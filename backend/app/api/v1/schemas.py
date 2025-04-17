@@ -1,9 +1,10 @@
+import uuid
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
 
 from app.db.base import get_db
-from app.services.auth import get_current_user
+from app.auth.auth import current_active_user
 from app.models.user import User
 from app.models.schema import Schema
 from app.schemas.schema import SchemaCreate, SchemaUpdate, Schema as SchemaSchema
@@ -15,7 +16,7 @@ async def read_schemas(
     db: Session = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(current_active_user),
 ):
     """
     Retrieve schemas
@@ -27,7 +28,7 @@ async def read_schemas(
 async def create_schema(
     schema_in: SchemaCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(current_active_user),
 ):
     """
     Create new schema
@@ -48,9 +49,9 @@ async def create_schema(
 
 @router.get("/{schema_id}", response_model=SchemaSchema)
 async def read_schema(
-    schema_id: int,
+    schema_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(current_active_user),
 ):
     """
     Get schema by ID

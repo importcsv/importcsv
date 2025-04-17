@@ -1,16 +1,20 @@
-from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form
+import uuid
+from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any, Optional
 import json
+from datetime import datetime
 
 from app.db.base import get_db
-from app.services.auth import get_current_user
+from app.auth.auth import current_active_user
 from app.models.user import User
 from app.models.import_job import ImportJob, ImportStatus
 from app.models.schema import Schema
 from app.schemas.import_job import ImportJobCreate, ImportJob as ImportJobSchema, ColumnMappingRequest
 from app.services.file_processor import file_processor
 from app.services.webhook import webhook_service, WebhookEventType
+from app.services.import_processor import import_processor
+from app.db.base import SessionLocal
 
 router = APIRouter()
 
@@ -19,7 +23,7 @@ async def read_import_jobs(
     db: Session = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(current_active_user),
 ):
     """
     Retrieve import jobs
@@ -31,7 +35,7 @@ async def read_import_jobs(
 async def upload_file(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(current_active_user),
 ):
     """
     Upload a file for analysis
@@ -53,19 +57,23 @@ async def upload_file(
 
 @router.post("/", response_model=ImportJobSchema)
 async def create_import_job(
-    schema_id: int = Form(...),
+    background_tasks: BackgroundTasks,
+    schema_id: str = Form(...),  # UUID as string
     file_path: str = Form(...),
     file_name: str = Form(...),
     file_type: str = Form(...),
     column_mapping: str = Form(...),  # JSON string
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(current_active_user),
 ):
     """
     Create new import job
     """
+    # Convert string UUID to UUID object
+    schema_uuid = uuid.UUID(schema_id)
+    
     # Verify schema exists and belongs to user
-    schema = db.query(Schema).filter(Schema.id == schema_id, Schema.user_id == current_user.id).first()
+    schema = db.query(Schema).filter(Schema.id == schema_uuid, Schema.user_id == current_user.id).first()
     if not schema:
         raise HTTPException(status_code=404, detail="Schema not found")
     
@@ -89,7 +97,8 @@ async def create_import_job(
     db.commit()
     db.refresh(import_job)
     
-    # Create webhook event
+    # Create webhook event with serializable payload
+    # Convert UUIDs to strings for JSON serialization
     await webhook_service.create_event(
         db,
         current_user.id,
@@ -97,21 +106,30 @@ async def create_import_job(
         WebhookEventType.IMPORT_STARTED,
         {
             "event_type": WebhookEventType.IMPORT_STARTED,
-            "import_job_id": import_job.id,
-            "schema_id": schema_id,
+            "import_job_id": str(import_job.id),
+            "schema_id": str(schema_uuid),
             "file_name": file_name,
             "row_count": import_job.row_count,
             "timestamp": import_job.created_at.isoformat()
         }
     )
     
+    # Process the import job in the background
+    background_tasks.add_task(
+        import_processor.process_import_job,
+        import_job_id=str(import_job.id),
+        schema_id=str(schema_uuid),
+        file_path=file_path,
+        column_mapping=column_mapping_dict
+    )
+    
     return import_job
 
 @router.get("/{import_job_id}", response_model=ImportJobSchema)
 async def read_import_job(
-    import_job_id: int,
+    import_job_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(current_active_user),
 ):
     """
     Get import job by ID

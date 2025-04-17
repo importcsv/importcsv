@@ -30,8 +30,12 @@ yarn-error.log*
 
 # Python
 __pycache__/
+**/__pycache__/
 *.py[cod]
 *$py.class
+**/*.pyc
+**/*.pyo
+**/*.pyd
 *.so
 .Python
 build/
@@ -77,7 +81,9 @@ logs/
 
 # FastAPI specific
 __pycache__/
+**/__pycache__/
 .pytest_cache/
+**/.pytest_cache/
 
 # Jupyter Notebook
 .ipynb_checkpoints

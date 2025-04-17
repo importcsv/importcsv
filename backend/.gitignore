@@ -1,7 +1,19 @@
 # Python
 __pycache__/
+**/__pycache__/
 *.py[cod]
 *$py.class
+*.so
+.Python
+**/*.pyc
+**/*.pyo
+**/*.pyd
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
 *.so
 .Python
 build/

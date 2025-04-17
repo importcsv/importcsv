@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, JSON, DateTime, ForeignKey, Enum, Boolean
+import uuid
+from sqlalchemy import Column, Integer, String, JSON, DateTime, ForeignKey, Enum, Boolean, UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 import enum
@@ -13,13 +14,13 @@ class WebhookEventType(str, enum.Enum):
 class WebhookEvent(Base):
     __tablename__ = "webhook_events"
 
-    id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
-    import_job_id = Column(Integer, ForeignKey("import_jobs.id"))
-    event_type = Column(Enum(WebhookEventType))
-    payload = Column(JSON)
-    delivered = Column(Boolean, default=False)
-    delivery_attempts = Column(Integer, default=0)
+    id = Column(UUID, primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID, ForeignKey("users.id"), nullable=False)
+    import_job_id = Column(UUID, ForeignKey("import_jobs.id"), nullable=False)
+    event_type = Column(Enum(WebhookEventType), nullable=False)
+    payload = Column(JSON, nullable=False)
+    delivered = Column(Boolean, default=False, nullable=False)
+    delivery_attempts = Column(Integer, default=0, nullable=False)
     last_delivery_attempt = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     

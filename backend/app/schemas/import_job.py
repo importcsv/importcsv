@@ -1,3 +1,4 @@
+import uuid
 from pydantic import BaseModel, Field
 from typing import Dict, Any, List, Optional
 from datetime import datetime
@@ -5,7 +6,7 @@ from app.models.import_job import ImportStatus
 
 # Base ImportJob model
 class ImportJobBase(BaseModel):
-    schema_id: int
+    schema_id: uuid.UUID
     file_name: str
     file_type: str
 
@@ -24,8 +25,8 @@ class ImportJobUpdate(BaseModel):
 
 # ImportJob in DB
 class ImportJobInDBBase(ImportJobBase):
-    id: int
-    user_id: int
+    id: uuid.UUID
+    user_id: uuid.UUID
     status: ImportStatus
     row_count: int
     processed_rows: int

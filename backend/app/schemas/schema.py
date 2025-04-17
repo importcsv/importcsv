@@ -1,3 +1,4 @@
+import uuid
 from pydantic import BaseModel, Field
 from typing import Dict, Any, List, Optional
 from datetime import datetime
@@ -41,8 +42,8 @@ class SchemaUpdate(BaseModel):
 
 # Schema in DB
 class SchemaInDBBase(SchemaBase):
-    id: int
-    user_id: int
+    id: uuid.UUID
+    user_id: uuid.UUID
     created_at: datetime
     updated_at: Optional[datetime] = None
 

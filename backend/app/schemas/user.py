@@ -1,39 +1,27 @@
+import uuid
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from datetime import datetime
+from fastapi_users import schemas
 
-# Shared properties
-class UserBase(BaseModel):
-    email: EmailStr
+class UserRead(schemas.BaseUser[uuid.UUID]):
     full_name: Optional[str] = None
-    is_active: bool = True
-    is_superuser: bool = False
-
-# Properties to receive via API on creation
-class UserCreate(UserBase):
-    password: str
-
-# Properties to receive via API on update
-class UserUpdate(BaseModel):
-    email: Optional[EmailStr] = None
-    full_name: Optional[str] = None
-    password: Optional[str] = None
-    is_active: Optional[bool] = None
-    is_superuser: Optional[bool] = None
-
-# Properties shared by models stored in DB
-class UserInDBBase(UserBase):
-    id: int
     created_at: datetime
     updated_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
 
-# Additional properties to return via API
-class User(UserInDBBase):
+class UserCreate(schemas.BaseUserCreate):
+    full_name: Optional[str] = None
+
+class UserUpdate(schemas.BaseUserUpdate):
+    full_name: Optional[str] = None
+
+# For backward compatibility with existing code
+class User(UserRead):
     pass
 
-# Additional properties stored in DB
-class UserInDB(UserInDBBase):
+# For internal use
+class UserInDB(UserRead):
     hashed_password: str

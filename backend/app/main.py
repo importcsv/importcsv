@@ -7,6 +7,9 @@ from dotenv import load_dotenv
 
 from app.api.routes import api_router
 from app.core.config import settings
+from app.auth.auth import fastapi_users, auth_backend
+from app.models.user import User
+from app.schemas.user import UserCreate, UserRead, UserUpdate
 
 # Load environment variables
 load_dotenv()
@@ -24,6 +27,33 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+)
+
+# Include FastAPI Users routes
+app.include_router(
+    fastapi_users.get_auth_router(auth_backend),
+    prefix=f"{settings.API_V1_STR}/auth/jwt",
+    tags=["auth"],
+)
+app.include_router(
+    fastapi_users.get_register_router(UserRead, UserCreate),
+    prefix=f"{settings.API_V1_STR}/auth",
+    tags=["auth"],
+)
+app.include_router(
+    fastapi_users.get_reset_password_router(),
+    prefix=f"{settings.API_V1_STR}/auth",
+    tags=["auth"],
+)
+app.include_router(
+    fastapi_users.get_verify_router(UserRead),
+    prefix=f"{settings.API_V1_STR}/auth",
+    tags=["auth"],
+)
+app.include_router(
+    fastapi_users.get_users_router(UserRead, UserUpdate),
+    prefix=f"{settings.API_V1_STR}/users",
+    tags=["users"],
 )
 
 # Include API routes
