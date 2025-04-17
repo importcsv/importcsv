@@ -1,0 +1,661 @@
+'use client';
+
+import React, { useState, useEffect, useRef } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogFooter,
+    DialogClose
+  } from "@/components/ui/dialog";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+  } from "@/components/ui/alert-dialog"
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useAuth } from '@/context/AuthContext';
+import { useRouter } from 'next/navigation';
+
+// Define Field structure to match backend SchemaField
+interface SchemaField {
+    name: string;           // was 'key' in our frontend
+    display_name: string;   // was 'label' in our frontend
+    type: string;           // e.g., 'text', 'number', 'date'
+    required?: boolean;     // optional, defaults to false in backend
+    description?: string;   // optional
+}
+
+// Updated Schema structure to match backend
+interface Schema {
+  id: string;
+  name: string;
+  description?: string;
+  fields: SchemaField[];
+}
+
+// Supported data types for columns
+const COLUMN_TYPES = ['text', 'number', 'date', 'email', 'boolean', 'url'];
+
+export default function SchemasPage() {
+  const [schemas, setSchemas] = useState<Schema[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false); // State for edit dialog
+  const [schemaToEdit, setSchemaToEdit] = useState<Schema | null>(null); // State for schema being edited
+  const [newSchemaName, setNewSchemaName] = useState(''); // Used for both create and edit
+  const [newFields, setNewFields] = useState<SchemaField[]>([]);
+  const [newFieldName, setNewFieldName] = useState('');
+  const [newFieldDisplayName, setNewFieldDisplayName] = useState('');
+  const [newFieldType, setNewFieldType] = useState<string>('');
+  const [newFieldRequired, setNewFieldRequired] = useState<boolean>(false);
+  const [saveError, setSaveError] = useState<string | null>(null); // Error for create/edit
+  const [schemaToDelete, setSchemaToDelete] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const { token, logout, refreshToken } = useAuth();
+  const router = useRouter();
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+
+  useEffect(() => {
+    // Fetch schemas logic
+    const fetchSchemas = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        if (!token) {
+            setIsLoading(false);
+            return;
+        }
+        
+        // Try to refresh the token before making the request
+        await refreshToken();
+        
+        const response = await fetch(`${backendUrl}/api/v1/schemas`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        if (!response.ok) {
+            // If unauthorized, try to refresh the token and retry once
+            if (response.status === 401) {
+                console.log('Token expired, attempting to refresh...');
+                const refreshed = await refreshToken();
+                
+                if (refreshed) {
+                    // Token refreshed successfully, retry the request
+                    console.log('Token refreshed, retrying request...');
+                    return fetchSchemas();
+                } else {
+                    // Token refresh failed, redirect to login
+                    console.error('Token refresh failed, redirecting to login');
+                    logout();
+                    router.push('/login');
+                    return; // Stop execution
+                }
+            }
+            
+            let errorDetail = 'Failed to fetch schemas';
+            try {
+                const errorData = await response.json();
+                errorDetail = errorData.detail || errorDetail;
+            } catch (e) { /* Ignore parsing error */ }
+            throw new Error(errorDetail);
+        }
+        const data = await response.json();
+        // The API returns the schemas directly as an array, not nested in a 'schemas' property
+        setSchemas(Array.isArray(data) ? data : []);
+      } catch (err: any) {
+        setError(err.message || 'An error occurred while fetching schemas.');
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchSchemas();
+  }, [token, backendUrl]); // Added backendUrl dependency
+
+  // --- Field Management (Shared for Create/Edit) ---
+  const handleAddField = () => {
+    if (!newFieldName || !newFieldDisplayName || !newFieldType) {
+      console.warn('Field name, display name, and type are required.');
+      return;
+    }
+    if (newFields.some(field => field.name === newFieldName)) {
+        console.warn(`Field name '${newFieldName}' already exists.`);
+        // Optionally show error in UI
+        setSaveError(`Field name '${newFieldName}' already exists.`);
+        return;
+    }
+    setSaveError(null); // Clear previous error
+    
+    // Update fields in a single state update to minimize re-renders
+    const newField = { 
+      name: newFieldName, 
+      display_name: newFieldDisplayName, 
+      type: newFieldType,
+      required: newFieldRequired
+    };
+    
+    setNewFields(prev => [...prev, newField]);
+    
+    // Clear field inputs in a separate batch
+    setTimeout(() => {
+      setNewFieldName('');
+      setNewFieldDisplayName('');
+      setNewFieldType('');
+      setNewFieldRequired(false);
+    }, 0);
+  };
+
+  const handleRemoveField = (nameToRemove: string) => {
+    setNewFields(newFields.filter(field => field.name !== nameToRemove));
+  };
+
+  // --- Reset Dialog Form State (Shared) ---
+  const resetFormState = () => {
+    setNewSchemaName('');
+    setNewFields([]);
+    setNewFieldName('');
+    setNewFieldDisplayName('');
+    setNewFieldType('');
+    setNewFieldRequired(false);
+    setSaveError(null);
+  };
+
+  // --- Create Schema Logic ---
+  const handleCreateDialogOpenChange = (open: boolean) => {
+      if (!open) {
+          // Only reset form when closing the dialog
+          resetFormState();
+      }
+      setIsCreateDialogOpen(open);
+  }
+
+  const handleSaveSchema = async (schemaName: string, fields: SchemaField[]) => {
+      setSaveError(null);
+      if (!token) {
+          setSaveError("Authentication token is missing.");
+          return;
+      }
+
+      try {
+          // Try to refresh the token before making the request
+          await refreshToken();
+          
+          const response = await fetch(`${backendUrl}/api/v1/schemas`, {
+              method: 'POST',
+              headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({ name: schemaName, fields: fields })
+          });
+          if (!response.ok) {
+              // If unauthorized, redirect to login
+              if (response.status === 401) {
+                  console.error('Authentication token expired or invalid');
+                  logout();
+                  router.push('/login');
+                  return; // Stop execution
+              }
+              
+              let errorDetail = 'Failed to save schema';
+              try {
+                  const errorData = await response.json();
+                  errorDetail = errorData.detail || errorDetail;
+              } catch (e) { /* Ignore parsing error */ }
+              throw new Error(errorDetail);
+          }
+          const createdSchema = await response.json();
+          setSchemas(prev => [...prev, createdSchema]);
+          setIsCreateDialogOpen(false); // Close dialog on success
+          // Reset form handled by onOpenChange
+      } catch (err: any) {
+          console.error('Error saving schema:', err);
+          setSaveError(err.message || 'An unknown error occurred during save.');
+      }
+  };
+
+  // --- Edit Schema Logic ---
+  const handleEditDialogOpenChange = (open: boolean) => {
+    if (!open) {
+        // Only reset form when closing the dialog
+        resetFormState();
+        setSchemaToEdit(null); // Clear the schema being edited
+    }
+    setIsEditDialogOpen(open);
+  };
+
+  const handleEditClick = (schema: Schema) => {
+    setSchemaToEdit(schema);
+    setNewSchemaName(schema.name); // Pre-populate name
+    setNewFields(schema.fields); // Pre-populate fields
+    setSaveError(null); // Clear any previous errors
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateSchema = async (schemaName: string, fields: SchemaField[]) => {
+    setSaveError(null);
+    if (!schemaToEdit || !token) {
+        setSaveError("Cannot update schema: Missing schema data or authentication token.");
+        return;
+    }
+
+    try {
+        // Try to refresh the token before making the request
+        await refreshToken();
+        
+        const response = await fetch(`${backendUrl}/api/v1/schemas/${schemaToEdit.id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ name: schemaName, fields: fields })
+        });
+        if (!response.ok) {
+            // If unauthorized, redirect to login
+            if (response.status === 401) {
+                console.error('Authentication token expired or invalid');
+                logout();
+                router.push('/login');
+                return; // Stop execution
+            }
+            
+            let errorDetail = 'Failed to update schema';
+            try {
+                const errorData = await response.json();
+                errorDetail = errorData.detail || errorDetail;
+            } catch (e) { /* Ignore parsing error */ }
+            throw new Error(errorDetail);
+        }
+        const updatedSchema = await response.json();
+        // Update the schema in the local state
+        setSchemas(prev => prev.map(s => s.id === updatedSchema.id ? updatedSchema : s));
+        setIsEditDialogOpen(false); // Close dialog on success
+        // Reset form handled by onOpenChange
+    } catch (err: any) {
+        console.error('Error updating schema:', err);
+        setSaveError(err.message || 'An unknown error occurred during update.');
+    }
+  };
+
+  // --- Delete Schema Logic ---
+  const handleDeleteSchema = async () => {
+    if (!schemaToDelete || !token) {
+        setDeleteError("Cannot delete schema: Missing ID or authentication token.");
+        return;
+    }
+    setDeleteError(null);
+    try {
+        const response = await fetch(`${backendUrl}/api/v1/schemas/${schemaToDelete}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            let errorDetail = 'Failed to delete schema';
+            try {
+                const errorData = await response.json();
+                errorDetail = errorData.detail || errorDetail;
+            } catch (e) { /* Ignore parsing error */ }
+            throw new Error(errorDetail);
+        }
+
+        setSchemas(prev => prev.filter(schema => schema.id !== schemaToDelete));
+        setSchemaToDelete(null);
+
+    } catch (err: any) {
+        console.error('Error deleting schema:', err);
+        setDeleteError(err.message || 'An unknown error occurred during deletion.');
+    }
+  };
+
+
+  // --- Schema Form Component (Internal) ---
+  const SchemaForm = ({ onSubmit, mode, initialName, initialFields }: { 
+    onSubmit: (name: string, fields: SchemaField[]) => void, 
+    mode: 'create' | 'edit',
+    initialName: string,
+    initialFields: SchemaField[]
+  }) => {
+    // Completely isolated state for the form
+    const [schemaName, setSchemaName] = useState(initialName);
+    const [fields, setFields] = useState<SchemaField[]>(initialFields);
+    
+    // Form state for new field inputs
+    const [newField, setNewField] = useState({
+      name: '',
+      display_name: '',
+      type: '',
+      required: false
+    });
+    
+    // Local error state
+    const [formError, setFormError] = useState<string | null>(null);
+    
+    // Handle input changes for schema name
+    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSchemaName(e.target.value);
+    };
+    
+    // Handle input changes for new field
+    const handleFieldInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setNewField(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    };
+    
+    // Handle select changes for field type
+    const handleTypeChange = (value: string) => {
+      setNewField(prev => ({
+        ...prev,
+        type: value
+      }));
+    };
+    
+    // Add field to local state
+    const handleAddField = () => {
+      // Validate field inputs
+      if (!newField.name || !newField.display_name || !newField.type) {
+        setFormError('Field name, display name, and type are required.');
+        return;
+      }
+      
+      // Check for duplicate field names
+      if (fields.some(field => field.name === newField.name)) {
+        setFormError(`Field name '${newField.name}' already exists.`);
+        return;
+      }
+      
+      // Clear any previous errors
+      setFormError(null);
+      
+      // Add the new field to local state
+      setFields(prev => [...prev, { ...newField }]);
+      
+      // Reset the new field form
+      setNewField({
+        name: '',
+        display_name: '',
+        type: '',
+        required: false
+      });
+    };
+    
+    // Remove field from local state
+    const handleRemoveField = (nameToRemove: string) => {
+      setFields(prev => prev.filter(field => field.name !== nameToRemove));
+    };
+    
+    // Handle form submission
+    const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      
+      // Validate form before submission
+      if (!schemaName) {
+        setFormError('Schema name is required.');
+        return;
+      }
+      
+      if (fields.length === 0) {
+        setFormError('At least one field is required.');
+        return;
+      }
+      
+      // Clear any previous errors
+      setFormError(null);
+      
+      // Call the parent's onSubmit with the form data
+      onSubmit(schemaName, fields);
+    };
+    
+    return (
+      <form onSubmit={handleSubmit}>
+        {/* Schema Name Input */}
+        <div className="grid gap-2 mb-4">
+          <Label htmlFor="schemaName">Schema Name</Label>
+          <Input
+            id="schemaName"
+            value={schemaName}
+            onChange={handleNameChange}
+            placeholder="e.g., Customer Data"
+            required
+          />
+        </div>
+        
+        {/* Fields Section */}
+        <div className="mb-4">
+          <Label className="font-semibold">Fields</Label>
+          {/* Display Added Fields */}
+          <div className="mt-2 space-y-2 max-h-40 overflow-y-auto border rounded p-2 bg-gray-50 mb-3">
+            {fields.length === 0 && <p className="text-sm text-gray-500">No fields added yet.</p>}
+            {fields.map((field) => (
+              <div key={field.name} className="flex justify-between items-center text-sm p-1 bg-white rounded border">
+                <span>
+                  {field.display_name} ({field.name}) - 
+                  <span className='italic text-gray-600'>{field.type}</span>
+                  {field.required && <span className='text-red-500 ml-1'>*</span>}
+                </span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleRemoveField(field.name)}
+                  className='text-red-500 hover:text-red-700 h-6 px-1.5'
+                >
+                  Remove
+                </Button>
+              </div>
+            ))}
+          </div>
+          
+          {/* Add New Field Form */}
+          <div className="grid grid-cols-3 gap-2 border-t pt-3">
+            <Input
+              placeholder="Field Name (no spaces)"
+              name="name"
+              value={newField.name}
+              onChange={(e) => setNewField(prev => ({
+                ...prev,
+                name: e.target.value.replace(/\s/g, '')
+              }))}
+            />
+            <Input
+              placeholder="Display Name"
+              name="display_name"
+              value={newField.display_name}
+              onChange={handleFieldInputChange}
+            />
+            <Select 
+              value={newField.type} 
+              onValueChange={handleTypeChange}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select Type" />
+              </SelectTrigger>
+              <SelectContent>
+                {COLUMN_TYPES.map(type => (
+                  <SelectItem key={type} value={type}>
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={handleAddField}
+            className='mt-2 w-full'
+            disabled={!newField.name || !newField.display_name || !newField.type}
+          >
+            Add Field
+          </Button>
+        </div>
+        
+        {/* Display form errors */}
+        {formError && <p className="text-red-500 text-sm pb-2">Error: {formError}</p>}
+        {saveError && <p className="text-red-500 text-sm pb-2">Error: {saveError}</p>}
+        
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button type="button" variant="outline">Cancel</Button>
+          </DialogClose>
+          <Button 
+            type="submit" 
+            disabled={!schemaName || fields.length === 0}
+          >
+            {mode === 'create' ? 'Save Schema' : 'Update Schema'}
+          </Button>
+        </DialogFooter>
+      </form>
+    );
+  };
+
+  // --- Main Render ---  
+  return (
+    <div className="container mx-auto p-4">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Manage Schemas</h1>
+        {/* Create Schema Dialog */}
+        <Dialog 
+          open={isCreateDialogOpen} 
+          onOpenChange={handleCreateDialogOpenChange}
+          // Add a key to force a complete remount when dialog opens/closes
+          key={`create-dialog-${isCreateDialogOpen}`}
+        >
+          <DialogTrigger asChild>
+            <Button>Create New Schema</Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Create New Schema</DialogTitle>
+              <DialogDescription>
+                Define the name and columns for your CSV imports.
+              </DialogDescription>
+            </DialogHeader>
+            <SchemaForm 
+              onSubmit={handleSaveSchema} 
+              mode="create" 
+              initialName="" 
+              initialFields={[]} 
+            />
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Schema Table Display */}
+      {isLoading && <p>Loading schemas...</p>}
+      {error && <p className="text-red-500">Error: {error}</p>}
+
+      {!isLoading && !error && (
+        <AlertDialog onOpenChange={(open) => {if (!open) setDeleteError(null)}}> {/* Outer wrapper for Delete Dialog */}
+            <Table>
+                <TableCaption>A list of your configured schemas.</TableCaption>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Columns Count</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {schemas.map((schema) => (
+                    <TableRow key={schema.id}>
+                        <TableCell className="font-medium">{schema.name}</TableCell>
+                        <TableCell>{schema.fields.length}</TableCell>
+                        <TableCell className="text-right space-x-2">
+                            {/* Edit Button - Triggers Edit Dialog */}
+                            <Dialog 
+                                open={isEditDialogOpen && schemaToEdit?.id === schema.id} 
+                                onOpenChange={handleEditDialogOpenChange}
+                                // Add a key to force a complete remount when dialog opens/closes
+                                key={`edit-dialog-${isEditDialogOpen}-${schema.id}`}
+                            >
+                                <DialogTrigger asChild>
+                                    <Button variant="ghost" size="sm" onClick={() => handleEditClick(schema)}>Edit</Button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-md">
+                                    <DialogHeader>
+                                        <DialogTitle>Edit Schema: {schemaToEdit?.name}</DialogTitle>
+                                        <DialogDescription>
+                                        Modify the name and columns for this schema.
+                                        </DialogDescription>
+                                    </DialogHeader>
+                                    {/* Re-use the SchemaForm for editing */}
+                                    <SchemaForm 
+                                      onSubmit={handleUpdateSchema} 
+                                      mode="edit" 
+                                      initialName={schemaToEdit?.name || ''} 
+                                      initialFields={schemaToEdit?.fields || []} 
+                                    />
+                                </DialogContent>
+                            </Dialog>
+
+                            {/* Delete Button Trigger */}
+                            <AlertDialogTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className='text-red-600 hover:text-red-800'
+                                    onClick={() => setSchemaToDelete(schema.id)}
+                                >
+                                    Delete
+                                </Button>
+                            </AlertDialogTrigger>
+                        </TableCell>
+                    </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+
+            {/* Delete Confirmation Dialog Content (remains the same) */}
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the schema
+                        and any associated import configurations.
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                {deleteError && <p className='text-sm text-red-500'>{deleteError}</p>} {/* Show delete error */}
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setSchemaToDelete(null)}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteSchema} className='bg-red-600 hover:bg-red-700'>Delete Schema</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+      )}
+    </div>
+  );
+}

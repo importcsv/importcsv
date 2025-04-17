@@ -18,6 +18,12 @@ class UserCreate(schemas.BaseUserCreate):
 class UserUpdate(schemas.BaseUserUpdate):
     full_name: Optional[str] = None
 
+# Public registration schema
+class UserRegister(BaseModel):
+    email: EmailStr
+    password: str = Field(..., min_length=8)
+    full_name: Optional[str] = None
+
 # For backward compatibility with existing code
 class User(UserRead):
     pass

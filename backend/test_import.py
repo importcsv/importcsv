@@ -6,7 +6,7 @@ import csv
 import time
 
 # API base URL
-BASE_URL = "http://127.0.0.1:8090"
+BASE_URL = "http://127.0.0.1:8000"
 
 def get_access_token(email, password):
     """Get access token by logging in"""
@@ -141,58 +141,58 @@ def test_get_import_job(token, import_job_id):
 def poll_import_job_until_complete(token, import_job_id, max_attempts=10, delay_seconds=2):
     """Poll the import job until it's completed or max attempts are reached"""
     headers = {"Authorization": f"Bearer {token}"}
-    
+
     print(f"\n=== Polling Import Job {import_job_id} ===")
     for attempt in range(1, max_attempts + 1):
         print(f"Polling attempt {attempt}/{max_attempts}...")
-        
+
         response = requests.get(
             f"{BASE_URL}/api/v1/imports/{import_job_id}",
             headers=headers
         )
-        
+
         if response.status_code != 200:
             print(f"Failed to get import job. Status code: {response.status_code}")
             print(response.text)
             return None
-            
+
         import_job = response.json()
         status = import_job.get('status')
         processed_rows = import_job.get('processed_rows', 0)
         total_rows = import_job.get('row_count', 0)
-        
+
         print(f"Status: {status} | Processed: {processed_rows}/{total_rows} rows")
-        
+
         # Check if job is complete
         if status in ['completed', 'failed', 'error']:
             print(f"Import job {status}!")
             return import_job
-            
+
         # If not complete, wait before next attempt
         if attempt < max_attempts:
             print(f"Waiting {delay_seconds} seconds before next check...")
             time.sleep(delay_seconds)
-    
+
     print("Max polling attempts reached. Import job may still be processing.")
     return None
 
 def manually_process_import_job(token, import_job_id):
     """Manually process an import job for testing purposes"""
     headers = {"Authorization": f"Bearer {token}"}
-    
+
     print(f"\n=== Manually Processing Import Job {import_job_id} ===")
     response = requests.post(
         f"{BASE_URL}/api/v1/imports/{import_job_id}/process",
         headers=headers
     )
-    
+
     if response.status_code != 200:
         print(f"Failed to process import job. Status code: {response.status_code}")
         print(response.text)
         print("Note: Your backend may not have an endpoint to process imports.")
         print("This is likely why jobs stay in 'pending' state.")
         return None
-        
+
     processed_job = response.json()
     print(f"Import job processed successfully!")
     print(f"New status: {processed_job.get('status')}")
@@ -201,20 +201,20 @@ def manually_process_import_job(token, import_job_id):
 def get_import_job_details(token, import_job_id):
     """Get detailed information about an import job"""
     headers = {"Authorization": f"Bearer {token}"}
-    
+
     print(f"\n=== Getting Import Job Details for {import_job_id} ===")
     response = requests.get(
         f"{BASE_URL}/api/v1/imports/{import_job_id}",
         headers=headers
     )
-    
+
     if response.status_code != 200:
         print(f"Failed to get import job details. Status code: {response.status_code}")
         print(response.text)
         return None
-        
+
     job_details = response.json()
-    
+
     # Print job metadata
     print(f"Import Job ID: {job_details['id']}")
     print(f"Status: {job_details['status']}")
@@ -222,16 +222,16 @@ def get_import_job_details(token, import_job_id):
     print(f"Total Rows: {job_details['row_count']}")
     print(f"Successfully Processed: {job_details['processed_rows']}")
     print(f"Errors: {job_details['error_count']}")
-    
+
     if job_details.get('created_at'):
         print(f"Created: {job_details['created_at']}")
-    
+
     if job_details.get('completed_at'):
         print(f"Completed: {job_details['completed_at']}")
-        
+
     if job_details.get('error_message'):
         print(f"Error Message: {job_details['error_message']}")
-    
+
     return job_details
 
 def create_schema(token, schema_name, columns):
@@ -298,23 +298,23 @@ if __name__ == "__main__":
     # Test file upload
     upload_data = test_file_upload(token, csv_file)
 
-    if upload_data and schema_id: 
+    if upload_data and schema_id:
         # Test creating import job
         import_job = test_create_import_job(token, schema_id, upload_data)
 
         if import_job:
             # Test getting import job status
             test_get_import_job(token, import_job['id'])
-            
+
             # Poll for a few attempts to see if the job completes on its own
             print("\nChecking if job completes automatically...")
             completed_job = poll_import_job_until_complete(token, import_job['id'], max_attempts=5, delay_seconds=2)
-            
+
             # If job is still pending, try to manually process it
             if completed_job and completed_job.get('status') == 'pending':
                 print("\nJob still pending. Attempting to manually process it...")
                 processed_job = manually_process_import_job(token, import_job['id'])
-                
+
                 if processed_job and processed_job.get('status') == 'completed':
                     completed_job = processed_job
                 else:
@@ -322,11 +322,11 @@ if __name__ == "__main__":
                     print("1. The backend doesn't have an automatic process to handle imports")
                     print("2. There's no endpoint to manually trigger processing")
                     print("3. You would need to implement a background worker or processing endpoint")
-            
+
             # If job completed (either automatically or manually), get detailed information
             if completed_job and completed_job.get('status') in ['completed', 'failed']:
                 job_details = get_import_job_details(token, import_job['id'])
-                
+
                 # Verify the job was processed successfully
                 if job_details and job_details.get('status') == 'completed':
                     print("\n✅ Import job completed successfully!")
