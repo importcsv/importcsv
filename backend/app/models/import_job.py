@@ -19,7 +19,7 @@ class ImportJob(Base):
 
     id = Column(UUID, primary_key=True, default=uuid.uuid4)
     user_id = Column(UUID, ForeignKey("users.id"), nullable=False)
-    schema_id = Column(UUID, ForeignKey("schemas.id"), nullable=False)
+    importer_id = Column(UUID, ForeignKey("importers.id"), nullable=False)
     file_name = Column(String, nullable=False)
     file_path = Column(String, nullable=False)
     file_type = Column(String, nullable=False)  # csv, xlsx, etc.
@@ -38,5 +38,5 @@ class ImportJob(Base):
     
     # Relationships
     user = relationship("User", back_populates="import_jobs")
-    schema = relationship("Schema", back_populates="import_jobs")
+    importer = relationship("Importer", back_populates="import_jobs")
     webhook_events = relationship("WebhookEvent", back_populates="import_job")

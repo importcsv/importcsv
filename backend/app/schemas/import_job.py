@@ -6,7 +6,7 @@ from app.models.import_job import ImportStatus
 
 # Base ImportJob model
 class ImportJobBase(BaseModel):
-    schema_id: uuid.UUID
+    importer_id: uuid.UUID
     file_name: str
     file_type: str
 
@@ -43,12 +43,18 @@ class ImportJobInDBBase(ImportJobBase):
 
 # ImportJob to return via API
 class ImportJob(ImportJobInDBBase):
-    pass
+    # Convert UUID fields to strings for API responses
+    id: str
+    user_id: str
+    importer_id: str
+    
+    class Config:
+        from_attributes = True
 
 # Column mapping model
 class ColumnMapping(BaseModel):
     file_column: str
-    schema_field: str
+    importer_field: str
     confidence: float = 0.0
     
 # Column mapping request

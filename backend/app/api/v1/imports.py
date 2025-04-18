@@ -9,7 +9,7 @@ from app.db.base import get_db
 from app.auth.auth import current_active_user
 from app.models.user import User
 from app.models.import_job import ImportJob, ImportStatus
-from app.models.schema import Schema
+from app.models.importer import Importer
 from app.schemas.import_job import ImportJobCreate, ImportJob as ImportJobSchema, ColumnMappingRequest
 from app.services.file_processor import file_processor
 from app.services.webhook import webhook_service, WebhookEventType
@@ -58,7 +58,7 @@ async def upload_file(
 @router.post("/", response_model=ImportJobSchema)
 async def create_import_job(
     background_tasks: BackgroundTasks,
-    schema_id: str = Form(...),  # UUID as string
+    importer_id: str = Form(...),  # UUID as string
     file_path: str = Form(...),
     file_name: str = Form(...),
     file_type: str = Form(...),
@@ -70,12 +70,12 @@ async def create_import_job(
     Create new import job
     """
     # Convert string UUID to UUID object
-    schema_uuid = uuid.UUID(schema_id)
+    importer_uuid = uuid.UUID(importer_id)
     
-    # Verify schema exists and belongs to user
-    schema = db.query(Schema).filter(Schema.id == schema_uuid, Schema.user_id == current_user.id).first()
-    if not schema:
-        raise HTTPException(status_code=404, detail="Schema not found")
+    # Verify importer exists and belongs to user
+    importer = db.query(Importer).filter(Importer.id == importer_uuid, Importer.user_id == current_user.id).first()
+    if not importer:
+        raise HTTPException(status_code=404, detail="Importer not found")
     
     # Parse column mapping
     try:
@@ -86,7 +86,7 @@ async def create_import_job(
     # Create import job
     import_job = ImportJob(
         user_id=current_user.id,
-        schema_id=schema_id,
+        importer_id=importer_id,
         file_name=file_name,
         file_path=file_path,
         file_type=file_type,
@@ -107,7 +107,7 @@ async def create_import_job(
         {
             "event_type": WebhookEventType.IMPORT_STARTED,
             "import_job_id": str(import_job.id),
-            "schema_id": str(schema_uuid),
+            "importer_id": str(importer_uuid),
             "file_name": file_name,
             "row_count": import_job.row_count,
             "timestamp": import_job.created_at.isoformat()
@@ -118,7 +118,7 @@ async def create_import_job(
     background_tasks.add_task(
         import_processor.process_import_job,
         import_job_id=str(import_job.id),
-        schema_id=str(schema_uuid),
+        importer_id=str(importer_uuid),
         file_path=file_path,
         column_mapping=column_mapping_dict
     )

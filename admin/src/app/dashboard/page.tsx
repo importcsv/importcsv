@@ -41,10 +41,10 @@ export default function DashboardPage() {
       </div>
       <p className="mb-4">Welcome to the protected dashboard!</p>
 
-      {/* Navigation Link to Schemas */}
+      {/* Navigation Link to Importers */}
       <div className="mt-6">
-        <Link href="/dashboard/schemas">
-            <Button>Manage Schemas</Button>
+        <Link href="/dashboard/importers">
+            <Button>Manage Importers</Button>
         </Link>
       </div>
 

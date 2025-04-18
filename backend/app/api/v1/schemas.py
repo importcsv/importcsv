@@ -6,12 +6,13 @@ from typing import List
 from app.db.base import get_db
 from app.auth.auth import current_active_user
 from app.models.user import User
-from app.models.schema import Schema
-from app.schemas.schema import SchemaCreate, SchemaUpdate, Schema as SchemaSchema
+from app.models.importer import Importer
+from app.schemas.importer import ImporterCreate, ImporterUpdate, Importer as ImporterSchema
 
+# For backward compatibility, we're forwarding requests from the schemas API to the importers API
 router = APIRouter()
 
-@router.get("/", response_model=List[SchemaSchema])
+@router.get("/", response_model=List[ImporterSchema])
 async def read_schemas(
     db: Session = Depends(get_db),
     skip: int = 0,
@@ -19,44 +20,44 @@ async def read_schemas(
     current_user: User = Depends(current_active_user),
 ):
     """
-    Retrieve schemas
+    Retrieve schemas (forwarded to importers for backward compatibility)
     """
-    schemas = db.query(Schema).filter(Schema.user_id == current_user.id).offset(skip).limit(limit).all()
-    return schemas
+    importers = db.query(Importer).filter(Importer.user_id == current_user.id).offset(skip).limit(limit).all()
+    return importers
 
-@router.post("/", response_model=SchemaSchema)
+@router.post("/", response_model=ImporterSchema)
 async def create_schema(
-    schema_in: SchemaCreate,
+    schema_in: ImporterCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(current_active_user),
 ):
     """
-    Create new schema
+    Create new schema (forwarded to importers for backward compatibility)
     """
-    # Convert SchemaField objects to dictionaries for JSON serialization
+    # Convert ImporterField objects to dictionaries for JSON serialization
     fields_json = [field.dict() for field in schema_in.fields]
     
-    schema = Schema(
+    importer = Importer(
         name=schema_in.name,
         description=schema_in.description,
         fields=fields_json,
         user_id=current_user.id,
     )
-    db.add(schema)
+    db.add(importer)
     db.commit()
-    db.refresh(schema)
-    return schema
+    db.refresh(importer)
+    return importer
 
-@router.get("/{schema_id}", response_model=SchemaSchema)
+@router.get("/{schema_id}", response_model=ImporterSchema)
 async def read_schema(
     schema_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user: User = Depends(current_active_user),
 ):
     """
-    Get schema by ID
+    Get schema by ID (forwarded to importers for backward compatibility)
     """
-    schema = db.query(Schema).filter(Schema.id == schema_id, Schema.user_id == current_user.id).first()
-    if not schema:
-        raise HTTPException(status_code=404, detail="Schema not found")
-    return schema
+    importer = db.query(Importer).filter(Importer.id == schema_id, Importer.user_id == current_user.id).first()
+    if not importer:
+        raise HTTPException(status_code=404, detail="Importer not found")
+    return importer

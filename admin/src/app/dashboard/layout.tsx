@@ -42,8 +42,8 @@ export default function DashboardLayout({
       exact: true
     },
     {
-      name: 'Schemas',
-      href: '/dashboard/schemas',
+      name: 'Importers',
+      href: '/dashboard/importers',
       icon: <FileSpreadsheet className="h-5 w-5 mr-2" />,
       exact: false
     },

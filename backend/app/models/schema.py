@@ -17,4 +17,4 @@ class Schema(Base):
     
     # Relationships
     user = relationship("User", back_populates="schemas")
-    import_jobs = relationship("ImportJob", back_populates="schema")
+    # Removed import_jobs relationship as it's now handled by the Importer model

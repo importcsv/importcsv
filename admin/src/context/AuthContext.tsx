@@ -39,31 +39,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
   
-  // Function to refresh the token
+  // Function to validate token with the backend
+  // Since FastAPI Users doesn't have a standard refresh token endpoint,
+  // we'll use the /me endpoint to check if the token is still valid
   const refreshToken = async (): Promise<boolean> => {
     if (!token) return false;
     
     try {
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-      const response = await fetch(`${backendUrl}/api/v1/auth/jwt/refresh`, {
-        method: 'POST',
+      // Check if the token is still valid by making a request to the /me endpoint
+      const response = await fetch(`${backendUrl}/api/v1/users/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       
       if (response.ok) {
-        const data = await response.json();
-        if (data.access_token) {
-          // Update token in state and localStorage
-          setToken(data.access_token);
-          localStorage.setItem(AUTH_TOKEN_KEY, data.access_token);
-          return true;
-        }
+        // Token is still valid, no need to refresh
+        return true;
       }
+      
+      // If token is invalid, we need to redirect to login
+      // We can't refresh the token automatically with the current setup
       return false;
     } catch (error) {
-      console.error('Error refreshing token:', error);
+      console.error('Error validating token:', error);
       return false;
     }
   };

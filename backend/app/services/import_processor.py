@@ -5,12 +5,12 @@ from sqlalchemy.orm import Session
 
 from app.db.base import SessionLocal
 from app.models.import_job import ImportJob, ImportStatus
-from app.models.schema import Schema
+from app.models.importer import Importer
 from app.services.file_processor import file_processor
 from app.services.webhook import webhook_service, WebhookEventType
 
 class ImportProcessor:
-    async def process_import_job(self, import_job_id: str, schema_id: str, file_path: str, column_mapping: Dict[str, str]):
+    async def process_import_job(self, import_job_id: str, importer_id: str, file_path: str, column_mapping: Dict[str, str]):
         """Process an import job in the background"""
         # Create a new database session for this background task
         db = SessionLocal()
@@ -26,12 +26,12 @@ class ImportProcessor:
             db.add(import_job)
             db.commit()
             
-            # Get the schema
-            schema = db.query(Schema).filter(Schema.id == uuid.UUID(schema_id)).first()
-            if not schema:
-                print(f"Error: Schema {schema_id} not found")
+            # Get the importer
+            importer = db.query(Importer).filter(Importer.id == uuid.UUID(importer_id)).first()
+            if not importer:
+                print(f"Error: Importer {importer_id} not found")
                 import_job.status = ImportStatus.FAILED
-                import_job.error_message = "Schema not found"
+                import_job.error_message = "Importer not found"
                 db.add(import_job)
                 db.commit()
                 return
@@ -45,13 +45,13 @@ class ImportProcessor:
                 db.add(import_job)
                 db.commit()
                 
-                # Convert schema.fields from JSON to SchemaField objects
-                from app.schemas.schema import SchemaField
-                schema_fields = [SchemaField(**field) for field in schema.fields]
+                # Convert importer.fields from JSON to ImporterField objects
+                from app.schemas.importer import ImporterField
+                importer_fields = [ImporterField(**field) for field in importer.fields]
                 
                 is_valid, validation_errors, processed_df = await file_processor.validate_data(
                     file_path,
-                    schema_fields,
+                    importer_fields,
                     column_mapping
                 )
                 
@@ -71,7 +71,7 @@ class ImportProcessor:
                 # Send CSV data to webhook
                 metadata = {
                     "import_job_id": str(import_job.id),
-                    "schema_id": str(schema.id),
+                    "importer_id": str(importer.id),
                     "file_name": import_job.file_name,
                     "row_count": import_job.row_count,
                     "processed_rows": import_job.processed_rows,
@@ -96,7 +96,7 @@ class ImportProcessor:
                         "event_type": WebhookEventType.IMPORT_FINISHED,
                         "status": "completed",
                         "import_job_id": str(import_job.id),
-                        "schema_id": str(schema.id),
+                        "importer_id": str(importer.id),
                         "file_name": import_job.file_name,
                         "row_count": import_job.row_count,
                         "processed_rows": import_job.processed_rows,
@@ -123,7 +123,7 @@ class ImportProcessor:
                         "event_type": WebhookEventType.IMPORT_FINISHED,
                         "status": "failed",
                         "import_job_id": str(import_job.id),
-                        "schema_id": str(schema.id),
+                        "importer_id": str(importer.id),
                         "file_name": import_job.file_name,
                         "error": str(e),
                         "timestamp": datetime.utcnow().isoformat()

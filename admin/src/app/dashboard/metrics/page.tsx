@@ -42,7 +42,7 @@ import {
 // Define the ImportJob interface based on the backend model
 interface ImportJob {
   id: string;
-  schema_id: string;
+  importer_id: string;
   file_name: string;
   file_type: string;
   status: 'pending' | 'processing' | 'validating' | 'validated' | 'importing' | 'completed' | 'failed';
@@ -53,7 +53,7 @@ interface ImportJob {
   created_at: string;
   updated_at?: string;
   completed_at?: string;
-  schema?: {
+  importer?: {
     name: string;
   };
 }
@@ -114,16 +114,16 @@ export default function MetricsPage() {
         if (!response.ok) {
           // If unauthorized, try to refresh the token and retry once
           if (response.status === 401) {
-            console.log('Token expired, attempting to refresh...');
-            const refreshed = await refreshToken();
+            console.log('Token validation check...');
+            const isValid = await refreshToken();
             
-            if (refreshed) {
-              // Token refreshed successfully, retry the request
-              console.log('Token refreshed, retrying request...');
+            if (isValid) {
+              // Token is still valid, retry the request
+              console.log('Token is valid, retrying request...');
               return fetchImports();
             } else {
-              // Token refresh failed, redirect to login
-              console.error('Token refresh failed, redirecting to login');
+              // Token is invalid, redirect to login
+              console.log('Token is invalid, redirecting to login');
               logout();
               router.push('/login');
               return; // Stop execution
@@ -385,7 +385,7 @@ export default function MetricsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>File Name</TableHead>
-                    <TableHead>Schema</TableHead>
+                    <TableHead>Importer</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Progress</TableHead>
                     <TableHead>Rows</TableHead>
@@ -398,7 +398,7 @@ export default function MetricsPage() {
                   {filteredImports.map((job) => (
                     <TableRow key={job.id}>
                       <TableCell className="font-medium">{job.file_name}</TableCell>
-                      <TableCell>{job.schema?.name || 'Unknown'}</TableCell>
+                      <TableCell>{job.importer?.name || 'Unknown'}</TableCell>
                       <TableCell>{getStatusBadge(job.status)}</TableCell>
                       <TableCell>
                         <div className="w-[100px]">
