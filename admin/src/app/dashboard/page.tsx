@@ -3,8 +3,6 @@
 import React, { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import Link from 'next/link';
 
 export default function DashboardPage() {
   const { isAuthenticated, isLoading, logout } = useAuth();
@@ -13,6 +11,9 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       router.push('/login');
+    } else if (!isLoading && isAuthenticated) {
+      // Redirect to importers page
+      router.push('/dashboard/importers');
     }
   }, [isAuthenticated, isLoading, router]);
 
@@ -34,21 +35,8 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-        <Button onClick={handleLogout} variant="outline">Logout</Button>
-      </div>
-      <p className="mb-4">Welcome to the protected dashboard!</p>
-
-      {/* Navigation Link to Importers */}
-      <div className="mt-6">
-        <Link href="/dashboard/importers">
-            <Button>Manage Importers</Button>
-        </Link>
-      </div>
-
-      {/* Dashboard content will go here */}
+    <div className="flex items-center justify-center min-h-screen">
+      <p>Redirecting to importers...</p>
     </div>
   );
 }

@@ -40,18 +40,6 @@ export default function DashboardLayout({
       href: '/dashboard',
       icon: <LayoutGrid className="h-5 w-5 mr-2" />,
       exact: true
-    },
-    {
-      name: 'Importers',
-      href: '/dashboard/importers',
-      icon: <FileSpreadsheet className="h-5 w-5 mr-2" />,
-      exact: false
-    },
-    {
-      name: 'Metrics',
-      href: '/dashboard/metrics',
-      icon: <BarChart3 className="h-5 w-5 mr-2" />,
-      exact: false
     }
   ];
 

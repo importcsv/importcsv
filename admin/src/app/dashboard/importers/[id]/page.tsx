@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import AddColumnForm, { ImporterField as AddColumnImporterField } from '@/components/AddColumnForm';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
@@ -16,21 +17,36 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ChevronLeft, Copy, ExternalLink, CheckCircle, AlertCircle } from 'lucide-react';
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ChevronLeft, Copy, ExternalLink, CheckCircle, AlertCircle, MoreVertical, Trash2 } from 'lucide-react';
 
-// Define the Importer interface based on the backend model
-interface ImporterField {
-  name: string;
-  display_name: string;
-  type: string;
-  required: boolean;
-  description?: string;
-  must_match?: boolean;
-  not_blank?: boolean;
-  example?: string;
-  validation_error_message?: string;
-  validation_format?: string;
-}
+// Use the ImporterField type from the AddColumnForm component
+type ImporterField = AddColumnImporterField;
 
 interface Importer {
   id: string;
@@ -60,6 +76,11 @@ export default function ImporterDetailPage() {
   const [includeUnmatchedColumns, setIncludeUnmatchedColumns] = useState(false);
   const [filterInvalidRows, setFilterInvalidRows] = useState(false);
   const [disableOnInvalidRows, setDisableOnInvalidRows] = useState(false);
+  
+  // Dialog States
+  const [showAddColumnDialog, setShowAddColumnDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
   const importerId = params.id as string;
@@ -216,6 +237,60 @@ export default function ImporterDetailPage() {
       });
     }
   };
+  
+  // Delete importer
+  const handleDeleteImporter = async () => {
+    if (!importer) return;
+    
+    setIsDeleting(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`${backendUrl}/api/v1/importers/${importerId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.status === 401) {
+        // Try to refresh the token
+        const refreshed = await refreshToken();
+        if (!refreshed) {
+          logout();
+          router.push('/login');
+          return;
+        }
+        
+        // Retry with new token
+        const retryResponse = await fetch(`${backendUrl}/api/v1/importers/${importerId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!retryResponse.ok) {
+          throw new Error(`Failed to delete importer: ${retryResponse.statusText}`);
+        }
+      } else if (!response.ok) {
+        throw new Error(`Failed to delete importer: ${response.statusText}`);
+      }
+      
+      // Redirect to importers list
+      router.push('/dashboard/importers');
+    } catch (err: any) {
+      console.error('Error deleting importer:', err);
+      setError(err.message || 'Failed to delete importer. Please try again.');
+      setNotification({
+        message: err.message || 'Failed to delete importer. Please try again.',
+        type: "error"
+      });
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteDialog(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -282,7 +357,44 @@ export default function ImporterDetailPage() {
           <Button variant="outline" onClick={() => router.push(`/dashboard/importers/${importerId}/preview`)}>
             Preview <ExternalLink className="ml-2 h-4 w-4" />
           </Button>
-          <Button>Actions</Button>
+          
+          {/* Actions Dropdown */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button>
+                Actions <MoreVertical className="ml-2 h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                <AlertDialogTrigger asChild>
+                  <DropdownMenuItem onSelect={(e: Event) => e.preventDefault()} className="text-red-600 focus:text-red-600">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Importer
+                  </DropdownMenuItem>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This action cannot be undone. This will permanently delete the importer
+                      and all associated data.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction 
+                      onClick={handleDeleteImporter}
+                      className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? 'Deleting...' : 'Delete'}
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
       
@@ -479,8 +591,55 @@ export default function ImporterDetailPage() {
                 </tbody>
               </table>
               <div className="mt-4 flex justify-end">
-                <Button>Add Column</Button>
+                <Button onClick={() => setShowAddColumnDialog(true)}>Add Column</Button>
               </div>
+              
+              {/* Add Column Dialog */}
+              <Dialog 
+                open={showAddColumnDialog} 
+                onOpenChange={setShowAddColumnDialog}
+              >
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="text-xl">Add Column</DialogTitle>
+                    <DialogDescription className="text-base">
+                      Define a new column for your CSV imports.
+                    </DialogDescription>
+                  </DialogHeader>
+                  
+                  <AddColumnForm 
+                    existingFields={importer.fields}
+                    onAddColumn={(newField) => {
+                      // Add the field to the importer and update it
+                      const updatedFields = [...importer.fields, newField];
+                      setImporter({
+                        ...importer,
+                        fields: updatedFields
+                      });
+                      
+                      // Show success notification
+                      setNotification({
+                        message: "Column added successfully. Don't forget to save your changes.",
+                        type: "success"
+                      });
+                      
+                      // Close the dialog
+                      setShowAddColumnDialog(false);
+                    }}
+                    compact={true}
+                  />
+                  
+                  <DialogFooter>
+                    <Button 
+                      type="button" 
+                      variant="secondary" 
+                      onClick={() => setShowAddColumnDialog(false)}
+                    >
+                      Cancel
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </CardContent>
           </Card>
         </TabsContent>

@@ -98,14 +98,14 @@ export default function ImportersPage() {
   const fetchImporters = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       const response = await fetch(`${backendUrl}/api/v1/importers/`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       if (response.status === 401) {
         // Try to refresh the token
         const refreshed = await refreshToken();
@@ -120,11 +120,11 @@ export default function ImportersPage() {
             'Authorization': `Bearer ${token}`
           }
         });
-        
+
         if (!retryResponse.ok) {
           throw new Error(`Failed to fetch importers: ${retryResponse.statusText}`);
         }
-        
+
         const data = await retryResponse.json();
         setImporters(data);
       } else if (!response.ok) {
@@ -148,21 +148,21 @@ export default function ImportersPage() {
       setFormError('Field name is required.');
       return false;
     }
-    
+
     if (!field.type) {
       setFormError('Field type is required.');
       return false;
     }
-    
+
     // Check for duplicate field names
     if (fields.some(f => f.name === field.name)) {
       setFormError(`Field name '${field.name}' already exists.`);
       return false;
     }
-    
+
     // Clear any previous errors
     setFormError(null);
-    
+
     // Add the new field to local state
     setFields(prev => [...prev, { ...field }]);
     return true;
@@ -188,7 +188,7 @@ export default function ImportersPage() {
 
   const handleSaveImporter = async (importerName: string, fields: ImporterField[]) => {
     setSaveError(null);
-    
+
     try {
       const response = await fetch(`${backendUrl}/api/v1/importers/`, {
         method: 'POST',
@@ -201,7 +201,7 @@ export default function ImportersPage() {
           fields: fields
         })
       });
-      
+
       if (response.status === 401) {
         // Try to refresh the token
         const refreshed = await refreshToken();
@@ -210,7 +210,7 @@ export default function ImportersPage() {
           router.push('/login');
           return;
         }
-        
+
         // Retry with new token
         const retryResponse = await fetch(`${backendUrl}/api/v1/importers/`, {
           method: 'POST',
@@ -223,14 +223,14 @@ export default function ImportersPage() {
             fields: fields
           })
         });
-        
+
         if (!retryResponse.ok) {
           throw new Error(`Failed to create importer: ${retryResponse.statusText}`);
         }
       } else if (!response.ok) {
         throw new Error(`Failed to create importer: ${response.statusText}`);
       }
-      
+
       // Refresh the importers list
       fetchImporters();
       // Close the dialog
@@ -257,9 +257,9 @@ export default function ImportersPage() {
 
   const handleUpdateImporter = async (importerName: string, fields: ImporterField[]) => {
     if (!importerToEdit) return;
-    
+
     setSaveError(null);
-    
+
     try {
       const response = await fetch(`${backendUrl}/api/v1/importers/${importerToEdit.id}`, {
         method: 'PUT',
@@ -272,7 +272,7 @@ export default function ImportersPage() {
           fields: fields
         })
       });
-      
+
       if (response.status === 401) {
         // Try to refresh the token
         const refreshed = await refreshToken();
@@ -281,7 +281,7 @@ export default function ImportersPage() {
           router.push('/login');
           return;
         }
-        
+
         // Retry with new token
         const retryResponse = await fetch(`${backendUrl}/api/v1/importers/${importerToEdit.id}`, {
           method: 'PUT',
@@ -294,14 +294,14 @@ export default function ImportersPage() {
             fields: fields
           })
         });
-        
+
         if (!retryResponse.ok) {
           throw new Error(`Failed to update importer: ${retryResponse.statusText}`);
         }
       } else if (!response.ok) {
         throw new Error(`Failed to update importer: ${response.statusText}`);
       }
-      
+
       // Refresh the importers list
       fetchImporters();
       // Close the dialog
@@ -316,9 +316,9 @@ export default function ImportersPage() {
   // --- Delete Importer Logic ---
   const handleDeleteImporter = async () => {
     if (!importerToDelete) return;
-    
+
     setDeleteError(null);
-    
+
     try {
       const response = await fetch(`${backendUrl}/api/v1/importers/${importerToDelete}`, {
         method: 'DELETE',
@@ -326,7 +326,7 @@ export default function ImportersPage() {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       if (response.status === 401) {
         // Try to refresh the token
         const refreshed = await refreshToken();
@@ -335,7 +335,7 @@ export default function ImportersPage() {
           router.push('/login');
           return;
         }
-        
+
         // Retry with new token
         const retryResponse = await fetch(`${backendUrl}/api/v1/importers/${importerToDelete}`, {
           method: 'DELETE',
@@ -343,14 +343,14 @@ export default function ImportersPage() {
             'Authorization': `Bearer ${token}`
           }
         });
-        
+
         if (!retryResponse.ok) {
           throw new Error(`Failed to delete importer: ${retryResponse.statusText}`);
         }
       } else if (!response.ok) {
         throw new Error(`Failed to delete importer: ${response.statusText}`);
       }
-      
+
       // Refresh the importers list
       fetchImporters();
       // Reset state
@@ -362,8 +362,8 @@ export default function ImportersPage() {
   };
 
   // --- Importer Form Component (Internal) ---
-  const ImporterForm = ({ onSubmit, mode, initialName, initialFields }: { 
-    onSubmit: (name: string, fields: ImporterField[]) => void, 
+  const ImporterForm = ({ onSubmit, mode, initialName, initialFields }: {
+    onSubmit: (name: string, fields: ImporterField[]) => void,
     mode: 'create' | 'edit',
     initialName: string,
     initialFields: ImporterField[]
@@ -372,7 +372,7 @@ export default function ImportersPage() {
     const [fields, setFields] = useState<ImporterField[]>(initialFields);
     const [showAddFieldDialog, setShowAddFieldDialog] = useState(false);
     const [formError, setFormError] = useState<string | null>(null);
-    
+
     // New field state with default values
     const [newField, setNewField] = useState<ImporterField>({
       name: '',
@@ -386,21 +386,21 @@ export default function ImportersPage() {
       validation_error_message: '',
       validation_format: ''
     });
-    
+
     // Handle importer name change
     const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       setImporterName(e.target.value);
     };
-    
+
     // Handle field input changes
     const handleFieldInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const { name, value } = e.target;
       setNewField(prev => ({
         ...prev,
-        [name]: value
+        [name]: name === 'name' ? value.replace(/\s/g, '') : value
       }));
     };
-    
+
     // Handle field type change
     const handleTypeChange = (value: string) => {
       setNewField(prev => ({
@@ -410,56 +410,74 @@ export default function ImportersPage() {
         validation_format: ''
       }));
     };
-    
+
     // Add field handler
     const addFieldHandler = () => {
-      const success = handleAddField(newField, fields, setFields, setFormError);
-      if (success) {
-        // Reset the new field form
-        setNewField({
-          name: '',
-          display_name: '',
-          type: '',
-          required: false,
-          description: '',
-          must_match: false,
-          not_blank: false,
-          example: '',
-          validation_error_message: '',
-          validation_format: ''
-        });
-        // Close the dialog
-        setShowAddFieldDialog(false);
+      // Basic validation
+      if (!newField.name) {
+        setFormError('Column name is required');
+        return;
       }
+      if (!newField.type) {
+        setFormError('Column type is required');
+        return;
+      }
+      
+      // Check for duplicate field names
+      if (fields.some(f => f.name === newField.name)) {
+        setFormError(`Column name '${newField.name}' already exists`);
+        return;
+      }
+      
+      // Add the field to the list
+      setFields(prev => [...prev, { ...newField }]);
+      
+      // Reset the new field form
+      setNewField({
+        name: '',
+        display_name: '',
+        type: '',
+        required: false,
+        description: '',
+        must_match: false,
+        not_blank: false,
+        example: '',
+        validation_error_message: '',
+        validation_format: ''
+      });
+      
+      // Clear any errors and close the dialog
+      setFormError(null);
+      setShowAddFieldDialog(false);
     };
-    
+
     // Remove field handler
     const removeFieldHandler = (nameToRemove: string) => {
       handleRemoveField(nameToRemove, fields, setFields);
     };
-    
+
     // Handle form submission
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
-      
+
       // Validate form before submission
       if (!importerName) {
         setFormError('Importer name is required.');
         return;
       }
-      
+
       if (fields.length === 0) {
         setFormError('At least one field is required.');
         return;
       }
-      
+
       // Clear any previous errors
       setFormError(null);
-      
+
       // Call the parent's onSubmit with the form data
       onSubmit(importerName, fields);
     };
-    
+
     return (
       <form onSubmit={handleSubmit}>
         {/* Importer Name Input */}
@@ -473,71 +491,114 @@ export default function ImportersPage() {
             required
           />
         </div>
-        
+
         {/* Fields Section */}
         <div className="mb-4">
-          <Label className="font-semibold">Fields</Label>
-          {/* Display Added Fields */}
-          <div className="mt-2 space-y-2 max-h-40 overflow-y-auto border rounded p-2 bg-gray-50 mb-3">
-            {fields.length === 0 && <p className="text-sm text-gray-500">No fields added yet.</p>}
-            {fields.map((field) => (
-              <div key={field.name} className="flex justify-between items-center text-sm p-1 bg-white rounded border">
-                <span>
-                  {field.display_name || field.name} ({field.name}) - 
-                  <span className='italic text-gray-600'>{field.type}</span>
-                  {field.required && <span className='text-red-500 ml-1'>*</span>}
-                </span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => removeFieldHandler(field.name)}
-                  className='text-red-500 hover:text-red-700 h-6 px-1.5'
-                >
-                  Remove
-                </Button>
+          <Label className="font-semibold text-base">Columns</Label>
+          {/* Display existing fields */}
+          <div className="space-y-2 mt-3 mb-4">
+            {fields.length > 0 ? (
+              <div className="rounded-md border overflow-hidden">
+                <table className="w-full text-left">
+                  <thead className="bg-gray-50 text-gray-700">
+                    <tr>
+                      <th className="px-4 py-3 text-base font-medium">Column Name</th>
+                      <th className="px-4 py-3 text-base font-medium">Format</th>
+                      <th className="px-4 py-3 text-base font-medium">Required</th>
+                      <th className="px-4 py-3 text-base font-medium">Description</th>
+                      <th className="px-4 py-3 text-right text-base font-medium">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {fields.map((field) => (
+                      <tr key={field.name} className="bg-white">
+                        <td className="px-4 py-3 text-base font-medium">
+                          {field.display_name || field.name}
+                          <div className="text-sm text-gray-500">{field.name}</div>
+                        </td>
+                        <td className="px-4 py-3 text-base">{field.type}</td>
+                        <td className="px-4 py-3 text-base">
+                          {field.required ? (
+                            <span className="text-red-600 font-medium">Yes</span>
+                          ) : (
+                            <span className="text-gray-500">No</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-base">{field.description || '-'}</td>
+                        <td className="px-4 py-3 text-right">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            onClick={() => removeFieldHandler(field.name)}
+                            className="text-gray-500 hover:text-red-600"
+                          >
+                            Remove
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
-            ))}
+            ) : (
+              <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-md border border-dashed">
+                <p className="text-base">No columns defined yet</p>
+                <p className="text-sm mt-1">Add columns to define your importer structure</p>
+              </div>
+            )}
           </div>
-          
-          {/* Add New Field Dialog Button */}
+
           <Button
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => setShowAddFieldDialog(true)}
-            className='mt-2 w-full'
+            onClick={() => {
+              setShowAddFieldDialog(true);
+              setFormError(null);
+            }}
+            className="w-full text-base font-medium py-5"
           >
             Add Column
           </Button>
-          
+
           {/* Add Field Dialog */}
-          <Dialog open={showAddFieldDialog} onOpenChange={setShowAddFieldDialog}>
+          <Dialog 
+            open={showAddFieldDialog} 
+            onOpenChange={(open) => {
+              setShowAddFieldDialog(open);
+              if (!open) setFormError(null);
+            }}
+          >
             <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Add Column</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-xl">Add Column</DialogTitle>
+                <DialogDescription className="text-base">
                   Define a new column for your CSV imports.
                 </DialogDescription>
               </DialogHeader>
-              
+
               <div className="space-y-4 py-2">
+                {formError && (
+                  <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md">
+                    {formError}
+                  </div>
+                )}
+                
                 {/* Column Name */}
                 <div className="space-y-2">
-                  <Label htmlFor="fieldName">Name</Label>
+                  <Label htmlFor="fieldName" className="text-base font-medium">Column Name</Label>
                   <Input
                     id="fieldName"
-                    placeholder="E.g. full_name"
                     name="name"
                     value={newField.name}
-                    onChange={(e) => setNewField(prev => ({
-                      ...prev,
-                      name: e.target.value.replace(/\s/g, '')
-                    }))}
+                    onChange={handleFieldInputChange}
+                    placeholder="e.g. email, first_name"
+                    required
+                    className="text-base py-5"
                   />
                   <p className="text-sm text-gray-500">Input the column name exactly as in your CSV or Excel file.</p>
                 </div>
-                
+
                 {/* Display Name */}
                 <div className="space-y-2">
                   <Label htmlFor="fieldDisplayName">Display Name</Label>
@@ -550,7 +611,7 @@ export default function ImportersPage() {
                   />
                   <p className="text-sm text-gray-500">Optional display name. Users will see this name when using the Importer. If you leave this blank, we will use the column name.</p>
                 </div>
-                
+
                 {/* Description */}
                 <div className="space-y-2">
                   <Label htmlFor="fieldDescription">Description</Label>
@@ -563,7 +624,7 @@ export default function ImportersPage() {
                   />
                   <p className="text-sm text-gray-500">Users will see this description when using the Importer.</p>
                 </div>
-                
+
                 {/* Example */}
                 <div className="space-y-2">
                   <Label htmlFor="fieldExample">Example</Label>
@@ -576,12 +637,12 @@ export default function ImportersPage() {
                   />
                   <p className="text-sm text-gray-500">An example of content for this column.</p>
                 </div>
-                
+
                 {/* Validation Type */}
                 <div className="space-y-2">
                   <Label htmlFor="fieldType">Validation Format</Label>
-                  <Select 
-                    value={newField.type} 
+                  <Select
+                    value={newField.type}
                     onValueChange={handleTypeChange}
                   >
                     <SelectTrigger id="fieldType">
@@ -601,13 +662,13 @@ export default function ImportersPage() {
                     {COLUMN_TYPES.find(t => t.value === newField.type)?.description || 'Select a validation format'}
                   </p>
                 </div>
-                
+
                 {/* Validation Format - Conditional based on type */}
                 {newField.type === 'date' && (
                   <div className="space-y-2">
                     <Label htmlFor="validationFormat">Date Format</Label>
-                    <Select 
-                      value={newField.validation_format || ''} 
+                    <Select
+                      value={newField.validation_format || ''}
                       onValueChange={(value) => setNewField(prev => ({ ...prev, validation_format: value }))}
                     >
                       <SelectTrigger id="validationFormat">
@@ -622,7 +683,7 @@ export default function ImportersPage() {
                     </Select>
                   </div>
                 )}
-                
+
                 {newField.type === 'select' && (
                   <div className="space-y-2">
                     <Label htmlFor="validationFormat">Options (comma separated)</Label>
@@ -636,7 +697,7 @@ export default function ImportersPage() {
                     <p className="text-sm text-gray-500">Comma separated list of options</p>
                   </div>
                 )}
-                
+
                 {newField.type === 'custom_regex' && (
                   <div className="space-y-2">
                     <Label htmlFor="validationFormat">Regular Expression</Label>
@@ -650,7 +711,7 @@ export default function ImportersPage() {
                     <p className="text-sm text-gray-500">Enter a valid regular expression pattern</p>
                   </div>
                 )}
-                
+
                 {/* Custom Validation Error Message */}
                 <div className="space-y-2">
                   <Label htmlFor="validationErrorMessage">Custom Validation Error Message</Label>
@@ -663,7 +724,7 @@ export default function ImportersPage() {
                   />
                   <p className="text-sm text-gray-500">Enter a custom error to show users when their data doesn't meet the validation format. If you leave this blank, we will show a standard error message such as 'Not a valid number'.</p>
                 </div>
-                
+
                 {/* Toggle Options */}
                 <div className="space-y-4">
                   <div className="flex items-center space-x-2">
@@ -675,7 +736,7 @@ export default function ImportersPage() {
                     <Label htmlFor="must_match">Must be matched</Label>
                   </div>
                   <p className="text-sm text-gray-500 pl-7">Require that users must match this column to a column in their imported data.</p>
-                  
+
                   <div className="flex items-center space-x-2">
                     <Switch
                       id="not_blank"
@@ -686,13 +747,17 @@ export default function ImportersPage() {
                   </div>
                 </div>
               </div>
-              
+
               <DialogFooter>
-                <Button type="button" variant="secondary" onClick={() => setShowAddFieldDialog(false)}>Cancel</Button>
-                <Button 
-                  type="button" 
+                <Button type="button" variant="secondary" onClick={() => {
+                  setShowAddFieldDialog(false);
+                  setFormError(null);
+                }}>Cancel</Button>
+                <Button
+                  type="button"
                   onClick={addFieldHandler}
                   disabled={!newField.name || !newField.type}
+                  className="font-medium"
                 >
                   Add Column
                 </Button>
@@ -700,17 +765,18 @@ export default function ImportersPage() {
             </DialogContent>
           </Dialog>
         </div>
-        
+
         {/* Display form errors */}
         {formError && <p className="text-red-500 text-sm pb-2">Error: {formError}</p>}
-        
+
         <DialogFooter>
           <DialogClose asChild>
             <Button type="button" variant="outline">Cancel</Button>
           </DialogClose>
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={!importerName || fields.length === 0}
+            className="font-medium"
           >
             {mode === 'create' ? 'Save Importer' : 'Update Importer'}
           </Button>
@@ -719,32 +785,19 @@ export default function ImportersPage() {
     );
   };
 
-  // --- Main Render ---  
+  // --- Main Render ---
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Importers</h1>
-        
-        {/* Create Importer Dialog */}
-        <Dialog open={isCreateDialogOpen} onOpenChange={handleCreateDialogOpenChange}>
-          <DialogTrigger asChild>
-            <Button>Create Importer</Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Create New Importer</DialogTitle>
-              <DialogDescription>
-                Define a new importer for your CSV imports.
-              </DialogDescription>
-            </DialogHeader>
-            <ImporterForm 
-              onSubmit={handleSaveImporter} 
-              mode="create" 
-              initialName="" 
-              initialFields={[]} 
-            />
-          </DialogContent>
-        </Dialog>
+        <h1 className="text-3xl font-bold tracking-tight">Importers</h1>
+
+        {/* Create Importer Button */}
+        <Button 
+          className="font-medium" 
+          onClick={() => router.push('/dashboard/importers/new')}
+        >
+          Create Importer
+        </Button>
       </div>
 
       {/* Loading and Error States */}
@@ -756,67 +809,42 @@ export default function ImportersPage() {
         <AlertDialog>
           <AlertDialogTrigger className="hidden" />
           <Table>
-            <TableCaption>Manage your importers.</TableCaption>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Columns Count</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="text-base">Name</TableHead>
+                <TableHead className="text-right text-base">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {importers.map((importer) => (
                 <TableRow key={importer.id}>
-                  <TableCell className="font-medium">{importer.name}</TableCell>
-                  <TableCell>{importer.fields.length}</TableCell>
-                  <TableCell className="text-right space-x-2">
-                    {/* Settings Button - Navigates to Importer Detail Page */}
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
-                      onClick={() => router.push(`/dashboard/importers/${importer.id}`)}
+                  <TableCell className="py-4">
+                    <a
+                      href={`/dashboard/importers/${importer.id}`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        router.push(`/dashboard/importers/${importer.id}`);
+                      }}
+                      className="text-blue-600 hover:text-blue-800 hover:underline font-medium text-lg"
                     >
-                      Settings
-                    </Button>
-                    
-                    {/* Edit Button - Triggers Edit Dialog */}
-                    <Dialog 
-                      open={isEditDialogOpen && importerToEdit?.id === importer.id} 
-                      onOpenChange={handleEditDialogOpenChange}
-                      // Add a key to force a complete remount when dialog opens/closes
-                      key={`edit-dialog-${isEditDialogOpen}-${importer.id}`}
-                    >
-                      <DialogTrigger asChild>
-                        <Button variant="ghost" size="sm" onClick={() => handleEditClick(importer)}>Edit</Button>
-                      </DialogTrigger>
-                      <DialogContent className="sm:max-w-md">
-                        <DialogHeader>
-                          <DialogTitle>Edit Importer: {importerToEdit?.name}</DialogTitle>
-                          <DialogDescription>
-                            Modify the name and columns for this importer.
-                          </DialogDescription>
-                        </DialogHeader>
-                        {/* Use the ImporterForm for editing */}
-                        <ImporterForm 
-                          onSubmit={handleUpdateImporter} 
-                          mode="edit" 
-                          initialName={importerToEdit?.name || ''} 
-                          initialFields={importerToEdit?.fields || []} 
-                        />
-                      </DialogContent>
-                    </Dialog>
+                      {importer.name}
+                    </a>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end space-x-3">
 
                     {/* Delete Button Trigger */}
                     <AlertDialogTrigger asChild>
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        className='text-red-600 hover:text-red-800'
+                        className='border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 font-medium'
                         onClick={() => setImporterToDelete(importer.id)}
                       >
                         Delete
                       </Button>
                     </AlertDialogTrigger>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
