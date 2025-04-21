@@ -254,13 +254,25 @@ export default function Main(props: CSVImporterProps) {
                 };
                 console.log('DEBUG: Transformed data:', transformedData);
                 
+                // Transform column mapping to a format expected by the backend
+                // Convert from {index: TemplateColumnMapping} to a format the backend expects
+                const columnMappingForBackend: Record<string, string> = {};
+                Object.entries(columnMapping).forEach(([index, mapping]) => {
+                  if (mapping.include) {
+                    // Use the upload column index as the key and the selected template column key as the value
+                    columnMappingForBackend[index] = mapping.key;
+                  }
+                });
+                console.log('DEBUG: Column mapping for backend:', columnMappingForBackend);
+                
                 // Use the public endpoint which doesn't require authentication
                 // This endpoint accepts an importer ID directly
-                const apiEndpoint = `${backendUrl}/api/v1/frontend/public/process-csv-data-by-importer/${importerId}`;
+                const apiEndpoint = `${backendUrl}/api/v1/public/process-import/${importerId}`;
                 
                 // Prepare the request payload - schema_id is now in the URL path
                 const payload = {
-                    ...transformedData
+                    ...transformedData,
+                    columnMapping: columnMappingForBackend
                   };
                 console.log('DEBUG: Request payload:', payload);
                 
