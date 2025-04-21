@@ -68,3 +68,7 @@ public/worker-*.js.map
 # Logs
 logs
 *.log
+
+# Yalc local package management
+.yalc/
+yalc.lock

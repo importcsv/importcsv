@@ -16,7 +16,7 @@ load_dotenv()
 
 # Import models to ensure they're registered with the Base metadata
 from app.models.user import User
-from app.models.schema import Schema
+from app.models.importer import Importer
 from app.models.import_job import ImportJob
 from app.models.webhook import WebhookEvent
 from app.db.base import Base

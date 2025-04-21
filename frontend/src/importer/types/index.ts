@@ -4,7 +4,7 @@ export type Template = {
 
 export type TemplateColumn = {
   name: string;
-  key: string;
+  key?: string; // Allow key to be potentially undefined initially
   description?: string;
   required?: boolean;
   suggested_mappings?: string[];

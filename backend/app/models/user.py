@@ -22,7 +22,6 @@ class User(SQLAlchemyBaseUserTable[uuid.UUID], Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
     # Relationships
-    schemas = relationship("Schema", back_populates="user")
     importers = relationship("Importer", back_populates="user")
     import_jobs = relationship("ImportJob", back_populates="user")
     webhook_events = relationship("WebhookEvent", back_populates="user")

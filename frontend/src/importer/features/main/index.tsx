@@ -29,6 +29,8 @@ export default function Main(props: CSVImporterProps) {
     customStyles,
     showDownloadTemplateButton,
     skipHeaderRowSelection,
+    importerId,
+    backendUrl = process.env.BACKEND_URL || 'http://localhost:8000',
   } = props;
   const skipHeader = skipHeaderRowSelection ?? false;
 
@@ -233,7 +235,90 @@ export default function Main(props: CSVImporterProps) {
                 rows: mappedRows,
               };
 
-              onComplete && onComplete(onCompleteData);
+              console.log('>>> Values just before IF check:', { 
+                importerIdValue: importerId, 
+                backendUrlValue: backendUrl,
+                importerIdType: typeof importerId,
+                backendUrlType: typeof backendUrl,
+                conditionResult: !!(importerId && backendUrl) // Explicitly log the condition result
+              });
+
+              // If importerId and backendUrl are provided, send data directly to the backend
+              if (importerId && backendUrl) {
+                console.log('DEBUG: Direct API integration triggered with:', { importerId, backendUrl });
+                
+                // Transform data for the backend format
+                const transformedData = {
+                  validData: mappedRows.map(row => row.values),
+                  invalidData: [] // We don't track invalid rows in this version
+                };
+                console.log('DEBUG: Transformed data:', transformedData);
+                
+                // Use the public endpoint which doesn't require authentication
+                // This endpoint accepts an importer ID directly
+                const apiEndpoint = `${backendUrl}/api/v1/frontend/public/process-csv-data-by-importer/${importerId}`;
+                
+                // Prepare the request payload - schema_id is now in the URL path
+                const payload = {
+                    ...transformedData
+                  };
+                console.log('DEBUG: Request payload:', payload);
+                
+                // Send the data to the backend
+                console.log('DEBUG: Sending fetch request to:', apiEndpoint);
+                fetch(apiEndpoint, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify(payload)
+                })
+                .then(response => {
+                  console.log('DEBUG: Received response:', { 
+                    status: response.status, 
+                    statusText: response.statusText,
+                    ok: response.ok,
+                    // Get headers as an object instead of using entries()
+                    headers: response.headers
+                  });
+                  if (!response.ok) {
+                    throw new Error(`Failed to process import: ${response.statusText}`);
+                  }
+                  return response.json();
+                })
+                .then(result => {
+                  console.log('DEBUG: Import processed successfully:', result);
+                  // Still call onComplete with the original data for backward compatibility
+                  console.log('DEBUG: Calling onComplete with backendResponse');
+                  onComplete && onComplete({
+                    ...onCompleteData,
+                    backendResponse: result
+                  });
+                })
+                .catch(error => {
+                  console.error('DEBUG: Error processing import:', error);
+                  console.log('DEBUG: Error details:', { 
+                    message: error.message, 
+                    stack: error.stack,
+                    name: error.name
+                  });
+                  // Still call onComplete with the error
+                  console.log('DEBUG: Calling onComplete with error');
+                  onComplete && onComplete({
+                    ...onCompleteData,
+                    error: error.message
+                  });
+                });
+              } else {
+                // Original behavior if no direct API integration is configured
+                console.log('DEBUG: No direct API integration configured. Missing:', { 
+                  importerId: importerId ? 'provided' : 'missing', 
+                  backendUrl: backendUrl ? 'provided' : 'missing',
+                  importerIdValue: importerId,
+                  backendUrlValue: backendUrl
+                });
+                onComplete && onComplete(onCompleteData);
+              }
 
               setIsSubmitting(false);
               goNext();

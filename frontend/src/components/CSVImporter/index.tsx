@@ -10,6 +10,7 @@ import "../../importer/style/index.scss";
 import "./style/csv-importer.css";
 
 const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: any) => {
+  // Destructure all known props from CSVImporterProps
   const {
     isModal = true,
     modalIsOpen = true,
@@ -25,7 +26,10 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
     skipHeaderRowSelection,
     language,
     customTranslations,
-    ...props
+    importerId,
+    backendUrl,
+    // Any remaining props will be valid DOM props
+    ...domProps
   } = importerProps;
   const ref = forwardRef ?? useRef(null);
 
@@ -81,18 +85,38 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
     modalOnCloseTriggered();
   });
 
+  // Since we've already destructured all known props above,
+  // domProps should only contain valid DOM attributes
   const elementProps = {
     ref,
     ...(isModal ? { onClick: backdropClick } : {}),
     className: domElementClass,
     "data-theme": darkMode ? "dark" : "light",
     style: { colorScheme: darkMode ? "dark" : "light" },
-    ...props,
+    ...domProps, // Only contains standard DOM props now
   };
 
+  // Create a new component that properly passes only the props that Importer needs
   const ImporterComponent = () => (
     <Providers>
-      <Importer {...importerProps} />
+      <Importer
+        isModal={isModal}
+        modalIsOpen={modalIsOpen}
+        modalOnCloseTriggered={modalOnCloseTriggered}
+        modalCloseOnOutsideClick={modalCloseOnOutsideClick}
+        template={template}
+        darkMode={darkMode}
+        primaryColor={primaryColor}
+        className={className}
+        onComplete={onComplete}
+        customStyles={customStyles}
+        showDownloadTemplateButton={showDownloadTemplateButton}
+        skipHeaderRowSelection={skipHeaderRowSelection}
+        language={language}
+        customTranslations={customTranslations}
+        importerId={importerId}
+        backendUrl={backendUrl}
+      />
     </Providers>
   );
 

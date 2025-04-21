@@ -1,183 +1,43 @@
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List, Dict, Any, Optional
 import json
 import pandas as pd
 from datetime import datetime
+import uuid
+import logging
 
 from app.db.base import get_db, SessionLocal
 from app.services.auth import get_current_user
 from app.models.user import User
 from app.models.import_job import ImportJob, ImportStatus
-from app.models.schema import Schema
+from app.models.importer import Importer
 from app.services.webhook import webhook_service, WebhookEventType
 from app.services.file_processor import file_processor
 
-router = APIRouter()
+logger = logging.getLogger(__name__)
 
-@router.post("/process-csv-data", response_model=Dict[str, Any])
-async def process_csv_data(
-    data: Dict[str, Any],
-    background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    # Log the raw request data for debugging
-    print(f"Received raw request data: {data}")
-    print(f"Current user: {current_user.email} (ID: {current_user.id})")
+# Function for background processing of import data
+async def process_import_data(import_job_id, valid_data, invalid_data, db):
     """
-    Process data from the frontend CSV importer
+    Process the import data in the background
     """
-    schema_id = data.get("schema_id")
-    if not schema_id:
-        raise HTTPException(status_code=400, detail="Schema ID is required")
-    
-    # Verify schema exists and belongs to user
-    schema = db.query(Schema).filter(Schema.id == schema_id, Schema.user_id == current_user.id).first()
-    if not schema:
-        raise HTTPException(status_code=404, detail="Schema not found")
-    
-    # Extract data from the frontend
-    valid_data = data.get("validData", [])
-    invalid_data = data.get("invalidData", [])
-    total_rows = len(valid_data) + len(invalid_data)
-    
-    # Log the received data for debugging
-    print(f"Received data: schema_id={schema_id}, valid_data={len(valid_data)}, invalid_data={len(invalid_data)}")
-    
-    # Allow empty data for testing purposes
-    if not valid_data and not invalid_data:
-        print("Warning: No data provided, but continuing for testing purposes")
-        # For testing, we'll create a job with 0 rows instead of raising an error
-        # In production, you might want to uncomment the line below
-        # raise HTTPException(status_code=400, detail="No data provided")
-    
-    # Create import job
-    import_job = ImportJob(
-        user_id=current_user.id,
-        schema_id=schema_id,
-        file_name="frontend_import.csv",
-        file_path="",  # No file path for frontend-processed data
-        file_type="csv",
-        status=ImportStatus.PROCESSING,
-        row_count=total_rows,
-        processed_rows=0,
-        error_count=len(invalid_data)
-    )
-    db.add(import_job)
-    db.commit()
-    db.refresh(import_job)
-    
-    # Process data in background
-    background_tasks.add_task(
-        process_import_data,
-        import_job.id,
-        valid_data,
-        invalid_data,
-        db
-    )
-    
-    # Create webhook event
-    await webhook_service.create_event(
-        db,
-        current_user.id,
-        import_job.id,
-        WebhookEventType.IMPORT_STARTED,
-        {
-            "event_type": WebhookEventType.IMPORT_STARTED,
-            "import_job_id": import_job.id,
-            "schema_id": schema_id,
-            "row_count": total_rows,
-            "timestamp": datetime.now().isoformat()
-        }
-    )
-    
-    return {
-        "job_id": import_job.id,
-        "status": import_job.status,
-        "total_rows": total_rows,
-        "valid_rows": len(valid_data),
-        "invalid_rows": len(invalid_data)
-    }
-
-@router.get("/schema-template/{schema_id}", response_model=Dict[str, Any])
-async def get_schema_template(
-    schema_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-):
-    """
-    Get schema template in the format expected by the frontend CSV importer
-    """
-    schema = db.query(Schema).filter(Schema.id == schema_id, Schema.user_id == current_user.id).first()
-    if not schema:
-        raise HTTPException(status_code=404, detail="Schema not found")
-    
-    # Convert schema fields to the format expected by the frontend
-    columns = []
-    for field in schema.fields:
-        column = {
-            "name": field.get("display_name") or field.get("name"),
-            "key": field.get("name"),
-            "required": field.get("required", False),
-            "description": field.get("description", "")
-        }
-        
-        # Add data type if available
-        if field.get("type"):
-            column["data_type"] = map_data_type(field.get("type"))
-            
-        # Add suggested mappings if available
-        if field.get("suggested_mappings"):
-            column["suggested_mappings"] = field.get("suggested_mappings")
-            
-        columns.append(column)
-    
-    return {
-        "id": schema.id,
-        "name": schema.name,
-        "description": schema.description,
-        "template": {
-            "columns": columns
-        }
-    }
-
-def map_data_type(backend_type: str) -> str:
-    """Map backend data types to frontend data types"""
-    mapping = {
-        "string": "string",
-        "number": "number",
-        "integer": "number",
-        "float": "number",
-        "boolean": "boolean",
-        "date": "date",
-        "datetime": "date"
-    }
-    return mapping.get(backend_type.lower(), "string")
-
-async def process_import_data(
-    import_job_id: int,
-    valid_data: List[Dict[str, Any]],
-    invalid_data: List[Dict[str, Any]],
-    db: Session
-):
-    """Process import data in the background"""
-    # Get a new DB session for the background task
+    # Get a new database session
     db_session = SessionLocal()
+    
     try:
         # Get the import job
         import_job = db_session.query(ImportJob).filter(ImportJob.id == import_job_id).first()
         if not import_job:
-            print(f"Import job {import_job_id} not found")
+            print(f"Error: Import job {import_job_id} not found")
             return
         
-        # Get the schema
-        schema = db_session.query(Schema).filter(Schema.id == import_job.schema_id).first()
-        if not schema:
-            print(f"Schema {import_job.schema_id} not found")
+        # Get the importer associated with the job
+        importer = import_job.importer
+        if not importer:
+            logger.error(f"Importer not found for import job {import_job_id}")
             import_job.status = ImportStatus.FAILED
-            import_job.errors = {"errors": ["Schema not found"]}
-            db_session.add(import_job)
+            import_job.error_message = "Associated importer configuration not found."
             db_session.commit()
             return
         
@@ -198,13 +58,13 @@ async def process_import_data(
                 # Create webhook event for completion
                 webhook_service.create_event(
                     db_session,
-                    import_job.user_id,
+                    importer.user_id,
                     import_job.id,
                     WebhookEventType.IMPORT_FINISHED,
                     {
                         "event_type": WebhookEventType.IMPORT_FINISHED,
                         "import_job_id": import_job.id,
-                        "schema_id": import_job.schema_id,
+                        "importer_id": import_job.importer_id,
                         "processed_rows": import_job.processed_rows,
                         "error_count": import_job.error_count,
                         "timestamp": datetime.now().isoformat()
@@ -218,13 +78,13 @@ async def process_import_data(
                 # Create webhook event for error
                 webhook_service.create_event(
                     db_session,
-                    import_job.user_id,
+                    importer.user_id,
                     import_job.id,
                     WebhookEventType.IMPORT_VALIDATION_ERROR,
                     {
                         "event_type": WebhookEventType.IMPORT_VALIDATION_ERROR,
                         "import_job_id": import_job.id,
-                        "schema_id": import_job.schema_id,
+                        "importer_id": import_job.importer_id,
                         "error": str(e),
                         "timestamp": datetime.now().isoformat()
                     }
@@ -237,3 +97,75 @@ async def process_import_data(
         db_session.commit()
     finally:
         db_session.close()
+
+router = APIRouter()
+
+# Public endpoints that don't require authentication
+
+@router.post("/public/process-csv-data-by-importer/{importer_id}", response_model=Dict[str, Any])
+async def process_csv_data_by_importer(
+    importer_id: str,
+    data: Dict[str, Any],
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db)
+):
+    """
+    Public endpoint to process data from the frontend CSV importer using importer_id
+    Authentication is done via the importer_id in the URL
+    """
+    logger.info(f"Received raw request data on public importer endpoint: {data}")
+    
+    # Verify importer exists and get associated user
+    importer = db.query(Importer).options(joinedload(Importer.user)).filter(Importer.id == importer_id).first()
+    if not importer:
+        logger.error(f"Importer not found: {importer_id}")
+        raise HTTPException(status_code=404, detail="Importer not found")
+    if not importer.user:
+        logger.error(f"User not found for importer: {importer_id}")
+        raise HTTPException(status_code=500, detail="Internal server error: Importer owner missing")
+    
+    user_id = importer.user.id
+
+    valid_data = data.get("validData", [])
+    invalid_data = data.get("invalidData", [])
+
+    logger.info(f"Received data on public importer endpoint: importer_id={importer_id}, valid_data={len(valid_data)}, invalid_data={len(invalid_data)}")
+
+    try:
+        # Logging for Debugging
+        logger.info(f"Attempting to create ImportJob for importer {importer_id}")
+        logger.info(f"ImportJob class attributes: {dir(ImportJob)}") # Simplified logging
+        
+        # Create import job (schema_id is no longer needed/valid)
+        import_job = ImportJob(
+            user_id=user_id,
+            importer_id=importer_id,
+            file_name="frontend_import.csv",
+            file_path="", # No file path for frontend-processed data
+            file_type="csv",
+            status=ImportStatus.PROCESSING,
+            row_count=len(valid_data),
+            processed_data={"validData": valid_data, "invalidData": invalid_data}
+        )
+        
+        db.add(import_job)
+        db.commit()
+        db.refresh(import_job)
+        
+        logger.info(f"Created ImportJob {import_job.id} for importer {importer_id}")
+        
+        # Start background task
+        background_tasks.add_task(process_import_data, import_job.id, valid_data, invalid_data, SessionLocal())
+        
+        return {"message": "Data received and processing started.", "import_job_id": import_job.id}
+    
+    except IntegrityError as e:
+        db.rollback()
+        logger.error(f"Database integrity error in public process_csv_data_by_importer: {e}", exc_info=True)
+        # This might now indicate issues with importer_id or user_id constraints
+        raise HTTPException(status_code=500, detail=f"Database constraint error: {e.orig}")
+    except Exception as e:
+        db.rollback()
+        logger.error(f"Error in public process_csv_data_by_importer: {e}", exc_info=True)
+        # General error, removed specific schema_id check as it's no longer passed
+        raise HTTPException(status_code=500, detail=f"Internal server error: {e}")

@@ -1,5 +1,4 @@
 import { Resource } from "i18next";
-import { HTMLAttributes } from "react";
 
 type ModalParams = {
   isModal?: boolean;
@@ -8,11 +7,11 @@ type ModalParams = {
   modalCloseOnOutsideClick?: boolean;
 };
 
-export type CSVImporterProps = (HTMLAttributes<HTMLDialogElement> & HTMLAttributes<HTMLDivElement>) & {
+export type CSVImporterProps = {
   template?: Record<string, unknown> | string;
   darkMode?: boolean;
   primaryColor?: string;
-  className?: string;
+  className?: string; // Keep className as it's often used for styling wrappers
   onComplete?: (data: any) => void;
   waitOnComplete?: boolean;
   customStyles?: Record<string, string> | string;
@@ -20,4 +19,8 @@ export type CSVImporterProps = (HTMLAttributes<HTMLDialogElement> & HTMLAttribut
   skipHeaderRowSelection?: boolean;
   language?: string;
   customTranslations?: Resource;
+  importerId?: string; // ID of the importer from the admin/backend
+  backendUrl?: string; // URL of the backend API
+  // You might want to explicitly allow specific data-* attributes if needed
+  // 'data-testid'?: string; 
 } & ModalParams;
