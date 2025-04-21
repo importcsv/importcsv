@@ -1,9 +1,11 @@
+import os
 import uuid
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List, Dict, Any, Optional
 import json
 from datetime import datetime
+import logging
 
 from app.db.base import get_db
 from app.auth.auth import current_active_user
@@ -12,9 +14,11 @@ from app.models.import_job import ImportJob, ImportStatus
 from app.models.importer import Importer
 from app.schemas.import_job import ImportJobCreate, ImportJob as ImportJobSchema, ColumnMappingRequest
 from app.services.file_processor import file_processor
-from app.services.webhook import webhook_service, WebhookEventType
-from app.services.import_processor import import_processor
+from app.services.webhook import WebhookService, WebhookEventType
+from app.services.import_processor import run_background_import
 from app.db.base import SessionLocal
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -86,11 +90,14 @@ async def create_import_job(
     # Create import job
     import_job = ImportJob(
         user_id=current_user.id,
-        importer_id=importer_id,
+        importer_id=importer_uuid,
         file_name=file_name,
         file_path=file_path,
         file_type=file_type,
         status=ImportStatus.PENDING,
+        row_count=0,
+        processed_rows=0,
+        error_count=0,
         column_mapping=column_mapping_dict
     )
     db.add(import_job)
@@ -99,6 +106,7 @@ async def create_import_job(
     
     # Create webhook event with serializable payload
     # Convert UUIDs to strings for JSON serialization
+    webhook_service = WebhookService()
     await webhook_service.create_event(
         db,
         current_user.id,
@@ -113,16 +121,22 @@ async def create_import_job(
             "timestamp": import_job.created_at.isoformat()
         }
     )
-    
-    # Process the import job in the background
+
+    # Schedule the background task using the top-level runner function
     background_tasks.add_task(
-        import_processor.process_import_job,
+        run_background_import, 
         import_job_id=str(import_job.id),
-        importer_id=str(importer_uuid),
         file_path=file_path,
         column_mapping=column_mapping_dict
     )
-    
+    logger.info(f"Background task scheduled for job {import_job.id} with file {file_path}")
+
+    # Logging before return
+    logger.warning(f"Returning ImportJob object immediately after scheduling background task: {import_job.__dict__}")
+    logger.debug(f"  id type: {type(import_job.id)}")
+    logger.debug(f"  user_id type: {type(import_job.user_id)}")
+    logger.debug(f"  importer_id type: {type(import_job.importer_id)}")
+
     return import_job
 
 @router.get("/{import_job_id}", response_model=ImportJobSchema)

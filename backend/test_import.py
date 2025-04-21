@@ -27,15 +27,15 @@ def get_access_token(email, password):
         print(response.text)
         return None
 
-def get_schema_id(token):
-    """Get the first schema ID"""
+def get_importer_id(token):
+    """Get the first importer ID"""
     headers = {"Authorization": f"Bearer {token}"}
-    response = requests.get(f"{BASE_URL}/api/v1/schemas/", headers=headers)
+    response = requests.get(f"{BASE_URL}/api/v1/importers/", headers=headers)
 
     if response.status_code == 200:
-        schemas = response.json()
-        if schemas:
-            return schemas[0]["id"]
+        importers = response.json()
+        if importers:
+            return importers[0]["id"]
     return None
 
 def create_test_csv():
@@ -81,7 +81,7 @@ def test_file_upload(token, file_path):
         print(response.text)
         return None
 
-def test_create_import_job(token, schema_id, upload_data):
+def test_create_import_job(token, importer_id, upload_data):
     """Test creating an import job"""
     headers = {
         "Authorization": f"Bearer {token}",
@@ -91,12 +91,12 @@ def test_create_import_job(token, schema_id, upload_data):
     column_mapping = {}
     for col in upload_data['columns']:
         # Simple mapping strategy - lowercase and replace spaces with underscores
-        schema_field = col.lower().replace(' ', '_')
-        column_mapping[col] = schema_field
+        importer_field = col.lower().replace(' ', '_')
+        column_mapping[col] = importer_field
 
     # Prepare form data
     form_data = {
-        "schema_id": schema_id,
+        "importer_id": importer_id,
         "file_path": upload_data['file_path'],
         "file_name": upload_data['file_name'],
         "file_type": "csv",
@@ -234,40 +234,58 @@ def get_import_job_details(token, import_job_id):
 
     return job_details
 
-def create_schema(token, schema_name, columns):
-    """Create a new schema or find an existing one by name."""
-    headers = {"Authorization": f"Bearer {token}"}
-    schema_data = {
-        "name": schema_name,
-        "description": f"Test schema for {schema_name}",
-        "fields": [
-            {"name": col.lower().replace(' ', '_'), "type": "string"} for col in columns
-        ]
+def create_importer(token, importer_name, columns):
+    """Create a new importer or find an existing one by name."""
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json"
     }
-    # Attempt to create the schema
+    
+    # Create importer fields from columns
+    fields = []
+    for col in columns:
+        field_name = col.lower().replace(' ', '_')
+        field = {
+            "name": field_name,
+            "display_name": col,
+            "type": "string",  # Default to string
+            "required": False,
+            "description": f"Field for {col}"
+        }
+        # Special case for age - make it a number
+        if "age" in field_name.lower():
+            field["type"] = "number"
+        fields.append(field)
+    
+    importer_data = {
+        "name": importer_name,
+        "description": f"Importer for {importer_name}",
+        "fields": fields
+    }
+    # Attempt to create the importer
     response = requests.post(
-        f"{BASE_URL}/api/v1/schemas/",
+        f"{BASE_URL}/api/v1/importers/",
         headers=headers,
-        json=schema_data
+        json=importer_data
     )
     if response.status_code == 200:
-        new_schema = response.json()
-        print(f"Successfully created schema: {new_schema['name']} (ID: {new_schema['id']})")
-        return new_schema['id']
+        new_importer = response.json()
+        print(f"Successfully created importer: {new_importer['name']} (ID: {new_importer['id']})")
+        return new_importer['id']
     elif response.status_code == 400 and "already exists" in response.text:
         # If creation failed because it already exists, find it
-        print(f"Schema '{schema_name}' already exists. Attempting to find its ID...")
-        schemas_response = requests.get(f"{BASE_URL}/api/v1/schemas/", headers=headers)
-        if schemas_response.status_code == 200:
-            schemas = schemas_response.json()
-            for schema in schemas:
-                if schema['name'] == schema_name:
-                    print(f"Found existing schema: {schema['name']} (ID: {schema['id']})")
-                    return schema['id']
-        print(f"Could not find existing schema named '{schema_name}' after creation attempt failed.")
+        print(f"Importer '{importer_name}' already exists. Attempting to find its ID...")
+        importers_response = requests.get(f"{BASE_URL}/api/v1/importers/", headers=headers)
+        if importers_response.status_code == 200:
+            importers = importers_response.json()
+            for importer in importers:
+                if importer['name'] == importer_name:
+                    print(f"Found existing importer: {importer['name']} (ID: {importer['id']})")
+                    return importer['id']
+        print(f"Could not find existing importer named '{importer_name}' after creation attempt failed.")
         return None
     else:
-        print(f"Failed to create schema. Status code: {response.status_code}")
+        print(f"Failed to create importer. Status code: {response.status_code}")
         print(response.text)
         return None
 
@@ -279,18 +297,18 @@ if __name__ == "__main__":
         print("Authentication failed. Exiting.")
         exit(1)
 
-    # Define schema details based on test CSV
-    schema_name = "Test Customer Schema"
+    # Define importer details based on test CSV
+    importer_name = "Test Customer Importer"
     test_columns = ["First Name", "Last Name", "Email", "Age"]
 
-    # Create or get schema ID
-    schema_id = create_schema(token, schema_name, test_columns)
+    # Create or get importer ID
+    importer_id = create_importer(token, importer_name, test_columns)
 
-    if not schema_id:
-        print("Failed to create or find a suitable schema. Exiting.")
+    if not importer_id:
+        print("Failed to create or find a suitable importer. Exiting.")
         exit(1)
 
-    print(f"Using schema ID: {schema_id}")
+    print(f"Using importer ID: {importer_id}")
 
     # Create test CSV file
     csv_file = create_test_csv()
@@ -298,9 +316,9 @@ if __name__ == "__main__":
     # Test file upload
     upload_data = test_file_upload(token, csv_file)
 
-    if upload_data and schema_id:
+    if upload_data and importer_id:
         # Test creating import job
-        import_job = test_create_import_job(token, schema_id, upload_data)
+        import_job = test_create_import_job(token, importer_id, upload_data)
 
         if import_job:
             # Test getting import job status

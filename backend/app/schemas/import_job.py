@@ -1,5 +1,5 @@
 import uuid
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 from app.models.import_job import ImportStatus
@@ -41,15 +41,29 @@ class ImportJobInDBBase(ImportJobBase):
     class Config:
         from_attributes = True
 
-# ImportJob to return via API
+# ImportJob to return via API (Uses computed_field with different names and aliases)
 class ImportJob(ImportJobInDBBase):
-    # Convert UUID fields to strings for API responses
-    id: str
-    user_id: str
-    importer_id: str
     
+    @computed_field(alias='id') # Keep 'id' in JSON output using alias
+    @property
+    def id_str(self) -> str: # Change property name
+        return str(self.id) 
+
+    @computed_field(alias='user_id') # Keep 'user_id' in JSON output
+    @property
+    def user_id_str(self) -> str: # Change property name
+        return str(self.user_id)
+
+    @computed_field(alias='importer_id') # Keep 'importer_id' in JSON output
+    @property
+    def importer_id_str(self) -> str: # Change property name
+        return str(self.importer_id)
+
     class Config:
         from_attributes = True
+        # Exclude the original UUID fields from the response if needed, 
+        # though aliasing might handle this implicitly. Let's try without exclude first.
+        # exclude = {'id', 'user_id', 'importer_id'} 
 
 # Column mapping model
 class ColumnMapping(BaseModel):

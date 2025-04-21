@@ -4,16 +4,8 @@ import subprocess
 from typing import AsyncGenerator
 
 from fastapi_users.password import PasswordHelper
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import async_session_maker
 
-from app.auth.auth import get_user_manager
-from app.core.security import get_password_hash
-from app.db.users import get_async_session, async_session_maker
-from app.models.user import User
-from app.models.schema import Schema
-from app.models.import_job import ImportJob
-from app.models.webhook import WebhookEvent
 from app.db.base import Base
 
 # Use Alembic to apply migrations
@@ -42,11 +34,11 @@ async def create_superuser(email: str, password: str, full_name: str = None):
         query = select(User).where(User.email == email)
         result = await session.execute(query)
         user = result.scalar_one_or_none()
-        
+
         if not user:
             password_helper = PasswordHelper()
             hashed_password = password_helper.hash(password)
-            
+
             # Create new user
             user = User(
                 id=uuid.uuid4(),
@@ -63,16 +55,16 @@ async def create_superuser(email: str, password: str, full_name: str = None):
             print(f"Superuser {email} created successfully.")
         else:
             print(f"Superuser {email} already exists.")
-        
+
         return user
 
 # Run this to initialize the database
 async def init_db_and_create_superuser():
     from app.core.config import settings
-    
+
     # Apply migrations using Alembic
     apply_migrations()
-    
+
     # Create superuser if credentials are provided
     if settings.ADMIN_EMAIL and settings.ADMIN_PASSWORD:
         await create_superuser(

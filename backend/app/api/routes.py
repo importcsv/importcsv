@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1 import auth, users, importers, imports, webhooks, frontend_integration, public
+from app.api.v1 import auth, users, importers, imports, webhooks, public
 
 api_router = APIRouter()
 
@@ -10,5 +10,4 @@ api_router.include_router(users.router, prefix="/v1/users", tags=["Users"])
 api_router.include_router(importers.router, prefix="/v1/importers", tags=["Importers"])
 api_router.include_router(imports.router, prefix="/v1/imports", tags=["Imports"])
 api_router.include_router(webhooks.router, prefix="/v1/webhooks", tags=["Webhooks"])
-api_router.include_router(frontend_integration.router, prefix="/v1/frontend", tags=["Frontend Integration"])
 api_router.include_router(public.router, prefix="/v1/public", tags=["Public API"])

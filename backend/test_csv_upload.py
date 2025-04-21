@@ -72,40 +72,40 @@ def upload_file(token, file_path):
         print(response.text)
         return None
 
-def get_schemas(token):
-    """Get available schemas"""
+def get_importers(token):
+    """Get available importers"""
     headers = {"Authorization": f"Bearer {token}"}
     
     response = requests.get(
-        f"{BASE_URL}/api/v1/schemas/",
+        f"{BASE_URL}/api/v1/importers/",
         headers=headers
     )
     
     if response.status_code == 200:
-        schemas = response.json()
-        if schemas:
-            print(f"Found {len(schemas)} schemas")
-            for i, schema in enumerate(schemas):
-                print(f"  Schema {i+1}: {schema.get('name')} (ID: {schema.get('id')})")
-            return schemas
+        importers = response.json()
+        if importers:
+            print(f"Found {len(importers)} importers")
+            for i, importer in enumerate(importers):
+                print(f"  Importer {i+1}: {importer.get('name')} (ID: {importer.get('id')})")
+            return importers
         else:
-            print("No schemas found. Creating a test schema...")
-            return create_test_schema(token)
+            print("No importers found. Creating a test importer...")
+            return create_test_importer(token)
     else:
-        print(f"Failed to get schemas. Status code: {response.status_code}")
+        print(f"Failed to get importers. Status code: {response.status_code}")
         print(response.text)
         return None
 
-def create_test_schema(token):
-    """Create a test schema if none exists"""
+def create_test_importer(token):
+    """Create a test importer if none exists"""
     headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json"
     }
     
-    schema_data = {
-        "name": f"Test Customer Schema {uuid.uuid4().hex[:6]}",
-        "description": "Schema for customer data import",
+    importer_data = {
+        "name": f"Test Customer Importer {uuid.uuid4().hex[:6]}",
+        "description": "Importer for customer data import",
         "fields": [
             {
                 "name": "first_name",
@@ -139,41 +139,40 @@ def create_test_schema(token):
     }
     
     response = requests.post(
-        f"{BASE_URL}/api/v1/schemas/",
+        f"{BASE_URL}/api/v1/importers/",
         headers=headers,
-        json=schema_data
+        json=importer_data
     )
     
     if response.status_code in (200, 201):
-        schema = response.json()
-        print(f"Created test schema: {schema.get('name')} (ID: {schema.get('id')})")
-        return [schema]
+        importer = response.json()
+        print("Test Importer Created Successfully!")
+        print(f"Importer ID: {importer.get('id')}")
+        print(f"Importer Name: {importer.get('name')}")
+        return [importer]  # Return as a list to match get_importers format
     else:
-        print(f"Failed to create schema. Status code: {response.status_code}")
+        print("Failed to create test importer")
         print(response.text)
         return None
 
-def create_import_job(token, schema_id, upload_data):
-    """Create an import job using the uploaded file and schema"""
+def create_import_job(token, importer_id, upload_data):
+    """Create an import job using the uploaded file and importer"""
     headers = {
-        "Authorization": f"Bearer {token}"
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/x-www-form-urlencoded"
     }
     
-    # Create a simple column mapping
-    file_columns = upload_data.get('columns', [])
-    schema_fields = ["first_name", "last_name", "email", "age"]
-    
-    # Map columns to schema fields based on matching names
+    # Create column mapping based on the importer fields
     column_mapping = {}
-    for i, col in enumerate(file_columns):
-        if i < len(schema_fields):
-            column_mapping[col] = schema_fields[i]
+    for column in upload_data.get("columns", []):
+        # Simple mapping strategy - just map to the same field name
+        # In a real application, you would want to map this more intelligently
+        column_mapping[column] = column
     
-    # Prepare form data
     form_data = {
-        "schema_id": str(schema_id),
-        "file_path": upload_data.get('file_path'),
-        "file_name": upload_data.get('file_name'),
+        "importer_id": importer_id,
+        "file_path": upload_data.get("file_path"),
+        "file_name": upload_data.get("file_name"),
         "file_type": "csv",
         "column_mapping": json.dumps(column_mapping)
     }
@@ -263,19 +262,19 @@ def run_csv_upload_test():
         print("File upload failed. Cannot continue test.")
         return
     
-    # Step 4: Get or create schema
-    print("\n=== Step 4: Get or Create Schema ===")
-    schemas = get_schemas(token)
-    if not schemas:
-        print("Failed to get or create schema. Cannot continue test.")
+    # Step 4: Get or create importer
+    print("\n=== Step 4: Get or Create Importer ===")
+    importers = get_importers(token)
+    if not importers:
+        print("Failed to get or create importer. Cannot continue test.")
         return
     
-    # Use the first schema
-    schema_id = schemas[0].get('id')
+    # Use the first importer
+    importer_id = importers[0].get('id')
     
     # Step 5: Create import job
     print("\n=== Step 5: Create Import Job ===")
-    import_job = create_import_job(token, schema_id, upload_data)
+    import_job = create_import_job(token, importer_id, upload_data)
     if not import_job:
         print("Failed to create import job. Cannot continue test.")
         return
