@@ -17,6 +17,7 @@ import Complete from "../complete";
 import MapColumns from "../map-columns";
 import RowSelection from "../row-selection";
 import Uploader from "../uploader";
+import SimpleValidation from '../validation/SimpleValidation';
 import { PiX } from "react-icons/pi";
 import { useTranslation } from "react-i18next";
 
@@ -154,6 +155,132 @@ export default function Main(props: CSVImporterProps) {
     }
   };
 
+  const handleValidationComplete = (validatedData: FileData) => {
+    // Update data with validated values
+    setData(validatedData);
+    setIsSubmitting(true);
+
+    // TODO (client-sdk): Move this type, add other data attributes (i.e. column definitions), and move the data processing to a function
+    type MappedRow = {
+      index: number;
+      values: Record<string, number | string>;
+    };
+    const startIndex = (selectedHeaderRow || 0) + 1;
+
+    const mappedRows: MappedRow[] = [];
+    validatedData.rows.slice(startIndex).forEach((row: FileRow) => {
+      const resultingRow: MappedRow = {
+        index: row.index - startIndex,
+        values: {},
+      };
+      row.values.forEach((value: string, valueIndex: number) => {
+        const mapping = columnMapping[valueIndex];
+        if (mapping && mapping.include) {
+          resultingRow.values[mapping.key] = value;
+        }
+      });
+      mappedRows.push(resultingRow);
+    });
+
+    const includedColumns = Object.values(columnMapping).filter(({ include }) => include);
+
+    const onCompleteData = {
+      num_rows: mappedRows.length,
+      num_columns: includedColumns.length,
+      error: null,
+      columns: includedColumns.map(({ key }) => ({ key, name: key })),
+      rows: mappedRows,
+    };
+
+    // Check if importerId is provided - it's required
+    if (!importerId) {
+      console.error('ERROR: importerId is required for CSV import');
+      setDataError('ImporterId is required for CSV import. Please provide a valid importer ID.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    console.log('DEBUG: Processing import with:', { importerId, backendUrl });
+
+    // Transform data for the backend format
+    const transformedData = {
+      validData: mappedRows.map(row => row.values),
+      invalidData: [] // We don't track invalid rows in this version
+    };
+    console.log('DEBUG: Transformed data:', transformedData);
+
+    // Transform column mapping to a format expected by the backend
+    const columnMappingForBackend: Record<string, string> = {};
+    Object.entries(columnMapping).forEach(([index, mapping]) => {
+      if (mapping.include) {
+        columnMappingForBackend[index] = mapping.key;
+      }
+    });
+    console.log('DEBUG: Column mapping for backend:', columnMappingForBackend);
+
+    // Use the public endpoint which doesn't require authentication
+    const apiEndpoint = `${backendUrl}/api/v1/public/process-import/${importerId}`;
+
+    // Prepare the request payload
+    const payload = {
+      ...transformedData,
+      columnMapping: columnMappingForBackend
+    };
+    console.log('DEBUG: Request payload:', payload);
+
+    // Send the data to the backend
+    console.log('DEBUG: Sending fetch request to:', apiEndpoint);
+    fetch(apiEndpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    })
+      .then(response => {
+        console.log('DEBUG: Received response:', {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok,
+          headers: response.headers
+        });
+        if (!response.ok) {
+          throw new Error(`Failed to process import: ${response.statusText}`);
+        }
+        return response.json();
+      })
+      .then(result => {
+        console.log('DEBUG: Import processed successfully:', result);
+        // Call onComplete with the original data and backend response
+        console.log('DEBUG: Calling onComplete with backendResponse');
+        onComplete && onComplete({
+          ...onCompleteData,
+          backendResponse: result
+        });
+      })
+      .catch(error => {
+        console.error('DEBUG: Error processing import:', error);
+        console.log('DEBUG: Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+        // Call onComplete with the error
+        console.log('DEBUG: Calling onComplete with error');
+        onComplete && onComplete({
+          ...onCompleteData,
+          error: error.message
+        });
+      });
+
+    setIsSubmitting(false);
+    goNext();
+  };
+
+  const handleBackToMapColumns = () => {
+    goBack(StepEnum.MapColumns);
+  };
+
   if (initializationError) {
     return (
       <div className={style.wrapper}>
@@ -248,133 +375,24 @@ export default function Main(props: CSVImporterProps) {
             columnMapping={columnMapping}
             skipHeaderRowSelection={skipHeader}
             selectedHeaderRow={selectedHeaderRow}
-            onSuccess={(columnMapping) => {
-              setIsSubmitting(true);
-              setColumnMapping(columnMapping);
-
-              // TODO (client-sdk): Move this type, add other data attributes (i.e. column definitions), and move the data processing to a function
-              type MappedRow = {
-                index: number;
-                values: Record<string, number | string>;
-              };
-              const startIndex = (selectedHeaderRow || 0) + 1;
-
-              const mappedRows: MappedRow[] = [];
-              data.rows.slice(startIndex).forEach((row: FileRow) => {
-                const resultingRow: MappedRow = {
-                  index: row.index - startIndex,
-                  values: {},
-                };
-                row.values.forEach((value: string, valueIndex: number) => {
-                  const mapping = columnMapping[valueIndex];
-                  if (mapping && mapping.include) {
-                    resultingRow.values[mapping.key] = value;
-                  }
-                });
-                mappedRows.push(resultingRow);
-              });
-
-              const includedColumns = Object.values(columnMapping).filter(({ include }) => include);
-
-              const onCompleteData = {
-                num_rows: mappedRows.length,
-                num_columns: includedColumns.length,
-                error: null,
-                // TODO (client-sdk): Either remove "name" or change it to the be the name of the original upload column
-                columns: includedColumns.map(({ key }) => ({ key, name: key })),
-                rows: mappedRows,
-              };
-
-              // Check if importerId is provided - it's required
-              if (!importerId) {
-                console.error('ERROR: importerId is required for CSV import');
-                setDataError('ImporterId is required for CSV import. Please provide a valid importer ID.');
-                setIsSubmitting(false);
-                return;
-              }
-
-              console.log('DEBUG: Processing import with:', { importerId, backendUrl });
-
-              // Transform data for the backend format
-              const transformedData = {
-                validData: mappedRows.map(row => row.values),
-                invalidData: [] // We don't track invalid rows in this version
-              };
-              console.log('DEBUG: Transformed data:', transformedData);
-
-              // Transform column mapping to a format expected by the backend
-              // Convert from {index: TemplateColumnMapping} to a format the backend expects
-              const columnMappingForBackend: Record<string, string> = {};
-              Object.entries(columnMapping).forEach(([index, mapping]) => {
-                if (mapping.include) {
-                  // Use the upload column index as the key and the selected template column key as the value
-                  columnMappingForBackend[index] = mapping.key;
-                }
-              });
-              console.log('DEBUG: Column mapping for backend:', columnMappingForBackend);
-
-              // Use the public endpoint which doesn't require authentication
-              // This endpoint accepts an importer ID directly
-              const apiEndpoint = `${backendUrl}/api/v1/public/process-import/${importerId}`;
-
-              // Prepare the request payload
-              const payload = {
-                ...transformedData,
-                columnMapping: columnMappingForBackend
-              };
-              console.log('DEBUG: Request payload:', payload);
-
-              // Send the data to the backend
-              console.log('DEBUG: Sending fetch request to:', apiEndpoint);
-              fetch(apiEndpoint, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-              })
-                .then(response => {
-                console.log('DEBUG: Received response:', {
-                  status: response.status,
-                  statusText: response.statusText,
-                  ok: response.ok,
-                  // Get headers as an object instead of using entries()
-                  headers: response.headers
-                });
-                if (!response.ok) {
-                  throw new Error(`Failed to process import: ${response.statusText}`);
-                }
-                return response.json();
-              })
-                .then(result => {
-                console.log('DEBUG: Import processed successfully:', result);
-                // Call onComplete with the original data and backend response
-                console.log('DEBUG: Calling onComplete with backendResponse');
-                onComplete && onComplete({
-                  ...onCompleteData,
-                  backendResponse: result
-                });
-              })
-                .catch(error => {
-                console.error('DEBUG: Error processing import:', error);
-                console.log('DEBUG: Error details:', {
-                  message: error.message,
-                  stack: error.stack,
-                  name: error.name
-                });
-                // Call onComplete with the error
-                console.log('DEBUG: Calling onComplete with error');
-                onComplete && onComplete({
-                  ...onCompleteData,
-                  error: error.message
-                });
-              });
-
-              setIsSubmitting(false);
+            onSuccess={(columns) => {
+              setColumnMapping(columns);
               goNext();
             }}
             isSubmitting={isSubmitting}
             onCancel={skipHeader ? reload : () => goBack(StepEnum.RowSelection)}
+          />
+        );
+      case StepEnum.Validation:
+        return (
+          <SimpleValidation
+            template={parsedTemplate}
+            data={data}
+            columnMapping={columnMapping}
+            selectedHeaderRow={selectedHeaderRow}
+            onSuccess={handleValidationComplete}
+            onCancel={handleBackToMapColumns}
+            isSubmitting={isSubmitting}
           />
         );
       case StepEnum.Complete:

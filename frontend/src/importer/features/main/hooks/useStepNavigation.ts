@@ -8,7 +8,8 @@ export const StepEnum = {
   Upload: 0,
   RowSelection: 1,
   MapColumns: 2,
-  Complete: 3,
+  Validation: 3,
+  Complete: 4,
 };
 
 const calculateNextStep = (nextStep: number, skipHeader: boolean) => {
@@ -18,6 +19,8 @@ const calculateNextStep = (nextStep: number, skipHeader: boolean) => {
       case StepEnum.RowSelection:
         return StepEnum.MapColumns;
       case StepEnum.MapColumns:
+        return StepEnum.Validation;
+      case StepEnum.Validation:
         return StepEnum.Complete;
       default:
         return nextStep;
@@ -31,6 +34,7 @@ const getStepConfig = (skipHeader: boolean) => {
     { label: "Upload", id: Steps.Upload },
     { label: "Select Header", id: Steps.RowSelection, disabled: skipHeader },
     { label: "Map Columns", id: Steps.MapColumns },
+    { label: "Validation", id: Steps.Validation },
   ];
 };
 

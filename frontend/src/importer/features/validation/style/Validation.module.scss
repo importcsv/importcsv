@@ -1,0 +1,122 @@
+.content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+.tableWrapper {
+  flex: 1;
+  overflow: auto;
+  margin-bottom: 1rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+}
+
+.errorContainer {
+  flex: 1;
+  margin: 0 1rem;
+}
+
+.errorCell {
+  background-color: rgba(255, 0, 0, 0.1);
+  border-radius: 4px;
+  padding: 4px 8px;
+  color: #e53e3e;
+}
+
+.errorRow {
+  background-color: rgba(255, 0, 0, 0.03);
+}
+
+.editableCellContainer {
+  position: relative;
+  width: 100%;
+}
+
+.simpleInput {
+  width: 100%;
+  padding: 0.25rem;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  
+  &:focus {
+    border-color: #3182ce;
+    box-shadow: 0 0 0 1px #3182ce;
+  }
+}
+
+.errorInput {
+  border-color: #e53e3e;
+  
+  &:focus {
+    border-color: #e53e3e;
+    box-shadow: 0 0 0 1px #e53e3e;
+  }
+}
+
+.errorIcon {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #e53e3e;
+  color: white;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+}
+
+.validationTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.validationTable th {
+  background-color: #f1f5f9;
+  text-transform: none;
+  font-weight: 600;
+  color: #334155;
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.validationTable th:first-child {
+  border-top-left-radius: 8px;
+}
+
+.validationTable th:last-child {
+  border-top-right-radius: 8px;
+}
+
+.validationTable td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e2e8f0;
+  color: #334155;
+}
+
+.validationTable tr:last-child td:first-child {
+  border-bottom-left-radius: 8px;
+}
+
+.validationTable tr:last-child td:last-child {
+  border-bottom-right-radius: 8px;
+}
+
+.validationTable tr:hover {
+  background-color: #f8fafc;
+}

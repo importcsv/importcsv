@@ -20,16 +20,12 @@ interface ImporterSchema {
 interface CSVImporterProps {
   schema?: ImporterSchema; // Schema is now optional as it will be fetched by the library
   onComplete: (data: any) => void;
-  usePublicApi?: boolean; // Whether to use the public API endpoint
-  backendUrl?: string; // Backend URL for API calls
   importerId: string; // Importer ID is required for direct API integration
 }
 
-const CSVImporter: React.FC<CSVImporterProps> = ({ 
-  schema, 
-  onComplete, 
-  usePublicApi = false,
-  backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000',
+const CSVImporter: React.FC<CSVImporterProps> = ({
+  schema,
+  onComplete,
   importerId
 }) => {
   // The template is now optional as it will be fetched by the library
@@ -42,14 +38,14 @@ const CSVImporter: React.FC<CSVImporterProps> = ({
       description: field.description || `${field.name} field`
     }))
   } : undefined;
-  
+
   // The simplest approach: just don't use the problematic props in the admin app
   // Instead, use the direct API integration in the frontend library
-  
+
   // For the admin preview, we don't need to use the public API or direct integration
   // We'll just use the CSVImporter component without the problematic props
   // and handle the data in the onComplete callback
-  
+
   return (
     <div className="w-full min-h-[500px]">
       <CSVImporterComponent
@@ -60,11 +56,10 @@ const CSVImporter: React.FC<CSVImporterProps> = ({
         showDownloadTemplateButton={true}
         skipHeaderRowSelection={false}
         importerId={importerId} // Pass down importerId
-        backendUrl={backendUrl} // Pass down backendUrl
         onComplete={(data: any) => {
           // Log the data for debugging
           console.log('CSV import completed with data:', data);
-          
+
           // Call the onComplete callback with the data
           if (onComplete) {
             onComplete(data);
