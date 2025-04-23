@@ -35,7 +35,7 @@ class ImportJob(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     completed_at = Column(DateTime(timezone=True), nullable=True)
-    
+
     # Relationships
     user = relationship("User", back_populates="import_jobs")
     importer = relationship("Importer", back_populates="import_jobs")

@@ -197,7 +197,6 @@ export default function ImporterPreviewPage() {
             <CSVImporter
               schema={schema}
               importerId={params.id?.toString()}
-              backendUrl={backendUrl}
               onComplete={handleImportComplete}
             />
           </>
