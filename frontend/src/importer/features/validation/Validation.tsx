@@ -4,8 +4,8 @@ import { Button, Flex, Text, Box, Switch, Tooltip, Input } from '@chakra-ui/reac
 import { ValidationProps } from './types';
 import style from './style/Validation.module.scss';
 
-// Simple validation component that avoids performance issues
-export default function SimpleValidation({
+// Validation component for checking imported data
+export default function Validation({
   template,
   data: fileData,
   columnMapping,

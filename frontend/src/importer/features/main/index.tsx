@@ -17,7 +17,7 @@ import Complete from "../complete";
 import MapColumns from "../map-columns";
 import RowSelection from "../row-selection";
 import Uploader from "../uploader";
-import SimpleValidation from '../validation/SimpleValidation';
+import Validation from '../validation/Validation';
 import { PiX } from "react-icons/pi";
 import { useTranslation } from "react-i18next";
 
@@ -381,7 +381,7 @@ export default function Main(props: CSVImporterProps) {
         );
       case StepEnum.Validation:
         return (
-          <SimpleValidation
+          <Validation
             template={parsedTemplate}
             data={data}
             columnMapping={columnMapping}
