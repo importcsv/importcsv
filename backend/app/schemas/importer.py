@@ -1,6 +1,6 @@
 import uuid
 from pydantic import BaseModel, Field, HttpUrl
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Literal
 from datetime import datetime
 
 # Importer field definition
@@ -16,6 +16,7 @@ class ImporterField(BaseModel):
     validation_error_message: Optional[str] = None  # Custom validation error message
     validation_format: Optional[str] = None  # For date format, regex pattern, or select options
     validation: Optional[Dict[str, Any]] = None  # JSON Schema validation rules
+    template: Optional[str] = None  # Template for boolean or select fields (e.g., 'true/false', 'yes/no', '1/0')
     # Remove self-reference to avoid circular dependency
     # fields: Optional[List[ImporterField]] = None
 

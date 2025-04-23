@@ -20,6 +20,7 @@ export interface ImporterField {
   example?: string;                  // Example value for the field
   validation_error_message?: string; // Custom validation error message
   validation_format?: string;        // For date format, regex pattern, or select options
+  template?: string;                 // Template for boolean or select fields (e.g., 'true/false', 'yes/no', '1/0')
 }
 
 interface AddColumnFormProps {
@@ -27,22 +28,27 @@ interface AddColumnFormProps {
   existingFields: ImporterField[];
   className?: string;
   compact?: boolean;
+  initialField?: ImporterField; // For editing existing columns
+  submitButtonText?: string; // Custom text for submit button
 }
 
 export default function AddColumnForm({ 
   onAddColumn, 
   existingFields, 
   className = '', 
-  compact = false 
+  compact = false,
+  initialField,
+  submitButtonText = 'Add Column'
 }: AddColumnFormProps) {
   const [formError, setFormError] = useState<string | null>(null);
-  const [newField, setNewField] = useState<ImporterField>({
+  const [newField, setNewField] = useState<ImporterField>(initialField || {
     name: '',
     display_name: '',
     type: 'text',
     required: false,
     description: '',
-    example: ''
+    example: '',
+    template: ''
   });
 
   // Handle field input changes
@@ -59,7 +65,8 @@ export default function AddColumnForm({
     setNewField(prev => ({
       ...prev,
       type: value,
-      validation_format: ''
+      validation_format: '',
+      template: value === 'boolean' ? 'true/false' : ''
     }));
   };
 
@@ -76,10 +83,33 @@ export default function AddColumnForm({
       return;
     }
     
-    // Check for duplicate field names
+    // Check for duplicate field names (skip this check when editing if name hasn't changed)
     if (existingFields.some(f => f.name === newField.name)) {
       setFormError(`Column name '${newField.name}' already exists`);
       return;
+    }
+    
+    // For select type, ensure validation_format is set if not already
+    if (newField.type === 'select' && !newField.validation_format) {
+      setFormError('Please provide options for the select field');
+      return;
+    }
+    
+    // For custom regex type, ensure validation_format is set and is a valid regex
+    if (newField.type === 'custom_regex') {
+      if (!newField.validation_format) {
+        setFormError('Please provide a regular expression pattern');
+        return;
+      }
+      
+      // Validate the regex pattern
+      try {
+        new RegExp(newField.validation_format);
+      } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : 'Invalid pattern';
+        setFormError(`Invalid regular expression: ${errorMessage}`);
+        return;
+      }
     }
     
     // Call the parent handler
@@ -92,7 +122,8 @@ export default function AddColumnForm({
       type: 'text',
       required: false,
       description: '',
-      example: ''
+      example: '',
+      template: ''
     });
     
     // Clear any errors
@@ -161,6 +192,79 @@ export default function AddColumnForm({
           </Select>
         </div>
         
+        {/* Options for Select type */}
+        {newField.type === 'select' && (
+          <div className="space-y-2">
+            <Label htmlFor="fieldOptions">Options</Label>
+            <Input
+              id="fieldOptions"
+              name="validation_format"
+              value={newField.validation_format || ''}
+              onChange={handleFieldInputChange}
+              placeholder="blue,red,yellow,white"
+              className="mt-1"
+            />
+            <p className="text-sm text-gray-500 mt-1">Comma separated list of options</p>
+            
+            {/* Example of how the options will appear */}
+            {newField.validation_format && (
+              <div className="mt-3 p-3 bg-gray-50 rounded-md border border-gray-200">
+                <p className="text-sm font-medium mb-2">Preview:</p>
+                <div className="flex flex-wrap gap-2">
+                  {newField.validation_format.split(',').map((option, index) => (
+                    <span 
+                      key={index} 
+                      className="px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-sm"
+                    >
+                      {option.trim()}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Template for Boolean type */}
+        {newField.type === 'boolean' && (
+          <div className="space-y-2">
+            <Label htmlFor="fieldTemplate">Boolean Format</Label>
+            <Select
+              value={newField.template || 'true/false'}
+              onValueChange={(value) => setNewField(prev => ({
+                ...prev,
+                template: value
+              }))}
+            >
+              <SelectTrigger id="fieldTemplate" className="mt-1">
+                <SelectValue placeholder="Choose template" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="true/false">true/false</SelectItem>
+                <SelectItem value="yes/no">yes/no</SelectItem>
+                <SelectItem value="1/0">1/0</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-gray-500 mt-1">Format for boolean values in CSV</p>
+          </div>
+        )}
+        
+        {/* Custom Regular Expression */}
+        {newField.type === 'custom_regex' && (
+          <div className="space-y-2">
+            <Label htmlFor="fieldRegex">Regular Expression</Label>
+            <Input
+              id="fieldRegex"
+              name="validation_format"
+              value={newField.validation_format || ''}
+              onChange={handleFieldInputChange}
+              placeholder="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+              className="mt-1"
+            />
+            <p className="text-sm text-gray-500 mt-1">Enter a valid regular expression pattern</p>
+          </div>
+        )}
+        
         {/* Description */}
         <div className="space-y-2">
           <Label htmlFor="fieldDescription">Description</Label>
@@ -207,7 +311,7 @@ export default function AddColumnForm({
         className="mt-4"
       >
         <Plus className="h-4 w-4 mr-1" />
-        Add Column
+        {submitButtonText}
       </Button>
     </div>
   );

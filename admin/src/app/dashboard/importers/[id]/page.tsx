@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import AddColumnForm, { ImporterField as AddColumnImporterField } from '@/components/AddColumnForm';
+import { ImporterField as AddColumnImporterField } from '@/components/AddColumnForm';
+import ImporterColumnsManager from '@/components/ImporterColumnsManager';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
@@ -560,88 +561,21 @@ export default function ImporterDetailPage() {
         
         {/* Columns Tab */}
         <TabsContent value="columns">
-          <Card>
-            <CardHeader>
-              <CardTitle>Columns</CardTitle>
-              <CardDescription>Define the columns for your importer</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <table className="w-full border-collapse">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="px-4 py-2 text-left">ORDER</th>
-                    <th className="px-4 py-2 text-left">COLUMN NAME</th>
-                    <th className="px-4 py-2 text-left">FORMAT</th>
-                    <th className="px-4 py-2 text-left">EXAMPLE</th>
-                    <th className="px-4 py-2 text-left">REQUIRED</th>
-                    <th className="px-4 py-2 text-left">DESCRIPTION</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {importer.fields.map((field, index) => (
-                    <tr key={index} className="border-b">
-                      <td className="px-4 py-2">{index + 1}</td>
-                      <td className="px-4 py-2">{field.name}</td>
-                      <td className="px-4 py-2">{field.type}</td>
-                      <td className="px-4 py-2">{field.example || '-'}</td>
-                      <td className="px-4 py-2">{field.required ? 'Yes' : 'No'}</td>
-                      <td className="px-4 py-2">{field.description || '-'}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div className="mt-4 flex justify-end">
-                <Button onClick={() => setShowAddColumnDialog(true)}>Add Column</Button>
-              </div>
+          <ImporterColumnsManager
+            initialColumns={importer.fields}
+            onColumnsChange={(updatedColumns) => {
+              setImporter({
+                ...importer,
+                fields: updatedColumns
+              });
               
-              {/* Add Column Dialog */}
-              <Dialog 
-                open={showAddColumnDialog} 
-                onOpenChange={setShowAddColumnDialog}
-              >
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle className="text-xl">Add Column</DialogTitle>
-                    <DialogDescription className="text-base">
-                      Define a new column for your CSV imports.
-                    </DialogDescription>
-                  </DialogHeader>
-                  
-                  <AddColumnForm 
-                    existingFields={importer.fields}
-                    onAddColumn={(newField) => {
-                      // Add the field to the importer and update it
-                      const updatedFields = [...importer.fields, newField];
-                      setImporter({
-                        ...importer,
-                        fields: updatedFields
-                      });
-                      
-                      // Show success notification
-                      setNotification({
-                        message: "Column added successfully. Don't forget to save your changes.",
-                        type: "success"
-                      });
-                      
-                      // Close the dialog
-                      setShowAddColumnDialog(false);
-                    }}
-                    compact={true}
-                  />
-                  
-                  <DialogFooter>
-                    <Button 
-                      type="button" 
-                      variant="secondary" 
-                      onClick={() => setShowAddColumnDialog(false)}
-                    >
-                      Cancel
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </CardContent>
-          </Card>
+              // Show success notification
+              setNotification({
+                message: "Column changes made. Don't forget to save your changes.",
+                type: "success"
+              });
+            }}
+          />
         </TabsContent>
         
         {/* Embed Tab */}

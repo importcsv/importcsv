@@ -91,12 +91,50 @@ export default function SimpleValidation({
         
         // Type validation (basic)
         const fieldAny = field as any;
+        
+        // Number validation
         if (fieldAny.type === 'number' && value !== '' && isNaN(Number(value))) {
           newErrors.push({
             rowIndex: displayRowIndex,
             columnIndex: colIdx,
             message: `${field.name} must be a number`
           });
+        }
+        
+        // Boolean validation with template support
+        if (fieldAny.type === 'boolean' && value !== '') {
+          const template = fieldAny.template || 'true/false';
+          let isValid = false;
+          
+          if (template === 'true/false') {
+            isValid = ['true', 'false', true, false].includes(value);
+          } else if (template === 'yes/no') {
+            isValid = ['yes', 'no', 'Yes', 'No', 'YES', 'NO'].includes(value);
+          } else if (template === '1/0') {
+            isValid = ['1', '0', 1, 0].includes(value);
+          }
+          
+          if (!isValid) {
+            newErrors.push({
+              rowIndex: displayRowIndex,
+              columnIndex: colIdx,
+              message: `${field.name} must be a valid boolean value (${template})`
+            });
+          }
+        }
+        
+        // Select validation
+        if (fieldAny.type === 'select' && value !== '') {
+          // Get options from validation_format
+          const options = fieldAny.validation_format ? fieldAny.validation_format.split(',').map(opt => opt.trim()) : [];
+          
+          if (options.length > 0 && !options.map(o => o.toLowerCase()).includes(String(value).toLowerCase())) {
+            newErrors.push({
+              rowIndex: displayRowIndex,
+              columnIndex: colIdx,
+              message: `${field.name} must be one of: ${options.join(', ')}`
+            });
+          }
         }
       });
     });

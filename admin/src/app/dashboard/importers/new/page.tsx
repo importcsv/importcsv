@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import AddColumnForm, { ImporterField } from '@/components/AddColumnForm';
+import { ImporterField } from '@/components/AddColumnForm';
+import ImporterColumnsManager from '@/components/ImporterColumnsManager';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
@@ -149,79 +150,13 @@ export default function NewImporterPage() {
         </Card>
         
         {/* Columns */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Columns</CardTitle>
-            <CardDescription>Define the columns for your importer</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Columns table */}
-            {fields.length > 0 ? (
-              <div className="rounded-md border overflow-hidden">
-                <table className="w-full text-left">
-                  <thead className="bg-gray-50 text-gray-700">
-                    <tr>
-                      <th className="px-4 py-3 text-base font-medium">Column Name</th>
-                      <th className="px-4 py-3 text-base font-medium">Format</th>
-                      <th className="px-4 py-3 text-base font-medium">Required</th>
-                      <th className="px-4 py-3 text-base font-medium">Description</th>
-                      <th className="px-4 py-3 text-right text-base font-medium">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    {fields.map((field) => (
-                      <tr key={field.name} className="bg-white">
-                        <td className="px-4 py-3 text-base font-medium">
-                          {field.display_name || field.name}
-                          <div className="text-sm text-gray-500">{field.name}</div>
-                        </td>
-                        <td className="px-4 py-3 text-base">{field.type}</td>
-                        <td className="px-4 py-3 text-base">
-                          {field.required ? (
-                            <span className="text-red-600 font-medium">Yes</span>
-                          ) : (
-                            <span className="text-gray-500">No</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-3 text-base">{field.description || '-'}</td>
-                        <td className="px-4 py-3 text-right">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => removeField(field.name)}
-                            className="text-gray-500 hover:text-red-600"
-                          >
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            Remove
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-md border border-dashed">
-                <p className="text-base">No columns defined yet</p>
-                <p className="text-sm mt-1">Add columns to define your importer structure</p>
-              </div>
-            )}
-            
-            {/* Add Column Form */}
-            <div className="bg-gray-50 p-4 rounded-md border mt-6">
-              <AddColumnForm 
-                existingFields={fields}
-                onAddColumn={(newField) => {
-                  // Add the field to the list
-                  setFields(prev => [...prev, newField]);
-                  
-                  // Clear any errors
-                  setFormError(null);
-                }}
-              />
-            </div>
-          </CardContent>
-        </Card>
+        <ImporterColumnsManager
+          initialColumns={fields}
+          onColumnsChange={(updatedColumns) => {
+            setFields(updatedColumns);
+            setFormError(null);
+          }}
+        />
         
         {/* Error message */}
         {error && (

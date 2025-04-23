@@ -9,6 +9,8 @@ interface ImporterField {
   required?: boolean;
   description?: string;
   data_type?: string;
+  template?: string; // Template for boolean or select fields (e.g., 'true/false', 'yes/no', '1/0')
+  validation_format?: string; // For select options, date format, or regex pattern
 }
 
 interface ImporterSchema {
@@ -35,7 +37,10 @@ const CSVImporter: React.FC<CSVImporterProps> = ({
       name: field.name,
       key: field.name.toLowerCase().replace(/\s+/g, '_'), // Convert to snake_case for keys
       required: field.required || false,
-      description: field.description || `${field.name} field`
+      description: field.description || `${field.name} field`,
+      type: field.data_type || 'text', // Map data_type to type
+      template: field.template, // Pass template for boolean fields
+      validation_format: field.validation_format // Pass validation_format for select options
     }))
   } : undefined;
 
