@@ -35,9 +35,9 @@ interface ImportData {
   error?: string; // Error message if processing failed
 }
 
-// Dynamically import the CSV Importer component
+// Dynamically import the CSV Importer component directly from the library
 const CSVImporter = dynamic(
-  () => import('@/components/CSVImporter'),
+  () => import('csv-import-react').then(mod => ({ default: mod.CSVImporter })),
   { ssr: false }
 );
 
@@ -120,12 +120,19 @@ export default function ImporterPreviewPage() {
               <h3 className="font-bold">Debug Info:</h3>
               <p>Importer ID: {params.id?.toString()}</p>
             </div>
-            <CSVImporter
-              importerId={params.id as string}
-              onComplete={handleImportComplete}
-              user={{ userId: "12345" }}
-              metadata={{ anotherId: "123" }}
-            />
+            <div className="w-full min-h-[500px]">
+              <CSVImporter
+                isModal={false}
+                darkMode={false}
+                primaryColor="#0284c7"
+                showDownloadTemplateButton={true}
+                skipHeaderRowSelection={false}
+                importerId={params.id as string}
+                onComplete={handleImportComplete}
+                user={{ userId: "12345" }}
+                metadata={{ anotherId: "123" }}
+              />
+            </div>
           </>
         )}
       </div>

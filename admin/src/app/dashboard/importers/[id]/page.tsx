@@ -590,14 +590,15 @@ export default function ImporterDetailPage() {
                 <div>
                   <Label>React Example</Label>
                   <div className="bg-gray-900 text-gray-100 p-4 rounded-md mt-2 font-mono text-sm overflow-x-auto">
-                    {`import { CSVImporter } from '@importcsv/react';
+                    {`import { CSVImporter } from 'csv-import-react';
 
 export default function YourComponent() {
   return (
     <CSVImporter 
       importerId="${importer.id}"
-      apiKey="YOUR_API_KEY"
-      onData={(data) => console.log(data)}
+      onComplete={(data) => console.log(data)}
+      user={{ userId: "YOUR_USER_ID" }}
+      metadata={{ source: "YOUR_APP" }}
     />
   );
 }`}
@@ -613,10 +614,11 @@ export default function YourComponent() {
   new CSVImporter({
     containerId: 'importer',
     importerId: '${importer.id}',
-    apiKey: 'YOUR_API_KEY',
-    onData: function(data) {
+    onComplete: function(data) {
       console.log(data);
-    }
+    },
+    user: { userId: "YOUR_USER_ID" },
+    metadata: { source: "YOUR_APP" }
   });
 </script>`}
                   </div>
