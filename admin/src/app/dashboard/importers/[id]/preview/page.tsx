@@ -45,64 +45,7 @@ export default function ImporterPreviewPage() {
   const params = useParams();
   const router = useRouter();
   const { token, refreshToken, logout } = useAuth();
-  const [schema, setSchema] = useState<ImporterSchema | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-
-  useEffect(() => {
-    const fetchSchema = async () => {
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
-
-      try {
-        setIsLoading(true);
-        const response = await fetch(`${backendUrl}/api/v1/importers/${params.id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (response.status === 401) {
-          // Try to refresh the token
-          const refreshed = await refreshToken();
-          if (!refreshed) {
-            logout();
-            router.push('/login');
-            return;
-          }
-
-          // Retry with new token
-          const retryResponse = await fetch(`${backendUrl}/api/v1/importers/${params.id}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-
-          if (!retryResponse.ok) {
-            throw new Error(`Failed to fetch importer: ${retryResponse.statusText}`);
-          }
-
-          const data = await retryResponse.json();
-          setSchema(data);
-        } else if (!response.ok) {
-          throw new Error(`Failed to fetch importer: ${response.statusText}`);
-        } else {
-          const data = await response.json();
-          setSchema(data);
-        }
-      } catch (err: unknown) {
-        console.error('Error fetching schema:', err);
-        setError('Failed to load schema details');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSchema();
-  }, [token, params.id, router, refreshToken, logout, backendUrl]);
 
   const handleImportComplete = async (data: ImportData) => {
     console.log('DEBUG: handleImportComplete called with data:', data);
@@ -146,20 +89,6 @@ export default function ImporterPreviewPage() {
     }
   };
 
-  if (isLoading) return (
-    <div className="container mx-auto p-4">
-      <div className="mb-6">
-        <Link href={`/dashboard/importers/${params.id}`} className="flex items-center text-sm text-gray-500 hover:text-gray-700">
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          Back to importer
-        </Link>
-      </div>
-      <div className="flex justify-center items-center h-64">
-        <p className="text-gray-500">Loading schema details...</p>
-      </div>
-    </div>
-  );
-
   if (error) return (
     <div className="container mx-auto p-4">
       <div className="mb-6">
@@ -183,20 +112,16 @@ export default function ImporterPreviewPage() {
         </Link>
       </div>
 
-      <h1 className="text-2xl font-bold mb-6">Preview Importer: {schema?.name}</h1>
 
       <div className="bg-white rounded-lg shadow p-6">
-        {schema && (
+        {(
           <>
             <div className="mb-4 p-3 bg-blue-50 rounded">
               <h3 className="font-bold">Debug Info:</h3>
-              <p>Backend URL: {backendUrl}</p>
               <p>Importer ID: {params.id?.toString()}</p>
-              <p>Direct API Enabled: {!!backendUrl && !!params.id}</p>
             </div>
             <CSVImporter
-              schema={schema}
-              importerId={params.id?.toString()}
+              importerId={params.id as string}
               onComplete={handleImportComplete}
             />
           </>

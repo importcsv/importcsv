@@ -8,6 +8,7 @@ from app.db.base import get_db
 from app.models.import_job import ImportJob as ImportJobModel, ImportStatus
 from app.models.importer import Importer
 from app.schemas.import_job import ImportJob as ImportJobSchema
+from app.schemas.importer import Importer as ImporterSchema
 from app.services.webhook import webhook_service, WebhookEventType
 from app.services.import_processor import import_processor
 
@@ -122,3 +123,30 @@ async def process_public_import(
         )
 
     return import_job
+
+
+@router.get("/schema/{importer_id}", response_model=ImporterSchema)
+async def get_public_schema(
+    importer_id: str,
+    db: Session = Depends(get_db)
+):
+    """
+    Public endpoint to fetch the schema for an importer by ID
+    This endpoint does not require authentication
+    """
+    try:
+        # Validate importer_id is a valid UUID
+        importer_uuid = uuid.UUID(importer_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid importer ID format")
+
+    # Find the importer by ID
+    importer = db.query(Importer).filter(Importer.id == importer_uuid).first()
+    if not importer:
+        raise HTTPException(status_code=404, detail="Importer not found")
+    
+    # Convert UUID fields to strings
+    importer.id = str(importer.id)
+    importer.user_id = str(importer.user_id)
+    
+    return importer

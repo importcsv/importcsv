@@ -67,15 +67,65 @@ export default function Main(props: CSVImporterProps) {
   const [parsedTemplate, setParsedTemplate] = useState<Template>({
     columns: [],
   });
+  const [isLoadingSchema, setIsLoadingSchema] = useState<boolean>(false);
 
+  // Fetch schema from the backend if importerId is provided
   useEffect(() => {
-    const [parsedTemplate, parsedTemplateError] = convertRawTemplate(template);
-    if (parsedTemplateError) {
-      setInitializationError(parsedTemplateError);
-    } else if (parsedTemplate) {
-      setParsedTemplate(parsedTemplate);
-    }
-  }, [template]);
+    const fetchSchema = async () => {
+      // If importerId is not provided, use the template prop if available
+      if (!importerId) {
+        if (template) {
+          const [parsedTemplate, parsedTemplateError] = convertRawTemplate(template);
+          if (parsedTemplateError) {
+            setInitializationError(parsedTemplateError);
+          } else if (parsedTemplate) {
+            setParsedTemplate(parsedTemplate);
+          }
+        } else {
+          setInitializationError('ImporterId is required for CSV import. Please provide a valid importer ID.');
+        }
+        return;
+      }
+
+      try {
+        setIsLoadingSchema(true);
+        // Fetch schema from the backend
+        const response = await fetch(`${backendUrl}/api/v1/public/schema/${importerId}`);
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch schema: ${response.statusText}`);
+        }
+        
+        const schemaData = await response.json();
+        console.log('Fetched schema from backend:', schemaData);
+        
+        // Convert the schema to the format expected by the importer
+        const schemaTemplate = {
+          columns: schemaData.fields.map((field: any) => ({
+            name: field.name,
+            key: field.key || field.name.toLowerCase().replace(/\s+/g, '_'), // Convert to snake_case for keys if key is not provided
+            required: field.required || false,
+            description: field.description || `${field.name} field`,
+            data_type: field.data_type
+          }))
+        };
+        
+        const [parsedTemplate, parsedTemplateError] = convertRawTemplate(schemaTemplate);
+        if (parsedTemplateError) {
+          setInitializationError(parsedTemplateError);
+        } else if (parsedTemplate) {
+          setParsedTemplate(parsedTemplate);
+        }
+      } catch (error) {
+        console.error('Error fetching schema:', error);
+        setInitializationError(`Failed to fetch schema: ${error instanceof Error ? error.message : String(error)}`);
+      } finally {
+        setIsLoadingSchema(false);
+      }
+    };
+
+    fetchSchema();
+  }, [importerId, backendUrl, template]);
 
   useEffect(() => {
     // TODO (client-sdk): Have the importer continue where left off if closed

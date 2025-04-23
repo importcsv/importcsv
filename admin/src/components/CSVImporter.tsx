@@ -18,11 +18,11 @@ interface ImporterSchema {
 }
 
 interface CSVImporterProps {
-  schema: ImporterSchema;
+  schema?: ImporterSchema; // Schema is now optional as it will be fetched by the library
   onComplete: (data: any) => void;
   usePublicApi?: boolean; // Whether to use the public API endpoint
   backendUrl?: string; // Backend URL for API calls
-  importerId?: string; // Importer ID for direct API integration
+  importerId: string; // Importer ID is required for direct API integration
 }
 
 const CSVImporter: React.FC<CSVImporterProps> = ({ 
@@ -32,15 +32,16 @@ const CSVImporter: React.FC<CSVImporterProps> = ({
   backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000',
   importerId
 }) => {
-  // Format the template according to the CSV importer's expected format
-  const template = {
-    columns: schema?.fields?.map((field: ImporterField) => ({
+  // The template is now optional as it will be fetched by the library
+  // Only use the provided schema if it exists (for backward compatibility)
+  const template = schema ? {
+    columns: schema.fields.map((field: ImporterField) => ({
       name: field.name,
       key: field.name.toLowerCase().replace(/\s+/g, '_'), // Convert to snake_case for keys
       required: field.required || false,
       description: field.description || `${field.name} field`
-    })) || []
-  };
+    }))
+  } : undefined;
   
   // The simplest approach: just don't use the problematic props in the admin app
   // Instead, use the direct API integration in the frontend library
