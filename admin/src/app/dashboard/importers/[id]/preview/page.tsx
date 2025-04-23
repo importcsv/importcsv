@@ -123,6 +123,8 @@ export default function ImporterPreviewPage() {
             <CSVImporter
               importerId={params.id as string}
               onComplete={handleImportComplete}
+              user={{ userId: "12345" }}
+              metadata={{ anotherId: "123" }}
             />
           </>
         )}

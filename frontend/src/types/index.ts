@@ -20,6 +20,8 @@ export type CSVImporterProps = {
   customTranslations?: Resource;
   importerId?: string; // ID of the importer from the admin/backend
   backendUrl?: string; // URL of the backend API
+  user?: Record<string, any>; // User details to identify the user in webhooks
+  metadata?: Record<string, any>; // Additional data to associate with the import
   // You might want to explicitly allow specific data-* attributes if needed
   // 'data-testid'?: string; 
 } & ModalParams;

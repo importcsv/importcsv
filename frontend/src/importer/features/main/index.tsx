@@ -31,6 +31,8 @@ export default function Main(props: CSVImporterProps) {
     skipHeaderRowSelection,
     importerId,
     backendUrl = process.env.BACKEND_URL || 'http://localhost:8000',
+    user,
+    metadata,
   } = props;
   const skipHeader = skipHeaderRowSelection ?? false;
 
@@ -220,7 +222,9 @@ export default function Main(props: CSVImporterProps) {
     // Prepare the request payload
     const payload = {
       ...transformedData,
-      columnMapping: columnMappingForBackend
+      columnMapping: columnMappingForBackend,
+      user: user || {},
+      metadata: metadata || {}
     };
     console.log('DEBUG: Request payload:', payload);
 

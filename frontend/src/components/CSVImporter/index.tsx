@@ -27,6 +27,8 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
     customTranslations,
     importerId,
     backendUrl,
+    user,
+    metadata,
     // Any remaining props will be valid DOM props
     ...domProps
   } = importerProps;
@@ -114,6 +116,8 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
         customTranslations={customTranslations}
         importerId={importerId}
         backendUrl={backendUrl}
+        user={user}
+        metadata={metadata}
       />
     </Providers>
   );

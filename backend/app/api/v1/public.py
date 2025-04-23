@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import Dict, Any, List
 import uuid
+import json
 from datetime import datetime
 
 from app.db.base import get_db
@@ -73,10 +74,19 @@ async def process_public_import(
     # Extract data from the request
     valid_data = data.get("validData", [])
     invalid_data = data.get("invalidData", [])
+    user_data = data.get("user", {})
+    metadata = data.get("metadata", {})
     total_rows = len(valid_data) + len(invalid_data)
 
     # Log the received data for debugging
-    print(f"Received data: importer_id={importer_id}, valid_data={len(valid_data)}, invalid_data={len(invalid_data)}")
+    print("="*80)
+    print(f"IMPORT REQUEST RECEIVED:")
+    print(f"  Importer ID: {importer_id}")
+    print(f"  Valid data rows: {len(valid_data)}")
+    print(f"  Invalid data rows: {len(invalid_data)}")
+    print(f"  User data: {json.dumps(user_data, indent=2)}")
+    print(f"  Metadata: {json.dumps(metadata, indent=2)}")
+    print("="*80)
 
     # Create import job
     import_job = ImportJobModel(
@@ -118,7 +128,9 @@ async def process_public_import(
                 "import_job_id": str(import_job.id),
                 "importer_id": importer_id,
                 "row_count": total_rows,
-                "timestamp": datetime.now().isoformat()
+                "timestamp": datetime.now().isoformat(),
+                "user": user_data,
+                "metadata": metadata
             }
         )
 
