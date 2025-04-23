@@ -25,7 +25,6 @@ export default function Main(props: CSVImporterProps) {
   const {
     isModal = true,
     modalOnCloseTriggered = () => null,
-    template,
     onComplete,
     customStyles,
     showDownloadTemplateButton,
@@ -70,21 +69,12 @@ export default function Main(props: CSVImporterProps) {
   });
   const [isLoadingSchema, setIsLoadingSchema] = useState<boolean>(false);
 
-  // Fetch schema from the backend if importerId is provided
+  // Fetch schema from the backend using importerId
   useEffect(() => {
     const fetchSchema = async () => {
-      // If importerId is not provided, use the template prop if available
+      // ImporterId is required
       if (!importerId) {
-        if (template) {
-          const [parsedTemplate, parsedTemplateError] = convertRawTemplate(template);
-          if (parsedTemplateError) {
-            setInitializationError(parsedTemplateError);
-          } else if (parsedTemplate) {
-            setParsedTemplate(parsedTemplate);
-          }
-        } else {
-          setInitializationError('ImporterId is required for CSV import. Please provide a valid importer ID.');
-        }
+        setInitializationError('ImporterId is required for CSV import. Please provide a valid importer ID.');
         return;
       }
 
@@ -126,7 +116,7 @@ export default function Main(props: CSVImporterProps) {
     };
 
     fetchSchema();
-  }, [importerId, backendUrl, template]);
+  }, [importerId, backendUrl]);
 
   useEffect(() => {
     // TODO (client-sdk): Have the importer continue where left off if closed

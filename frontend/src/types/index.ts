@@ -8,7 +8,6 @@ type ModalParams = {
 };
 
 export type CSVImporterProps = {
-  template?: Record<string, unknown> | string;
   darkMode?: boolean;
   primaryColor?: string;
   className?: string; // Keep className as it's often used for styling wrappers

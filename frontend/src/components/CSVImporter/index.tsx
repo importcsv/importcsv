@@ -16,7 +16,6 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
     modalIsOpen = true,
     modalOnCloseTriggered = () => null,
     modalCloseOnOutsideClick,
-    template,
     darkMode = false,
     primaryColor = "#7a5ef8",
     className,
@@ -104,7 +103,6 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
         modalIsOpen={modalIsOpen}
         modalOnCloseTriggered={modalOnCloseTriggered}
         modalCloseOnOutsideClick={modalCloseOnOutsideClick}
-        template={template}
         darkMode={darkMode}
         primaryColor={primaryColor}
         className={className}

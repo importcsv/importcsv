@@ -126,9 +126,9 @@ export default function SimpleValidation({
         // Select validation
         if (fieldAny.type === 'select' && value !== '') {
           // Get options from validation_format
-          const options = fieldAny.validation_format ? fieldAny.validation_format.split(',').map(opt => opt.trim()) : [];
+          const options = fieldAny.validation_format ? fieldAny.validation_format.split(',').map((opt: string) => opt.trim()) : [];
           
-          if (options.length > 0 && !options.map(o => o.toLowerCase()).includes(String(value).toLowerCase())) {
+          if (options.length > 0 && !options.map((o: string) => o.toLowerCase()).includes(String(value).toLowerCase())) {
             newErrors.push({
               rowIndex: displayRowIndex,
               columnIndex: colIdx,
