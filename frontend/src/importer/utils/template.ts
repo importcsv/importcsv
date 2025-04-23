@@ -32,6 +32,9 @@ export function convertRawTemplate(rawTemplate?: Record<string, unknown> | strin
     const description: string = item.description || "";
     const required: boolean = item.required || false;
     let suggestedMappings: string[] = item.suggested_mappings || [];
+    const data_type: string = item.data_type || "";
+    const validation_format: string = item.validation_format || "";
+    const type: string = item.type || data_type || "";
 
     if (name === "") {
       return [null, `Invalid template: The parameter "name" is required for each column (check column ${i})`];
@@ -63,6 +66,9 @@ export function convertRawTemplate(rawTemplate?: Record<string, unknown> | strin
       description,
       required,
       suggested_mappings: suggestedMappings,
+      data_type,
+      validation_format,
+      type
     } as TemplateColumn);
   }
 

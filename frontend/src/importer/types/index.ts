@@ -8,6 +8,9 @@ export type TemplateColumn = {
   description?: string;
   required?: boolean;
   suggested_mappings?: string[];
+  data_type?: string;
+  validation_format?: string;
+  type?: string; // For backwards compatibility
 };
 
 export type UploadColumn = {

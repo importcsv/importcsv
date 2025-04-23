@@ -48,6 +48,20 @@ export default function SimpleValidation({
     shouldValidateRef.current = true;
   }, [editedValues]);
   
+  // Check for mapping mismatches
+  React.useEffect(() => {
+    // Check if mappings match template fields
+    const templateKeys = template.columns.map(col => col.key);
+    const mismatches = Object.entries(columnMapping).filter(([_, mapping]) => {
+      if (!mapping.include) return false;
+      return !templateKeys.includes(mapping.key);
+    });
+    
+    if (mismatches.length > 0) {
+      console.warn('Found mismatches between column mapping and template');
+    }
+  }, [template, columnMapping]);
+
   // Separate validation logic
   const validateData = React.useCallback(() => {
     if (!shouldValidateRef.current) return;
@@ -59,20 +73,31 @@ export default function SimpleValidation({
       const displayRowIndex = rowIdx + headerRowIndex + 1;
       
       // For each column mapping
-      Object.entries(columnMapping).forEach(([templateField, mapping]) => {
+      Object.entries(columnMapping).forEach(([colIndexStr, mapping]) => {
         if (!mapping.include) return;
         
-        const colIdx = parseInt(mapping.key);
+        // The column index in the data
+        const colIdx = parseInt(colIndexStr);
         if (isNaN(colIdx)) return;
+        
+        // The key in the template
+        const templateField = mapping.key;
         
         // Find the corresponding template field
         const field = template.columns.find(col => col.key === templateField);
-        if (!field) return;
+        if (!field) {
+          console.warn(`No matching template field found for ${templateField}`);
+          return;
+        }
         
         // Get the value (use edited value if available)
         const originalValue = row.values[colIdx];
         const editedValue = editedValuesRef.current[rowIdx]?.[colIdx];
         const value = editedValue !== undefined ? editedValue : originalValue;
+        
+        // Access field properties safely
+        const fieldAny = field as any;
+        const fieldType = fieldAny.type || fieldAny.data_type || '';
         
         // Skip validation if value is empty and not required
         if ((value === '' || value === null || value === undefined) && !field.required) {
@@ -89,11 +114,8 @@ export default function SimpleValidation({
           return;
         }
         
-        // Type validation (basic)
-        const fieldAny = field as any;
-        
         // Number validation
-        if (fieldAny.type === 'number' && value !== '' && isNaN(Number(value))) {
+        if ((fieldType === 'number' || fieldType === 'numeric') && value !== '' && isNaN(Number(value))) {
           newErrors.push({
             rowIndex: displayRowIndex,
             columnIndex: colIdx,
@@ -102,7 +124,7 @@ export default function SimpleValidation({
         }
         
         // Boolean validation with template support
-        if (fieldAny.type === 'boolean' && value !== '') {
+        if ((fieldType === 'boolean' || fieldType === 'bool') && value !== '') {
           const template = fieldAny.template || 'true/false';
           let isValid = false;
           
@@ -123,8 +145,68 @@ export default function SimpleValidation({
           }
         }
         
+        // Date validation
+        if ((fieldType === 'date' || fieldType === 'datetime') && value !== '') {
+          // Robust date validation
+          let isValidDate = false;
+          
+          try {
+            // Test common date formats
+            const dateValue = String(value).trim();
+            
+            // Reject numeric-only values (like "1234")
+            const isNumeric = /^\d+$/.test(dateValue);
+            if (isNumeric) {
+              newErrors.push({
+                rowIndex: displayRowIndex,
+                columnIndex: colIdx,
+                message: `${field.name} must be a valid date format (not just numbers)`
+              });
+              return; // Skip further validation
+            } 
+            
+            // Basic validation
+            const date = new Date(value);
+            isValidDate = !isNaN(date.getTime());
+            
+            // Additional validation for year-only inputs
+            if (isValidDate) {
+              const isoString = date.toISOString();
+              // If input was just a year but ISO date is January 1st, it's not a valid date format
+              if (/^\d{4}-01-01T00:00:00.000Z$/.test(isoString) && !/^\d{4}-\d{2}-\d{2}/.test(String(value))) {
+                isValidDate = false;
+              }
+            }
+          } catch (e) {
+            isValidDate = false;
+          }
+          
+          if (!isValidDate) {
+            newErrors.push({
+              rowIndex: displayRowIndex,
+              columnIndex: colIdx,
+              message: `${field.name} must be a valid date format`
+            });
+          }
+        }
+        
+        // Email validation
+        if (fieldType === 'email' && value !== '') {
+          // Regular expression for validating an Email
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          const isValidEmail = emailRegex.test(String(value));
+          
+          if (!isValidEmail) {
+            newErrors.push({
+              rowIndex: displayRowIndex,
+              columnIndex: colIdx,
+              message: `${field.name} must be a valid email address`
+            });
+          }
+        }
+        
         // Select validation
-        if (fieldAny.type === 'select' && value !== '') {
+        if ((fieldType === 'select' || fieldType === 'enum') && value !== '') {
           // Get options from validation_format
           const options = fieldAny.validation_format ? fieldAny.validation_format.split(',').map((opt: string) => opt.trim()) : [];
           

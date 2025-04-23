@@ -92,14 +92,20 @@ export default function Main(props: CSVImporterProps) {
         
         // Convert the schema to the format expected by the importer
         const schemaTemplate = {
-          columns: schemaData.fields.map((field: any) => ({
-            name: field.name,
-            key: field.key || field.name.toLowerCase().replace(/\s+/g, '_'), // Convert to snake_case for keys if key is not provided
-            required: field.required || false,
-            description: field.description || `${field.name} field`,
-            data_type: field.data_type
-          }))
+          columns: schemaData.fields.map((field: any) => {
+            console.log('Processing backend field:', field);
+            return {
+              name: field.name,
+              key: field.key || field.name.toLowerCase().replace(/\s+/g, '_'), // Convert to snake_case for keys if key is not provided
+              required: field.required || false,
+              description: field.description || `${field.name} field`,
+              type: field.type, // Use the type directly from backend
+              data_type: field.type, // Also store as data_type for compatibility
+              validation_format: field.validation_format
+            };
+          })
         };
+        console.log('Converted schema template:', schemaTemplate);
         
         const [parsedTemplate, parsedTemplateError] = convertRawTemplate(schemaTemplate);
         if (parsedTemplateError) {
