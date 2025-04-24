@@ -15,3 +15,4 @@ alembic
 pydantic-settings
 fastapi-users[sqlalchemy]
 asyncpg
+openai>=1.0.0

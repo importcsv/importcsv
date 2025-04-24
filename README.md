@@ -17,6 +17,7 @@ An intuitive, flexible, open-source CSV importer focused on exceptional develope
 
 - **Intelligent LLM-powered Column Matching & Data Cleaning**
   - Auto-match column names/types via GPT
+  - Smart column mapping with AI-powered suggestions
   - One-click auto-correction & validation fixes
 
 - **Comprehensive Validation**
@@ -53,6 +54,22 @@ Frontend Embeddable Widget (React SDK)
 - **LLM Integration**: LiteLLM
 - **Deployment**: Docker & Docker-compose
 
+## LLM-Enhanced Column Mapping
+
+ImportCSV now features AI-powered column mapping that intelligently matches CSV columns to your schema:
+
+- **Smart Semantic Matching**: Understands relationships between column names beyond string similarity
+- **Context-Aware**: Uses sample data to improve matching accuracy
+- **User Control**: Toggle between AI and traditional matching
+
+### Configuration
+
+1. Set your OpenAI API key in the backend `.env` file:
+   ```
+   OPENAI_API_KEY=your-api-key-here
+   OPENAI_MODEL=gpt-3.5-turbo  # or gpt-4 for higher accuracy
+   ```
+
 ## Getting Started
 
 ### Prerequisites
@@ -60,6 +77,7 @@ Frontend Embeddable Widget (React SDK)
 - Python 3.11+
 - Node.js 18+
 - Docker & Docker Compose (for deployment)
+- OpenAI API key (for LLM-enhanced features)
 
 ### Installation
 

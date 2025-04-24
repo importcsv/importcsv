@@ -1,6 +1,7 @@
 import { FormEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@chakra-ui/button";
+import { Button, Switch, Flex, Text, Tooltip, Icon } from "@chakra-ui/react";
+import { PiInfo } from "react-icons/pi";
 import Errors from "../../components/Errors";
 import Table from "../../components/Table";
 import { Template, UploadColumn } from "../../types";
@@ -17,6 +18,8 @@ export default function MapColumns({
   onSuccess,
   onCancel,
   isSubmitting,
+  importerId,
+  backendUrl,
 }: MapColumnsProps) {
   if (data.rows.length === 0) {
     return null;
@@ -25,6 +28,9 @@ export default function MapColumns({
   const { t } = useTranslation();
   const headerRowIndex = selectedHeaderRow ? selectedHeaderRow : 0;
   let sampleDataRows = data.rows.slice(headerRowIndex + 1, headerRowIndex + 4);
+  
+  // State for LLM suggestions toggle - default to true for better UX
+  const [useLLMSuggestions, setUseLLMSuggestions] = useState(true);
 
   const uploadColumns: UploadColumn[] = data.rows[headerRowIndex]?.values.map((cell, index) => {
     let sample_data = sampleDataRows.map((row) => row.values[index]);
@@ -34,7 +40,15 @@ export default function MapColumns({
       sample_data,
     };
   });
-  const { rows, formValues } = useMapColumnsTable(uploadColumns, template.columns, columnMapping, isSubmitting);
+  const { rows, formValues, isLoadingLLMSuggestions } = useMapColumnsTable(
+    uploadColumns, 
+    template.columns, 
+    columnMapping, 
+    isSubmitting,
+    importerId,
+    backendUrl,
+    useLLMSuggestions
+  );
   const [error, setError] = useState<string | null>(null);
 
   const verifyRequiredColumns = (template: Template, formValues: { [uploadColumnIndex: number]: TemplateColumnMapping }): boolean => {
@@ -69,6 +83,22 @@ export default function MapColumns({
 
   return (
     <div className={style.content}>
+      {importerId && backendUrl && (
+        <Flex align="center" mb={4}>
+          <Switch 
+            id="llm-suggestions" 
+            isChecked={useLLMSuggestions}
+            onChange={(e) => setUseLLMSuggestions(e.target.checked)}
+            colorScheme="blue"
+            mr={2}
+          />
+          <Text fontSize="sm">Use AI-powered matching</Text>
+          <Tooltip label="Suggests better column matches using machine learning" placement="top">
+            <Icon as={PiInfo} ml={2} color="gray.500" />
+          </Tooltip>
+          {isLoadingLLMSuggestions && <Text ml={2} fontSize="sm" color="blue.500">Loading...</Text>}
+        </Flex>
+      )}
       <form onSubmit={onSubmit}>
         {data ? (
           <div className={style.tableWrapper}>

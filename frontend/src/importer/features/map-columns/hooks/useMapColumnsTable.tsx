@@ -7,14 +7,20 @@ import { TemplateColumn, UploadColumn } from "../../../types";
 import stringsSimilarity from "../../../utils/stringSimilarity";
 import { TemplateColumnMapping } from "../types";
 import style from "../style/MapColumns.module.scss";
+import { getLLMColumnMappingSuggestions } from "../../../services/api";
 
 export default function useMapColumnsTable(
   uploadColumns: UploadColumn[],
   templateColumns: TemplateColumn[] = [],
   columnsValues: { [uploadColumnIndex: number]: TemplateColumnMapping },
-  isLoading?: boolean
+  isLoading?: boolean,
+  importerId?: string,
+  backendUrl?: string,
+  useLLMSuggestions: boolean = false
 ) {
   const { t } = useTranslation();
+  const [isLoadingLLMSuggestions, setIsLoadingLLMSuggestions] = useState(false);
+  
   useEffect(() => {
     Object.keys(columnsValues).map((uploadColumnIndexStr) => {
       const uploadColumnIndex = Number(uploadColumnIndexStr);
@@ -39,12 +45,18 @@ export default function useMapColumnsTable(
     const usedTemplateColumns = new Set<string>();
     const initialObject: { [key: number]: TemplateColumnMapping } = {};
 
-    return uploadColumns.reduce((acc, uc) => {
+    // Create initial mappings using traditional string matching
+    const initialMappings = uploadColumns.reduce((acc, uc) => {
       const matchedSuggestedTemplateColumn = templateColumns?.find((tc) => isSuggestedMapping(tc, uc.name));
 
       if (matchedSuggestedTemplateColumn && matchedSuggestedTemplateColumn.key) {
         usedTemplateColumns.add(matchedSuggestedTemplateColumn.key);
-        acc[uc.index] = { key: matchedSuggestedTemplateColumn.key, include: true };
+        acc[uc.index] = { 
+          key: matchedSuggestedTemplateColumn.key, 
+          include: true,
+          // Don't mark as selected so LLM can override it
+          selected: false 
+        };
         return acc;
       }
 
@@ -59,10 +71,13 @@ export default function useMapColumnsTable(
       acc[uc.index] = {
         key: similarTemplateColumn?.key || "",
         include: !!similarTemplateColumn?.key,
-        selected: !!similarTemplateColumn?.key,
+        // Don't mark as selected so LLM can override it
+        selected: false,
       };
       return acc;
     }, initialObject);
+
+    return initialMappings;
   });
 
   const [selectedValues, setSelectedValues] = useState<{ key: string; selected: boolean | undefined }[]>(
@@ -139,5 +154,68 @@ export default function useMapColumnsTable(
       };
     });
   }, [values, isLoading]);
-  return { rows, formValues: values };
+  // Fetch LLM suggestions if enabled
+  useEffect(() => {
+    const fetchLLMSuggestions = async () => {
+      if (!useLLMSuggestions || !importerId || !backendUrl || 
+          uploadColumns.length === 0 || templateColumns.length === 0) {
+        return;
+      }
+
+      try {
+        setIsLoadingLLMSuggestions(true);
+        const llmSuggestions = await getLLMColumnMappingSuggestions(
+          backendUrl,
+          importerId,
+          uploadColumns,
+          templateColumns
+        );
+
+        if (Object.keys(llmSuggestions).length > 0) {
+          // Create a new mappings object preserving user selections
+          const newMappings: { [key: number]: TemplateColumnMapping } = {};
+          const usedTemplateColumns = new Set<string>();
+          
+          // Preserve user selections
+          Object.entries(values).forEach(([columnIndexStr, mapping]) => {
+            const columnIndex = Number(columnIndexStr);
+            if (mapping.selected === true && mapping.key) {
+              newMappings[columnIndex] = mapping;
+              usedTemplateColumns.add(mapping.key);
+            } else {
+              newMappings[columnIndex] = { key: "", include: false, selected: false };
+            }
+          });
+          
+          // Apply LLM suggestions to unmapped columns
+          Object.entries(llmSuggestions).forEach(([columnIndexStr, suggestion]) => {
+            const index = Number(columnIndexStr);
+            if (!newMappings[index]?.selected && !usedTemplateColumns.has(suggestion.key)) {
+              newMappings[index] = suggestion;
+              usedTemplateColumns.add(suggestion.key);
+            }
+          });
+          
+          // Update state
+          setValues(newMappings);
+          setSelectedValues(Object.values(newMappings).map((mapping: TemplateColumnMapping) => ({
+            key: mapping.key,
+            selected: mapping.selected
+          })) as { key: string; selected: boolean | undefined }[]);
+        }
+      } catch (error) {
+        console.error('Error fetching LLM suggestions:', error);
+      } finally {
+        setIsLoadingLLMSuggestions(false);
+      }
+    };
+
+    fetchLLMSuggestions();
+  }, [useLLMSuggestions, importerId, backendUrl, JSON.stringify(uploadColumns), JSON.stringify(templateColumns)]);
+
+  return { 
+    rows, 
+    formValues: values,
+    isLoadingLLMSuggestions 
+  };
 }

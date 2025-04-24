@@ -1,7 +1,7 @@
 import Papa from "papaparse";
 import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
-import { IconButton } from "@chakra-ui/button";
+import { IconButton, Button } from "@chakra-ui/react";
 import Errors from "../../components/Errors";
 import Stepper from "../../components/Stepper";
 import { CSVImporterProps } from "../../../types";
@@ -381,6 +381,8 @@ export default function Main(props: CSVImporterProps) {
             }}
             isSubmitting={isSubmitting}
             onCancel={skipHeader ? reload : () => goBack(StepEnum.RowSelection)}
+            importerId={importerId}
+            backendUrl={backendUrl}
           />
         );
       case StepEnum.Validation:
