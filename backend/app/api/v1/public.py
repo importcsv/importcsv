@@ -150,7 +150,7 @@ async def process_public_import(
 async def suggest_fixes(request: SuggestFixesRequest):
     """
     Use AI to suggest fixes for validation errors in CSV data
-    
+
     This endpoint takes error information and returns suggested fixes with explanations
     """
     try:
@@ -165,10 +165,10 @@ async def suggest_fixes(request: SuggestFixesRequest):
         if request.data_rows:
             print(f"Sample row structure: {json.dumps(request.data_rows[0]) if request.data_rows else 'None'}")
         print("=" * 80)
-        
+
         # Set a maximum processing time to avoid hanging
         import asyncio
-        
+
         # Call the LLM service with timeout
         try:
             async def get_suggestions():
@@ -178,21 +178,21 @@ async def suggest_fixes(request: SuggestFixesRequest):
                     template_fields=request.template_fields,
                     valid_rows=request.valid_rows
                 )
-                
+
             # Set a 10-second timeout
             suggestions = await asyncio.wait_for(get_suggestions(), timeout=10.0)
             return suggestions
-            
+
         except asyncio.TimeoutError:
             print("Request timed out after 10 seconds, returning fallback response")
             # Return a simple mock response if the request times out
             return {
                 "fixes": [
                     {
-                        "row_index": 1, 
+                        "row_index": 1,
                         "column_index": 7,
                         "original_value": "1234",
-                        "suggested_value": "2023-10-15", 
+                        "suggested_value": "2023-10-15",
                         "explanation": "The warranty date should be in YYYY-MM-DD format."
                     }
                 ]
@@ -242,9 +242,9 @@ async def get_public_schema(
     importer = db.query(Importer).filter(Importer.id == importer_uuid).first()
     if not importer:
         raise HTTPException(status_code=404, detail="Importer not found")
-    
+
     # Convert UUID fields to strings
     importer.id = str(importer.id)
     importer.user_id = str(importer.user_id)
-    
+
     return importer

@@ -15,6 +15,7 @@ from app.models.user import User
 from app.schemas.importer import ImporterField
 from app.services.file_processor import file_processor
 from app.services.webhook import webhook_service, WebhookEventType
+from app.schemas.webhook import WebhookEventCreate
 import sys
 
 logger = logging.getLogger(__name__)
@@ -529,6 +530,14 @@ class ImportProcessor:
         """
         Helper method to send completion or error webhooks.
         """
+        # Log detailed webhook debugging info
+        logger.info(f"DEBUG: _send_completion_webhook called for job {import_job.id}")
+        logger.info(f"DEBUG: Importer: {importer.id if importer else 'None'}")
+        
+        if importer:
+            logger.info(f"DEBUG: Webhook URL: {importer.webhook_url}")
+            logger.info(f"DEBUG: Webhook enabled: {importer.webhook_enabled}")
+            
         # Check if importer object exists first
         if not importer:
             logger.warning(f"Webhook skipped for job {import_job.id}: Importer object is None.")
@@ -538,7 +547,10 @@ class ImportProcessor:
             logger.debug(f"Webhook skipped for job {import_job.id}: Webhook URL not set or not enabled for importer {importer.id}.")
             return
 
-        event_type = "import_completed" if import_job.status == ImportStatus.COMPLETED else "import_failed"
+        logger.info(f"DEBUG: Preparing webhook for job {import_job.id}, status {import_job.status}")
+        logger.info(f"DEBUG: Using webhook URL: {importer.webhook_url}")
+            
+        event_type = WebhookEventType.IMPORT_FINISHED if import_job.status == ImportStatus.COMPLETED else "import.failed"
         payload = {
             "job_id": str(import_job.id),
             "importer_id": str(importer.id),
@@ -550,36 +562,90 @@ class ImportProcessor:
             "invalid_rows": import_job.error_count,
             "processed_rows": import_job.processed_rows, # Add processed rows count
             "error_message": import_job.error_message if import_job.status == ImportStatus.FAILED else None,
-            "message": f"Import job {import_job.status.value}." + (f" Error: {import_job.error_message}" if import_job.error_message else "")
+            "message": f"Import job {import_job.status.value}." + (f" Error: {import_job.error_message}" if import_job.error_message else ""),
+            "timestamp": datetime.utcnow().isoformat(),
+            "webhook_url": importer.webhook_url  # Include webhook URL in payload for debugging
         }
 
-        # Optionally include processed data sample in webhook (be cautious with data size/sensitivity)
-        if event_type == "import_completed" and importer.include_data_in_webhook and processed_df is not None and not processed_df.empty:
+        # Handle the case where include_data_in_webhook is not in the model yet
+        should_include_data = False
+        
+        # Safe way to check attribute existence and value
+        try:
+            if hasattr(importer, 'include_data_in_webhook') and importer.include_data_in_webhook is not None:
+                should_include_data = importer.include_data_in_webhook
+            else:
+                # Default to including data
+                should_include_data = True
+        except:
+            # If any error, default to including data
+            should_include_data = True
+        
+        # Always include data sample in webhook if the processed_df exists
+        if should_include_data and processed_df is not None and not processed_df.empty:
              # Example: Include first 5 rows as JSON
              try:
-                 # Make sure column names are suitable for JSON (e.g., no weird characters)
-                 sample_data = processed_df.head(importer.webhook_data_sample_size or 5).to_dict(orient='records') # Use configured sample size or default 5
+                 # Default sample size
+                 sample_size = 5
+                 
+                 # Safe way to check for webhook_data_sample_size
+                 try:
+                     if hasattr(importer, 'webhook_data_sample_size') and importer.webhook_data_sample_size is not None:
+                         sample_size = importer.webhook_data_sample_size
+                 except:
+                     pass  # Keep default sample size
+                 
+                 sample_data = processed_df.head(sample_size).to_dict(orient='records')
                  payload['data_sample'] = sample_data
-                 logger.debug(f"Including data sample (up to {importer.webhook_data_sample_size or 5} rows) in webhook for job {import_job.id}")
+                 logger.info(f"DEBUG: Including data sample (up to {sample_size} rows) in webhook for job {import_job.id}")
              except Exception as e:
                  logger.warning(f"Could not serialize data sample for webhook payload for job {import_job.id}: {e}")
+                 logger.warning(f"Error details: {str(e)}")
 
-
-        webhook_event = WebhookEventCreate(
-            importer_id=importer.id,
-            event_type=event_type,
-            payload=payload
-        )
-
-        # Use background task to send webhook to avoid blocking completion
-        # Need access to BackgroundTasks instance or call a helper that has it.
-        # Let's assume webhook_service can handle background sending internally for now.
+        # Create webhook event in database and send directly
         try:
-            # Assuming webhook_service method handles potential background task scheduling
-            await self.webhook_service.send_webhook_in_background(webhook_event)
-            logger.info(f"Scheduled '{event_type}' webhook task for job {import_job.id}")
+            # Create event in database for record-keeping
+            await self.webhook_service.create_event(
+                db=db,
+                user_id=import_job.user_id,
+                import_job_id=import_job.id,
+                event_type=event_type,
+                payload=payload
+            )
+            logger.info(f"DEBUG: Created '{event_type}' webhook event in database for job {import_job.id}")
+
+            # Double-check URL is valid again
+            if not importer.webhook_url or not importer.webhook_url.strip() or not (importer.webhook_url.startswith('http://') or importer.webhook_url.startswith('https://')):
+                logger.error(f"DEBUG: Invalid webhook URL: '{importer.webhook_url}' - cannot send webhook")
+                return
+                
+            # Sanitize webhook URL
+            webhook_url = importer.webhook_url.strip()
+            logger.info(f"DEBUG: Final webhook URL being used: '{webhook_url}'")
+
+            # Send webhook directly using the importer's URL
+            try:
+                logger.info(f"DEBUG: About to send webhook to {webhook_url}")
+                
+                success = await self.webhook_service.send_webhook(
+                    url=webhook_url,
+                    payload=payload,
+                    secret=self.webhook_service.webhook_secret
+                )
+                
+                if success:
+                    logger.info(f"Successfully sent webhook to {webhook_url} for job {import_job.id}")
+                else:
+                    logger.warning(f"Failed to send webhook to {webhook_url} for job {import_job.id}")
+            except Exception as send_err:
+                logger.error(f"DEBUG: Exception when sending webhook: {str(send_err)}")
+                import traceback
+                logger.error(f"DEBUG: Webhook send traceback: {traceback.format_exc()}")
+                
         except Exception as e:
-             logger.error(f"Failed to schedule webhook task for job {import_job.id}: {e}", exc_info=True)
+            logger.error(f"Failed to send webhook for job {import_job.id}: {e}", exc_info=True)
+            import traceback
+            logger.error(f"DEBUG: Webhook outer traceback: {traceback.format_exc()}")
 
 # Instantiate the services needed by ImportProcessor
 webhook_service = WebhookService()

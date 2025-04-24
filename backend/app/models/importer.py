@@ -16,6 +16,8 @@ class Importer(Base):
     # Webhook settings
     webhook_url = Column(String, nullable=True)  # URL where imported data is sent to
     webhook_enabled = Column(Boolean, default=True)  # Whether to use webhook or onData callback
+    include_data_in_webhook = Column(Boolean, default=True)  # Whether to include processed data in webhook
+    webhook_data_sample_size = Column(Integer, default=5)  # Number of rows to include in webhook sample
     
     # Import settings
     include_unmatched_columns = Column(Boolean, default=False)  # Include all unmatched columns in import

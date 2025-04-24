@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
 import os
+import logging
 from dotenv import load_dotenv
 
 from app.api.routes import api_router
@@ -10,6 +11,15 @@ from app.core.config import settings
 from app.auth.auth import fastapi_users, auth_backend
 from app.models.user import User
 from app.schemas.user import UserCreate, UserRead, UserUpdate
+
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    handlers=[
+        logging.StreamHandler(),  # Log to console
+    ]
+)
 
 # Load environment variables
 load_dotenv()

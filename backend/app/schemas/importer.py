@@ -36,6 +36,8 @@ class ImporterBase(BaseModel):
     fields: List[ImporterField]
     webhook_url: Optional[str] = None
     webhook_enabled: bool = True
+    include_data_in_webhook: Optional[bool] = None 
+    webhook_data_sample_size: Optional[int] = None
     include_unmatched_columns: bool = False
     filter_invalid_rows: bool = False
     disable_on_invalid_rows: bool = False
@@ -54,6 +56,8 @@ class ImporterUpdate(BaseModel):
     fields: Optional[List[ImporterField]] = None
     webhook_url: Optional[str] = None
     webhook_enabled: Optional[bool] = None
+    include_data_in_webhook: Optional[bool] = None
+    webhook_data_sample_size: Optional[int] = None
     include_unmatched_columns: Optional[bool] = None
     filter_invalid_rows: Optional[bool] = None
     disable_on_invalid_rows: Optional[bool] = None

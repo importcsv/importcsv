@@ -96,18 +96,42 @@ async def update_importer(
     if not importer:
         raise HTTPException(status_code=404, detail="Importer not found")
     
+    # Debug webhook settings before update
+    print(f"DEBUG: Before update - importer {importer_id} webhook_url: '{importer.webhook_url}'")
+    print(f"DEBUG: Before update - importer {importer_id} webhook_enabled: {importer.webhook_enabled}")
+    
     update_data = importer_in.dict(exclude_unset=True)
+    
+    # Print the update data for debugging
+    print(f"DEBUG: Update data for importer {importer_id}: {update_data}")
     
     if "fields" in update_data and update_data["fields"]:
         # Convert ImporterField objects to dictionaries for JSON serialization
         update_data["fields"] = [field.dict() for field in update_data["fields"]]
     
+    # Special handling for webhook_url to ensure it's valid
+    if 'webhook_url' in update_data:
+        webhook_url = update_data['webhook_url']
+        print(f"DEBUG: Setting webhook_url to: '{webhook_url}'")
+        if webhook_url and not (webhook_url.startswith('http://') or webhook_url.startswith('https://')):
+            print(f"DEBUG: Warning - importer {importer_id} received potentially invalid webhook_url: '{webhook_url}'")
+            # Fix common issues like missing protocol
+            if webhook_url and not webhook_url.startswith('http'):
+                fixed_url = f"https://{webhook_url}"
+                print(f"DEBUG: Fixing webhook URL by adding https:// prefix: '{fixed_url}'")
+                update_data['webhook_url'] = fixed_url
+    
     for field, value in update_data.items():
+        print(f"DEBUG: Setting importer field '{field}' to: {value}")
         setattr(importer, field, value)
     
     db.add(importer)
     db.commit()
     db.refresh(importer)
+    
+    # Debug webhook settings after update
+    print(f"DEBUG: After update - importer {importer_id} webhook_url: '{importer.webhook_url}'")
+    print(f"DEBUG: After update - importer {importer_id} webhook_enabled: {importer.webhook_enabled}")
     
     # Convert UUID fields to strings
     importer.id = str(importer.id)

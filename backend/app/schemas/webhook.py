@@ -1,22 +1,24 @@
 from pydantic import BaseModel, Field, HttpUrl
 from typing import Dict, Any, List, Optional
 from datetime import datetime
+import uuid
 from app.models.webhook import WebhookEventType
 
 # Base WebhookEvent model
 class WebhookEventBase(BaseModel):
-    event_type: WebhookEventType
-    import_job_id: int
+    event_type: str
     payload: Dict[str, Any]
 
 # WebhookEvent creation model
 class WebhookEventCreate(WebhookEventBase):
-    pass
+    importer_id: Optional[uuid.UUID] = None
+    import_job_id: Optional[uuid.UUID] = None
 
 # WebhookEvent in DB
 class WebhookEventInDBBase(WebhookEventBase):
-    id: int
-    user_id: int
+    id: uuid.UUID
+    user_id: uuid.UUID
+    import_job_id: uuid.UUID
     delivered: bool
     delivery_attempts: int
     last_delivery_attempt: Optional[datetime] = None
