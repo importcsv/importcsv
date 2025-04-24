@@ -395,6 +395,7 @@ export default function Main(props: CSVImporterProps) {
             onSuccess={handleValidationComplete}
             onCancel={handleBackToMapColumns}
             isSubmitting={isSubmitting}
+            backendUrl={backendUrl}
           />
         );
       case StepEnum.Complete:

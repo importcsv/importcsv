@@ -17,6 +17,7 @@ export interface ValidationProps {
   onSuccess: (validData: any) => void;
   onCancel: () => void;
   isSubmitting: boolean;
+  backendUrl?: string;
 }
 
 export interface ValidationState {

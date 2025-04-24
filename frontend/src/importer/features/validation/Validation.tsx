@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo, FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Flex, Text, Box, Switch, Tooltip, Input } from '@chakra-ui/react';
+import { Button, Flex, Text, Box, Switch, Tooltip, Input, useDisclosure } from '@chakra-ui/react';
 import { ValidationProps } from './types';
 import style from './style/Validation.module.scss';
+import AIFixModal from './AIFixModal';
 
 // Validation component for checking imported data
 export default function Validation({
@@ -13,8 +14,10 @@ export default function Validation({
   onSuccess,
   onCancel,
   isSubmitting,
+  backendUrl,
 }: ValidationProps) {
   const { t } = useTranslation();
+  const { isOpen, onOpen, onClose } = useDisclosure();
   
   // Basic state setup
   const [editedValues, setEditedValues] = useState<Record<number, Record<number, any>>>({});
@@ -287,6 +290,23 @@ export default function Validation({
     });
   };
   
+  // Handle applying AI-suggested fixes
+  const handleApplyFixes = (fixes: Array<{rowIndex: number, columnIndex: number, value: string}>) => {
+    // Create a new edited values object with the fixes applied
+    const newEditedValues = { ...editedValues };
+    
+    fixes.forEach(fix => {
+      if (!newEditedValues[fix.rowIndex]) {
+        newEditedValues[fix.rowIndex] = {};
+      }
+      newEditedValues[fix.rowIndex][fix.columnIndex] = fix.value;
+    });
+    
+    setEditedValues(newEditedValues);
+    shouldValidateRef.current = true; // Trigger validation
+    validateData(); // Re-validate immediately
+  };
+  
   // Render the component
   return (
     <div className={style.validationContainer}>
@@ -298,9 +318,22 @@ export default function Validation({
       <div className={style.validationContent}>
         {errors.length > 0 && (
           <div className={style.errorSummary}>
-            <Text color="red.500">
-              {t('validation.errorCount', { count: errors.length })}
-            </Text>
+            <Flex justify="space-between" align="center">
+              <Text color="red.500">
+                {t('validation.errorCount', { count: errors.length })}
+              </Text>
+              {backendUrl && (
+                <Button 
+                  size="sm" 
+                  colorScheme="blue" 
+                  leftIcon={<span role="img" aria-label="AI">✨</span>}
+                  onClick={onOpen}
+                  isDisabled={errors.length === 0}
+                >
+                  AI Smart Fix
+                </Button>
+              )}
+            </Flex>
           </div>
         )}
         
@@ -383,6 +416,20 @@ export default function Validation({
           </Flex>
         </form>
       </div>
+      
+      {/* AI Fix Modal */}
+      <AIFixModal
+        isOpen={isOpen}
+        onClose={onClose}
+        errors={errors}
+        dataRows={dataRows}
+        headerRow={headerRow}
+        templateFields={template.columns}
+        selectedHeaderRow={selectedHeaderRow || 0}
+        columnMapping={columnMapping}
+        backendUrl={backendUrl || ''}
+        onApplyFixes={handleApplyFixes}
+      />
     </div>
   );
 }
