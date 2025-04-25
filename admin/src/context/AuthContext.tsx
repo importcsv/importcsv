@@ -115,8 +115,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = (data: { token: string; refreshToken: string; user?: any }) => {
     try {
+        console.log('AuthContext: Storing tokens in context and localStorage');
         localStorage.setItem(AUTH_TOKEN_KEY, data.token); // Save access token to localStorage
-        localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken); // Save refresh token to localStorage
+        
+        // Make sure we have a refresh token
+        if (data.refreshToken) {
+            localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken); // Save refresh token to localStorage
+            console.log('AuthContext: Refresh token stored');
+        } else {
+            console.warn('AuthContext: No refresh token provided to login function');
+        }
+        
         setIsAuthenticated(true);
         setToken(data.token);
         setRefreshToken(data.refreshToken);

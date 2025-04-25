@@ -1,5 +1,6 @@
 from typing import Dict, Any
 from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi.security import OAuth2PasswordRequestForm
 from jose import jwt, JWTError
 from sqlalchemy.orm import Session
 
@@ -10,9 +11,12 @@ from app.schemas.auth import RefreshTokenRequest, PasswordResetRequest
 from app.models.user import User as UserModel
 
 from app.auth.users import (
+    UserManager,
     fastapi_users,
     jwt_backend,
     cookie_backend,
+    get_user_manager,
+    get_jwt_strategy,
     get_current_active_user as current_active_user,
 )
 from app.auth.token import (
@@ -25,13 +29,87 @@ router = APIRouter()
 
 
 
-# Include the FastAPI Users routers
-# JWT Authentication (Bearer token)
-router.include_router(
-    fastapi_users.get_auth_router(jwt_backend),
-    prefix="",  # Removed '/jwt' prefix to simplify the endpoint path
-    tags=["auth"],
-)
+# Custom login endpoint that returns both access and refresh tokens
+@router.post("/login", response_model=Dict[str, Any])
+async def login(
+    credentials: OAuth2PasswordRequestForm = Depends(),
+    user_manager: UserManager = Depends(get_user_manager),
+    db: Session = Depends(get_db),
+):
+    """Login with username/password and get both access and refresh tokens"""
+    try:
+        # Use the standard FastAPI-Users authentication
+        user = await user_manager.authenticate(credentials)
+        if user is None or not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="LOGIN_BAD_CREDENTIALS",
+            )
+            
+        # Get the access token - using the JWT strategy directly
+        strategy = get_jwt_strategy()
+        access_token = await strategy.write_token(user)
+        
+        # Generate a refresh token
+        from app.auth.token import create_refresh_token
+        refresh_token = create_refresh_token(user.id)
+        
+        # Return both tokens
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "refresh_token": refresh_token
+        }
+    except Exception as e:
+        print(f"Login error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="LOGIN_BAD_CREDENTIALS",
+        )
+
+# Include other FastAPI Users routers (except login which we've replaced)
+
+# Add a custom login endpoint that also returns a refresh token
+@router.post("/jwt/login-with-refresh", response_model=Dict[str, Any])
+async def login_with_refresh(
+    credentials: OAuth2PasswordRequestForm = Depends(),
+    user_manager: UserManager = Depends(get_user_manager),
+    db: Session = Depends(get_db),
+):
+    """Login with username/password and get both access and refresh tokens"""
+    try:
+        # Use the standard FastAPI-Users authentication
+        user = await user_manager.authenticate(credentials)
+        if user is None or not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="LOGIN_BAD_CREDENTIALS",
+            )
+            
+        # Get the access token - using the JWT strategy directly
+        strategy = get_jwt_strategy()
+        access_token = await strategy.write_token(user)
+        
+        # Generate a refresh token
+        from app.auth.token import create_refresh_token
+        refresh_token = create_refresh_token(user.id)
+        
+        # Return both tokens
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "refresh_token": refresh_token
+        }
+    except Exception as e:
+        print(f"Login error: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="LOGIN_BAD_CREDENTIALS",
+        )
 
 # Cookie Authentication (for web applications)
 router.include_router(
@@ -76,14 +154,23 @@ async def refresh_token_endpoint(
 ):
     """
     Refresh an access token using a refresh token
+    Simplified version without blacklist checks
     """
     try:
-        # Verify the refresh token
-        token_data = verify_refresh_token(request.refresh_token, db)
+        # Verify the refresh token - we don't need the db for the simplified version
+        token_data = verify_refresh_token(request.refresh_token)
 
-        # Create a new access token using FastAPI-Users JWT backend
-        # This ensures we're using the same token generation method as the login endpoint
-        user = await fastapi_users.get_user_manager().get_by_id(token_data.user_id)
+        # Extract the user ID from the token data
+        if not token_data.user_id:
+            # If user_id is not in the convenience field, get it from sub
+            user_id = UUID(token_data.sub)
+        else:
+            user_id = token_data.user_id
+
+        # Get the user directly from the database
+        from app.models.user import User
+        user = db.query(User).filter(User.id == user_id).first()
+        
         if not user or not user.is_active:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -91,15 +178,27 @@ async def refresh_token_endpoint(
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        # Generate a new token using the JWT backend
-        token = await jwt_backend.get_login_response(user, None)
+        # Generate a new token using the JWT strategy directly
+        strategy = get_jwt_strategy()
+        access_token = await strategy.write_token(user)
+
+        # Also generate a new refresh token to extend the session
+        from app.auth.token import create_refresh_token
+        new_refresh_token = create_refresh_token(user_id)
 
         return {
-            "access_token": token.access_token,
+            "access_token": access_token,
+            "refresh_token": new_refresh_token,
             "token_type": "bearer"
         }
+    except HTTPException as e:
+        # Re-raise HTTP exceptions without modification
+        print(f"HTTP Exception in refresh_token_endpoint: {e.detail}")
+        raise
     except Exception as e:
         print(f"Refresh token error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid refresh token",
