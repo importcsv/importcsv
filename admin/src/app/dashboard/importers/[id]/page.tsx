@@ -139,13 +139,19 @@ export default function ImporterDetailPage() {
     setError(null);
     
     try {
+      if (!importer) {
+        throw new Error('Importer data is not available');
+      }
+
       // Use the API client to update the importer
+      // Include fields from the current importer state to ensure they are preserved
       await importersApi.updateImporter(importerId, {
         webhook_url: webhookUrl,
         webhook_enabled: webhookEnabled,
         include_unmatched_columns: includeUnmatchedColumns,
         filter_invalid_rows: filterInvalidRows,
-        disable_on_invalid_rows: disableOnInvalidRows
+        disable_on_invalid_rows: disableOnInvalidRows,
+        fields: importer.fields // Include the current fields
       });
       
       setNotification({
