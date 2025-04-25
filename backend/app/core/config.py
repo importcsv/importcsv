@@ -1,47 +1,139 @@
-from pydantic_settings import BaseSettings
-from typing import List, Optional, Union
+import logging
 import os
+
 from dotenv import load_dotenv
+from pathlib import Path
+from pydantic_settings import BaseSettings
+from pydantic import model_validator, field_validator, Field
+from typing import List, Optional, Literal
 
 # Load environment variables
 load_dotenv()
 
-class Settings(BaseSettings):
+# Get the root directory of the project
+ROOT_DIR = Path(__file__).parent.parent.parent.resolve()
+
+
+class BaseAppSettings(BaseSettings):
+    """Base settings shared across all environments"""
+
     # API settings
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "ImportCSV"
-    
-    # CORS settings
-    CORS_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8000", "http://localhost:6006", "http://localhost:5173"]
-    
-    # Database settings
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@localhost:5432/importcsv")
-    
+
+    # CORS settings - expects comma-separated string in env var
+    CORS_ORIGINS_STR: str = Field(
+        default_factory=lambda: os.getenv(
+            "CORS_ORIGINS", "http://localhost:3000,http://localhost:8000,http://localhost:6006,http://localhost:5173"
+        )
+    )
+    CORS_ORIGINS: List[str] = []
+
     # JWT settings
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-for-jwt")
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    
+
     # LLM settings
-    OPENAI_API_KEY: Optional[str] = os.getenv("OPENAI_API_KEY")
-    LLM_MODEL: str = os.getenv("LLM_MODEL", "gpt-4")
-    USE_LOCAL_LLM: bool = os.getenv("USE_LOCAL_LLM", "false").lower() == "true"
-    LOCAL_LLM_URL: Optional[str] = os.getenv("LOCAL_LLM_URL")
-    
+    OPENAI_API_KEY: Optional[str] = Field(default_factory=lambda: os.getenv("OPENAI_API_KEY"))
+    LLM_MODEL: str = Field(default_factory=lambda: os.getenv("LLM_MODEL", "o3-mini"))
+    USE_LOCAL_LLM: bool = Field(
+        default_factory=lambda: os.getenv("USE_LOCAL_LLM", "false").lower() == "true"
+    )
+    LOCAL_LLM_URL: Optional[str] = Field(default_factory=lambda: os.getenv("LOCAL_LLM_URL"))
+
     # File upload settings
-    UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", "./uploads")
+    UPLOAD_DIR: str = Field(default_factory=lambda: os.getenv("UPLOAD_DIR", str(ROOT_DIR / "uploads")))
     MAX_UPLOAD_SIZE: int = 10 * 1024 * 1024  # 10MB
-    
-    # Webhook settings
-    WEBHOOK_SECRET: str = os.getenv("WEBHOOK_SECRET", "your-webhook-secret")
-    
-    # Admin credentials
-    ADMIN_EMAIL: Optional[str] = os.getenv("ADMIN_EMAIL")
-    ADMIN_PASSWORD: Optional[str] = os.getenv("ADMIN_PASSWORD")
-    ADMIN_NAME: Optional[str] = os.getenv("ADMIN_NAME", "Admin User")
+
+    # Admin credentials (optional, for initial setup)
+    ADMIN_EMAIL: Optional[str] = Field(default_factory=lambda: os.getenv("ADMIN_EMAIL"))
+    ADMIN_PASSWORD: Optional[str] = Field(default_factory=lambda: os.getenv("ADMIN_PASSWORD"))
+    ADMIN_NAME: Optional[str] = Field(default_factory=lambda: os.getenv("ADMIN_NAME", "Admin User"))
+
+    # Logging configuration
+    LOG_LEVEL: str = Field(default_factory=lambda: os.getenv("LOG_LEVEL", "INFO"))
+
+    # These must be set in environment for all environments
+    DATABASE_URL: str
+    SECRET_KEY: str
+    WEBHOOK_SECRET: str
+
+    @model_validator(mode='before')
+    @classmethod
+    def split_cors_origins(cls, data):
+        if isinstance(data, dict):
+            cors_origins_str = data.get('CORS_ORIGINS_STR', '')
+            if isinstance(cors_origins_str, str):
+                data['CORS_ORIGINS'] = [origin.strip() for origin in cors_origins_str.split(",") if origin.strip()]
+            elif isinstance(cors_origins_str, list):
+                # Handle case where it might already be a list (though unlikely with BaseSettings)
+                data['CORS_ORIGINS'] = cors_origins_str
+        return data
+
+    @field_validator("SECRET_KEY")
+    @classmethod
+    def secret_key_must_be_secure(cls, v):
+        if len(v) < 32:
+            raise ValueError("SECRET_KEY must be at least 32 characters long")
+        return v
+
+    @field_validator("UPLOAD_DIR")
+    @classmethod
+    def ensure_upload_dir_exists(cls, v):
+        upload_path = Path(v)
+        if not upload_path.exists():
+            upload_path.mkdir(parents=True, exist_ok=True)
+        return str(upload_path)
 
     class Config:
         env_file = ".env"
         case_sensitive = True
 
-settings = Settings()
+
+class DevelopmentSettings(BaseAppSettings):
+    """Development-specific settings"""
+    ENVIRONMENT: Literal["development"] = "development"
+
+    # Override log level for development
+    LOG_LEVEL: str = Field(default_factory=lambda: os.getenv("LOG_LEVEL", "DEBUG"))
+
+    # Additional development-specific settings
+    DEBUG: bool = True
+    RELOAD: bool = True
+
+
+class ProductionSettings(BaseAppSettings):
+    """Production-specific settings"""
+    ENVIRONMENT: Literal["production"] = "production"
+
+    # Production overrides
+    DEBUG: bool = False
+    RELOAD: bool = False
+
+    # Stricter security settings for production
+    @field_validator("CORS_ORIGINS")
+    @classmethod
+    def validate_cors_origins(cls, v):
+        # In production, don't allow localhost origins unless explicitly set
+        default_local = ["http://localhost:3000", "http://localhost:8000",
+                         "http://localhost:6006", "http://localhost:5173"]
+
+        # If CORS_ORIGINS only contains default localhost values, warn and clear
+        if all(origin in default_local for origin in v) and len(v) == len(default_local):
+            logging.warning(
+                "Using default localhost CORS origins in production! "
+                "This is likely a misconfiguration. Set CORS_ORIGINS env var."
+            )
+            return []
+        return v
+
+
+# Determine which settings to use based on environment
+def get_settings() -> BaseAppSettings:
+    env = os.getenv("ENVIRONMENT", "development")
+    if env == "production":
+        return ProductionSettings()
+    return DevelopmentSettings()
+
+
+settings = get_settings()

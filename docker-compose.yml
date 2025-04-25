@@ -14,19 +14,6 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
-  postgres_test:
-    image: postgres:16
-    container_name: importcsv-postgres-test
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: importcsv_test
-    ports:
-      - "5433:5432"
-    volumes:
-      - postgres_test_data:/var/lib/postgresql/data
-    restart: unless-stopped
 
 volumes:
   postgres_data:
-  postgres_test_data:

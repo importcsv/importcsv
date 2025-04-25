@@ -17,7 +17,7 @@ from app.models.import_job import ImportJob, ImportStatus
 from app.models.importer import Importer
 from app.schemas.import_job import ImportJobCreate, ImportJob as ImportJobSchema, ColumnMappingRequest
 from app.services.file_processor import file_processor
-from app.services.webhook import WebhookService, WebhookEventType, debug_print
+from app.services.webhook import WebhookService, WebhookEventType
 from app.services.import_processor import run_background_import
 from app.db.base import SessionLocal
 
@@ -49,10 +49,10 @@ async def upload_file(
     """
     file_path = await file_processor.save_upload_file(file)
     file_info = file_processor.get_file_info(file_path)
-    
+
     # Auto-detect schema
     detected_schema = await file_processor.detect_schema(file_path)
-    
+
     return {
         "file_name": file.filename,
         "file_path": file_path,
@@ -78,18 +78,18 @@ async def create_import_job(
     """
     # Convert string UUID to UUID object
     importer_uuid = uuid.UUID(importer_id)
-    
+
     # Verify importer exists and belongs to user
     importer = db.query(Importer).filter(Importer.id == importer_uuid, Importer.user_id == current_user.id).first()
     if not importer:
         raise HTTPException(status_code=404, detail="Importer not found")
-    
+
     # Parse column mapping
     try:
         column_mapping_dict = json.loads(column_mapping)
     except json.JSONDecodeError:
         raise HTTPException(status_code=400, detail="Invalid column mapping JSON")
-    
+
     # Create import job
     import_job = ImportJob(
         user_id=current_user.id,
@@ -106,7 +106,7 @@ async def create_import_job(
     db.add(import_job)
     db.commit()
     db.refresh(import_job)
-    
+
     # Create webhook event with serializable payload
     # Convert UUIDs to strings for JSON serialization
     webhook_service = WebhookService()
@@ -131,66 +131,66 @@ async def create_import_job(
     import time
     import pandas as pd
     from app.services.import_processor import ImportProcessor
-    from app.services.webhook import webhook_service, debug_print
-    
+    from app.services.webhook import webhook_service
+
     # Create a debug file specific to this upload
     debug_file = f"/tmp/csv_direct_process_{int(time.time())}.txt"
-    
+
     with open(debug_file, "w") as f:
         f.write(f"Direct CSV processing started at {datetime.now().isoformat()}\n")
         f.write(f"Import job ID: {import_job.id}\n")
         f.write(f"File path: {file_path}\n")
         f.write(f"Importer ID: {importer_uuid}\n")
-    
+
     logger.info(f"DEBUG: Running direct CSV processing for job {import_job.id} (log: {debug_file})")
     print(f"DEBUG: Running direct CSV processing for job {import_job.id} (log: {debug_file})", file=sys.stderr)
-    
+
     try:
         # First verify the file exists and has content
         if not os.path.exists(file_path):
             with open(debug_file, "a") as f:
                 f.write(f"ERROR: File {file_path} does not exist\n")
             raise FileNotFoundError(f"File {file_path} not found")
-            
+
         # Read the CSV file directly
         with open(debug_file, "a") as f:
             f.write(f"Reading CSV file: {file_path}\n")
-        
+
         try:
             df = pd.read_csv(file_path)
             with open(debug_file, "a") as f:
                 f.write(f"CSV file read successfully. Found {len(df)} rows.\n")
                 f.write(f"Columns: {df.columns.tolist()}\n")
-            
+
             # Apply column mapping if provided
             if column_mapping_dict:
                 with open(debug_file, "a") as f:
                     f.write(f"Applying column mapping: {column_mapping_dict}\n")
                 df.rename(columns=column_mapping_dict, inplace=True, errors='ignore')
-            
+
             # Get the importer specifically to access its webhook_url
             with open(debug_file, "a") as f:
                 f.write(f"Retrieving importer details...\n")
-            
+
             importer = db.query(Importer).filter(Importer.id == importer_uuid).first()
             if not importer:
                 with open(debug_file, "a") as f:
                     f.write(f"ERROR: Importer {importer_uuid} not found\n")
                 raise Exception(f"Importer {importer_uuid} not found")
-            
+
             # Log importer's webhook settings
             with open(debug_file, "a") as f:
                 f.write(f"Importer webhook URL: '{importer.webhook_url}'\n")
                 f.write(f"Importer webhook enabled: {importer.webhook_enabled}\n")
-            
+
             # Prepare and send a webhook directly
             if importer.webhook_url and importer.webhook_enabled:
                 with open(debug_file, "a") as f:
                     f.write(f"Preparing to send webhook directly to {importer.webhook_url}\n")
-                
+
                 # Sample the first few rows
                 sample_data = df.head(5).to_dict(orient='records')
-                
+
                 # Create webhook payload
                 payload = {
                     "event_type": "import.completed",
@@ -205,65 +205,65 @@ async def create_import_job(
                     "testing_mode": "direct_in_request",
                     "debug_file": debug_file
                 }
-                
+
                 with open(debug_file, "a") as f:
                     f.write(f"Webhook payload created with {len(sample_data)} sample rows\n")
-                
+
                 # Send webhook directly
                 logger.info(f"Sending webhook directly for job {import_job.id} to {importer.webhook_url}")
                 print(f"DEBUG: Sending webhook directly for job {import_job.id} to {importer.webhook_url}", file=sys.stderr)
-                
+
                 # Send in-line, not as a background task
                 success = await webhook_service.send_webhook(
                     url=importer.webhook_url,
                     payload=payload,
                     secret=webhook_service.webhook_secret
                 )
-                
+
                 with open(debug_file, "a") as f:
                     f.write(f"Direct webhook send result: {'SUCCESS' if success else 'FAILED'}\n")
-                
+
                 # Update the success status in the response
                 logger.info(f"Direct webhook result: {'SUCCESS' if success else 'FAILED'}")
                 print(f"DEBUG: Direct webhook result: {'SUCCESS' if success else 'FAILED'}", file=sys.stderr)
-                
+
             else:
                 with open(debug_file, "a") as f:
                     f.write(f"Webhook not sent because webhook_url is not set or webhooks are disabled\n")
                 logger.warning(f"Webhook not sent for job {import_job.id} because webhook_url is not set or webhooks are disabled")
-        
+
         except Exception as csv_err:
             with open(debug_file, "a") as f:
                 f.write(f"ERROR processing CSV: {str(csv_err)}\n")
                 import traceback
                 f.write(f"Traceback: {traceback.format_exc()}\n")
             logger.error(f"Error processing CSV directly: {csv_err}", exc_info=True)
-        
+
         # Also schedule the normal background task for complete processing
         background_tasks.add_task(
-            run_background_import, 
+            run_background_import,
             import_job_id=str(import_job.id),
             file_path=file_path,
             column_mapping=column_mapping_dict
         )
-        
+
         with open(debug_file, "a") as f:
             f.write(f"Background task also scheduled for job {import_job.id}\n")
-            
+
         logger.info(f"Background task scheduled for job {import_job.id} with file {file_path}")
-            
+
     except Exception as e:
         with open(debug_file, "a") as f:
             f.write(f"OUTER ERROR: {str(e)}\n")
             import traceback
             f.write(f"Traceback: {traceback.format_exc()}\n")
-        
+
         logger.error(f"Error in direct CSV processing: {e}", exc_info=True)
         print(f"DEBUG: Error in direct CSV processing: {e}", file=sys.stderr)
-        
+
         # Fall back to background task
         background_tasks.add_task(
-            run_background_import, 
+            run_background_import,
             import_job_id=str(import_job.id),
             file_path=file_path,
             column_mapping=column_mapping_dict
@@ -288,11 +288,11 @@ async def read_import_job(
     Get import job by ID
     """
     import_job = db.query(ImportJob).filter(
-        ImportJob.id == import_job_id, 
+        ImportJob.id == import_job_id,
         ImportJob.user_id == current_user.id
     ).first()
-    
+
     if not import_job:
         raise HTTPException(status_code=404, detail="Import job not found")
-    
+
     return import_job

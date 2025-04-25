@@ -28,7 +28,7 @@ async def read_webhook_events(
     events = db.query(WebhookEvent).filter(
         WebhookEvent.user_id == current_user.id
     ).offset(skip).limit(limit).all()
-    
+
     return events
 
 @router.post("/test", response_model=Dict[str, Any])
@@ -43,14 +43,14 @@ async def test_webhook(
     import logging
     import os
     logger = logging.getLogger(__name__)
-    
+
     # Create a file to verify this endpoint is being called
     debug_file_path = "/tmp/webhook_test_debug.txt"
     with open(debug_file_path, "w") as f:
         f.write(f"Webhook test called at {datetime.now().isoformat()}\n")
         f.write(f"URL: {url}\n")
         f.write(f"User: {current_user.email}\n")
-    
+
     # Prepare a test payload
     payload = {
         "event_type": "webhook.test",
@@ -62,63 +62,57 @@ async def test_webhook(
             "example_row_2": {"field1": "value3", "field2": "value4"}
         }
     }
-    
-    # Import our debug printing function
-    from app.services.webhook import debug_print
-    
-    debug_print(f"DEBUG: Testing webhook to URL: {url}")
-    debug_print(f"DEBUG: Test payload: {payload}")
-    
+
+
     # Write payload to file as well
     with open(debug_file_path, "a") as f:
         f.write(f"Payload: {str(payload)}\n")
-    
+
     # Try to send the webhook
     try:
         # Create a new httpx client for just this request
         import httpx
-        
+
         # First log details to the file
         with open(debug_file_path, "a") as f:
             f.write("About to send webhook POST request...\n")
-        
+
         # Serialize payload
         import json
         from app.services.webhook import UUIDEncoder
         serialized_payload = json.dumps(payload, cls=UUIDEncoder)
-        
+
         # Generate signature
         signature = webhook_service.generate_signature(payload, webhook_service.webhook_secret)
-        
+
         headers = {
             "Content-Type": "application/json",
             "X-ImportCSV-Signature": signature,
             "X-ImportCSV-Event": payload.get("event_type", "")
         }
-        
+
         # Create a client with debugging
         async with httpx.AsyncClient(timeout=30.0) as client:
             with open(debug_file_path, "a") as f:
                 f.write(f"Sending to URL: {url}\n")
                 f.write(f"Headers: {headers}\n")
-            
+
             response = await client.post(
                 url,
                 content=serialized_payload.encode('utf-8'),
                 headers=headers,
             )
-            
+
             status_code = response.status_code
             response_text = response.text
-            
+
             # Log response
             with open(debug_file_path, "a") as f:
                 f.write(f"Response status: {status_code}\n")
                 f.write(f"Response text: {response_text[:500]}\n")
-            
+
             success = status_code >= 200 and status_code < 300
-            debug_print(f"DEBUG: Webhook test result: {'SUCCESS' if success else 'FAILED'}")
-            
+
             return {
                 "success": success,
                 "url": url,
@@ -127,17 +121,16 @@ async def test_webhook(
                 "status_code": status_code,
                 "response_text": response_text[:500]
             }
-            
+
     except Exception as e:
         logger.error(f"Error testing webhook: {e}", exc_info=True)
-        debug_print(f"DEBUG: Webhook test error: {e}")
-        
+
         # Log exception to file
         with open(debug_file_path, "a") as f:
             f.write(f"Exception: {str(e)}\n")
             import traceback
             f.write(f"Traceback: {traceback.format_exc()}\n")
-        
+
         return {
             "success": False,
             "url": url,
@@ -158,13 +151,13 @@ async def public_test_webhook(
     import logging
     import os
     logger = logging.getLogger(__name__)
-    
+
     # Create a file to verify this endpoint is being called
     debug_file_path = "/tmp/public_webhook_test_debug.txt"
     with open(debug_file_path, "w") as f:
         f.write(f"Public webhook test called at {datetime.now().isoformat()}\n")
         f.write(f"URL: {url}\n")
-    
+
     # Prepare a test payload
     payload = {
         "event_type": "webhook.public_test",
@@ -175,19 +168,16 @@ async def public_test_webhook(
             "example_row_2": {"field1": "value3", "field2": "value4"}
         }
     }
-    
-    from app.services.webhook import debug_print
-    debug_print(f"DEBUG: Testing public webhook to URL: {url}")
-    
+
     # Try to send the webhook directly using httpx
     try:
         import httpx
         import json
-        
+
         # Log to file
         with open(debug_file_path, "a") as f:
             f.write("About to send public webhook request...\n")
-        
+
         # Send request directly
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(
@@ -195,17 +185,17 @@ async def public_test_webhook(
                 json=payload,
                 headers={"Content-Type": "application/json"}
             )
-            
+
             status_code = response.status_code
             response_text = response.text
-            
+
             # Log response
             with open(debug_file_path, "a") as f:
                 f.write(f"Response status: {status_code}\n")
                 f.write(f"Response text: {response_text[:500]}\n")
-            
+
             success = status_code >= 200 and status_code < 300
-            
+
             return {
                 "success": success,
                 "url": url,
@@ -215,16 +205,16 @@ async def public_test_webhook(
                 "response_text": response_text[:500],
                 "debug_file": debug_file_path
             }
-            
+
     except Exception as e:
         logger.error(f"Error in public webhook test: {e}", exc_info=True)
-        
+
         # Log exception to file
         with open(debug_file_path, "a") as f:
             f.write(f"Exception: {str(e)}\n")
             import traceback
             f.write(f"Traceback: {traceback.format_exc()}\n")
-        
+
         return {
             "success": False,
             "url": url,
@@ -249,20 +239,20 @@ async def send_processed_data(
     import time
     import pandas as pd
     logger = logging.getLogger(__name__)
-    
+
     # Create a debug file for this webhook send
     debug_file = f"/tmp/webhook_admin_send_{int(time.time())}.txt"
     with open(debug_file, "w") as f:
         f.write(f"Admin webhook send started at {datetime.now().isoformat()}\n")
         f.write(f"Importer ID: {importer_id}\n")
         f.write(f"User: {current_user.email}\n")
-    
+
     # First, get the importer
     importer = db.query(Importer).filter(
         Importer.id == importer_id,
         Importer.user_id == current_user.id
     ).first()
-    
+
     if not importer:
         with open(debug_file, "a") as f:
             f.write(f"ERROR: Importer {importer_id} not found\n")
@@ -271,13 +261,13 @@ async def send_processed_data(
             "message": f"Importer {importer_id} not found",
             "debug_file": debug_file
         }
-    
+
     # Log importer details
     with open(debug_file, "a") as f:
         f.write(f"Found importer: {importer.name} (ID: {importer.id})\n")
         f.write(f"Webhook URL: {importer.webhook_url}\n")
         f.write(f"Webhook enabled: {importer.webhook_enabled}\n")
-    
+
     # Check if webhook is configured
     if not importer.webhook_url or not importer.webhook_enabled:
         with open(debug_file, "a") as f:
@@ -289,12 +279,12 @@ async def send_processed_data(
             "webhook_enabled": importer.webhook_enabled,
             "debug_file": debug_file
         }
-    
+
     # Get the most recent import job for this importer
     import_job = db.query(ImportJob).filter(
         ImportJob.importer_id == importer_id
     ).order_by(ImportJob.created_at.desc()).first()
-    
+
     if not import_job:
         with open(debug_file, "a") as f:
             f.write(f"ERROR: No import jobs found for importer {importer_id}\n")
@@ -303,56 +293,56 @@ async def send_processed_data(
             "message": "No import jobs found for this importer",
             "debug_file": debug_file
         }
-    
+
     # Log import job details
     with open(debug_file, "a") as f:
         f.write(f"Found most recent import job: {import_job.id}\n")
         f.write(f"File: {import_job.file_name} ({import_job.file_path})\n")
         f.write(f"Status: {import_job.status}\n")
-    
+
     # Try to read the CSV file if it exists
     file_path = import_job.file_path
     sample_data = []
-    
+
     if file_path and os.path.exists(file_path):
         try:
             # Read the CSV file
             with open(debug_file, "a") as f:
                 f.write(f"Reading CSV file: {file_path}\n")
-                
+
             df = pd.read_csv(file_path)
-            
+
             with open(debug_file, "a") as f:
                 f.write(f"CSV read successfully. Found {len(df)} rows.\n")
                 f.write(f"Columns: {df.columns.tolist()}\n")
-            
+
             # Apply column mapping if available
             if import_job.column_mapping:
                 with open(debug_file, "a") as f:
                     f.write(f"Applying column mapping: {import_job.column_mapping}\n")
-                
+
                 # Convert the mapping to a format acceptable by pandas
                 mapping = import_job.column_mapping
                 df.rename(columns=mapping, inplace=True, errors='ignore')
-            
+
             # Get a sample of the data
             sample_data = df.head(5).to_dict(orient='records')
-            
+
             with open(debug_file, "a") as f:
                 f.write(f"Created sample data with {len(sample_data)} rows\n")
-            
+
         except Exception as e:
             with open(debug_file, "a") as f:
                 f.write(f"ERROR reading CSV: {str(e)}\n")
                 import traceback
                 f.write(f"Traceback: {traceback.format_exc()}\n")
-            
+
             # Continue with empty sample data
             sample_data = []
     else:
         with open(debug_file, "a") as f:
             f.write(f"WARNING: File {file_path} not found or not specified\n")
-    
+
     # Prepare the payload
     payload = {
         "event_type": "admin.manual_webhook",
@@ -369,25 +359,25 @@ async def send_processed_data(
         "data_sample": sample_data,
         "debug_file": debug_file
     }
-    
+
     with open(debug_file, "a") as f:
         f.write(f"Prepared webhook payload\n")
         f.write(f"Payload summary: Event={payload['event_type']}, JobID={payload['job_id']}, Rows={payload['row_count']}\n")
-    
+
     # Send the webhook
     try:
         with open(debug_file, "a") as f:
             f.write(f"Sending webhook to {importer.webhook_url}...\n")
-        
+
         success = await webhook_service.send_webhook(
             url=importer.webhook_url,
             payload=payload,
             secret=webhook_service.webhook_secret
         )
-        
+
         with open(debug_file, "a") as f:
             f.write(f"Webhook send result: {'SUCCESS' if success else 'FAILED'}\n")
-        
+
         return {
             "success": success,
             "message": "Webhook sent successfully" if success else "Failed to send webhook",
@@ -399,13 +389,13 @@ async def send_processed_data(
             "sample_count": len(sample_data),
             "debug_file": debug_file
         }
-        
+
     except Exception as e:
         with open(debug_file, "a") as f:
             f.write(f"ERROR sending webhook: {str(e)}\n")
             import traceback
             f.write(f"Traceback: {traceback.format_exc()}\n")
-        
+
         return {
             "success": False,
             "message": f"Error sending webhook: {str(e)}",
@@ -427,32 +417,32 @@ async def retry_webhook_event(
         WebhookEvent.id == event_id,
         WebhookEvent.user_id == current_user.id
     ).first()
-    
+
     if not event:
         raise HTTPException(status_code=404, detail="Webhook event not found")
-    
+
     # TODO: Get webhook configuration for user
     # For now, using a placeholder URL and the global webhook secret
     webhook_url = "https://example.com/webhook"
     webhook_secret = "your-webhook-secret"
-    
+
     success = await webhook_service.send_webhook(
         webhook_url,
         event.payload,
         webhook_secret
     )
-    
+
     # Update event status
     event.delivery_attempts += 1
     event.last_delivery_attempt = datetime.now()
-    
+
     if success:
         event.delivered = True
-    
+
     db.add(event)
     db.commit()
     db.refresh(event)
-    
+
     return {
         "success": success,
         "event_id": event.id,
