@@ -1,25 +1,60 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
+from starlette.middleware.sessions import SessionMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 import uvicorn
 import os
 import logging
+from typing import Callable
 from dotenv import load_dotenv
 
 from app.api.routes import api_router
 from app.core.config import settings
-from app.auth.auth import fastapi_users, auth_backend
-from app.models.user import User
-from app.schemas.user import UserCreate, UserRead, UserUpdate
+
+# Security headers middleware
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        response = await call_next(request)
+        # Add security headers
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Content-Security-Policy"] = "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+        return response
 
 # Configure logging
 logging.basicConfig(
-    level=logging.DEBUG,
+    level=logging.INFO,
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     handlers=[
         logging.StreamHandler(),  # Log to console
     ]
 )
+
+# Disable all SQLAlchemy logging at the root level
+logging.getLogger('sqlalchemy').setLevel(logging.CRITICAL)
+logging.getLogger('sqlalchemy.engine').setLevel(logging.CRITICAL)
+
+# Create a filter to block SQLAlchemy log messages
+class SQLAlchemyFilter(logging.Filter):
+    def filter(self, record):
+        return not record.name.startswith('sqlalchemy')
+
+# Apply the filter to the root logger
+root_logger = logging.getLogger()
+root_logger.addFilter(SQLAlchemyFilter())
+
+# Also set a higher level for the root logger to avoid INFO logs
+logging.getLogger().setLevel(logging.WARNING)
+
+# We've disabled SQL logging by setting echo=False in the engine configuration
+# in app/db/base.py, which is the proper way to disable SQLAlchemy logging
 
 # Load environment variables
 load_dotenv()
@@ -31,42 +66,42 @@ app = FastAPI(
 )
 
 # Configure CORS
+logging.info(f"Configuring CORS with origins: {settings.CORS_ORIGINS}")
+
+# Add CORS middleware - settings are environment-specific through the settings classes
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Explicitly allow frontend origin
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "Accept"],
-    expose_headers=["Content-Length"],
-    max_age=600,  # Cache preflight requests for 10 minutes
+    allow_origins=settings.CORS_ORIGINS,
+    allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+    allow_methods=settings.CORS_ALLOW_METHODS,
+    allow_headers=settings.CORS_ALLOW_HEADERS,
+    expose_headers=settings.CORS_EXPOSE_HEADERS,
+    max_age=settings.CORS_MAX_AGE,
 )
 
-# Include FastAPI Users routes
-app.include_router(
-    fastapi_users.get_auth_router(auth_backend),
-    prefix=f"{settings.API_V1_STR}/auth/jwt",
-    tags=["auth"],
+# Add security headers
+app.add_middleware(SecurityHeadersMiddleware)
+
+# Add GZip compression
+app.add_middleware(GZipMiddleware, minimum_size=1000)
+
+# Add session middleware for cookie-based auth
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.SECRET_KEY,
+    max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+    https_only=settings.ENVIRONMENT == "production",
 )
-app.include_router(
-    fastapi_users.get_register_router(UserRead, UserCreate),
-    prefix=f"{settings.API_V1_STR}/auth",
-    tags=["auth"],
-)
-app.include_router(
-    fastapi_users.get_reset_password_router(),
-    prefix=f"{settings.API_V1_STR}/auth",
-    tags=["auth"],
-)
-app.include_router(
-    fastapi_users.get_verify_router(UserRead),
-    prefix=f"{settings.API_V1_STR}/auth",
-    tags=["auth"],
-)
-app.include_router(
-    fastapi_users.get_users_router(UserRead, UserUpdate),
-    prefix=f"{settings.API_V1_STR}/users",
-    tags=["users"],
-)
+
+# In production, add TrustedHostMiddleware
+if settings.ENVIRONMENT == "production":
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=["api.yourdomain.com", "*.yourdomain.com"]  # Update with your domain
+    )
+
+# All FastAPI Users routes are now included via api_router
+# This avoids duplication and makes route management cleaner
 
 # Include API routes
 app.include_router(api_router, prefix="/api")

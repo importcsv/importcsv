@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { ImporterField as AddColumnImporterField } from '@/components/AddColumnForm';
 import ImporterColumnsManager from '@/components/ImporterColumnsManager';
+import apiClient, { importersApi } from '@/utils/apiClient';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
@@ -93,57 +94,35 @@ export default function ImporterDetailPage() {
       setError(null);
       
       try {
-        if (!token) {
-          setIsLoading(false);
-          return;
-        }
-        
-        const response = await fetch(`${backendUrl}/api/v1/importers/${importerId}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (response.status === 401) {
-          // Try to refresh the token
-          const refreshed = await refreshToken();
-          if (!refreshed) {
-            logout();
-            router.push('/login');
-            return;
-          }
-          
-          // Retry with new token
-          const retryResponse = await fetch(`${backendUrl}/api/v1/importers/${importerId}`, {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            }
-          });
-          
-          if (!retryResponse.ok) {
-            throw new Error(`Failed to fetch importer: ${retryResponse.statusText}`);
-          }
-          
-          const data = await retryResponse.json();
-          setImporter(data);
-          initializeFormState(data);
-        } else if (!response.ok) {
-          throw new Error(`Failed to fetch importer: ${response.statusText}`);
-        } else {
-          const data = await response.json();
-          setImporter(data);
-          initializeFormState(data);
-        }
+        // Use the API client to get importer details
+        const data = await importersApi.getImporter(importerId);
+        setImporter(data);
+        initializeFormState(data);
       } catch (err: any) {
         console.error('Error fetching importer:', err);
-        setError('Failed to load importer. Please try again later.');
+        
+        // Extract error message from API response if available
+        let errorMessage = 'Failed to load importer. Please try again later.';
+        if (err.response && err.response.data && err.response.data.detail) {
+          errorMessage = err.response.data.detail;
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+        
+        setError(errorMessage);
+        
+        // If the error is authentication-related and not handled by the client,
+        // redirect to login
+        if (err.response && err.response.status === 401) {
+          router.push('/login');
+        }
       } finally {
         setIsLoading(false);
       }
     };
     
     fetchImporterDetails();
-  }, [token, importerId]);
+  }, [importerId, router]);
   
   // Initialize form state with importer data
   const initializeFormState = (data: Importer) => {
@@ -160,67 +139,33 @@ export default function ImporterDetailPage() {
     setError(null);
     
     try {
-      const response = await fetch(`${backendUrl}/api/v1/importers/${importerId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          webhook_url: webhookUrl,
-          webhook_enabled: webhookEnabled,
-          include_unmatched_columns: includeUnmatchedColumns,
-          filter_invalid_rows: filterInvalidRows,
-          disable_on_invalid_rows: disableOnInvalidRows
-        })
+      // Use the API client to update the importer
+      await importersApi.updateImporter(importerId, {
+        webhook_url: webhookUrl,
+        webhook_enabled: webhookEnabled,
+        include_unmatched_columns: includeUnmatchedColumns,
+        filter_invalid_rows: filterInvalidRows,
+        disable_on_invalid_rows: disableOnInvalidRows
       });
       
-      if (response.status === 401) {
-        // Try to refresh the token
-        const refreshed = await refreshToken();
-        if (!refreshed) {
-          logout();
-          router.push('/login');
-          return;
-        }
-        
-        // Retry with new token
-        const retryResponse = await fetch(`${backendUrl}/api/v1/importers/${importerId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            webhook_url: webhookUrl,
-            webhook_enabled: webhookEnabled,
-            include_unmatched_columns: includeUnmatchedColumns,
-            filter_invalid_rows: filterInvalidRows,
-            disable_on_invalid_rows: disableOnInvalidRows
-          })
-        });
-        
-        if (!retryResponse.ok) {
-          throw new Error(`Failed to update importer: ${retryResponse.statusText}`);
-        }
-        
-        setNotification({
-          message: "Your importer settings have been updated successfully.",
-          type: "success"
-        });
-      } else if (!response.ok) {
-        throw new Error(`Failed to update importer: ${response.statusText}`);
-      } else {
-        setNotification({
-          message: "Your importer settings have been updated successfully.",
-          type: "success"
-        });
-      }
+      setNotification({
+        message: "Your importer settings have been updated successfully.",
+        type: "success"
+      });
     } catch (err: any) {
       console.error('Error updating importer:', err);
-      setError(err.message || 'Failed to update importer. Please try again.');
+      
+      // Extract error message from API response if available
+      let errorMessage = 'Failed to update importer. Please try again.';
+      if (err.response && err.response.data && err.response.data.detail) {
+        errorMessage = err.response.data.detail;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
       setNotification({
-        message: err.message || 'Failed to update importer. Please try again.',
+        message: errorMessage,
         type: "error"
       });
     } finally {
@@ -247,44 +192,25 @@ export default function ImporterDetailPage() {
     setError(null);
     
     try {
-      const response = await fetch(`${backendUrl}/api/v1/importers/${importerId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (response.status === 401) {
-        // Try to refresh the token
-        const refreshed = await refreshToken();
-        if (!refreshed) {
-          logout();
-          router.push('/login');
-          return;
-        }
-        
-        // Retry with new token
-        const retryResponse = await fetch(`${backendUrl}/api/v1/importers/${importerId}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (!retryResponse.ok) {
-          throw new Error(`Failed to delete importer: ${retryResponse.statusText}`);
-        }
-      } else if (!response.ok) {
-        throw new Error(`Failed to delete importer: ${response.statusText}`);
-      }
+      // Use the API client to delete the importer
+      await importersApi.deleteImporter(importerId);
       
       // Redirect to importers list
       router.push('/dashboard/importers');
     } catch (err: any) {
       console.error('Error deleting importer:', err);
-      setError(err.message || 'Failed to delete importer. Please try again.');
+      
+      // Extract error message from API response if available
+      let errorMessage = 'Failed to delete importer. Please try again.';
+      if (err.response && err.response.data && err.response.data.detail) {
+        errorMessage = err.response.data.detail;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
       setNotification({
-        message: err.message || 'Failed to delete importer. Please try again.',
+        message: errorMessage,
         type: "error"
       });
     } finally {

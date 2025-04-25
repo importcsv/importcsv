@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.db.base import get_db
-from app.services.auth import get_current_user, get_current_active_superuser
+from app.auth.users import get_current_user, get_current_superuser as get_current_active_superuser
 from app.core.security import get_password_hash
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate, User as UserSchema, UserRegister

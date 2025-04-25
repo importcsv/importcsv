@@ -11,7 +11,7 @@ import logging
 import pandas as pd
 
 from app.db.base import get_db
-from app.auth.auth import current_active_user
+from app.auth.users import get_current_active_user
 from app.models.user import User
 from app.models.import_job import ImportJob, ImportStatus
 from app.models.importer import Importer
@@ -30,7 +30,7 @@ async def read_import_jobs(
     db: Session = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: User = Depends(current_active_user),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Retrieve import jobs
@@ -42,7 +42,7 @@ async def read_import_jobs(
 async def upload_file(
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
-    current_user: User = Depends(current_active_user),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Upload a file for analysis
@@ -71,7 +71,7 @@ async def create_import_job(
     file_type: str = Form(...),
     column_mapping: str = Form(...),  # JSON string
     db: Session = Depends(get_db),
-    current_user: User = Depends(current_active_user),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Create new import job
@@ -282,7 +282,7 @@ async def create_import_job(
 async def read_import_job(
     import_job_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(current_active_user),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get import job by ID

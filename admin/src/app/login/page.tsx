@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from 'next/navigation'; 
 import Link from 'next/link';
 import React, { useState } from 'react';
+import { authApi } from "@/utils/apiClient";
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -19,40 +20,30 @@ export default function LoginPage() {
     event.preventDefault();
     setError(null); 
 
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-
-    const formData = new URLSearchParams();
-    formData.append('username', email);
-    formData.append('password', password);
-
     try {
-      const response = await fetch(`${backendUrl}/api/v1/auth/jwt/login`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: formData.toString(),
+      // Use the API client for login
+      const data = await authApi.login(email, password);
+      
+      // Login successful, update auth context
+      login({ 
+        token: data.access_token,
+        refreshToken: data.refresh_token
       });
-
-      if (response.ok) {
-        const data = await response.json();
-        login({ token: data.access_token, /* other user details */ });
-        router.push('/dashboard'); 
-      } else {
-        let errorMessage = 'Login failed. Please check your credentials.';
-        try {
-            const errorData = await response.json();
-            if (errorData.detail) {
-                errorMessage = errorData.detail;
-            }
-        } catch (e) {
-            console.error('Error parsing error response:', e);
+      
+      // Redirect to dashboard
+      router.push('/dashboard'); 
+    } catch (error: any) {
+      // Handle login errors
+      let errorMessage = 'Login failed. Please check your credentials.';
+      
+      if (error.response && error.response.data) {
+        // Extract error message from axios error response
+        if (error.response.data.detail) {
+          errorMessage = error.response.data.detail;
         }
-        setError(errorMessage);
-        console.error('Login failed:', response.status, response.statusText);
       }
-    } catch (error) {
-      setError('An error occurred during login. Please try again.');
+      
+      setError(errorMessage);
       console.error('Login request error:', error);
     }
   };

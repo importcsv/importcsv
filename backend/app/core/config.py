@@ -21,17 +21,18 @@ class BaseAppSettings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "ImportCSV"
 
-    # CORS settings - expects comma-separated string in env var
-    CORS_ORIGINS_STR: str = Field(
-        default_factory=lambda: os.getenv(
-            "CORS_ORIGINS", "http://localhost:3000,http://localhost:8000,http://localhost:6006,http://localhost:5173"
-        )
-    )
     CORS_ORIGINS: List[str] = []
+
+    # CORS configuration
+    CORS_ALLOW_CREDENTIALS: bool = True
+    CORS_ALLOW_METHODS: List[str] = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+    CORS_ALLOW_HEADERS: List[str] = ["Content-Type", "Authorization", "Accept", "X-Requested-With", "Origin"]
+    CORS_EXPOSE_HEADERS: List[str] = ["Content-Length", "Content-Type"]
+    CORS_MAX_AGE: int = 600  # Cache preflight requests for 10 minutes
 
     # JWT settings
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 120  # Increased from 30 to 120 minutes (2 hours)
 
     # LLM settings
     OPENAI_API_KEY: Optional[str] = Field(default_factory=lambda: os.getenv("OPENAI_API_KEY"))
@@ -57,18 +58,6 @@ class BaseAppSettings(BaseSettings):
     DATABASE_URL: str
     SECRET_KEY: str
     WEBHOOK_SECRET: str
-
-    @model_validator(mode='before')
-    @classmethod
-    def split_cors_origins(cls, data):
-        if isinstance(data, dict):
-            cors_origins_str = data.get('CORS_ORIGINS_STR', '')
-            if isinstance(cors_origins_str, str):
-                data['CORS_ORIGINS'] = [origin.strip() for origin in cors_origins_str.split(",") if origin.strip()]
-            elif isinstance(cors_origins_str, list):
-                # Handle case where it might already be a list (though unlikely with BaseSettings)
-                data['CORS_ORIGINS'] = cors_origins_str
-        return data
 
     @field_validator("SECRET_KEY")
     @classmethod
@@ -100,6 +89,16 @@ class DevelopmentSettings(BaseAppSettings):
     # Additional development-specific settings
     DEBUG: bool = True
     RELOAD: bool = True
+
+    # Development-specific CORS origins
+    CORS_ORIGINS: List[str] = [
+        "http://localhost:3000",  # Next.js
+        "http://localhost:5173",  # Vite
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:5173",
+        "http://localhost:8000",  # Backend
+        "http://localhost:6006",  # Storybook
+    ]
 
 
 class ProductionSettings(BaseAppSettings):

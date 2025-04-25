@@ -1,17 +1,19 @@
 'use client';
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import apiClient, { authApi } from '@/utils/apiClient';
 
-// Define the key for localStorage
-const AUTH_TOKEN_KEY = 'authToken';
+// Import storage keys from apiClient to avoid duplication
+import { AUTH_TOKEN_KEY, REFRESH_TOKEN_KEY } from '@/utils/apiClient';
 
 interface AuthContextType {
   isAuthenticated: boolean;
   user: any; // Replace 'any' with a specific User type if available
-  token: string | null; // Add token state
-  login: (data: { token: string; user?: any }) => void; // Update login params
+  token: string | null; // Access token
+  refreshToken: string | null; // Refresh token
+  login: (data: { token: string; refreshToken: string; user?: any }) => void; // Updated login params
   logout: () => void;
-  refreshToken: () => Promise<boolean>; // Add refresh token function
+  refreshAccessToken: () => Promise<boolean>; // Function to refresh the access token
   isLoading: boolean;
 }
 
@@ -20,69 +22,72 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [user, setUser] = useState<any>(null); // Replace 'any' with a specific User type
-  const [token, setToken] = useState<string | null>(null); // Add token state
+  const [token, setToken] = useState<string | null>(null); // Access token
+  const [refreshToken, setRefreshToken] = useState<string | null>(null); // Refresh token
   const [isLoading, setIsLoading] = useState<boolean>(true); // Start with loading state
 
-  // Function to validate token with the backend
-  const validateToken = async (token: string): Promise<boolean> => {
-    try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-      const response = await fetch(`${backendUrl}/api/v1/users/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      return response.ok;
-    } catch (error) {
-      console.error('Error validating token:', error);
-      return false;
-    }
-  };
+  // Use the authApi.validateToken directly since it already has error handling
   
-  // Function to validate token with the backend
-  // Since FastAPI Users doesn't have a standard refresh token endpoint,
-  // we'll use the /me endpoint to check if the token is still valid
-  const refreshToken = async (): Promise<boolean> => {
-    if (!token) return false;
+  // Function to refresh the access token using the refresh token
+  const refreshAccessToken = async (): Promise<boolean> => {
+    if (!refreshToken) return false;
     
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-      // Check if the token is still valid by making a request to the /me endpoint
-      const response = await fetch(`${backendUrl}/api/v1/users/me`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      // Use the API client's refresh token function
+      const newToken = await authApi.refreshAccessToken();
       
-      if (response.ok) {
-        // Token is still valid, no need to refresh
-        return true;
-      }
-      
-      // If token is invalid, we need to redirect to login
-      // We can't refresh the token automatically with the current setup
-      return false;
+      // Update the access token
+      setToken(newToken);
+      return true;
     } catch (error) {
-      console.error('Error validating token:', error);
+      console.error('Error refreshing token:', error);
+      // Don't call logout() here to avoid circular dependencies
+      // Just clear the state
+      setIsAuthenticated(false);
+      setUser(null);
+      setToken(null);
+      setRefreshToken(null);
+      localStorage.removeItem(AUTH_TOKEN_KEY);
+      localStorage.removeItem(REFRESH_TOKEN_KEY);
       return false;
     }
   };
 
-  // Check localStorage for token on initial load
+  // Check localStorage for tokens on initial load
   useEffect(() => {
     const checkAuth = async () => {
       setIsLoading(true);
       try {
         const storedToken = localStorage.getItem(AUTH_TOKEN_KEY);
+        const storedRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+        
         if (storedToken) {
           // Validate token with backend
-          const isValid = await validateToken(storedToken);
+          const isValid = await authApi.validateToken(storedToken);
           if (isValid) {
             setToken(storedToken);
+            if (storedRefreshToken) {
+              setRefreshToken(storedRefreshToken);
+            }
             setIsAuthenticated(true);
             // You could fetch user details here if needed
+          } else if (storedRefreshToken) {
+            // Token is invalid but we have a refresh token, try to refresh
+            setRefreshToken(storedRefreshToken);
+            const refreshed = await refreshAccessToken();
+            if (!refreshed) {
+              // Refresh failed, clear everything
+              localStorage.removeItem(AUTH_TOKEN_KEY);
+              localStorage.removeItem(REFRESH_TOKEN_KEY);
+              setIsAuthenticated(false);
+              setUser(null);
+              setToken(null);
+              setRefreshToken(null);
+            } else {
+              setIsAuthenticated(true);
+            }
           } else {
-            // Token is invalid or expired
+            // Token is invalid and no refresh token
             localStorage.removeItem(AUTH_TOKEN_KEY);
             setIsAuthenticated(false);
             setUser(null);
@@ -92,6 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setIsAuthenticated(false);
           setUser(null);
           setToken(null);
+          setRefreshToken(null);
         }
       } catch (error) {
         // Handle potential localStorage errors
@@ -99,6 +105,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setIsAuthenticated(false);
         setUser(null);
         setToken(null);
+        setRefreshToken(null);
       }
       setIsLoading(false);
     };
@@ -106,36 +113,51 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     checkAuth();
   }, []);
 
-  const login = (data: { token: string; user?: any }) => {
+  const login = (data: { token: string; refreshToken: string; user?: any }) => {
     try {
-        localStorage.setItem(AUTH_TOKEN_KEY, data.token); // Save token to localStorage
+        localStorage.setItem(AUTH_TOKEN_KEY, data.token); // Save access token to localStorage
+        localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken); // Save refresh token to localStorage
         setIsAuthenticated(true);
         setToken(data.token);
+        setRefreshToken(data.refreshToken);
         setUser(data.user || null);
     } catch (error) {
-        console.error("Error saving auth token to localStorage:", error);
+        console.error("Error saving auth tokens to localStorage:", error);
         // Handle potential storage errors (e.g., quota exceeded)
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     try {
-        localStorage.removeItem(AUTH_TOKEN_KEY); // Remove token from localStorage
+        // Call the logout endpoint using the API client
+        // This also handles clearing localStorage
+        await authApi.logout();
+        
+        // Reset state
         setIsAuthenticated(false);
         setUser(null);
         setToken(null);
+        setRefreshToken(null);
     } catch (error) {
-        console.error("Error removing auth token from localStorage:", error);
+        console.error("Error during logout:", error);
+        // Even if API call fails, clear local state
+        setIsAuthenticated(false);
+        setUser(null);
+        setToken(null);
+        setRefreshToken(null);
+        localStorage.removeItem(AUTH_TOKEN_KEY);
+        localStorage.removeItem(REFRESH_TOKEN_KEY);
     }
   };
 
   const value = {
     isAuthenticated,
     user,
-    token, // Provide token in context value
+    token, // Access token
+    refreshToken, // Refresh token
     login,
     logout,
-    refreshToken,
+    refreshAccessToken, // Renamed from refreshToken to refreshAccessToken
     isLoading,
   };
 

@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import React, { useState } from 'react';
+import { authApi } from "@/utils/apiClient";
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -37,61 +38,39 @@ export default function SignupPage() {
       return;
     }
 
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
-
     try {
-      // Register the user
-      const registerResponse = await fetch(`${backendUrl}/api/v1/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email,
-          password,
-          full_name: fullName,
-          is_superuser: false,
-          is_active: true,
-        }),
-      });
-
-      if (!registerResponse.ok) {
-        let errorMessage = 'Registration failed.';
-        try {
-          const errorData = await registerResponse.json();
-          if (errorData.detail) {
-            errorMessage = errorData.detail;
-          }
-        } catch (e) {
-          console.error('Error parsing error response:', e);
-        }
-        setError(errorMessage);
-        setIsLoading(false);
-        return;
-      }
+      // Register the user using the API client
+      await authApi.register(email, password, fullName);
 
       // If registration is successful, automatically log the user in
-      const formData = new URLSearchParams();
-      formData.append('username', email);
-      formData.append('password', password);
-
-      const loginResponse = await fetch(`${backendUrl}/api/v1/auth/jwt/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: formData.toString(),
-      });
-
-      if (loginResponse.ok) {
-        const data = await loginResponse.json();
-        login({ token: data.access_token });
+      try {
+        // Use the API client for login
+        const data = await authApi.login(email, password);
+        
+        // Login successful, update auth context
+        login({ 
+          token: data.access_token,
+          refreshToken: data.refresh_token
+        });
+        
+        // Redirect to dashboard
         router.push('/dashboard');
-      } else {
+      } catch (loginError) {
         setError('Registration successful, but automatic login failed. Please go to the login page.');
+        console.error('Login after registration failed:', loginError);
       }
-    } catch (error) {
-      setError('An error occurred during registration. Please try again.');
+    } catch (error: any) {
+      // Handle registration errors
+      let errorMessage = 'Registration failed.';
+      
+      if (error.response && error.response.data) {
+        // Extract error message from axios error response
+        if (error.response.data.detail) {
+          errorMessage = error.response.data.detail;
+        }
+      }
+      
+      setError(errorMessage);
       console.error('Registration request error:', error);
     } finally {
       setIsLoading(false);

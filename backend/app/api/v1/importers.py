@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.db.base import get_db
-from app.auth.auth import current_active_user
+from app.auth.users import get_current_active_user
 from app.models.user import User
 from app.models.importer import Importer
 from app.schemas.importer import ImporterCreate, ImporterUpdate, Importer as ImporterSchema
@@ -16,7 +16,7 @@ async def read_importers(
     db: Session = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: User = Depends(current_active_user),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Retrieve importers
@@ -34,7 +34,7 @@ async def read_importers(
 async def create_importer(
     importer_in: ImporterCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(current_active_user),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Create new importer
@@ -67,7 +67,7 @@ async def create_importer(
 async def read_importer(
     importer_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(current_active_user),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Get importer by ID
@@ -87,7 +87,7 @@ async def update_importer(
     importer_id: uuid.UUID,
     importer_in: ImporterUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(current_active_user),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Update an importer
@@ -143,7 +143,7 @@ async def update_importer(
 async def delete_importer(
     importer_id: uuid.UUID,
     db: Session = Depends(get_db),
-    current_user: User = Depends(current_active_user),
+    current_user: User = Depends(get_current_active_user),
 ):
     """
     Delete an importer

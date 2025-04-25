@@ -25,3 +25,4 @@ class User(SQLAlchemyBaseUserTable[uuid.UUID], Base):
     importers = relationship("Importer", back_populates="user")
     import_jobs = relationship("ImportJob", back_populates="user")
     webhook_events = relationship("WebhookEvent", back_populates="user")
+    blacklisted_tokens = relationship("TokenBlacklist", back_populates="user")

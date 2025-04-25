@@ -38,6 +38,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import apiClient, { importersApi } from '@/utils/apiClient';
 
 // Define Field structure to match backend ImporterField
 interface ImporterField {
@@ -100,42 +101,19 @@ export default function ImportersPage() {
     setError(null);
 
     try {
-      const response = await fetch(`${backendUrl}/api/v1/importers/`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.status === 401) {
-        // Try to refresh the token
-        const refreshed = await refreshToken();
-        if (!refreshed) {
-          logout();
-          router.push('/login');
-          return;
-        }
-        // Retry with new token
-        const retryResponse = await fetch(`${backendUrl}/api/v1/importers/`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (!retryResponse.ok) {
-          throw new Error(`Failed to fetch importers: ${retryResponse.statusText}`);
-        }
-
-        const data = await retryResponse.json();
-        setImporters(data);
-      } else if (!response.ok) {
-        throw new Error(`Failed to fetch importers: ${response.statusText}`);
-      } else {
-        const data = await response.json();
-        setImporters(data);
-      }
-    } catch (err) {
+      // Use the API client to get importers
+      // The token handling and refresh is done automatically by the client
+      const data = await importersApi.getImporters();
+      setImporters(data);
+    } catch (err: any) {
       console.error('Error fetching importers:', err);
-      setError('Failed to load importers. Please try again later.');
+      setError(err.message || 'An error occurred while fetching importers');
+      
+      // If the error is authentication-related and not handled by the client,
+      // redirect to login
+      if (err.response && err.response.status === 401) {
+        router.push('/login');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -188,56 +166,29 @@ export default function ImportersPage() {
 
   const handleSaveImporter = async (importerName: string, fields: ImporterField[]) => {
     setSaveError(null);
-
+    
     try {
-      const response = await fetch(`${backendUrl}/api/v1/importers/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: importerName,
-          fields: fields
-        })
+      // Use the API client to create an importer
+      await importersApi.createImporter({
+        name: importerName,
+        fields: fields,
       });
-
-      if (response.status === 401) {
-        // Try to refresh the token
-        const refreshed = await refreshToken();
-        if (!refreshed) {
-          logout();
-          router.push('/login');
-          return;
-        }
-
-        // Retry with new token
-        const retryResponse = await fetch(`${backendUrl}/api/v1/importers/`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            name: importerName,
-            fields: fields
-          })
-        });
-
-        if (!retryResponse.ok) {
-          throw new Error(`Failed to create importer: ${retryResponse.statusText}`);
-        }
-      } else if (!response.ok) {
-        throw new Error(`Failed to create importer: ${response.statusText}`);
-      }
-
-      // Refresh the importers list
-      fetchImporters();
-      // Close the dialog
+      
+      // Close dialog and refresh importers list
       setIsCreateDialogOpen(false);
+      fetchImporters();
     } catch (err: any) {
       console.error('Error creating importer:', err);
-      setSaveError(err.message || 'Failed to create importer. Please try again.');
+      
+      // Extract error message from API response if available
+      let errorMessage = 'An error occurred while creating the importer';
+      if (err.response && err.response.data && err.response.data.detail) {
+        errorMessage = err.response.data.detail;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setSaveError(errorMessage);
     }
   };
 
@@ -257,107 +208,58 @@ export default function ImportersPage() {
 
   const handleUpdateImporter = async (importerName: string, fields: ImporterField[]) => {
     if (!importerToEdit) return;
-
     setSaveError(null);
-
+    
     try {
-      const response = await fetch(`${backendUrl}/api/v1/importers/${importerToEdit.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: importerName,
-          fields: fields
-        })
+      // Use the API client to update an importer
+      await importersApi.updateImporter(importerToEdit.id, {
+        name: importerName,
+        fields: fields,
       });
-
-      if (response.status === 401) {
-        // Try to refresh the token
-        const refreshed = await refreshToken();
-        if (!refreshed) {
-          logout();
-          router.push('/login');
-          return;
-        }
-
-        // Retry with new token
-        const retryResponse = await fetch(`${backendUrl}/api/v1/importers/${importerToEdit.id}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            name: importerName,
-            fields: fields
-          })
-        });
-
-        if (!retryResponse.ok) {
-          throw new Error(`Failed to update importer: ${retryResponse.statusText}`);
-        }
-      } else if (!response.ok) {
-        throw new Error(`Failed to update importer: ${response.statusText}`);
-      }
-
-      // Refresh the importers list
-      fetchImporters();
-      // Close the dialog
+      
+      // Close dialog and refresh importers list
       setIsEditDialogOpen(false);
       setImporterToEdit(null);
+      fetchImporters();
     } catch (err: any) {
       console.error('Error updating importer:', err);
-      setSaveError(err.message || 'Failed to update importer. Please try again.');
+      
+      // Extract error message from API response if available
+      let errorMessage = 'An error occurred while updating the importer';
+      if (err.response && err.response.data && err.response.data.detail) {
+        errorMessage = err.response.data.detail;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setSaveError(errorMessage);
     }
   };
 
   // --- Delete Importer Logic ---
   const handleDeleteImporter = async () => {
     if (!importerToDelete) return;
-
     setDeleteError(null);
-
+    
     try {
-      const response = await fetch(`${backendUrl}/api/v1/importers/${importerToDelete}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.status === 401) {
-        // Try to refresh the token
-        const refreshed = await refreshToken();
-        if (!refreshed) {
-          logout();
-          router.push('/login');
-          return;
-        }
-
-        // Retry with new token
-        const retryResponse = await fetch(`${backendUrl}/api/v1/importers/${importerToDelete}`, {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (!retryResponse.ok) {
-          throw new Error(`Failed to delete importer: ${retryResponse.statusText}`);
-        }
-      } else if (!response.ok) {
-        throw new Error(`Failed to delete importer: ${response.statusText}`);
-      }
-
-      // Refresh the importers list
-      fetchImporters();
-      // Reset state
+      // Use the API client to delete an importer
+      await importersApi.deleteImporter(importerToDelete);
+      
+      // Reset state and refresh importers list
       setImporterToDelete(null);
+      fetchImporters();
     } catch (err: any) {
       console.error('Error deleting importer:', err);
-      setDeleteError(err.message || 'Failed to delete importer. Please try again.');
+      
+      // Extract error message from API response if available
+      let errorMessage = 'An error occurred while deleting the importer';
+      if (err.response && err.response.data && err.response.data.detail) {
+        errorMessage = err.response.data.detail;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setDeleteError(errorMessage);
     }
   };
 

@@ -6,6 +6,7 @@ import ImporterColumnsManager from '@/components/ImporterColumnsManager';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
+import apiClient, { importersApi } from '@/utils/apiClient';
 import { 
   Card, 
   CardContent, 
@@ -24,14 +25,12 @@ import { ChevronLeft, Plus, Trash2 } from 'lucide-react';
 
 export default function NewImporterPage() {
   const router = useRouter();
-  const { token, refreshToken, logout } = useAuth();
+  const { isAuthenticated } = useAuth();
   const [importerName, setImporterName] = useState('');
   const [fields, setFields] = useState<ImporterField[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-  
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
 
   // Handle importer name change
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,55 +60,32 @@ export default function NewImporterPage() {
     setFormError(null);
     
     try {
-      const response = await fetch(`${backendUrl}/api/v1/importers/`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          name: importerName,
-          fields: fields
-        })
+      // Use the API client to create a new importer
+      const data = await importersApi.createImporter({
+        name: importerName,
+        fields: fields
       });
       
-      if (response.status === 401) {
-        // Try to refresh the token
-        const refreshed = await refreshToken();
-        if (!refreshed) {
-          logout();
-          router.push('/login');
-          return;
-        }
-        
-        // Retry with new token
-        const retryResponse = await fetch(`${backendUrl}/api/v1/importers/`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            name: importerName,
-            fields: fields
-          })
-        });
-        
-        if (!retryResponse.ok) {
-          throw new Error(`Failed to create importer: ${retryResponse.statusText}`);
-        }
-        
-        const data = await retryResponse.json();
-        router.push(`/dashboard/importers/${data.id}`);
-      } else if (!response.ok) {
-        throw new Error(`Failed to create importer: ${response.statusText}`);
-      } else {
-        const data = await response.json();
-        router.push(`/dashboard/importers/${data.id}`);
-      }
+      // Navigate to the new importer's detail page
+      router.push(`/dashboard/importers/${data.id}`);
     } catch (err: any) {
       console.error('Error creating importer:', err);
-      setError(err.message || 'Failed to create importer. Please try again.');
+      
+      // Extract error message from API response if available
+      let errorMessage = 'Failed to create importer. Please try again.';
+      if (err.response && err.response.data && err.response.data.detail) {
+        errorMessage = err.response.data.detail;
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+      
+      setError(errorMessage);
+      
+      // If the error is authentication-related and not handled by the client,
+      // redirect to login
+      if (err.response && err.response.status === 401) {
+        router.push('/login');
+      }
     } finally {
       setIsLoading(false);
     }

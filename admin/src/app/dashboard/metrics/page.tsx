@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
+import { importsApi } from '@/utils/apiClient';
 import {
   Card,
   CardContent,
@@ -96,55 +97,37 @@ export default function MetricsPage() {
     const fetchImports = async () => {
       setIsLoading(true);
       setError(null);
+      
       try {
-        if (!token) {
-          setIsLoading(false);
-          return;
-        }
+        // Use the API client to get all import jobs
+        // The token handling and refresh is done automatically by the client
+        const data = await importsApi.getImports();
         
-        // Try to refresh the token before making the request
-        await refreshToken();
+        // Ensure we have an array of imports
+        const importsArray = Array.isArray(data) ? data : [];
         
-        const response = await fetch(`${backendUrl}/api/v1/imports`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (!response.ok) {
-          // If unauthorized, try to refresh the token and retry once
-          if (response.status === 401) {
-            console.log('Token validation check...');
-            const isValid = await refreshToken();
-            
-            if (isValid) {
-              // Token is still valid, retry the request
-              console.log('Token is valid, retrying request...');
-              return fetchImports();
-            } else {
-              // Token is invalid, redirect to login
-              console.log('Token is invalid, redirecting to login');
-              logout();
-              router.push('/login');
-              return; // Stop execution
-            }
-          }
-          
-          let errorDetail = 'Failed to fetch import jobs';
-          try {
-            const errorData = await response.json();
-            errorDetail = errorData.detail || errorDetail;
-          } catch (e) { /* Ignore parsing error */ }
-          throw new Error(errorDetail);
-        }
-        
-        const data = await response.json();
-        setImports(Array.isArray(data) ? data : []);
-        setFilteredImports(Array.isArray(data) ? data : []);
-        calculateMetrics(Array.isArray(data) ? data : []);
+        // Update state with the fetched data
+        setImports(importsArray);
+        setFilteredImports(importsArray);
+        calculateMetrics(importsArray);
       } catch (err: any) {
-        setError(err.message || 'An error occurred while fetching import jobs.');
-        console.error(err);
+        console.error('Error fetching import jobs:', err);
+        
+        // Extract error message from API response if available
+        let errorMessage = 'An error occurred while fetching import jobs.';
+        if (err.response && err.response.data && err.response.data.detail) {
+          errorMessage = err.response.data.detail;
+        } else if (err.message) {
+          errorMessage = err.message;
+        }
+        
+        setError(errorMessage);
+        
+        // If the error is authentication-related and not handled by the client,
+        // redirect to login
+        if (err.response && err.response.status === 401) {
+          router.push('/login');
+        }
       } finally {
         setIsLoading(false);
       }
