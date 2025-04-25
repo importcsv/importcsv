@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setToken(newToken);
       return true;
     } catch (error) {
-      console.error('Error refreshing token:', error);
+
       // Don't call logout() here to avoid circular dependencies
       // Just clear the state
       setIsAuthenticated(false);
@@ -101,7 +101,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       } catch (error) {
         // Handle potential localStorage errors
-        console.error("Error reading auth token from localStorage:", error);
+
         setIsAuthenticated(false);
         setUser(null);
         setToken(null);
@@ -115,15 +115,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = (data: { token: string; refreshToken: string; user?: any }) => {
     try {
-        console.log('AuthContext: Storing tokens in context and localStorage');
+
         localStorage.setItem(AUTH_TOKEN_KEY, data.token); // Save access token to localStorage
         
         // Make sure we have a refresh token
         if (data.refreshToken) {
             localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken); // Save refresh token to localStorage
-            console.log('AuthContext: Refresh token stored');
+
         } else {
-            console.warn('AuthContext: No refresh token provided to login function');
+
         }
         
         setIsAuthenticated(true);
@@ -131,7 +131,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setRefreshToken(data.refreshToken);
         setUser(data.user || null);
     } catch (error) {
-        console.error("Error saving auth tokens to localStorage:", error);
+
         // Handle potential storage errors (e.g., quota exceeded)
     }
   };
@@ -148,7 +148,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setToken(null);
         setRefreshToken(null);
     } catch (error) {
-        console.error("Error during logout:", error);
+
         // Even if API call fails, clear local state
         setIsAuthenticated(false);
         setUser(null);

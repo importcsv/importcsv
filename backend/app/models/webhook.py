@@ -10,6 +10,7 @@ class WebhookEventType(str, enum.Enum):
     IMPORT_VALIDATION_ERROR = "import.validation_error"
     IMPORT_PROGRESS = "import.progress"
     IMPORT_FINISHED = "import.finished"
+    IMPORT_FAILED = "import.failed"
 
 class WebhookEvent(Base):
     __tablename__ = "webhook_events"
@@ -24,6 +25,6 @@ class WebhookEvent(Base):
     last_delivery_attempt = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
-    # Relationships
+    # Relationships - using simple string references
     user = relationship("User", back_populates="webhook_events")
     import_job = relationship("ImportJob", back_populates="webhook_events")

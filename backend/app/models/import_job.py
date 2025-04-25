@@ -5,6 +5,8 @@ from sqlalchemy.orm import relationship
 import enum
 from app.db.base import Base
 
+# Import models using strings in relationships to avoid circular imports
+
 class ImportStatus(str, enum.Enum):
     PENDING = "pending"
     PROCESSING = "processing"
@@ -36,7 +38,7 @@ class ImportJob(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     completed_at = Column(DateTime(timezone=True), nullable=True)
 
-    # Relationships
+    # Relationships - using simple string references
     user = relationship("User", back_populates="import_jobs")
     importer = relationship("Importer", back_populates="import_jobs")
     webhook_events = relationship("WebhookEvent", back_populates="import_job")

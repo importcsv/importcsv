@@ -54,6 +54,11 @@ class BaseAppSettings(BaseSettings):
     # Logging configuration
     LOG_LEVEL: str = Field(default_factory=lambda: os.getenv("LOG_LEVEL", "INFO"))
 
+    # Redis and RQ settings
+    REDIS_URL: str = Field(default_factory=lambda: os.getenv("REDIS_URL", "redis://localhost:6379"))
+    RQ_DEFAULT_TIMEOUT: int = Field(default_factory=lambda: int(os.getenv("RQ_DEFAULT_TIMEOUT", "3600")))  # 1 hour default
+    RQ_IMPORT_QUEUE: str = Field(default_factory=lambda: os.getenv("RQ_IMPORT_QUEUE", "imports"))
+    
     # These must be set in environment for all environments
     DATABASE_URL: str
     SECRET_KEY: str

@@ -36,6 +36,10 @@ async_session_maker = sessionmaker(
 # Create base class for models
 Base = declarative_base()
 
+# Import all models to ensure they are registered with SQLAlchemy
+# This must be done after Base is defined but before any relationships are used
+from app.db.models import *  # noqa
+
 # Dependency to get DB session for synchronous operations
 def get_db() -> Generator:
     db = SessionLocal()

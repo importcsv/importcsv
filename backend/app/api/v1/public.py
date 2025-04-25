@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import Dict, Any, List
 import uuid
@@ -12,8 +12,9 @@ from app.models.importer import Importer
 from app.schemas.import_job import ImportJob as ImportJobSchema
 from app.schemas.importer import Importer as ImporterSchema
 from app.services.webhook import webhook_service, WebhookEventType
-from app.services.import_processor import import_processor
+from app.services.import_service import import_service
 from app.services.llm import llm_service
+from app.services.queue import enqueue_job
 
 router = APIRouter()
 
@@ -25,44 +26,62 @@ class SuggestFixesRequest(BaseModel):
     valid_rows: List[Dict[str, Any]] = []
 
 
-async def process_import_data(import_job_id: uuid.UUID, valid_data: List[Dict[str, Any]], invalid_data: List[Dict[str, Any]], db: Session):
+def process_import_data(import_job_id: str, valid_data: List[Dict[str, Any]], invalid_data: List[Dict[str, Any]]):
     """
-    Process import data in the background task.
-    This function handles the data processing without requiring UUID conversion.
+    Process import data as a background job in Redis Queue.
+    This function creates its own database session and handles all database operations.
+    
+    Args:
+        import_job_id (str): The ID of the import job as a string
+        valid_data (List[Dict[str, Any]]): List of valid data rows to process
+        invalid_data (List[Dict[str, Any]]): List of invalid data rows for reference
+    
+    Returns:
+        Dict[str, Any]: Result of the processing
     """
+    # Create a new database session for this worker
+    from app.db.base import SessionLocal
+    import asyncio
+    
+    db = SessionLocal()
+    
     try:
-        # Get the import job
-        import_job = db.query(ImportJobModel).filter(ImportJobModel.id == import_job_id).first()
-        if not import_job:
-            print(f"Error: Import job {import_job_id} not found")
-            return
-
-        # Extract column mapping from the request or provide an empty dict if not present
-        column_mapping = {}
-
-        # Process the data
-        import_job.processed_rows = len(valid_data)
-        import_job.status = ImportStatus.COMPLETED
-        db.commit()
-
-        print(f"Successfully processed {len(valid_data)} rows for import job {import_job_id}")
+        # Use the import_service to process the data
+        # We need to run the async function in a new event loop since this is a worker process
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        try:
+            # Run the async function in the event loop
+            loop.run_until_complete(
+                import_service.process_import_data(
+                    db=db,
+                    import_job_id=import_job_id,
+                    valid_data=valid_data,
+                    invalid_data=invalid_data
+                )
+            )
+            print(f"Successfully processed {len(valid_data)} rows for import job {import_job_id}")
+            return {
+                "status": "success", 
+                "processed_rows": len(valid_data),
+                "invalid_rows": len(invalid_data)
+            }
+        finally:
+            loop.close()
+        
     except Exception as e:
         print(f"Error processing import data: {str(e)}")
-        # Try to update the import job status if possible
-        try:
-            import_job = db.query(ImportJobModel).filter(ImportJobModel.id == import_job_id).first()
-            if import_job:
-                import_job.status = ImportStatus.FAILED
-                import_job.error_message = f"Error processing import: {str(e)}"
-                db.commit()
-        except Exception as update_error:
-            print(f"Error updating import job status: {str(update_error)}")
+        return {"status": "error", "message": str(e)}
+        
+    finally:
+        # Always close the database session
+        db.close()
 
 @router.post("/process-import/{importer_id}", response_model=ImportJobSchema)
 async def process_public_import(
     importer_id: str,
     data: Dict[str, Any],
-    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db)
 ):
     """
@@ -117,13 +136,22 @@ async def process_public_import(
     # Extract column mapping from the request or provide an empty dict if not present
     column_mapping = data.get("columnMapping", {})
 
-    background_tasks.add_task(
-        process_import_data,
-        import_job.id,
-        valid_data,
-        invalid_data,
-        db
+    # Enqueue processing job in Redis Queue
+    job_id = enqueue_job(
+        'app.api.v1.public.process_import_data',
+        import_job_id=str(import_job.id),
+        valid_data=valid_data,
+        invalid_data=invalid_data
     )
+    
+    if job_id:
+        print(f"Import job {import_job.id} enqueued with RQ job ID: {job_id}")
+    else:
+        print(f"Failed to enqueue import job {import_job.id}")
+        # Update job status to indicate queueing failure
+        import_job.status = ImportStatus.FAILED
+        import_job.error_message = "Failed to enqueue job for processing"
+        db.commit()
 
     # Create webhook event if enabled
     if importer.webhook_enabled and importer.webhook_url:

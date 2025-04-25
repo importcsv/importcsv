@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, AsyncGenerator
 
 from app.db.base import get_db
-from app.auth.users import get_current_user, get_current_superuser as get_current_active_superuser
-from app.core.security import get_password_hash
+from app.auth.users import get_current_user, get_current_superuser as get_current_active_superuser, get_user_manager
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate, User as UserSchema, UserRegister
 
@@ -35,6 +34,7 @@ async def create_user(
     user_in: UserCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_superuser),
+    user_manager = Depends(get_user_manager),
 ):
     """
     Create new user (superuser only)
@@ -46,9 +46,12 @@ async def create_user(
             detail="The user with this email already exists in the system",
         )
     
+    # Use FastAPI-Users' password hashing
+    hashed_password = user_manager.password_helper.hash(user_in.password)
+    
     user = User(
         email=user_in.email,
-        hashed_password=get_password_hash(user_in.password),
+        hashed_password=hashed_password,
         full_name=user_in.full_name,
         is_superuser=user_in.is_superuser,
     )
@@ -61,6 +64,7 @@ async def create_user(
 async def register_user(
     user_in: UserRegister,
     db: Session = Depends(get_db),
+    user_manager = Depends(get_user_manager),
 ):
     """
     Public endpoint to register a new user
@@ -72,10 +76,13 @@ async def register_user(
             detail="The user with this email already exists in the system",
         )
     
+    # Use FastAPI-Users' password hashing
+    hashed_password = user_manager.password_helper.hash(user_in.password)
+    
     # Create a regular user (not a superuser)
     user = User(
         email=user_in.email,
-        hashed_password=get_password_hash(user_in.password),
+        hashed_password=hashed_password,
         full_name=user_in.full_name,
         is_superuser=False,  # Regular users can't be superusers
         is_active=True,

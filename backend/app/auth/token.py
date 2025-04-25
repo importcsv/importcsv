@@ -10,7 +10,6 @@ from jose import jwt, JWTError
 from sqlalchemy.orm import Session
 
 from app.core.config import settings
-from app.models.token import TokenBlacklist
 from app.schemas.token import TokenData
 
 
@@ -31,7 +30,7 @@ def create_refresh_token(
 
     # Get current time and expiration time as UTC timestamps
     now = datetime.datetime.now(pytz.UTC)
-    
+
     to_encode = {
         "sub": str(user_id),
         "exp": int(expire.timestamp()),  # Use integer timestamp for consistency
@@ -39,7 +38,7 @@ def create_refresh_token(
         "jti": token_id,
         "aud": ["fastapi-users:refresh"],
     }
-    
+
 
 
     encoded_jwt = jwt.encode(
@@ -90,7 +89,7 @@ def verify_refresh_token(token: str, db: Session = None) -> TokenData:
         # Extract data
         user_id = UUID(payload["sub"])
         token_id = payload["jti"]
-        
+
         # Ensure timezone-aware datetime objects
         try:
             # Handle both integer and datetime timestamps
@@ -98,12 +97,12 @@ def verify_refresh_token(token: str, db: Session = None) -> TokenData:
                 expires_at = datetime.datetime.fromtimestamp(payload["exp"]).replace(tzinfo=pytz.UTC)
             else:
                 expires_at = payload["exp"].replace(tzinfo=pytz.UTC) if payload["exp"].tzinfo is None else payload["exp"]
-                
+
             if isinstance(payload["iat"], int):
                 token_issued_at = datetime.datetime.fromtimestamp(payload["iat"]).replace(tzinfo=pytz.UTC)
             else:
                 token_issued_at = payload["iat"].replace(tzinfo=pytz.UTC) if payload["iat"].tzinfo is None else payload["iat"]
-                
+
 
         except Exception as time_error:
 
