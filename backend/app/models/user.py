@@ -1,12 +1,12 @@
 import uuid
-from typing import Optional, List
 
 from fastapi_users.db import SQLAlchemyBaseUserTable
-from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, UUID
+from sqlalchemy import Column, String, Boolean, DateTime, UUID
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
 from app.db.base import Base
+
 
 class User(SQLAlchemyBaseUserTable[uuid.UUID], Base):
     __tablename__ = "users"
@@ -20,7 +20,7 @@ class User(SQLAlchemyBaseUserTable[uuid.UUID], Base):
     is_verified = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
+
     # Relationships - using simple string references
     importers = relationship("Importer", back_populates="user")
     import_jobs = relationship("ImportJob", back_populates="user")

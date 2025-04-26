@@ -1,7 +1,9 @@
 import uuid
+from datetime import datetime
+
 from pydantic import BaseModel, Field
 from typing import Dict, Any, List, Optional, Literal
-from datetime import datetime
+
 
 # Schema field definition
 class SchemaField(BaseModel):
@@ -14,37 +16,45 @@ class SchemaField(BaseModel):
     not_blank: bool = False  # Value cannot be blank
     example: Optional[str] = None  # Example value for the field
     validation_error_message: Optional[str] = None  # Custom validation error message
-    validation_format: Optional[str] = None  # For date format, regex pattern, or select options
+    validation_format: Optional[str] = (
+        None  # For date format, regex pattern, or select options
+    )
     validation: Optional[Dict[str, Any]] = None  # JSON Schema validation rules
-    template: Optional[str] = None  # Template for boolean or select fields (e.g., 'true/false', 'yes/no', '1/0')
-    
+    template: Optional[str] = (
+        None  # Template for boolean or select fields (e.g., 'true/false', 'yes/no', '1/0')
+    )
+
     def dict(self, *args, **kwargs):
         # Ensure all fields are serializable
         result = super().dict(*args, **kwargs)
         # Remove None values to keep the JSON clean
         return {k: v for k, v in result.items() if v is not None}
-        
+
     class Config:
         from_attributes = True
+
 
 # Base Schema model
 class SchemaBase(BaseModel):
     name: str
     description: Optional[str] = None
     fields: List[SchemaField]
-    
+
     class Config:
         from_attributes = True
+
 
 # Schema creation model
 class SchemaCreate(SchemaBase):
     pass
+
 
 # Schema update model
 class SchemaUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
     fields: Optional[List[SchemaField]] = None
+
 
 # Schema in DB
 class SchemaInDBBase(SchemaBase):
@@ -56,11 +66,12 @@ class SchemaInDBBase(SchemaBase):
     class Config:
         from_attributes = True
 
+
 # Schema to return via API
 class Schema(SchemaInDBBase):
     # Convert UUID fields to strings for API responses
     id: str
     user_id: str
-    
+
     class Config:
         from_attributes = True

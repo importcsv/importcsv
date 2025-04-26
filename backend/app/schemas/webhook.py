@@ -4,15 +4,18 @@ from datetime import datetime
 import uuid
 from app.models.webhook import WebhookEventType
 
+
 # Base WebhookEvent model
 class WebhookEventBase(BaseModel):
     event_type: str
     payload: Dict[str, Any]
 
+
 # WebhookEvent creation model
 class WebhookEventCreate(WebhookEventBase):
     importer_id: Optional[uuid.UUID] = None
     import_job_id: Optional[uuid.UUID] = None
+
 
 # WebhookEvent in DB
 class WebhookEventInDBBase(WebhookEventBase):
@@ -27,9 +30,11 @@ class WebhookEventInDBBase(WebhookEventBase):
     class Config:
         from_attributes = True
 
+
 # WebhookEvent to return via API
 class WebhookEvent(WebhookEventInDBBase):
     pass
+
 
 # Webhook configuration
 class WebhookConfig(BaseModel):
@@ -39,9 +44,11 @@ class WebhookConfig(BaseModel):
     description: Optional[str] = None
     active: bool = True
 
+
 # Webhook configuration create
 class WebhookConfigCreate(WebhookConfig):
     pass
+
 
 # Webhook configuration update
 class WebhookConfigUpdate(BaseModel):
