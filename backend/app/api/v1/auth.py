@@ -13,7 +13,6 @@ from app.models.user import User as UserModel
 from app.auth.users import (
     UserManager,
     fastapi_users,
-    jwt_backend,
     cookie_backend,
     get_user_manager,
     get_jwt_strategy,
@@ -26,7 +25,6 @@ from app.auth.token import (
 )
 
 router = APIRouter()
-
 
 
 # Custom login endpoint that returns both access and refresh tokens
@@ -45,33 +43,33 @@ async def login(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="LOGIN_BAD_CREDENTIALS",
             )
-            
+
         # Get the access token - using the JWT strategy directly
         strategy = get_jwt_strategy()
         access_token = await strategy.write_token(user)
-        
+
         # Generate a refresh token
         from app.auth.token import create_refresh_token
+
         refresh_token = create_refresh_token(user.id)
-        
+
         # Return both tokens
         return {
             "access_token": access_token,
             "token_type": "bearer",
-            "refresh_token": refresh_token
+            "refresh_token": refresh_token,
         }
     except Exception as e:
         print(f"Login error: {str(e)}")
         import traceback
+
         traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="LOGIN_BAD_CREDENTIALS",
         )
 
-# Include other FastAPI Users routers (except login which we've replaced)
 
-# Add a custom login endpoint that also returns a refresh token
 @router.post("/jwt/login-with-refresh", response_model=Dict[str, Any])
 async def login_with_refresh(
     credentials: OAuth2PasswordRequestForm = Depends(),
@@ -87,29 +85,32 @@ async def login_with_refresh(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="LOGIN_BAD_CREDENTIALS",
             )
-            
+
         # Get the access token - using the JWT strategy directly
         strategy = get_jwt_strategy()
         access_token = await strategy.write_token(user)
-        
+
         # Generate a refresh token
         from app.auth.token import create_refresh_token
+
         refresh_token = create_refresh_token(user.id)
-        
+
         # Return both tokens
         return {
             "access_token": access_token,
             "token_type": "bearer",
-            "refresh_token": refresh_token
+            "refresh_token": refresh_token,
         }
     except Exception as e:
         print(f"Login error: {str(e)}")
         import traceback
+
         traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="LOGIN_BAD_CREDENTIALS",
         )
+
 
 # Cookie Authentication (for web applications)
 router.include_router(
@@ -169,8 +170,9 @@ async def refresh_token_endpoint(
 
         # Get the user directly from the database
         from app.models.user import User
+
         user = db.query(User).filter(User.id == user_id).first()
-        
+
         if not user or not user.is_active:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -184,12 +186,13 @@ async def refresh_token_endpoint(
 
         # Also generate a new refresh token to extend the session
         from app.auth.token import create_refresh_token
+
         new_refresh_token = create_refresh_token(user_id)
 
         return {
             "access_token": access_token,
             "refresh_token": new_refresh_token,
-            "token_type": "bearer"
+            "token_type": "bearer",
         }
     except HTTPException as e:
         # Re-raise HTTP exceptions without modification
@@ -198,6 +201,7 @@ async def refresh_token_endpoint(
     except Exception as e:
         print(f"Refresh token error: {str(e)}")
         import traceback
+
         traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -230,9 +234,7 @@ async def logout(
         try:
             # Decode with verification to extract the JTI
             payload = jwt.decode(
-                token,
-                settings.SECRET_KEY,
-                algorithms=[settings.ALGORITHM]
+                token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
             )
 
             # Extract the JTI and revoke the token
@@ -243,12 +245,14 @@ async def logout(
                 else:
                     raise HTTPException(status_code=500, detail="Error revoking token")
             else:
-                raise HTTPException(status_code=400, detail="Invalid token format (missing JTI)")
+                raise HTTPException(
+                    status_code=400, detail="Invalid token format (missing JTI)"
+                )
         except JWTError as e:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail=f"Invalid token: {str(e)}",
-                headers={"WWW-Authenticate": "Bearer"}
+                headers={"WWW-Authenticate": "Bearer"},
             )
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid token format: {str(e)}")
@@ -266,7 +270,9 @@ async def logout_all_devices(
     if success:
         return {"detail": "Successfully logged out from all devices"}
     else:
-        raise HTTPException(status_code=500, detail="Error logging out from all devices")
+        raise HTTPException(
+            status_code=500, detail="Error logging out from all devices"
+        )
 
 
 @router.post("/request-password-reset", response_model=Dict[str, str])
@@ -281,7 +287,9 @@ async def request_password_reset(
     """
     # This will be handled by FastAPI Users
     # We're just redirecting to their endpoint
-    return {"detail": "If your email is registered, you will receive a password reset link"}
+    return {
+        "detail": "If your email is registered, you will receive a password reset link"
+    }
 
 
 @router.get("/me", response_model=Dict[str, Any])
