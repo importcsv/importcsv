@@ -29,8 +29,7 @@ export default function MapColumns({
   const headerRowIndex = selectedHeaderRow ? selectedHeaderRow : 0;
   let sampleDataRows = data.rows.slice(headerRowIndex + 1, headerRowIndex + 4);
   
-  // State for LLM suggestions toggle - default to true for better UX
-  const [useLLMSuggestions, setUseLLMSuggestions] = useState(true);
+  // No longer using LLM suggestions
 
   const uploadColumns: UploadColumn[] = data.rows[headerRowIndex]?.values.map((cell, index) => {
     let sample_data = sampleDataRows.map((row) => row.values[index]);
@@ -40,14 +39,13 @@ export default function MapColumns({
       sample_data,
     };
   });
-  const { rows, formValues, isLoadingLLMSuggestions } = useMapColumnsTable(
+  const { rows, formValues } = useMapColumnsTable(
     uploadColumns, 
     template.columns, 
     columnMapping, 
     isSubmitting,
     importerKey,
-    backendUrl,
-    useLLMSuggestions
+    backendUrl
   );
   const [error, setError] = useState<string | null>(null);
 
@@ -83,22 +81,7 @@ export default function MapColumns({
 
   return (
     <div className={style.content}>
-      {importerKey && backendUrl && (
-        <Flex align="center" mb={4}>
-          <Switch 
-            id="llm-suggestions" 
-            isChecked={useLLMSuggestions}
-            onChange={(e) => setUseLLMSuggestions(e.target.checked)}
-            colorScheme="blue"
-            mr={2}
-          />
-          <Text fontSize="sm">Use AI-powered matching</Text>
-          <Tooltip label="Suggests better column matches using machine learning" placement="top">
-            <Icon as={PiInfo} ml={2} color="gray.500" />
-          </Tooltip>
-          {isLoadingLLMSuggestions && <Text ml={2} fontSize="sm" color="blue.500">Loading...</Text>}
-        </Flex>
-      )}
+      {/* LLM matching removed for better UX */}
       <form onSubmit={onSubmit}>
         {data ? (
           <div className={style.tableWrapper}>
