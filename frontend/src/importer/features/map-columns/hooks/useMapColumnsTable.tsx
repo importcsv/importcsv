@@ -14,7 +14,7 @@ export default function useMapColumnsTable(
   templateColumns: TemplateColumn[] = [],
   columnsValues: { [uploadColumnIndex: number]: TemplateColumnMapping },
   isLoading?: boolean,
-  importerId?: string,
+  importerKey?: string,
   backendUrl?: string,
   useLLMSuggestions: boolean = false
 ) {
@@ -157,7 +157,7 @@ export default function useMapColumnsTable(
   // Fetch LLM suggestions if enabled
   useEffect(() => {
     const fetchLLMSuggestions = async () => {
-      if (!useLLMSuggestions || !importerId || !backendUrl || 
+      if (!useLLMSuggestions || !importerKey || !backendUrl || 
           uploadColumns.length === 0 || templateColumns.length === 0) {
         return;
       }
@@ -166,7 +166,7 @@ export default function useMapColumnsTable(
         setIsLoadingLLMSuggestions(true);
         const llmSuggestions = await getLLMColumnMappingSuggestions(
           backendUrl,
-          importerId,
+          importerKey,
           uploadColumns,
           templateColumns
         );
@@ -211,7 +211,7 @@ export default function useMapColumnsTable(
     };
 
     fetchLLMSuggestions();
-  }, [useLLMSuggestions, importerId, backendUrl, JSON.stringify(uploadColumns), JSON.stringify(templateColumns)]);
+  }, [useLLMSuggestions, importerKey, backendUrl, JSON.stringify(uploadColumns), JSON.stringify(templateColumns)]);
 
   return { 
     rows, 

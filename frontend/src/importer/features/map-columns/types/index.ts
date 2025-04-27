@@ -18,6 +18,6 @@ export type MapColumnsProps = {
   onSuccess: (columnMapping: { [index: number]: TemplateColumnMapping }) => void;
   onCancel: () => void;
   isSubmitting: boolean;
-  importerId?: string;     // ID of the importer for LLM API calls
+  importerKey?: string;     // Key of the importer for LLM API calls
   backendUrl?: string;     // Backend URL for API calls
 };

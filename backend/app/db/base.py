@@ -1,12 +1,13 @@
-from contextlib import contextmanager
 import logging
+
+from contextlib import contextmanager
+
 from sqlalchemy import create_engine, event
-from sqlalchemy.engine import Engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.exc import SQLAlchemyError, DBAPIError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from typing import Generator, AsyncGenerator, Optional, Any, Dict
+from typing import Generator, AsyncGenerator, Any, Dict
 
 from app.core.config import settings
 
@@ -14,32 +15,33 @@ logger = logging.getLogger(__name__)
 
 # Configure engine options with best practices
 engine_options: Dict[str, Any] = {
-    "pool_pre_ping": True,      # Verify connections before using them
-    "pool_recycle": 3600,      # Recycle connections after 1 hour
-    "pool_size": 5,           # Maintain a pool of 5 connections
-    "max_overflow": 10,       # Allow up to 10 additional connections
-    "pool_timeout": 30,       # Wait up to 30 seconds for a connection
-    "echo": False,            # Disable SQL logging in production
+    "pool_pre_ping": True,  # Verify connections before using them
+    "pool_recycle": 3600,  # Recycle connections after 1 hour
+    "pool_size": 5,  # Maintain a pool of 5 connections
+    "max_overflow": 10,  # Allow up to 10 additional connections
+    "pool_timeout": 30,  # Wait up to 30 seconds for a connection
+    "echo": False,  # Disable SQL logging in production
 }
 
 # Create SQLAlchemy engine for synchronous operations
-engine = create_engine(
-    settings.DATABASE_URL,
-    **engine_options
-)
+engine = create_engine(settings.DATABASE_URL, **engine_options)
+
 
 # Add connection pool events for monitoring
 @event.listens_for(engine, "connect")
 def connect(dbapi_connection, connection_record):
     logger.debug("Database connection established")
 
+
 @event.listens_for(engine, "checkout")
 def checkout(dbapi_connection, connection_record, connection_proxy):
     logger.debug("Database connection checked out from pool")
 
+
 @event.listens_for(engine, "checkin")
 def checkin(dbapi_connection, connection_record):
     logger.debug("Database connection returned to pool")
+
 
 # Create session factory for synchronous operations
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -59,9 +61,7 @@ async_engine = create_async_engine(
 
 # Create async session factory
 async_session_maker = sessionmaker(
-    async_engine,
-    class_=AsyncSession,
-    expire_on_commit=False
+    async_engine, class_=AsyncSession, expire_on_commit=False
 )
 
 # Create base class for models
@@ -70,6 +70,7 @@ Base = declarative_base()
 # Import all models to ensure they are registered with SQLAlchemy
 # This must be done after Base is defined but before any relationships are used
 from app.db.models import *  # noqa
+
 
 # Enhanced dependency to get DB session for synchronous operations with error handling
 def get_db() -> Generator[Session, None, None]:
@@ -84,6 +85,7 @@ def get_db() -> Generator[Session, None, None]:
     finally:
         db.close()
 
+
 # Context manager for manual session handling
 @contextmanager
 def get_db_context() -> Generator[Session, None, None]:
@@ -97,6 +99,7 @@ def get_db_context() -> Generator[Session, None, None]:
         raise
     finally:
         db.close()
+
 
 # Enhanced dependency to get DB session for asynchronous operations
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:

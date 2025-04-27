@@ -25,7 +25,7 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
     skipHeaderRowSelection,
     language,
     customTranslations,
-    importerId,
+    importerKey,
     backendUrl,
     user,
     metadata,
@@ -114,7 +114,7 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
         skipHeaderRowSelection={skipHeaderRowSelection}
         language={language}
         customTranslations={customTranslations}
-        importerId={importerId}
+        importerKey={importerKey}
         backendUrl={backendUrl}
         user={user}
         metadata={metadata}

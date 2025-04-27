@@ -19,6 +19,7 @@ class Importer(Base):
     __tablename__ = "importers"
 
     id = Column(UUID, primary_key=True, default=uuid.uuid4)
+    key = Column(UUID, unique=True, index=True, default=uuid.uuid4)
     name = Column(String, index=True, nullable=False)
     description = Column(String, nullable=True)
     user_id = Column(UUID, ForeignKey("users.id"), nullable=False)

@@ -139,6 +139,7 @@ class ImporterUpdate(BaseModel):
 # Importer in DB
 class ImporterInDBBase(ImporterBase):
     id: uuid.UUID
+    key: uuid.UUID
     user_id: uuid.UUID
     created_at: datetime
     updated_at: Optional[datetime] = None

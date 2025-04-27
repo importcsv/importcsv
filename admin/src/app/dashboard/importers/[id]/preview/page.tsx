@@ -46,6 +46,8 @@ export default function ImporterPreviewPage() {
   const router = useRouter();
   const { token, refreshToken, logout } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const [importer, setImporter] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   const handleImportComplete = async (data: ImportData) => {
     console.log('DEBUG: handleImportComplete called with data:', data);
@@ -89,6 +91,35 @@ export default function ImporterPreviewPage() {
     }
   };
 
+  // Fetch importer details to get the key
+  useEffect(() => {
+    const fetchImporterDetails = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api/v1/importers/${params.id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch importer details');
+        }
+        
+        const data = await response.json();
+        setImporter(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (token) {
+      fetchImporterDetails();
+    }
+  }, [params.id, token]);
+
   if (error) return (
     <div className="container mx-auto p-4">
       <div className="mb-6">
@@ -99,6 +130,20 @@ export default function ImporterPreviewPage() {
       </div>
       <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
         <p>Error: {error}</p>
+      </div>
+    </div>
+  );
+  
+  if (loading) return (
+    <div className="container mx-auto p-4">
+      <div className="mb-6">
+        <Link href={`/dashboard/importers/${params.id}`} className="flex items-center text-sm text-gray-500 hover:text-gray-700">
+          <ChevronLeft className="h-4 w-4 mr-1" />
+          Back to importer
+        </Link>
+      </div>
+      <div className="text-center py-10">
+        <p>Loading importer details...</p>
       </div>
     </div>
   );
@@ -119,19 +164,22 @@ export default function ImporterPreviewPage() {
             <div className="mb-4 p-3 bg-blue-50 rounded">
               <h3 className="font-bold">Debug Info:</h3>
               <p>Importer ID: {params.id?.toString()}</p>
+              <p>Importer Key: {importer?.key}</p>
             </div>
             <div className="w-full min-h-[500px]">
-              <CSVImporter
-                isModal={false}
-                darkMode={false}
-                primaryColor="#0284c7"
-                showDownloadTemplateButton={true}
-                skipHeaderRowSelection={false}
-                importerId={params.id as string}
-                onComplete={handleImportComplete}
-                user={{ userId: "12345" }}
-                metadata={{ anotherId: "123" }}
-              />
+              {importer?.key && (
+                <CSVImporter
+                  isModal={false}
+                  darkMode={false}
+                  primaryColor="#0284c7"
+                  showDownloadTemplateButton={true}
+                  skipHeaderRowSelection={false}
+                  importerKey={importer.key}
+                  onComplete={handleImportComplete}
+                  user={{ userId: "12345" }}
+                  metadata={{ anotherId: "123" }}
+                />
+              )}
             </div>
           </>
         )}

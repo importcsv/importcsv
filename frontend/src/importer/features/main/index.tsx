@@ -29,7 +29,7 @@ export default function Main(props: CSVImporterProps) {
     customStyles,
     showDownloadTemplateButton,
     skipHeaderRowSelection,
-    importerId,
+    importerKey,
     backendUrl = process.env.BACKEND_URL || 'http://localhost:8000',
     user,
     metadata,
@@ -71,19 +71,19 @@ export default function Main(props: CSVImporterProps) {
   });
   const [isLoadingSchema, setIsLoadingSchema] = useState<boolean>(false);
 
-  // Fetch schema from the backend using importerId
+  // Fetch schema from the backend using importerKey
   useEffect(() => {
     const fetchSchema = async () => {
-      // ImporterId is required
-      if (!importerId) {
-        setInitializationError('ImporterId is required for CSV import. Please provide a valid importer ID.');
+      // ImporterKey is required
+      if (!importerKey) {
+        setInitializationError('ImporterKey is required for CSV import. Please provide a valid importer key.');
         return;
       }
 
       try {
         setIsLoadingSchema(true);
         // Fetch schema from the backend
-        const response = await fetch(`${backendUrl}/api/v1/public/schema/${importerId}`);
+        const response = await fetch(`${backendUrl}/api/v1/public/schema?importer_key=${importerKey}`);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch schema: ${response.statusText}`);
@@ -124,7 +124,7 @@ export default function Main(props: CSVImporterProps) {
     };
 
     fetchSchema();
-  }, [importerId, backendUrl]);
+  }, [importerKey, backendUrl]);
 
   useEffect(() => {
     // TODO (client-sdk): Have the importer continue where left off if closed
@@ -190,15 +190,15 @@ export default function Main(props: CSVImporterProps) {
       rows: mappedRows,
     };
 
-    // Check if importerId is provided - it's required
-    if (!importerId) {
-      console.error('ERROR: importerId is required for CSV import');
-      setDataError('ImporterId is required for CSV import. Please provide a valid importer ID.');
+    // Check if importerKey is provided - it's required
+    if (!importerKey) {
+      console.error('ERROR: importerKey is required for CSV import');
+      setDataError('ImporterKey is required for CSV import. Please provide a valid importer key.');
       setIsSubmitting(false);
       return;
     }
 
-    console.log('DEBUG: Processing import with:', { importerId, backendUrl });
+    console.log('DEBUG: Processing import with:', { importerKey, backendUrl });
 
     // Transform data for the backend format
     const transformedData = {
@@ -216,15 +216,16 @@ export default function Main(props: CSVImporterProps) {
     });
     console.log('DEBUG: Column mapping for backend:', columnMappingForBackend);
 
-    // Use the public endpoint which doesn't require authentication
-    const apiEndpoint = `${backendUrl}/api/v1/public/process-import/${importerId}`;
+    // Use the public endpoint for processing imports
+    const apiEndpoint = `${backendUrl}/api/v1/public/process-import`;
 
     // Prepare the request payload
     const payload = {
       ...transformedData,
       columnMapping: columnMappingForBackend,
       user: user || {},
-      metadata: metadata || {}
+      metadata: metadata || {},
+      importer_key: importerKey || ''
     };
     console.log('DEBUG: Request payload:', payload);
 
@@ -233,7 +234,7 @@ export default function Main(props: CSVImporterProps) {
     fetch(apiEndpoint, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify(payload)
     })
@@ -381,7 +382,7 @@ export default function Main(props: CSVImporterProps) {
             }}
             isSubmitting={isSubmitting}
             onCancel={skipHeader ? reload : () => goBack(StepEnum.RowSelection)}
-            importerId={importerId}
+            importerKey={importerKey}
             backendUrl={backendUrl}
           />
         );

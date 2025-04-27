@@ -2,10 +2,12 @@
 # before any relationships are resolved
 
 # This file is imported by base.py to ensure all models are loaded
+# Using import strings to avoid circular imports
 
-from app.models.user import User
-from app.models.import_job import ImportJob
-from app.models.importer import Importer
-from app.models.webhook import WebhookEvent
+# Import the modules, not the classes directly
+import app.models.user
+import app.models.import_job
+import app.models.importer
+import app.models.webhook
 
-# Add any new models here
+# Add any new model imports here

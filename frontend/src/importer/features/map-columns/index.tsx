@@ -18,7 +18,7 @@ export default function MapColumns({
   onSuccess,
   onCancel,
   isSubmitting,
-  importerId,
+  importerKey,
   backendUrl,
 }: MapColumnsProps) {
   if (data.rows.length === 0) {
@@ -45,7 +45,7 @@ export default function MapColumns({
     template.columns, 
     columnMapping, 
     isSubmitting,
-    importerId,
+    importerKey,
     backendUrl,
     useLLMSuggestions
   );
@@ -83,7 +83,7 @@ export default function MapColumns({
 
   return (
     <div className={style.content}>
-      {importerId && backendUrl && (
+      {importerKey && backendUrl && (
         <Flex align="center" mb={4}>
           <Switch 
             id="llm-suggestions" 

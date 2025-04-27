@@ -4,7 +4,7 @@ import { TemplateColumnMapping } from '../features/map-columns/types';
 /**
  * Request LLM-powered column mapping suggestions from the backend
  * @param backendUrl The URL of the backend API
- * @param importerId The ID of the importer
+ * @param importerKey The key of the importer
  * @param uploadColumns The columns from the uploaded file
  * @param templateColumns The columns from the schema template
  * @param sampleData Optional sample data to improve matching
@@ -12,13 +12,13 @@ import { TemplateColumnMapping } from '../features/map-columns/types';
  */
 export async function getLLMColumnMappingSuggestions(
   backendUrl: string,
-  importerId: string,
+  importerKey: string,
   uploadColumns: UploadColumn[],
   templateColumns: TemplateColumn[],
   sampleData?: string[][]
 ): Promise<{ [key: number]: TemplateColumnMapping }> {
   try {
-    const response = await fetch(`${backendUrl}/api/v1/public/llm-column-mapping/${importerId}`, {
+    const response = await fetch(`${backendUrl}/api/v1/public/llm-column-mapping`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -35,7 +35,8 @@ export async function getLLMColumnMappingSuggestions(
           description: col.description,
           required: col.required,
           type: col.type || col.data_type
-        }))
+        })),
+        importer_key: importerKey
       }),
     });
 

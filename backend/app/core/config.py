@@ -26,7 +26,7 @@ class BaseAppSettings(BaseSettings):
     # CORS configuration
     CORS_ALLOW_CREDENTIALS: bool = True
     CORS_ALLOW_METHODS: List[str] = ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
-    CORS_ALLOW_HEADERS: List[str] = ["Content-Type", "Authorization", "Accept", "X-Requested-With", "Origin"]
+    CORS_ALLOW_HEADERS: List[str] = ["Content-Type", "Authorization", "Accept", "X-Requested-With", "Origin", "importer-key"]
     CORS_EXPOSE_HEADERS: List[str] = ["Content-Length", "Content-Type"]
     CORS_MAX_AGE: int = 600  # Cache preflight requests for 10 minutes
 

@@ -1,6 +1,8 @@
 import logging
+import uuid
 from typing import Optional, List, Dict, Any
 
+from fastapi import HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import flag_modified
 
@@ -192,3 +194,23 @@ def batch_delete_importers(db: Session, user_id: str, importer_ids: List[str]) -
     except Exception as e:
         logger.error(f"Error batch deleting importers: {str(e)}")
         raise
+
+
+def get_importer_by_key(db: Session, importer_key: uuid.UUID) -> Importer:
+    """Helper function to get an importer by key and handle common error cases.
+
+    Args:
+        db: Database session
+        importer_key: UUID key of the importer
+
+    Returns:
+        Importer object if found
+
+    Raises:
+        HTTPException: If importer not found
+    """
+    importer = db.query(Importer).filter(Importer.key == importer_key).first()
+    if not importer:
+        msg = f"Importer with key {importer_key} not found"
+        raise HTTPException(status_code=404, detail=msg)
+    return importer

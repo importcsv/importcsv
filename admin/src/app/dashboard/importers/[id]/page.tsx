@@ -52,6 +52,7 @@ type ImporterField = AddColumnImporterField;
 
 interface Importer {
   id: string;
+  key: string;
   name: string;
   description?: string;
   fields: ImporterField[];
@@ -185,6 +186,17 @@ export default function ImporterDetailPage() {
       navigator.clipboard.writeText(importer.id);
       setNotification({
         message: "Importer ID has been copied to clipboard.",
+        type: "success"
+      });
+    }
+  };
+
+  // Copy importer key to clipboard
+  const copyImporterKey = () => {
+    if (importer) {
+      navigator.clipboard.writeText(importer.key);
+      setNotification({
+        message: "Importer Key has been copied to clipboard.",
         type: "success"
       });
     }
@@ -349,8 +361,8 @@ export default function ImporterDetailPage() {
             </CardHeader>
             <CardContent>
               <div className="flex items-center space-x-2">
-                <Input value={importer.id} readOnly className="font-mono bg-gray-50" />
-                <Button variant="outline" size="icon" onClick={copyImporterId}>
+                <Input value={importer.key} readOnly className="font-mono bg-gray-50" />
+                <Button variant="outline" size="icon" onClick={copyImporterKey}>
                   <Copy className="h-4 w-4" />
                 </Button>
               </div>
@@ -512,6 +524,27 @@ export default function ImporterDetailPage() {
         
         {/* Embed Tab */}
         <TabsContent value="embed">
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Importer Key</CardTitle>
+              <CardDescription>The unique key used to identify this Importer</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center space-x-2 p-2 bg-gray-50 border rounded-md">
+                <code className="flex-1 font-mono text-sm break-all">{importer?.key}</code>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={copyImporterKey}
+                  className="flex items-center"
+                >
+                  <Copy className="h-4 w-4 mr-1" />
+                  Copy Key
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+          
           <Card>
             <CardHeader>
               <CardTitle>Embed Code</CardTitle>
@@ -527,7 +560,7 @@ export default function ImporterDetailPage() {
 export default function YourComponent() {
   return (
     <CSVImporter 
-      importerId="${importer.id}"
+      importerKey="${importer.key}"
       onComplete={(data) => console.log(data)}
       user={{ userId: "YOUR_USER_ID" }}
       metadata={{ source: "YOUR_APP" }}
@@ -545,7 +578,7 @@ export default function YourComponent() {
 <script>
   new CSVImporter({
     containerId: 'importer',
-    importerId: '${importer.id}',
+    importerKey: '${importer.key}',
     onComplete: function(data) {
       console.log(data);
     },

@@ -286,3 +286,40 @@ class ImportService:
 
 # Create a singleton instance of the ImportService
 import_service = ImportService()
+
+
+def log_import_started(
+    importer_id: uuid.UUID,
+    import_job_id: uuid.UUID,
+    row_count: int,
+    user_data: dict = None,
+    metadata: dict = None
+):
+    """Log an import started event.
+    
+    This is a simplified version that just logs the event without using webhooks.
+    For actual webhook delivery, use the webhook_service directly with a DB session.
+    
+    Args:
+        importer_id: UUID of the importer
+        import_job_id: UUID of the import job
+        row_count: Total number of rows in the import
+        user_data: User data to include in the webhook
+        metadata: Additional metadata to include
+    """
+    user_data = user_data or {}
+    metadata = metadata or {}
+    
+    # Create event payload
+    payload = {
+        "event_type": WebhookEventType.IMPORT_STARTED,
+        "import_job_id": str(import_job_id),
+        "importer_id": str(importer_id),
+        "row_count": row_count,
+        "timestamp": datetime.now().isoformat(),
+        "user": user_data,
+        "metadata": metadata,
+    }
+    
+    # Log the event
+    logger.info(f"Import started: {payload}")

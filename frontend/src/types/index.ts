@@ -18,7 +18,7 @@ export type CSVImporterProps = {
   skipHeaderRowSelection?: boolean;
   language?: string;
   customTranslations?: Resource;
-  importerId?: string; // ID of the importer from the admin/backend
+  importerKey?: string; // Key of the importer from the admin/backend
   backendUrl?: string; // URL of the backend API
   user?: Record<string, any>; // User details to identify the user in webhooks
   metadata?: Record<string, any>; // Additional data to associate with the import
