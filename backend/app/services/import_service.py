@@ -195,16 +195,32 @@ class ImportService:
 
             # Process the pre-validated data
             try:
-                if valid_data:
-                    processed_df = pd.DataFrame(valid_data)
-                    logger.info(f"Successfully processed {len(valid_data)} valid rows.")
-                    import_job.processed_rows = len(valid_data)
-
+                # Process each row by merging mapped and unmapped data when appropriate
+                processed_rows = []
+                
+                for row_data in valid_data:
+                    # Start with the mapped data
+                    processed_row = row_data.get('data', {}).copy()
+                    
+                    # Add unmapped data if the setting is enabled
+                    if importer.include_unmatched_columns:
+                        # Only add unmapped fields that don't conflict with mapped fields
+                        unmapped_data = row_data.get('unmapped_data', {})
+                        processed_row.update({k: v for k, v in unmapped_data.items() if k not in processed_row})
+                    
+                    processed_rows.append(processed_row)
+                
+                # Create DataFrame and update job status
+                if processed_rows:
+                    processed_df = pd.DataFrame(processed_rows)
+                    import_job.processed_rows = len(processed_rows)
+                    logger.info(f"Successfully processed {len(processed_rows)} valid rows.")
+                
                 import_job.status = ImportStatus.COMPLETED
                 import_job.completed_at = datetime.now().astimezone()
                 db.commit()
                 logger.info(f"Job {import_job.id} processing completed successfully.")
-
+                
             except Exception as process_exc:
                 logger.error(f"Error processing pre-validated data for job {import_job_id}: {process_exc}", exc_info=True)
                 import_job.status = ImportStatus.FAILED
@@ -246,8 +262,9 @@ class ImportService:
         """
         try:
             # Prepare payload
+            event_type = WebhookEventType.IMPORT_FINISHED if import_job.status == ImportStatus.COMPLETED else WebhookEventType.IMPORT_FAILED
             payload = {
-                "event_type": WebhookEventType.IMPORT_FINISHED if import_job.status == ImportStatus.COMPLETED else WebhookEventType.IMPORT_FAILED,
+                "event_type": event_type.value,
                 "import_job_id": str(import_job.id),
                 "importer_id": str(importer.id),
                 "row_count": import_job.row_count,
@@ -270,7 +287,7 @@ class ImportService:
                     db=db,
                     user_id=import_job.user_id,
                     import_job_id=import_job.id,
-                    event_type=WebhookEventType.IMPORT_FINISHED if import_job.status == ImportStatus.COMPLETED else WebhookEventType.IMPORT_FAILED,
+                    event_type=event_type,
                     payload=payload
                 )
 

@@ -70,6 +70,7 @@ export default function Main(props: CSVImporterProps) {
     columns: [],
   });
   const [isLoadingSchema, setIsLoadingSchema] = useState<boolean>(false);
+  const [includeUnmatchedColumns, setIncludeUnmatchedColumns] = useState<boolean>(false);
 
   // Fetch schema from the backend using importerKey
   useEffect(() => {
@@ -91,6 +92,12 @@ export default function Main(props: CSVImporterProps) {
         
         const schemaData = await response.json();
         console.log('Fetched schema from backend:', schemaData);
+        
+        // Store the include_unmatched_columns setting from the importer configuration
+        if (schemaData.include_unmatched_columns !== undefined) {
+          setIncludeUnmatchedColumns(schemaData.include_unmatched_columns);
+          console.log('Include unmatched columns setting:', schemaData.include_unmatched_columns);
+        }
         
         // Convert the schema to the format expected by the importer
         const schemaTemplate = {
@@ -160,24 +167,40 @@ export default function Main(props: CSVImporterProps) {
 
     // TODO (client-sdk): Move this type, add other data attributes (i.e. column definitions), and move the data processing to a function
     type MappedRow = {
-      index: number;
-      values: Record<string, number | string>;
+      data: Record<string, number | string>; // Mapped data
+      unmapped_data: Record<string, string>; // Unmapped data
     };
     const startIndex = (selectedHeaderRow || 0) + 1;
 
-    const mappedRows: MappedRow[] = [];
-    validatedData.rows.slice(startIndex).forEach((row: FileRow) => {
+    // Process rows to create data structure with mapped and unmapped data
+    const headerRow = validatedData.rows[selectedHeaderRow || 0];
+    const mappedRows = validatedData.rows.slice(startIndex).map(row => {
+      // Initialize the result structure
       const resultingRow: MappedRow = {
-        index: row.index - startIndex,
-        values: {},
+        data: {},
+        unmapped_data: {}
       };
-      row.values.forEach((value: string, valueIndex: number) => {
+      
+      // Process each cell in the row
+      row.values.forEach((value, valueIndex) => {
         const mapping = columnMapping[valueIndex];
+        const headerValue = headerRow.values[valueIndex];
+        
+        // Normalize the value (handle empty/null/NaN)
+        const normalizedValue = (value === undefined || value === null || value === '' || 
+          (typeof value === 'number' && isNaN(value))) ? "" : value.toString();
+        
         if (mapping && mapping.include) {
-          resultingRow.values[mapping.key] = value;
+          // Add to mapped data
+          resultingRow.data[mapping.key] = normalizedValue;
+        } else if (includeUnmatchedColumns && headerValue) {
+          // Add to unmapped data if setting is enabled
+          const columnKey = headerValue.toString().toLowerCase().replace(/\s+/g, '_');
+          resultingRow.unmapped_data[columnKey] = normalizedValue;
         }
       });
-      mappedRows.push(resultingRow);
+      
+      return resultingRow;
     });
 
     const includedColumns = Object.values(columnMapping).filter(({ include }) => include);
@@ -202,7 +225,7 @@ export default function Main(props: CSVImporterProps) {
 
     // Transform data for the backend format
     const transformedData = {
-      validData: mappedRows.map(row => row.values),
+      validData: mappedRows,
       invalidData: [] // We don't track invalid rows in this version
     };
     console.log('DEBUG: Transformed data:', transformedData);

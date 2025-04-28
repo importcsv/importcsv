@@ -38,7 +38,7 @@ console_handler = logging.StreamHandler(sys.stderr)
 console_handler.setFormatter(console_formatter)
 webhook_logger.addHandler(console_handler)
 
-# Custom JSON encoder to handle UUID serialization
+# Custom JSON encoder to handle UUID serialization and special values
 class UUIDEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, uuid.UUID):
@@ -50,6 +50,36 @@ class UUIDEncoder(json.JSONEncoder):
 class WebhookService:
     def __init__(self):
         self.webhook_secret = settings.SECRET_KEY  # Using app secret key for signing
+        
+    def _sanitize_payload(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Sanitize payload by replacing NaN values with None"""
+        if not payload:
+            return payload
+            
+        # Convert to JSON and back using our custom encoder
+        # This will handle all NaN values and UUIDs in one step
+        try:
+            # First convert to JSON string
+            json_str = json.dumps(payload)
+            # Then parse it back to a Python object
+            return json.loads(json_str)
+        except (TypeError, ValueError):
+            # If there's any error in JSON conversion, try manual sanitization
+            if isinstance(payload, dict):
+                result = {}
+                for key, value in payload.items():
+                    if isinstance(value, float) and (value != value):  # NaN check
+                        result[key] = None
+                    elif isinstance(value, (dict, list)):
+                        result[key] = self._sanitize_payload(value)
+                    else:
+                        result[key] = value
+                return result
+            elif isinstance(payload, list):
+                return [self._sanitize_payload(item) if isinstance(item, (dict, list)) else 
+                        None if isinstance(item, float) and (item != item) else item 
+                        for item in payload]
+            return payload
 
     def generate_signature(self, payload: Dict[str, Any], secret: str) -> str:
         """Generate HMAC signature for webhook payload"""
@@ -141,12 +171,15 @@ class WebhookService:
         payload: Dict[str, Any]
     ) -> WebhookEvent:
         """Create webhook event in database and send it immediately"""
+        # Sanitize the payload to handle NaN values before storing in the database
+        sanitized_payload = self._sanitize_payload(payload)
+        
         # First create the webhook event record
         webhook_event = WebhookEvent(
             user_id=user_id,
             import_job_id=import_job_id,
             event_type=event_type,
-            payload=payload,
+            payload=sanitized_payload,
             delivered=False,
             delivery_attempts=0
         )

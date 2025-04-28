@@ -465,8 +465,8 @@ export default function ImporterDetailPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Input 
-                value={importerName} 
+              <Input
+                value={importerName}
                 onChange={(e) => setImporterName(e.target.value)}
                 placeholder="Enter a name for your importer"
               />
@@ -526,14 +526,12 @@ export default function ImporterDetailPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <Label className="text-base">
-                    Include All Un-matched Columns in Import
+                    Include All Unmatched Columns in Import
                   </Label>
                   <p className="text-sm text-gray-500 mt-1">
                     Enable this to import all columns uploaded by users, even if
-                    they are un-matched. This is useful if users have a variable
-                    number of additional columns they want to import. See the
-                    docs for details about the data format for un-matched
-                    columns.
+                    they are unmatched. This is useful if users have a variable
+                    number of additional columns they want to import.
                   </p>
                   <Link
                     href="#"
