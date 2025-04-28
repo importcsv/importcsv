@@ -658,7 +658,7 @@ export default function YourComponent() {
   return (
     <CSVImporter
       importerKey="${importer.key}"
-      onComplete={(data) => console.log(data)}
+      onComplete={(data) => {}}
       user={{ userId: "YOUR_USER_ID" }}
       metadata={{ source: "YOUR_APP" }}
     />
@@ -677,7 +677,7 @@ export default function YourComponent() {
     containerId: 'importer',
     importerKey: '${importer.key}',
     onComplete: function(data) {
-      console.log(data);
+
     },
     user: { userId: "YOUR_USER_ID" },
     metadata: { source: "YOUR_APP" }

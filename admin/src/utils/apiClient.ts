@@ -101,7 +101,7 @@ const refreshAccessToken = async (): Promise<string> => {
       localStorage.removeItem(REFRESH_TOKEN_KEY);
 
       // Redirect to login page
-      console.log("Redirecting to login page due to failed token refresh");
+      // Redirect to login page due to failed token refresh
       window.location.href = "/login";
     }
 
@@ -217,10 +217,8 @@ export const authApi = {
           },
         })
         .catch(async (error) => {
-          console.log(
-            "New login endpoint failed, falling back to standard login:",
-            error?.response?.status,
-          );
+          // Log login endpoint failure
+          // "New login endpoint failed, falling back to standard login:" + error?.response?.status
           // Fall back to the standard login endpoint if the new one fails
           return await axios.post(
             `${API_BASE_URL}/api/v1/auth/login`,

@@ -1,12 +1,12 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { ChevronLeft } from 'lucide-react';
-import dynamic from 'next/dynamic';
+import React, { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft } from "lucide-react";
+import dynamic from "next/dynamic";
 
 // Define types for our schema and data
 interface ImporterField {
@@ -37,8 +37,9 @@ interface ImportData {
 
 // Dynamically import the CSV Importer component directly from the library
 const CSVImporter = dynamic(
-  () => import('csv-import-react').then(mod => ({ default: mod.CSVImporter })),
-  { ssr: false }
+  () =>
+    import("csv-import-react").then((mod) => ({ default: mod.CSVImporter })),
+  { ssr: false },
 );
 
 export default function ImporterPreviewPage() {
@@ -50,43 +51,47 @@ export default function ImporterPreviewPage() {
   const [loading, setLoading] = useState(true);
 
   const handleImportComplete = async (data: ImportData) => {
-    console.log('DEBUG: handleImportComplete called with data:', data);
+    // Process import data
     try {
       // Check if we received a backend response directly from the CSV importer
       if (data.backendResponse) {
-        console.log('DEBUG: Received backend response directly from CSV importer:', data.backendResponse);
-        alert('CSV data processed successfully!');
+        alert("CSV data processed successfully!");
         return;
       }
 
       // Check if there was an error from the direct integration
       if (data.error) {
-        console.log('DEBUG: Received error from CSV importer:', data.error);
         throw new Error(data.error);
       }
 
       // If no direct backend response, process manually (fallback)
       // Transform data from the library format to the backend format
       const transformedData = {
-        validData: data.rows?.filter((row: ImportRow) => !row.errors || row.errors.length === 0).map((row: ImportRow) => {
-          // Create a simple object with the values
-          return row.values;
-        }) || [],
-        invalidData: data.rows?.filter((row: ImportRow) => row.errors && row.errors.length > 0).map((row: ImportRow) => {
-          return {
-            values: row.values,
-            errors: row.errors
-          };
-        }) || []
+        validData:
+          data.rows
+            ?.filter((row: ImportRow) => !row.errors || row.errors.length === 0)
+            .map((row: ImportRow) => {
+              // Create a simple object with the values
+              return row.values;
+            }) || [],
+        invalidData:
+          data.rows
+            ?.filter((row: ImportRow) => row.errors && row.errors.length > 0)
+            .map((row: ImportRow) => {
+              return {
+                values: row.values,
+                errors: row.errors,
+              };
+            }) || [],
       };
 
-      console.log('Transformed data:', transformedData);
-      console.log('Using fallback API call - the direct integration should handle this automatically');
+      // Using fallback API call for data processing
 
       // Show success notification
-      alert('CSV data processed successfully!');
+      alert("CSV data processed successfully!");
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       alert(`Error processing import: ${errorMessage}`);
     }
   };
@@ -96,76 +101,86 @@ export default function ImporterPreviewPage() {
     const fetchImporterDetails = async () => {
       setLoading(true);
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'}/api/v1/importers/${params.id}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
+        const response = await fetch(
+          `${
+            process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
+          }/api/v1/importers/${params.id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          },
+        );
+
         if (!response.ok) {
-          throw new Error('Failed to fetch importer details');
+          throw new Error("Failed to fetch importer details");
         }
-        
+
         const data = await response.json();
         setImporter(data);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
+        setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
         setLoading(false);
       }
     };
-    
+
     if (token) {
       fetchImporterDetails();
     }
   }, [params.id, token]);
 
-  if (error) return (
-    <div className="container mx-auto p-4">
-      <div className="mb-6">
-        <Link href={`/dashboard/importers/${params.id}`} className="flex items-center text-sm text-gray-500 hover:text-gray-700">
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          Back to importer
-        </Link>
+  if (error)
+    return (
+      <div className="container mx-auto p-4">
+        <div className="mb-6">
+          <Link
+            href={`/dashboard/importers/${params.id}`}
+            className="flex items-center text-sm text-gray-500 hover:text-gray-700"
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Back to importer
+          </Link>
+        </div>
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
+          <p>Error: {error}</p>
+        </div>
       </div>
-      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
-        <p>Error: {error}</p>
+    );
+
+  if (loading)
+    return (
+      <div className="container mx-auto p-4">
+        <div className="mb-6">
+          <Link
+            href={`/dashboard/importers/${params.id}`}
+            className="flex items-center text-sm text-gray-500 hover:text-gray-700"
+          >
+            <ChevronLeft className="h-4 w-4 mr-1" />
+            Back to importer
+          </Link>
+        </div>
+        <div className="text-center py-10">
+          <p>Loading importer details...</p>
+        </div>
       </div>
-    </div>
-  );
-  
-  if (loading) return (
-    <div className="container mx-auto p-4">
-      <div className="mb-6">
-        <Link href={`/dashboard/importers/${params.id}`} className="flex items-center text-sm text-gray-500 hover:text-gray-700">
-          <ChevronLeft className="h-4 w-4 mr-1" />
-          Back to importer
-        </Link>
-      </div>
-      <div className="text-center py-10">
-        <p>Loading importer details...</p>
-      </div>
-    </div>
-  );
+    );
 
   return (
     <div className="container mx-auto p-4">
       <div className="mb-6">
-        <Link href={`/dashboard/importers/${params.id}`} className="flex items-center text-sm text-gray-500 hover:text-gray-700">
+        <Link
+          href={`/dashboard/importers/${params.id}`}
+          className="flex items-center text-sm text-gray-500 hover:text-gray-700"
+        >
           <ChevronLeft className="h-4 w-4 mr-1" />
           Back to importer
         </Link>
       </div>
 
-
       <div className="bg-white rounded-lg shadow p-6">
-        {(
+        {
           <>
-            <div className="mb-4 p-3 bg-blue-50 rounded">
-              <h3 className="font-bold">Debug Info:</h3>
-              <p>Importer ID: {params.id?.toString()}</p>
-              <p>Importer Key: {importer?.key}</p>
-            </div>
             <div className="w-full min-h-[500px]">
               {importer?.key && (
                 <CSVImporter
@@ -182,7 +197,7 @@ export default function ImporterPreviewPage() {
               )}
             </div>
           </>
-        )}
+        }
       </div>
     </div>
   );
