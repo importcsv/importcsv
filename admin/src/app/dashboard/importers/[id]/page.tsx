@@ -1,25 +1,25 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { ImporterField as AddColumnImporterField } from '@/components/AddColumnForm';
-import ImporterColumnsManager from '@/components/ImporterColumnsManager';
-import apiClient, { importersApi } from '@/utils/apiClient';
-import { useParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import React, { useState, useEffect } from "react";
+import { ImporterField as AddColumnImporterField } from "@/components/AddColumnForm";
+import ImporterColumnsManager from "@/components/ImporterColumnsManager";
+import apiClient, { importersApi } from "@/utils/apiClient";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import { useAuth } from "@/context/AuthContext";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -44,8 +44,22 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, Copy, ExternalLink, CheckCircle, AlertCircle, MoreVertical, Trash2 } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  ChevronLeft,
+  Copy,
+  ExternalLink,
+  CheckCircle,
+  AlertCircle,
+  MoreVertical,
+  Trash2,
+} from "lucide-react";
 
 // Use the ImporterField type from the AddColumnForm component
 type ImporterField = AddColumnImporterField;
@@ -73,19 +87,24 @@ export default function ImporterDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [notification, setNotification] = useState<{message: string, type: 'success' | 'error'} | null>(null);
-  const [webhookUrl, setWebhookUrl] = useState('');
+  const [notification, setNotification] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
+  const [importerName, setImporterName] = useState("");
+  const [webhookUrl, setWebhookUrl] = useState("");
   const [webhookEnabled, setWebhookEnabled] = useState(true);
   const [includeUnmatchedColumns, setIncludeUnmatchedColumns] = useState(false);
   const [filterInvalidRows, setFilterInvalidRows] = useState(false);
   const [disableOnInvalidRows, setDisableOnInvalidRows] = useState(false);
-  
+
   // Dialog States
   const [showAddColumnDialog, setShowAddColumnDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+
+  const backendUrl =
+    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
   const importerId = params.id as string;
 
   // Fetch importer details
@@ -93,100 +112,102 @@ export default function ImporterDetailPage() {
     const fetchImporterDetails = async () => {
       setIsLoading(true);
       setError(null);
-      
+
       try {
         // Use the API client to get importer details
         const data = await importersApi.getImporter(importerId);
         setImporter(data);
         initializeFormState(data);
       } catch (err: any) {
-        console.error('Error fetching importer:', err);
-        
+        console.error("Error fetching importer:", err);
+
         // Extract error message from API response if available
-        let errorMessage = 'Failed to load importer. Please try again later.';
+        let errorMessage = "Failed to load importer. Please try again later.";
         if (err.response && err.response.data && err.response.data.detail) {
           errorMessage = err.response.data.detail;
         } else if (err.message) {
           errorMessage = err.message;
         }
-        
+
         setError(errorMessage);
-        
+
         // If the error is authentication-related and not handled by the client,
         // redirect to login
         if (err.response && err.response.status === 401) {
-          router.push('/login');
+          router.push("/login");
         }
       } finally {
         setIsLoading(false);
       }
     };
-    
+
     fetchImporterDetails();
   }, [importerId, router]);
-  
+
   // Initialize form state with importer data
   const initializeFormState = (data: Importer) => {
-    setWebhookUrl(data.webhook_url || '');
+    setImporterName(data.name);
+    setWebhookUrl(data.webhook_url || "");
     setWebhookEnabled(data.webhook_enabled);
     setIncludeUnmatchedColumns(data.include_unmatched_columns);
     setFilterInvalidRows(data.filter_invalid_rows);
     setDisableOnInvalidRows(data.disable_on_invalid_rows);
   };
-  
+
   // Save importer settings
   const saveImporterSettings = async () => {
     setIsSaving(true);
     setError(null);
-    
+
     try {
       if (!importer) {
-        throw new Error('Importer data is not available');
+        throw new Error("Importer data is not available");
       }
 
       // Use the API client to update the importer
       // Include fields from the current importer state to ensure they are preserved
       await importersApi.updateImporter(importerId, {
+        name: importerName,
         webhook_url: webhookUrl,
         webhook_enabled: webhookEnabled,
         include_unmatched_columns: includeUnmatchedColumns,
         filter_invalid_rows: filterInvalidRows,
         disable_on_invalid_rows: disableOnInvalidRows,
-        fields: importer.fields // Include the current fields
+        fields: importer.fields, // Include the current fields
       });
-      
+
       setNotification({
         message: "Your importer settings have been updated successfully.",
-        type: "success"
+        type: "success",
       });
     } catch (err: any) {
-      console.error('Error updating importer:', err);
-      
+      console.error("Error updating importer:", err);
+
       // Extract error message from API response if available
-      let errorMessage = 'Failed to update importer. Please try again.';
+      let errorMessage = "Failed to update importer. Please try again.";
       if (err.response && err.response.data && err.response.data.detail) {
         errorMessage = err.response.data.detail;
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       setError(errorMessage);
       setNotification({
         message: errorMessage,
-        type: "error"
+        type: "error",
       });
     } finally {
       setIsSaving(false);
     }
   };
-  
+
   // Copy importer ID to clipboard
   const copyImporterId = () => {
     if (importer) {
       navigator.clipboard.writeText(importer.id);
       setNotification({
         message: "Importer ID has been copied to clipboard.",
-        type: "success"
+        type: "success",
       });
     }
   };
@@ -197,39 +218,39 @@ export default function ImporterDetailPage() {
       navigator.clipboard.writeText(importer.key);
       setNotification({
         message: "Importer Key has been copied to clipboard.",
-        type: "success"
+        type: "success",
       });
     }
   };
-  
+
   // Delete importer
   const handleDeleteImporter = async () => {
     if (!importer) return;
-    
+
     setIsDeleting(true);
     setError(null);
-    
+
     try {
       // Use the API client to delete the importer
       await importersApi.deleteImporter(importerId);
-      
+
       // Redirect to importers list
-      router.push('/dashboard/importers');
+      router.push("/dashboard/importers");
     } catch (err: any) {
-      console.error('Error deleting importer:', err);
-      
+      console.error("Error deleting importer:", err);
+
       // Extract error message from API response if available
-      let errorMessage = 'Failed to delete importer. Please try again.';
+      let errorMessage = "Failed to delete importer. Please try again.";
       if (err.response && err.response.data && err.response.data.detail) {
         errorMessage = err.response.data.detail;
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       setError(errorMessage);
       setNotification({
         message: errorMessage,
-        type: "error"
+        type: "error",
       });
     } finally {
       setIsDeleting(false);
@@ -241,7 +262,10 @@ export default function ImporterDetailPage() {
     return (
       <div className="p-6">
         <div className="flex items-center space-x-2 mb-6">
-          <Link href="/dashboard/importers" className="text-blue-600 hover:text-blue-800 flex items-center">
+          <Link
+            href="/dashboard/importers"
+            className="text-blue-600 hover:text-blue-800 flex items-center"
+          >
             <ChevronLeft className="h-4 w-4 mr-1" />
             Back to list
           </Link>
@@ -257,7 +281,10 @@ export default function ImporterDetailPage() {
     return (
       <div className="p-6">
         <div className="flex items-center space-x-2 mb-6">
-          <Link href="/dashboard/importers" className="text-blue-600 hover:text-blue-800 flex items-center">
+          <Link
+            href="/dashboard/importers"
+            className="text-blue-600 hover:text-blue-800 flex items-center"
+          >
             <ChevronLeft className="h-4 w-4 mr-1" />
             Back to list
           </Link>
@@ -273,7 +300,10 @@ export default function ImporterDetailPage() {
     return (
       <div className="p-6">
         <div className="flex items-center space-x-2 mb-6">
-          <Link href="/dashboard/importers" className="text-blue-600 hover:text-blue-800 flex items-center">
+          <Link
+            href="/dashboard/importers"
+            className="text-blue-600 hover:text-blue-800 flex items-center"
+          >
             <ChevronLeft className="h-4 w-4 mr-1" />
             Back to list
           </Link>
@@ -289,20 +319,28 @@ export default function ImporterDetailPage() {
     <div className="p-6">
       {/* Header with back button */}
       <div className="flex items-center space-x-2 mb-6">
-        <Link href="/dashboard/importers" className="text-blue-600 hover:text-blue-800 flex items-center">
+        <Link
+          href="/dashboard/importers"
+          className="text-blue-600 hover:text-blue-800 flex items-center"
+        >
           <ChevronLeft className="h-4 w-4 mr-1" />
           Back to list
         </Link>
       </div>
-      
+
       {/* Importer title and actions */}
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">{importer.name}</h1>
+        <h1 className="text-3xl font-bold">{importerName}</h1>
         <div className="flex space-x-2">
-          <Button variant="outline" onClick={() => router.push(`/dashboard/importers/${importerId}/preview`)}>
+          <Button
+            variant="outline"
+            onClick={() =>
+              router.push(`/dashboard/importers/${importerId}/preview`)
+            }
+          >
             Preview <ExternalLink className="ml-2 h-4 w-4" />
           </Button>
-          
+
           {/* Actions Dropdown */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -311,29 +349,37 @@ export default function ImporterDetailPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+              <AlertDialog
+                open={showDeleteDialog}
+                onOpenChange={setShowDeleteDialog}
+              >
                 <AlertDialogTrigger asChild>
-                  <DropdownMenuItem onSelect={(e: Event) => e.preventDefault()} className="text-red-600 focus:text-red-600">
+                  <DropdownMenuItem
+                    onSelect={(e: Event) => e.preventDefault()}
+                    className="text-red-600 focus:text-red-600"
+                  >
                     <Trash2 className="mr-2 h-4 w-4" />
                     Delete Importer
                   </DropdownMenuItem>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
                   <AlertDialogHeader>
-                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                    <AlertDialogTitle>
+                      Are you absolutely sure?
+                    </AlertDialogTitle>
                     <AlertDialogDescription>
-                      This action cannot be undone. This will permanently delete the importer
-                      and all associated data.
+                      This action cannot be undone. This will permanently delete
+                      the importer and all associated data.
                     </AlertDialogDescription>
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction 
+                    <AlertDialogAction
                       onClick={handleDeleteImporter}
                       className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
                       disabled={isDeleting}
                     >
-                      {isDeleting ? 'Deleting...' : 'Delete'}
+                      {isDeleting ? "Deleting..." : "Delete"}
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
@@ -342,7 +388,33 @@ export default function ImporterDetailPage() {
           </DropdownMenu>
         </div>
       </div>
-      
+
+      {/* Persistent notification bar */}
+      {notification && (
+        <div
+          className={`p-4 mb-4 rounded-md flex items-center ${
+            notification.type === "success"
+              ? "bg-green-50 text-green-700 border border-green-200"
+              : "bg-red-50 text-red-700 border border-red-200"
+          }`}
+        >
+          {notification.type === "success" ? (
+            <CheckCircle className="h-5 w-5 mr-2" />
+          ) : (
+            <AlertCircle className="h-5 w-5 mr-2" />
+          )}
+          <span>{notification.message}</span>
+          <button
+            className="ml-auto text-gray-500 hover:text-gray-700"
+            onClick={() => setNotification(null)}
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* Save button removed from here and moved to bottom right */}
+
       {/* Importer details in tabs */}
       <Tabs defaultValue="settings" className="space-y-6">
         <TabsList>
@@ -350,77 +422,100 @@ export default function ImporterDetailPage() {
           <TabsTrigger value="columns">Columns</TabsTrigger>
           <TabsTrigger value="embed">Embed</TabsTrigger>
         </TabsList>
-        
+
         {/* Settings Tab */}
         <TabsContent value="settings" className="space-y-6">
           {/* Key */}
           <Card>
             <CardHeader>
               <CardTitle>Key</CardTitle>
-              <CardDescription>The unique key used to identify this Importer</CardDescription>
+              <CardDescription>
+                The unique key used to identify this Importer
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center space-x-2">
-                <Input value={importer.key} readOnly className="font-mono bg-gray-50" />
+                <Input
+                  value={importer.key}
+                  readOnly
+                  className="font-mono bg-gray-50"
+                />
                 <Button variant="outline" size="icon" onClick={copyImporterKey}>
                   <Copy className="h-4 w-4" />
                 </Button>
               </div>
               <div className="mt-2">
-                <Link href="#" className="text-blue-600 hover:text-blue-800 text-sm flex items-center">
-                  How to embed the importer into your app <ExternalLink className="ml-1 h-3 w-3" />
+                <Link
+                  href="#"
+                  className="text-blue-600 hover:text-blue-800 text-sm flex items-center"
+                >
+                  How to embed the importer into your app{" "}
+                  <ExternalLink className="ml-1 h-3 w-3" />
                 </Link>
               </div>
             </CardContent>
           </Card>
-          
+
           {/* Name */}
           <Card>
             <CardHeader>
               <CardTitle>Name</CardTitle>
-              <CardDescription>Give your importer a useful name</CardDescription>
+              <CardDescription>
+                Give your importer a useful name
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <Input value={importer.name} readOnly className="bg-gray-50" />
+              <Input 
+                value={importerName} 
+                onChange={(e) => setImporterName(e.target.value)}
+                placeholder="Enter a name for your importer"
+              />
             </CardContent>
           </Card>
-          
+
           {/* Webhook Settings */}
           <Card>
             <CardHeader>
               <CardTitle>Where to Send Uploaded Data</CardTitle>
               <CardDescription>
-                Choose how we send uploaded data to your app. Choose Webhook to have us send uploads to the Webhook URL you enter below. Alternatively, choose onData callback to have data received directly in your app frontend.
+                Choose how we send uploaded data to your app. Choose Webhook to
+                have us send uploads to the Webhook URL you enter below.
+                Alternatively, choose onData callback to have data received
+                directly in your app frontend.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <Label htmlFor="webhook-enabled">Webhook</Label>
-                <Switch 
-                  id="webhook-enabled" 
-                  checked={webhookEnabled} 
-                  onCheckedChange={setWebhookEnabled} 
+                <Switch
+                  id="webhook-enabled"
+                  checked={webhookEnabled}
+                  onCheckedChange={setWebhookEnabled}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="webhook-url">Webhook URL</Label>
-                <Input 
-                  id="webhook-url" 
-                  placeholder="E.g. https://api.myapp.com/myendpoint" 
-                  value={webhookUrl} 
+                <Input
+                  id="webhook-url"
+                  placeholder="E.g. https://api.myapp.com/myendpoint"
+                  value={webhookUrl}
                   onChange={(e) => setWebhookUrl(e.target.value)}
                 />
                 <p className="text-sm text-gray-500">
-                  Uploaded data will be sent to our servers, and we will send you a webhook with the data.
-                  <Link href="#" className="text-blue-600 hover:text-blue-800 ml-1">
+                  Uploaded data will be sent to our servers, and we will send
+                  you a webhook with the data.
+                  <Link
+                    href="#"
+                    className="text-blue-600 hover:text-blue-800 ml-1"
+                  >
                     Webhook docs <ExternalLink className="inline h-3 w-3" />
                   </Link>
                 </p>
               </div>
             </CardContent>
           </Card>
-          
+
           {/* Import Settings */}
           <Card>
             <CardHeader>
@@ -430,79 +525,74 @@ export default function ImporterDetailPage() {
               {/* Include Unmatched Columns */}
               <div className="flex items-start justify-between">
                 <div>
-                  <Label className="text-base">Include All Un-matched Columns in Import</Label>
+                  <Label className="text-base">
+                    Include All Un-matched Columns in Import
+                  </Label>
                   <p className="text-sm text-gray-500 mt-1">
-                    Enable this to import all columns uploaded by users, even if they are un-matched. This is useful if users have a variable number of additional columns they want to import. See the docs for details about the data format for un-matched columns.
+                    Enable this to import all columns uploaded by users, even if
+                    they are un-matched. This is useful if users have a variable
+                    number of additional columns they want to import. See the
+                    docs for details about the data format for un-matched
+                    columns.
                   </p>
-                  <Link href="#" className="text-blue-600 hover:text-blue-800 text-sm flex items-center mt-1">
+                  <Link
+                    href="#"
+                    className="text-blue-600 hover:text-blue-800 text-sm flex items-center mt-1"
+                  >
                     Importer docs <ExternalLink className="ml-1 h-3 w-3" />
                   </Link>
                 </div>
-                <Switch 
-                  checked={includeUnmatchedColumns} 
-                  onCheckedChange={setIncludeUnmatchedColumns} 
+                <Switch
+                  checked={includeUnmatchedColumns}
+                  onCheckedChange={setIncludeUnmatchedColumns}
                 />
               </div>
-              
+
               {/* Filter Invalid Rows */}
               <div className="flex items-start justify-between pt-4 border-t">
                 <div>
                   <Label className="text-base">Filter Invalid Rows</Label>
                   <p className="text-sm text-gray-500 mt-1">
-                    Enable to prevent rows that fail any column validation criteria being imported. If disabled, users will be warned about invalid rows, but they will still be imported.
+                    Enable to prevent rows that fail any column validation
+                    criteria being imported. If disabled, users will be warned
+                    about invalid rows, but they will still be imported.
                   </p>
-                  <Link href="#" className="text-blue-600 hover:text-blue-800 text-sm flex items-center mt-1">
+                  <Link
+                    href="#"
+                    className="text-blue-600 hover:text-blue-800 text-sm flex items-center mt-1"
+                  >
                     Importer docs <ExternalLink className="ml-1 h-3 w-3" />
                   </Link>
                 </div>
-                <Switch 
-                  checked={filterInvalidRows} 
-                  onCheckedChange={setFilterInvalidRows} 
+                <Switch
+                  checked={filterInvalidRows}
+                  onCheckedChange={setFilterInvalidRows}
                 />
               </div>
-              
+
               {/* Disable Importing All Data */}
               <div className="flex items-start justify-between pt-4 border-t">
                 <div>
-                  <Label className="text-base">Disable importing all data if there are invalid rows</Label>
+                  <Label className="text-base">
+                    Disable importing all data if there are invalid rows
+                  </Label>
                   <p className="text-sm text-gray-500 mt-1">
-                    Enable to prevent importing all data if there are any invalid rows. If disabled, users will be warned about errors and invalid rows, but data will still be imported.
+                    Enable to prevent importing all data if there are any
+                    invalid rows. If disabled, users will be warned about errors
+                    and invalid rows, but data will still be imported.
                   </p>
                 </div>
-                <Switch 
-                  checked={disableOnInvalidRows} 
-                  onCheckedChange={setDisableOnInvalidRows} 
+                <Switch
+                  checked={disableOnInvalidRows}
+                  onCheckedChange={setDisableOnInvalidRows}
                 />
               </div>
             </CardContent>
           </Card>
-          
-          {/* Notification */}
-          {notification && (
-            <div className={`p-4 mb-4 rounded-md flex items-center ${notification.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
-              {notification.type === 'success' ? (
-                <CheckCircle className="h-5 w-5 mr-2" />
-              ) : (
-                <AlertCircle className="h-5 w-5 mr-2" />
-              )}
-              <span>{notification.message}</span>
-              <button 
-                className="ml-auto text-gray-500 hover:text-gray-700"
-                onClick={() => setNotification(null)}
-              >
-                ×
-              </button>
-            </div>
-          )}
-          
-          {/* Save Button */}
-          <div className="flex justify-end">
-            <Button onClick={saveImporterSettings} disabled={isSaving}>
-              {isSaving ? 'Saving...' : 'Save Settings'}
-            </Button>
-          </div>
+
+          {/* Notification moved to top level */}
         </TabsContent>
-        
+
         {/* Columns Tab */}
         <TabsContent value="columns">
           <ImporterColumnsManager
@@ -510,31 +600,36 @@ export default function ImporterDetailPage() {
             onColumnsChange={(updatedColumns) => {
               setImporter({
                 ...importer,
-                fields: updatedColumns
+                fields: updatedColumns,
               });
-              
-              // Show success notification
+
+              // Show success notification with clearer instructions
               setNotification({
-                message: "Column changes made. Don't forget to save your changes.",
-                type: "success"
+                message:
+                  "Column changes applied. Click the green 'Save Changes' button to persist your changes.",
+                type: "success",
               });
             }}
           />
         </TabsContent>
-        
+
         {/* Embed Tab */}
         <TabsContent value="embed">
           <Card className="mb-6">
             <CardHeader>
               <CardTitle>Importer Key</CardTitle>
-              <CardDescription>The unique key used to identify this Importer</CardDescription>
+              <CardDescription>
+                The unique key used to identify this Importer
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex items-center space-x-2 p-2 bg-gray-50 border rounded-md">
-                <code className="flex-1 font-mono text-sm break-all">{importer?.key}</code>
-                <Button 
-                  variant="outline" 
-                  size="sm" 
+                <code className="flex-1 font-mono text-sm break-all">
+                  {importer?.key}
+                </code>
+                <Button
+                  variant="outline"
+                  size="sm"
                   onClick={copyImporterKey}
                   className="flex items-center"
                 >
@@ -544,11 +639,13 @@ export default function ImporterDetailPage() {
               </div>
             </CardContent>
           </Card>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Embed Code</CardTitle>
-              <CardDescription>Use this code to embed the importer in your application</CardDescription>
+              <CardDescription>
+                Use this code to embed the importer in your application
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
@@ -559,7 +656,7 @@ export default function ImporterDetailPage() {
 
 export default function YourComponent() {
   return (
-    <CSVImporter 
+    <CSVImporter
       importerKey="${importer.key}"
       onComplete={(data) => console.log(data)}
       user={{ userId: "YOUR_USER_ID" }}
@@ -569,7 +666,7 @@ export default function YourComponent() {
 }`}
                   </div>
                 </div>
-                
+
                 <div>
                   <Label>HTML Example</Label>
                   <div className="bg-gray-900 text-gray-100 p-4 rounded-md mt-2 font-mono text-sm overflow-x-auto">
@@ -593,6 +690,18 @@ export default function YourComponent() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Save button at bottom right, within the container */}
+      <div className="flex justify-end pb-8">
+        <Button
+          onClick={saveImporterSettings}
+          disabled={isSaving}
+          className="bg-green-600 hover:bg-green-700 text-white font-medium px-6 py-2 rounded-md shadow-md"
+          size="lg"
+        >
+          {isSaving ? "Saving..." : "Save Changes"}
+        </Button>
+      </div>
     </div>
   );
 }
