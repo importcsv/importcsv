@@ -40,7 +40,7 @@ export default function AddColumnForm({
   initialField,
   submitButtonText = 'Add Column'
 }: AddColumnFormProps) {
-  const [formError, setFormError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [newField, setNewField] = useState<ImporterField>(initialField || {
     name: '',
     display_name: '',
@@ -72,44 +72,54 @@ export default function AddColumnForm({
 
   // Add field handler
   const addFieldHandler = () => {
+    // Reset previous errors
+    const errors: Record<string, string> = {};
+    let hasErrors = false;
+    
     // Basic validation
     if (!newField.name) {
-      setFormError('Column name is required');
-      return;
+      errors.name = 'Column name is required';
+      hasErrors = true;
     }
     
     if (!newField.type) {
-      setFormError('Column type is required');
-      return;
+      errors.type = 'Column type is required';
+      hasErrors = true;
     }
     
     // Check for duplicate field names (skip this check when editing if name hasn't changed)
     if (existingFields.some(f => f.name === newField.name)) {
-      setFormError(`Column name '${newField.name}' already exists`);
-      return;
+      errors.name = `Column name '${newField.name}' already exists`;
+      hasErrors = true;
     }
     
     // For select type, ensure validation_format is set if not already
     if (newField.type === 'select' && !newField.validation_format) {
-      setFormError('Please provide options for the select field');
-      return;
+      errors.validation_format = 'Please provide options for the select field';
+      hasErrors = true;
     }
     
     // For custom regex type, ensure validation_format is set and is a valid regex
     if (newField.type === 'custom_regex') {
       if (!newField.validation_format) {
-        setFormError('Please provide a regular expression pattern');
-        return;
+        errors.validation_format = 'Please provide a regular expression pattern';
+        hasErrors = true;
+      } else {
+        // Validate the regex pattern
+        try {
+          new RegExp(newField.validation_format);
+        } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'Invalid pattern';
+          errors.validation_format = `Invalid regular expression: ${errorMessage}`;
+          hasErrors = true;
+        }
       }
-      
-      // Validate the regex pattern
-      try {
-        new RegExp(newField.validation_format);
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Invalid pattern';
-        setFormError(`Invalid regular expression: ${errorMessage}`);
-        return;
-      }
+    }
+    
+    // If there are errors, update state and return
+    if (hasErrors) {
+      setFieldErrors(errors);
+      return;
     }
     
     // Call the parent handler
@@ -127,18 +137,12 @@ export default function AddColumnForm({
     });
     
     // Clear any errors
-    setFormError(null);
+    setFieldErrors({});
   };
 
   return (
     <div className={`${className}`}>
-      <h3 className="text-lg font-medium mb-4">Add Column</h3>
-      
-      {formError && (
-        <div className="bg-red-50 border border-red-200 text-red-700 p-3 rounded-md mb-4">
-          {formError}
-        </div>
-      )}
+
       
       <div className={`${compact ? 'space-y-4' : 'grid grid-cols-1 md:grid-cols-2 gap-4 mb-4'}`}>
         {/* Column Name */}
@@ -150,9 +154,14 @@ export default function AddColumnForm({
             value={newField.name}
             onChange={handleFieldInputChange}
             placeholder="e.g. email, first_name"
-            className="mt-1"
+            className={`mt-1 ${fieldErrors.name ? 'border-red-500' : ''}`}
+            required
           />
-          <p className="text-sm text-gray-500 mt-1">Input the column name exactly as in your CSV file.</p>
+          {fieldErrors.name ? (
+            <p className="text-sm text-red-500 mt-1">{fieldErrors.name}</p>
+          ) : (
+            <p className="text-sm text-gray-500 mt-1">Input the column name exactly as in your CSV file.</p>
+          )}
         </div>
         
         {/* Display Name */}
@@ -176,7 +185,7 @@ export default function AddColumnForm({
             value={newField.type}
             onValueChange={handleTypeChange}
           >
-            <SelectTrigger id="fieldType" className="mt-1">
+            <SelectTrigger id="fieldType" className={`mt-1 ${fieldErrors.type ? 'border-red-500' : ''}`}>
               <SelectValue placeholder="Select a format" />
             </SelectTrigger>
             <SelectContent>
@@ -190,6 +199,9 @@ export default function AddColumnForm({
               <SelectItem value="custom_regex">Custom Regular Expression</SelectItem>
             </SelectContent>
           </Select>
+          {fieldErrors.type && (
+            <p className="text-sm text-red-500 mt-1">{fieldErrors.type}</p>
+          )}
         </div>
         
         {/* Options for Select type */}
@@ -202,9 +214,14 @@ export default function AddColumnForm({
               value={newField.validation_format || ''}
               onChange={handleFieldInputChange}
               placeholder="blue,red,yellow,white"
-              className="mt-1"
+              className={`mt-1 ${fieldErrors.validation_format ? 'border-red-500' : ''}`}
+              required
             />
-            <p className="text-sm text-gray-500 mt-1">Comma separated list of options</p>
+            {fieldErrors.validation_format ? (
+              <p className="text-sm text-red-500 mt-1">{fieldErrors.validation_format}</p>
+            ) : (
+              <p className="text-sm text-gray-500 mt-1">Comma separated list of options</p>
+            )}
             
             {/* Example of how the options will appear */}
             {newField.validation_format && (
@@ -259,9 +276,14 @@ export default function AddColumnForm({
               value={newField.validation_format || ''}
               onChange={handleFieldInputChange}
               placeholder="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-              className="mt-1"
+              className={`mt-1 ${fieldErrors.validation_format ? 'border-red-500' : ''}`}
+              required
             />
-            <p className="text-sm text-gray-500 mt-1">Enter a valid regular expression pattern</p>
+            {fieldErrors.validation_format ? (
+              <p className="text-sm text-red-500 mt-1">{fieldErrors.validation_format}</p>
+            ) : (
+              <p className="text-sm text-gray-500 mt-1">Enter a valid regular expression pattern</p>
+            )}
           </div>
         )}
         
