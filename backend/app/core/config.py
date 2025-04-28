@@ -34,14 +34,14 @@ class BaseAppSettings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 120  # Increased from 30 to 120 minutes (2 hours)
 
-    # LLM settings
+    # LLM settings (deprecated but kept for backward compatibility)
     OPENAI_API_KEY: Optional[str] = Field(default_factory=lambda: os.getenv("OPENAI_API_KEY"))
     LLM_MODEL: str = Field(default_factory=lambda: os.getenv("LLM_MODEL", "o3-mini"))
     USE_LOCAL_LLM: bool = Field(
         default_factory=lambda: os.getenv("USE_LOCAL_LLM", "false").lower() == "true"
     )
     LOCAL_LLM_URL: Optional[str] = Field(default_factory=lambda: os.getenv("LOCAL_LLM_URL"))
-
+    
     # File upload settings
     UPLOAD_DIR: str = Field(default_factory=lambda: os.getenv("UPLOAD_DIR", str(ROOT_DIR / "uploads")))
     MAX_UPLOAD_SIZE: int = 10 * 1024 * 1024  # 10MB

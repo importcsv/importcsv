@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1 import auth, importers, imports, public, llm
+from app.api.v1 import auth, importers, imports, public
 
 api_router = APIRouter()
 
@@ -12,4 +12,3 @@ api_router.include_router(auth.router, prefix="/v1/auth", tags=["Authentication"
 api_router.include_router(importers.router, prefix="/v1/importers", tags=["Importers"])
 api_router.include_router(imports.router, prefix="/v1/imports", tags=["Imports"])
 api_router.include_router(public.router, prefix="/v1/public", tags=["Public API"])
-api_router.include_router(llm.router, prefix="/v1/public", tags=["AI Services"])

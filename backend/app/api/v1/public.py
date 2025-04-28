@@ -15,18 +15,13 @@ from app.schemas.import_job import ImportJob as ImportJobSchema
 from app.schemas.importer import Importer as ImporterSchema
 from app.services.webhook import webhook_service, WebhookEventType
 from app.services.import_service import import_service
-from app.services.llm import llm_service
+
 from app.services.queue import enqueue_job
 
 router = APIRouter()
 
 
 # Define request/response models
-class SuggestFixesRequest(BaseModel):
-    errors: List[Dict[str, Any]]
-    data_rows: List[Dict[str, Any]]
-    template_fields: List[Dict[str, Any]]
-    valid_rows: List[Dict[str, Any]] = []
 
 # Define a request model for process-import
 class ProcessImportRequest(BaseModel):
@@ -181,87 +176,7 @@ async def process_public_import(
     return import_job
 
 
-@router.post("/suggest-fixes", response_model=Dict[str, Any])
-async def suggest_fixes(request: SuggestFixesRequest):
-    """
-    Use AI to suggest fixes for validation errors in CSV data
 
-    This endpoint takes error information and returns suggested fixes with explanations
-    """
-    try:
-        # Log request data for debugging
-        print("=" * 80)
-        print("SUGGESTION REQUEST RECEIVED:")
-        print(f"Number of errors: {len(request.errors)}")
-        print(f"Number of data rows: {len(request.data_rows)}")
-        print(f"Number of template fields: {len(request.template_fields)}")
-        if request.errors:
-            print(
-                f"Sample error: {json.dumps(request.errors[0]) if request.errors else 'None'}"
-            )
-        if request.data_rows:
-            print(
-                f"Sample row structure: {json.dumps(request.data_rows[0]) if request.data_rows else 'None'}"
-            )
-        print("=" * 80)
-
-        # Set a maximum processing time to avoid hanging
-        import asyncio
-
-        # Call the LLM service with timeout
-        try:
-
-            async def get_suggestions():
-                return await llm_service.suggest_error_fixes(
-                    errors=request.errors,
-                    data_rows=request.data_rows,
-                    template_fields=request.template_fields,
-                    valid_rows=request.valid_rows,
-                )
-
-            # Set a 10-second timeout
-            suggestions = await asyncio.wait_for(get_suggestions(), timeout=10.0)
-            return suggestions
-
-        except asyncio.TimeoutError:
-            print("Request timed out after 10 seconds, returning fallback response")
-            # Return a simple mock response if the request times out
-            return {
-                "fixes": [
-                    {
-                        "row_index": 1,
-                        "column_index": 7,
-                        "original_value": "1234",
-                        "suggested_value": "2023-10-15",
-                        "explanation": "The warranty date should be in YYYY-MM-DD format.",
-                    }
-                ]
-            }
-    except Exception as e:
-        import traceback
-
-        print(f"Error suggesting fixes: {e}")
-        print(f"Traceback: {traceback.format_exc()}")
-        # Return a mock response instead of an error for better UX
-        return {
-            "fixes": [
-                {
-                    "row_index": 1,
-                    "column_index": 7,
-                    "original_value": "1234",
-                    "suggested_value": "2023-10-07",
-                    "explanation": "The warranty date needs to be in YYYY-MM-DD format instead of just numbers.",
-                },
-                {
-                    "row_index": 9,
-                    "column_index": 48,
-                    "original_value": "adam.perc",
-                    "suggested_value": "adam.percy@company.com",
-                    "explanation": "Completed the email address with the domain and corrected the username to match the full name.",
-                },
-            ],
-            "_note": "This is fallback data. Original request encountered an error.",
-        }
 
 
 @router.get("/schema", response_model=ImporterSchema)

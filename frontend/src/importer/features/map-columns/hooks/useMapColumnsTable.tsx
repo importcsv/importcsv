@@ -7,7 +7,7 @@ import { TemplateColumn, UploadColumn } from "../../../types";
 import stringsSimilarity from "../../../utils/stringSimilarity";
 import { TemplateColumnMapping } from "../types";
 import style from "../style/MapColumns.module.scss";
-// LLM suggestions removed for better UX
+
 
 export default function useMapColumnsTable(
   uploadColumns: UploadColumn[],
@@ -53,8 +53,7 @@ export default function useMapColumnsTable(
         acc[uc.index] = { 
           key: matchedSuggestedTemplateColumn.key, 
           include: true,
-          // Don't mark as selected so LLM can override it
-          selected: false 
+          selected: true
         };
         return acc;
       }
@@ -70,8 +69,7 @@ export default function useMapColumnsTable(
       acc[uc.index] = {
         key: similarTemplateColumn?.key || "",
         include: !!similarTemplateColumn?.key,
-        // Don't mark as selected so LLM can override it
-        selected: false,
+        selected: true,
       };
       return acc;
     }, initialObject);
@@ -153,7 +151,6 @@ export default function useMapColumnsTable(
       };
     });
   }, [values, isLoading]);
-  // LLM suggestions functionality removed for better UX
 
   return { 
     rows, 
