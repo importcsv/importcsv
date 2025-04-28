@@ -288,6 +288,67 @@ class ImportService:
 import_service = ImportService()
 
 
+def process_import_data_worker(
+    import_job_id: str,
+    valid_data: List[Dict[str, Any]],
+    invalid_data: List[Dict[str, Any]],
+):
+    """
+    Process import data as a background job in Redis Queue.
+    This function creates its own database session and handles all database operations.
+    It's designed to be called by a worker process, not directly by API endpoints.
+    
+    Args:
+        import_job_id (str): The ID of the import job as a string
+        valid_data (List[Dict[str, Any]]): List of valid data rows to process
+        invalid_data (List[Dict[str, Any]]): List of invalid data rows for reference
+
+    Returns:
+        Dict[str, Any]: Result of the processing
+    """
+    # Import here to avoid circular imports
+    import asyncio
+    from app.db.base import SessionLocal
+    
+    # Create a new database session for this worker
+    db = SessionLocal()
+
+    try:
+        # Use the import_service to process the data
+        # We need to run the async function in a new event loop since this is a worker process
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+        try:
+            # Run the async function in the event loop
+            loop.run_until_complete(
+                import_service.process_import_data(
+                    db=db,
+                    import_job_id=import_job_id,
+                    valid_data=valid_data,
+                    invalid_data=invalid_data,
+                )
+            )
+            logger.info(
+                f"Successfully processed {len(valid_data)} rows for import job {import_job_id}"
+            )
+            return {
+                "status": "success",
+                "processed_rows": len(valid_data),
+                "invalid_rows": len(invalid_data),
+            }
+        finally:
+            loop.close()
+
+    except Exception as e:
+        logger.error(f"Error processing import data: {str(e)}")
+        return {"status": "error", "message": str(e)}
+
+    finally:
+        # Always close the database session
+        db.close()
+
+
 def log_import_started(
     importer_id: uuid.UUID,
     import_job_id: uuid.UUID,

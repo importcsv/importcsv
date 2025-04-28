@@ -83,3 +83,13 @@ class ColumnMapping(BaseModel):
 # Column mapping request
 class ColumnMappingRequest(BaseModel):
     mappings: List[ColumnMapping]
+
+
+# Import request for importer-key based authentication
+class ImportByKeyRequest(BaseModel):
+    validData: List[Dict[str, Any]]
+    invalidData: List[Dict[str, Any]] = []
+    columnMapping: Dict[str, Any] = {}
+    user: Dict[str, Any] = {}
+    metadata: Dict[str, Any] = {}
+    importer_key: uuid.UUID

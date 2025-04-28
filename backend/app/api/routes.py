@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1 import auth, importers, imports, public
+from app.api.v1 import auth, importers, imports
 
 api_router = APIRouter()
 
@@ -11,4 +11,6 @@ api_router.include_router(auth.router, prefix="/v1/auth", tags=["Authentication"
 # Other API routes
 api_router.include_router(importers.router, prefix="/v1/importers", tags=["Importers"])
 api_router.include_router(imports.router, prefix="/v1/imports", tags=["Imports"])
-api_router.include_router(public.router, prefix="/v1/public", tags=["Public API"])
+
+# Key-authenticated routes (no user authentication required)
+api_router.include_router(imports.key_router, prefix="/v1/imports", tags=["Key Imports"])

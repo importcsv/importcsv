@@ -83,7 +83,7 @@ export default function Main(props: CSVImporterProps) {
       try {
         setIsLoadingSchema(true);
         // Fetch schema from the backend
-        const response = await fetch(`${backendUrl}/api/v1/public/schema?importer_key=${importerKey}`);
+        const response = await fetch(`${backendUrl}/api/v1/imports/key/schema?importer_key=${importerKey}`);
         
         if (!response.ok) {
           throw new Error(`Failed to fetch schema: ${response.statusText}`);
@@ -217,7 +217,7 @@ export default function Main(props: CSVImporterProps) {
     console.log('DEBUG: Column mapping for backend:', columnMappingForBackend);
 
     // Use the public endpoint for processing imports
-    const apiEndpoint = `${backendUrl}/api/v1/public/process-import`;
+    const apiEndpoint = `${backendUrl}/api/v1/imports/key/process`;
 
     // Prepare the request payload
     const payload = {
