@@ -242,7 +242,6 @@ class ImportService:
                         await self._send_completion_webhook(db, import_job, importer)
                 except Exception as recovery_exc:
                     logger.error(f"Failed during exception recovery for job {import_job_id}: {recovery_exc}")
-                    db.rollback()
 
     async def _send_completion_webhook(
         self,
@@ -276,14 +275,15 @@ class ImportService:
 
             # Include data in the webhook payload
             if processed_df is not None and not processed_df.empty:
+                # Convert DataFrame to records - NaN handling is now done in webhook service
                 payload["data"] = processed_df.to_dict('records')
                 logger.info(f"Including full data ({len(processed_df)} rows) in webhook for job {import_job.id}")
 
             # Only send webhook if configured
             if importer.webhook_enabled and importer.webhook_url:
                 # Create webhook event and send webhook
-                # The create_event method already sends the webhook
-                webhook_event = await self.webhook_service.create_event(
+                # The create_webhook_event method already sends the webhook
+                webhook_event = await self.webhook_service.create_webhook_event(
                     db=db,
                     user_id=import_job.user_id,
                     import_job_id=import_job.id,

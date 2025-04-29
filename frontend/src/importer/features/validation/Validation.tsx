@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, Flex, Text, Box, Switch, Tooltip, Input } from '@chakra-ui/react';
+import { Button, Flex, Text, Box, Switch, Tooltip, Input, Alert, AlertIcon, AlertTitle, AlertDescription } from '@chakra-ui/react';
 import { ValidationProps } from './types';
 import style from './style/Validation.module.scss';
 
@@ -15,6 +15,8 @@ export default function Validation({
   onCancel,
   isSubmitting,
   backendUrl,
+  filterInvalidRows,
+  disableOnInvalidRows,
 }: ValidationProps) {
   const { t } = useTranslation();
 
@@ -260,33 +262,63 @@ export default function Validation({
     });
   }, [dataRows, showOnlyErrors, errors, headerRowIndex]);
   
+  // Track rows with errors - consolidated error tracking
+  const errorTracking = useMemo(() => {
+    const indices = new Set<number>();
+    const rowObjects = new Set<number>();
+    
+    errors.forEach(err => {
+      // Convert from display row index to actual data row index
+      const dataRowIdx = err.rowIndex - headerRowIndex - 1;
+      if (dataRowIdx >= 0 && dataRowIdx < dataRows.length) {
+        indices.add(dataRowIdx);
+        rowObjects.add(dataRows[dataRowIdx]?.index || -1);
+      }
+    });
+    
+    return {
+      indices,  // For filtering rows
+      objects: Array.from(rowObjects).filter(idx => idx !== -1),  // For UI display
+      count: indices.size  // For quick access to error count
+    };
+  }, [errors, headerRowIndex, dataRows]);
+
   // Handle form submission
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     
-    if (errors.length > 0) {
-      return; // Don't submit if there are errors
+    if (disableOnInvalidRows && errors.length > 0) {
+      return; // Don't submit if disableOnInvalidRows is true and there are errors
     }
     
-    // Apply edits to the data
+    // Update the data with edited values
     const updatedData = dataRows.map((row, rowIdx) => {
+      // Apply edited values to this row
       const values = [...row.values];
       
-      // Apply any edited values
       if (editedValues[rowIdx]) {
-        Object.entries(editedValues[rowIdx]).forEach(([colIdxStr, value]) => {
-          const colIdx = parseInt(colIdxStr);
-          values[colIdx] = value;
+        Object.entries(editedValues[rowIdx]).forEach(([colIdx, value]) => {
+          values[parseInt(colIdx)] = value;
         });
       }
       
       return { ...row, values };
     });
     
+    // Filter out rows with errors if filterInvalidRows is enabled
+    const filteredData = filterInvalidRows 
+      ? updatedData.filter((_, rowIdx) => !errorTracking.indices.has(rowIdx))
+      : updatedData;
+    
+    // Log what's happening for debugging
+    if (filterInvalidRows && errorTracking.count > 0) {
+      console.log(`Filtering out ${errorTracking.count} rows with validation errors`);
+    }
+    
     // Call onSuccess with the updated data
     onSuccess({
       ...fileData,
-      rows: [headerRow, ...updatedData]
+      rows: [headerRow, ...filteredData]
     });
   };
   
@@ -307,9 +339,22 @@ export default function Validation({
               <Text color="red.500">
                 {errors.length} {errors.length === 1 ? 'error' : 'errors'} found
               </Text>
-
             </Flex>
           </div>
+        )}
+        
+        {filterInvalidRows && errorTracking.count > 0 && (
+          <Alert status="warning" variant="left-accent" mt={4} mb={4}>
+            <AlertIcon />
+            <Box>
+              <AlertTitle>{t('validation.invalidRowsWarning', 'Invalid Rows Will Be Filtered')}</AlertTitle>
+              <AlertDescription>
+                {t('validation.invalidRowsDescription', 
+                  `${errorTracking.count} ${errorTracking.count === 1 ? 'row' : 'rows'} with validation errors will be excluded from the import. You can fix the errors to include these rows.`
+                )}
+              </AlertDescription>
+            </Box>
+          </Alert>
         )}
         
         <div className={style.validationFilters}>
@@ -384,7 +429,7 @@ export default function Validation({
               type="submit"
               colorScheme="blue"
               isLoading={isSubmitting}
-              isDisabled={errors.length > 0}
+              isDisabled={disableOnInvalidRows && errors.length > 0}
             >
               {t('common.continue', 'Continue')}
             </Button>

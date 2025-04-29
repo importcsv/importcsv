@@ -71,6 +71,8 @@ export default function Main(props: CSVImporterProps) {
   });
   const [isLoadingSchema, setIsLoadingSchema] = useState<boolean>(false);
   const [includeUnmatchedColumns, setIncludeUnmatchedColumns] = useState<boolean>(false);
+  const [filterInvalidRows, setFilterInvalidRows] = useState<boolean>(false);
+  const [disableOnInvalidRows, setDisableOnInvalidRows] = useState<boolean>(false);
 
   // Fetch schema from the backend using importerKey
   useEffect(() => {
@@ -97,6 +99,18 @@ export default function Main(props: CSVImporterProps) {
         if (schemaData.include_unmatched_columns !== undefined) {
           setIncludeUnmatchedColumns(schemaData.include_unmatched_columns);
           console.log('Include unmatched columns setting:', schemaData.include_unmatched_columns);
+        }
+        
+        // Store the filter_invalid_rows setting from the importer configuration
+        if (schemaData.filter_invalid_rows !== undefined) {
+          setFilterInvalidRows(schemaData.filter_invalid_rows);
+          console.log('Filter invalid rows setting:', schemaData.filter_invalid_rows);
+        }
+        
+        // Store the disable_on_invalid_rows setting from the importer configuration
+        if (schemaData.disable_on_invalid_rows !== undefined) {
+          setDisableOnInvalidRows(schemaData.disable_on_invalid_rows);
+          console.log('Disable on invalid rows setting:', schemaData.disable_on_invalid_rows);
         }
         
         // Convert the schema to the format expected by the importer
@@ -420,6 +434,8 @@ export default function Main(props: CSVImporterProps) {
             onCancel={handleBackToMapColumns}
             isSubmitting={isSubmitting}
             backendUrl={backendUrl}
+            filterInvalidRows={filterInvalidRows}
+            disableOnInvalidRows={disableOnInvalidRows}
           />
         );
       case StepEnum.Complete:

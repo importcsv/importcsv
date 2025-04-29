@@ -40,10 +40,14 @@ webhook_logger.addHandler(console_handler)
 
 # Custom JSON encoder to handle UUID serialization and special values
 class UUIDEncoder(json.JSONEncoder):
+    """Custom JSON encoder that handles UUID objects and NaN values"""
     def default(self, obj):
         if isinstance(obj, uuid.UUID):
             # Convert UUID to string
             return str(obj)
+        # Handle float NaN values
+        if isinstance(obj, float) and obj != obj:  # NaN check
+            return None
         # Let the base class handle other types or raise TypeError
         return json.JSONEncoder.default(self, obj)
 
@@ -55,31 +59,41 @@ class WebhookService:
         """Sanitize payload by replacing NaN values with None"""
         if not payload:
             return payload
-            
-        # Convert to JSON and back using our custom encoder
-        # This will handle all NaN values and UUIDs in one step
+        
+        # Simple recursive sanitization function
+        def sanitize(obj):
+            if isinstance(obj, dict):
+                return {k: sanitize(v) for k, v in obj.items()}
+            elif isinstance(obj, list):
+                return [sanitize(item) for item in obj]
+            elif isinstance(obj, float) and obj != obj:  # NaN check
+                return None
+            else:
+                return obj
+        
+        # Sanitize and then verify with JSON encoder
         try:
-            # First convert to JSON string
-            json_str = json.dumps(payload)
-            # Then parse it back to a Python object
-            return json.loads(json_str)
-        except (TypeError, ValueError):
-            # If there's any error in JSON conversion, try manual sanitization
+            sanitized = sanitize(payload)
+            # Verify serialization works
+            json.dumps(sanitized, cls=UUIDEncoder)
+            return sanitized
+        except (TypeError, ValueError) as e:
+            webhook_logger.error(f"Error serializing payload: {str(e)}")
+            # If there's an error, create a minimal valid payload
             if isinstance(payload, dict):
+                # Keep only serializable values
                 result = {}
                 for key, value in payload.items():
-                    if isinstance(value, float) and (value != value):  # NaN check
+                    try:
+                        # Test if this value can be serialized
+                        json.dumps({"test": value}, cls=UUIDEncoder)
+                        result[key] = sanitize(value)
+                    except (TypeError, ValueError):
+                        # If not serializable, set to None
+                        webhook_logger.warning(f"Replacing non-serializable value for key '{key}' with None")
                         result[key] = None
-                    elif isinstance(value, (dict, list)):
-                        result[key] = self._sanitize_payload(value)
-                    else:
-                        result[key] = value
                 return result
-            elif isinstance(payload, list):
-                return [self._sanitize_payload(item) if isinstance(item, (dict, list)) else 
-                        None if isinstance(item, float) and (item != item) else item 
-                        for item in payload]
-            return payload
+            return {"error": "Original payload contained invalid data", "timestamp": datetime.now().isoformat()}
 
     def generate_signature(self, payload: Dict[str, Any], secret: str) -> str:
         """Generate HMAC signature for webhook payload"""
@@ -162,17 +176,21 @@ class WebhookService:
             
         return success
 
-    async def create_event(
-        self,
-        db: Session,
-        user_id: uuid.UUID,
-        import_job_id: uuid.UUID,
-        event_type: WebhookEventType,
-        payload: Dict[str, Any]
-    ) -> WebhookEvent:
-        """Create webhook event in database and send it immediately"""
+    async def create_webhook_event(self, db: Session, user_id: uuid.UUID, import_job_id: uuid.UUID, 
+                          event_type: WebhookEventType, payload: Dict[str, Any]) -> WebhookEvent:
+        """Create a webhook event record"""
+        webhook_logger.info(f"Creating webhook event: {event_type.value} for import job {import_job_id}")
+        
         # Sanitize the payload to handle NaN values before storing in the database
         sanitized_payload = self._sanitize_payload(payload)
+        
+        # Add essential information to ensure we have a valid minimal payload
+        if isinstance(sanitized_payload, dict):
+            sanitized_payload.update({
+                "event_type": event_type.value,
+                "import_job_id": str(import_job_id),
+                "timestamp": datetime.now().isoformat()
+            })
         
         # First create the webhook event record
         webhook_event = WebhookEvent(
