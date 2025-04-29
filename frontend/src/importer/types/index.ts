@@ -7,7 +7,6 @@ export type TemplateColumn = {
   key?: string; // Allow key to be potentially undefined initially
   description?: string;
   required?: boolean;
-  suggested_mappings?: string[];
   data_type?: string;
   validation_format?: string;
   type?: string; // For backwards compatibility

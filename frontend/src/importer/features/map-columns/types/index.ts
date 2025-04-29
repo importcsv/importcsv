@@ -5,8 +5,6 @@ export type TemplateColumnMapping = {
   key: string;
   include: boolean;
   selected?: boolean;
-  confidence?: number;       // Confidence score from LLM (0-1)
-  isLLMSuggestion?: boolean; // Flag to indicate this came from LLM
 };
 
 export type MapColumnsProps = {
@@ -18,6 +16,6 @@ export type MapColumnsProps = {
   onSuccess: (columnMapping: { [index: number]: TemplateColumnMapping }) => void;
   onCancel: () => void;
   isSubmitting: boolean;
-  importerKey?: string;     // Key of the importer for LLM API calls
+  importerKey?: string;     // Key of the importer for API calls
   backendUrl?: string;     // Backend URL for API calls
 };

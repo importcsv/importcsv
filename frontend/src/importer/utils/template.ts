@@ -17,7 +17,6 @@ export function convertRawTemplate(rawTemplate?: Record<string, unknown> | strin
   }
 
   const seenKeys: Record<string, boolean> = {};
-  const seenSuggestedMappings: Record<string, boolean> = {};
   const columns: TemplateColumn[] = [];
 
   for (let i = 0; i < columnData.length; i++) {
@@ -31,7 +30,6 @@ export function convertRawTemplate(rawTemplate?: Record<string, unknown> | strin
     let key: string = item.key || "";
     const description: string = item.description || "";
     const required: boolean = item.required || false;
-    let suggestedMappings: string[] = item.suggested_mappings || [];
     const data_type: string = item.data_type || "";
     const validation_format: string = item.validation_format || "";
     const type: string = item.type || data_type || "";
@@ -48,24 +46,11 @@ export function convertRawTemplate(rawTemplate?: Record<string, unknown> | strin
 
     seenKeys[key] = true;
 
-    for (let j = 0; j < suggestedMappings.length; j++) {
-      let mappingVal = suggestedMappings[j].trim();
-      const lowerCaseMapping = mappingVal.toLowerCase();
-
-      if (mappingVal === "" || seenSuggestedMappings[lowerCaseMapping]) {
-        return [null, `Invalid template: The suggested_mappings for column ${name} cannot contain blank values or duplicate values.`];
-      }
-
-      seenSuggestedMappings[lowerCaseMapping] = true;
-      suggestedMappings[j] = mappingVal;
-    }
-
     columns.push({
       name,
       key,
       description,
       required,
-      suggested_mappings: suggestedMappings,
       data_type,
       validation_format,
       type

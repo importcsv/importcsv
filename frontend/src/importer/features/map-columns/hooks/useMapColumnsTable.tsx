@@ -15,8 +15,7 @@ export default function useMapColumnsTable(
   columnsValues: { [uploadColumnIndex: number]: TemplateColumnMapping },
   isLoading?: boolean,
   importerKey?: string,
-  backendUrl?: string,
-  // useLLMSuggestions parameter removed
+  backendUrl?: string
 ) {
   const { t } = useTranslation();
   
@@ -33,11 +32,9 @@ export default function useMapColumnsTable(
     return stringsSimilarity(templateColumnKeyFormatted, uploadColumnName.toLowerCase()) > 0.9;
   };
 
+  // Simple string matching function - always returns false since suggested_mappings were removed
   const isSuggestedMapping = (templateColumn: TemplateColumn, uploadColumnName: string) => {
-    if (!templateColumn?.suggested_mappings) {
-      return false;
-    }
-    return templateColumn.suggested_mappings.some((suggestion) => suggestion.toLowerCase() === uploadColumnName.toLowerCase());
+    return false; // No longer using suggested mappings
   };
 
   const [values, setValues] = useState<{ [key: number]: TemplateColumnMapping }>(() => {
