@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { ImporterField as AddColumnImporterField } from "@/components/AddColumnForm";
 import ImporterColumnsManager from "@/components/ImporterColumnsManager";
 import apiClient, { importersApi } from "@/utils/apiClient";
+import { useToast } from "@/components/ui/use-toast";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
@@ -87,10 +88,7 @@ export default function ImporterDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [notification, setNotification] = useState<{
-    message: string;
-    type: "success" | "error";
-  } | null>(null);
+  const { toast } = useToast();
   const [importerName, setImporterName] = useState("");
   const [webhookUrl, setWebhookUrl] = useState("");
   const [webhookEnabled, setWebhookEnabled] = useState(true);
@@ -176,9 +174,10 @@ export default function ImporterDetailPage() {
         fields: importer.fields, // Include the current fields
       });
 
-      setNotification({
-        message: "Your importer settings have been updated successfully.",
-        type: "success",
+      toast({
+        title: "Success",
+        description: "Your importer settings have been updated successfully.",
+        variant: "default",
       });
     } catch (err: any) {
       console.error("Error updating importer:", err);
@@ -192,9 +191,10 @@ export default function ImporterDetailPage() {
       }
 
       setError(errorMessage);
-      setNotification({
-        message: errorMessage,
-        type: "error",
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
       });
     } finally {
       setIsSaving(false);
@@ -205,9 +205,10 @@ export default function ImporterDetailPage() {
   const copyImporterId = () => {
     if (importer) {
       navigator.clipboard.writeText(importer.id);
-      setNotification({
-        message: "Importer ID has been copied to clipboard.",
-        type: "success",
+      toast({
+        title: "Success",
+        description: "Importer ID has been copied to clipboard.",
+        variant: "default",
       });
     }
   };
@@ -216,9 +217,10 @@ export default function ImporterDetailPage() {
   const copyImporterKey = () => {
     if (importer) {
       navigator.clipboard.writeText(importer.key);
-      setNotification({
-        message: "Importer Key has been copied to clipboard.",
-        type: "success",
+      toast({
+        title: "Success",
+        description: "Importer Key has been copied to clipboard.",
+        variant: "default",
       });
     }
   };
@@ -248,9 +250,10 @@ export default function ImporterDetailPage() {
       }
 
       setError(errorMessage);
-      setNotification({
-        message: errorMessage,
-        type: "error",
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
       });
     } finally {
       setIsDeleting(false);
@@ -389,29 +392,7 @@ export default function ImporterDetailPage() {
         </div>
       </div>
 
-      {/* Persistent notification bar */}
-      {notification && (
-        <div
-          className={`p-4 mb-4 rounded-md flex items-center ${
-            notification.type === "success"
-              ? "bg-green-50 text-green-700 border border-green-200"
-              : "bg-red-50 text-red-700 border border-red-200"
-          }`}
-        >
-          {notification.type === "success" ? (
-            <CheckCircle className="h-5 w-5 mr-2" />
-          ) : (
-            <AlertCircle className="h-5 w-5 mr-2" />
-          )}
-          <span>{notification.message}</span>
-          <button
-            className="ml-auto text-gray-500 hover:text-gray-700"
-            onClick={() => setNotification(null)}
-          >
-            ×
-          </button>
-        </div>
-      )}
+      {/* Toast notifications are now handled by the Toaster component */}
 
       {/* Save button removed from here and moved to bottom right */}
 
@@ -602,10 +583,10 @@ export default function ImporterDetailPage() {
               });
 
               // Show success notification with clearer instructions
-              setNotification({
-                message:
-                  "Column changes applied. Click the green 'Save Changes' button to persist your changes.",
-                type: "success",
+              toast({
+                title: "Success",
+                description: "Column changes applied. Click the green 'Save Changes' button to persist your changes.",
+                variant: "default",
               });
             }}
           />
