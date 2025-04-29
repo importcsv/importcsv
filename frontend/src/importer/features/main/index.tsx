@@ -289,12 +289,28 @@ export default function Main(props: CSVImporterProps) {
       })
       .then(result => {
         console.log('DEBUG: Import processed successfully:', result);
-        // Call onComplete with the original data and backend response
-        console.log('DEBUG: Calling onComplete with backendResponse');
-        onComplete && onComplete({
-          ...onCompleteData,
-          backendResponse: result
-        });
+        // Call onComplete with the simplified backend response
+        console.log('DEBUG: Calling onComplete with simplified response');
+        
+        // The backend now returns a simplified response with just success/failure status
+        // and a job_id that can be used to track the job
+        if (result.success) {
+          onComplete && onComplete({
+            success: true,
+            job_id: result.job_id,
+            message: result.message || 'Import job successfully enqueued',
+            num_rows: mappedRows.length,
+            num_columns: includedColumns.length
+          });
+        } else {
+          onComplete && onComplete({
+            success: false,
+            job_id: result.job_id,
+            message: result.message || 'Failed to process import',
+            num_rows: mappedRows.length,
+            num_columns: includedColumns.length
+          });
+        }
       })
       .catch(error => {
         console.error('DEBUG: Error processing import:', error);
@@ -306,8 +322,10 @@ export default function Main(props: CSVImporterProps) {
         // Call onComplete with the error
         console.log('DEBUG: Calling onComplete with error');
         onComplete && onComplete({
-          ...onCompleteData,
-          error: error.message
+          success: false,
+          message: error.message,
+          num_rows: mappedRows.length,
+          num_columns: includedColumns.length
         });
       });
 

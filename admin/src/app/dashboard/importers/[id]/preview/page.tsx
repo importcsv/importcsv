@@ -52,47 +52,6 @@ export default function ImporterPreviewPage() {
 
   const handleImportComplete = async (data: ImportData) => {
     // Process import data
-    try {
-      // Check if we received a backend response directly from the CSV importer
-      if (data.backendResponse) {
-        // Successfully processed by the backend
-        return;
-      }
-
-      // Check if there was an error from the direct integration
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      // If no direct backend response, process manually (fallback)
-      // Transform data from the library format to the backend format
-      const transformedData = {
-        validData:
-          data.rows
-            ?.filter((row: ImportRow) => !row.errors || row.errors.length === 0)
-            .map((row: ImportRow) => {
-              // Create a simple object with the values
-              return row.values;
-            }) || [],
-        invalidData:
-          data.rows
-            ?.filter((row: ImportRow) => row.errors && row.errors.length > 0)
-            .map((row: ImportRow) => {
-              return {
-                values: row.values,
-                errors: row.errors,
-              };
-            }) || [],
-      };
-
-      // Using fallback API call for data processing
-
-      // CSV data processed successfully - no alert needed
-    } catch (error: unknown) {
-      const errorMessage =
-        error instanceof Error ? error.message : String(error);
-      alert(`Error processing import: ${errorMessage}`);
-    }
   };
 
   // Fetch importer details to get the key

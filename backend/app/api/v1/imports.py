@@ -1,3 +1,4 @@
+import json
 import logging
 import uuid
 from typing import List
@@ -9,7 +10,11 @@ from app.auth.users import get_current_active_user
 from app.db.base import get_db
 from app.models.user import User
 from app.models.import_job import ImportJob as ImportJobModel, ImportStatus
-from app.schemas.import_job import ImportJob as ImportJobSchema, ImportByKeyRequest
+from app.schemas.import_job import (
+    ImportJob as ImportJobSchema,
+    ImportByKeyRequest,
+    ImportProcessResponse,
+)
 from app.services.import_service import (
     import_service,
     log_import_started,
@@ -145,7 +150,7 @@ async def read_import_job(
 # The process_import_data function has been moved to import_service.py as process_import_data_worker
 
 
-@key_router.post("/process", response_model=ImportJobSchema)
+@key_router.post("/process", response_model=ImportProcessResponse)
 async def process_import_by_key(
     request: ImportByKeyRequest,
     db: Session = Depends(get_db),
@@ -221,7 +226,15 @@ async def process_import_by_key(
         metadata=metadata,
     )
 
-    return import_job
+    # Return simplified response
+    if import_job.status == ImportStatus.FAILED:
+        return ImportProcessResponse(
+            success=False,
+        )
+    else:
+        return ImportProcessResponse(
+            success=True,
+        )
 
 
 @key_router.get("/schema")

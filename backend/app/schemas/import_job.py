@@ -93,3 +93,8 @@ class ImportByKeyRequest(BaseModel):
     user: Dict[str, Any] = {}
     metadata: Dict[str, Any] = {}
     importer_key: uuid.UUID
+
+
+# Simplified response for import processing
+class ImportProcessResponse(BaseModel):
+    success: bool
