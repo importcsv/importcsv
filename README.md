@@ -55,7 +55,7 @@ The easiest way to get started is using Docker Compose:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/importcsv.git
+git clone https://github.com/abhishekray07/importcsv.git
 cd importcsv
 
 # Start all services
