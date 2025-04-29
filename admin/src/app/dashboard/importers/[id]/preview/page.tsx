@@ -55,7 +55,7 @@ export default function ImporterPreviewPage() {
     try {
       // Check if we received a backend response directly from the CSV importer
       if (data.backendResponse) {
-        alert("CSV data processed successfully!");
+        // Successfully processed by the backend
         return;
       }
 
@@ -87,8 +87,7 @@ export default function ImporterPreviewPage() {
 
       // Using fallback API call for data processing
 
-      // Show success notification
-      alert("CSV data processed successfully!");
+      // CSV data processed successfully - no alert needed
     } catch (error: unknown) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
@@ -191,8 +190,6 @@ export default function ImporterPreviewPage() {
                   skipHeaderRowSelection={false}
                   importerKey={importer.key}
                   onComplete={handleImportComplete}
-                  user={{ userId: "12345" }}
-                  metadata={{ anotherId: "123" }}
                 />
               )}
             </div>
