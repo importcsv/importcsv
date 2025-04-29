@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   postgres:
@@ -24,7 +24,64 @@ services:
     restart: unless-stopped
     command: redis-server --appendonly yes
 
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: importcsv-backend
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/importcsv
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=development
+      - SECRET_KEY=your-secret-key-at-least-32-characters-long
+      - WEBHOOK_SECRET=your-webhook-secret-for-callbacks
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - backend_logs:/app/logs
+    restart: unless-stopped
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: importcsv-worker
+    depends_on:
+      - postgres
+      - redis
+      - backend
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/importcsv
+      - REDIS_URL=redis://redis:6379/0
+      - ENVIRONMENT=development
+      - SECRET_KEY=your-secret-key-at-least-32-characters-long
+      - WEBHOOK_SECRET=your-webhook-secret-for-callbacks
+    volumes:
+      - ./backend/uploads:/app/uploads
+    restart: unless-stopped
+    command: python -m app.worker
+
+  admin:
+    build:
+      context: .
+      dockerfile: admin/Dockerfile
+    container_name: importcsv-admin
+    depends_on:
+      - backend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:8000
+    volumes:
+      - ./frontend/build:/app/node_modules/csv-import-react/build
+    restart: unless-stopped
 
 volumes:
   postgres_data:
   redis_data:
+  backend_logs:
