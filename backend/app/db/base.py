@@ -30,17 +30,17 @@ engine = create_engine(settings.DATABASE_URL, **engine_options)
 # Add connection pool events for monitoring
 @event.listens_for(engine, "connect")
 def connect(dbapi_connection, connection_record):
-    logger.debug("Database connection established")
+    logger.info("Database connection established")
 
 
 @event.listens_for(engine, "checkout")
 def checkout(dbapi_connection, connection_record, connection_proxy):
-    logger.debug("Database connection checked out from pool")
+    logger.info("Database connection checked out from pool")
 
 
 @event.listens_for(engine, "checkin")
 def checkin(dbapi_connection, connection_record):
-    logger.debug("Database connection returned to pool")
+    logger.info("Database connection returned to pool")
 
 
 # Create session factory for synchronous operations

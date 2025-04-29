@@ -131,7 +131,7 @@ class WebhookService:
             async with httpx.AsyncClient(timeout=60.0) as client:
                 # First try with the json parameter (most reliable method)
                 try:
-                    webhook_logger.debug("Sending webhook request with json parameter")
+                    webhook_logger.info("Sending webhook request with json parameter")
                     response = await client.post(
                         clean_url,
                         json=payload,  # Let httpx handle serialization
@@ -143,7 +143,7 @@ class WebhookService:
                     webhook_logger.error(f"Error sending webhook with json parameter: {str(json_err)}")
                     
                     # Try fallback with manual serialization
-                    webhook_logger.debug("Retrying with manual serialization")
+                    webhook_logger.info("Retrying with manual serialization")
                     try:
                         serialized_payload = json.dumps(payload, cls=UUIDEncoder)
                         response = await client.post(
@@ -165,7 +165,7 @@ class WebhookService:
         """Handle webhook response and return success status"""
         # Log the response
         method_str = "fallback method" if is_fallback else "json parameter"
-        webhook_logger.debug(f"Webhook response ({method_str}): status={response.status_code}")
+        webhook_logger.info(f"Webhook response ({method_str}): status={response.status_code}")
         
         # Return based on status code
         success = 200 <= response.status_code < 300

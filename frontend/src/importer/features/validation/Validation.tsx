@@ -310,20 +310,13 @@ export default function Validation({
       ? updatedData.filter((_, rowIdx) => !errorTracking.indices.has(rowIdx))
       : updatedData;
     
-    // Log what's happening for debugging
-    if (filterInvalidRows && errorTracking.count > 0) {
-      console.log(`Filtering out ${errorTracking.count} rows with validation errors`);
-    }
-    
     // Call onSuccess with the updated data
     onSuccess({
       ...fileData,
       rows: [headerRow, ...filteredData]
     });
   };
-  
 
-  
   // Render the component
   return (
     <div className={style.validationContainer}>

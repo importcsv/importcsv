@@ -89,7 +89,7 @@ class DevelopmentSettings(BaseAppSettings):
     ENVIRONMENT: Literal["development"] = "development"
 
     # Override log level for development
-    LOG_LEVEL: str = Field(default_factory=lambda: os.getenv("LOG_LEVEL", "DEBUG"))
+    LOG_LEVEL: str = Field(default_factory=lambda: os.getenv("LOG_LEVEL", "INFO"))
 
     # Additional development-specific settings
     DEBUG: bool = True

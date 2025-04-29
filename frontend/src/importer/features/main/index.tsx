@@ -235,14 +235,14 @@ export default function Main(props: CSVImporterProps) {
       return;
     }
 
-    console.log('DEBUG: Processing import with:', { importerKey, backendUrl });
+
 
     // Transform data for the backend format
     const transformedData = {
       validData: mappedRows,
       invalidData: [] // We don't track invalid rows in this version
     };
-    console.log('DEBUG: Transformed data:', transformedData);
+
 
     // Transform column mapping to a format expected by the backend
     const columnMappingForBackend: Record<string, string> = {};
@@ -251,7 +251,7 @@ export default function Main(props: CSVImporterProps) {
         columnMappingForBackend[index] = mapping.key;
       }
     });
-    console.log('DEBUG: Column mapping for backend:', columnMappingForBackend);
+
 
     // Use the public endpoint for processing imports
     const apiEndpoint = `${backendUrl}/api/v1/imports/key/process`;
@@ -264,10 +264,10 @@ export default function Main(props: CSVImporterProps) {
       metadata: metadata || {},
       importer_key: importerKey || ''
     };
-    console.log('DEBUG: Request payload:', payload);
+
 
     // Send the data to the backend
-    console.log('DEBUG: Sending fetch request to:', apiEndpoint);
+
     fetch(apiEndpoint, {
       method: 'POST',
       headers: {
@@ -276,21 +276,15 @@ export default function Main(props: CSVImporterProps) {
       body: JSON.stringify(payload)
     })
       .then(response => {
-        console.log('DEBUG: Received response:', {
-          status: response.status,
-          statusText: response.statusText,
-          ok: response.ok,
-          headers: response.headers
-        });
         if (!response.ok) {
           throw new Error(`Failed to process import: ${response.statusText}`);
         }
         return response.json();
       })
       .then(result => {
-        console.log('DEBUG: Import processed successfully:', result);
+
         // Call onComplete with the simplified backend response
-        console.log('DEBUG: Calling onComplete with simplified response');
+
         
         // The backend now returns a simplified response with just success/failure status
         // and a job_id that can be used to track the job
@@ -313,14 +307,10 @@ export default function Main(props: CSVImporterProps) {
         }
       })
       .catch(error => {
-        console.error('DEBUG: Error processing import:', error);
-        console.log('DEBUG: Error details:', {
-          message: error.message,
-          stack: error.stack,
-          name: error.name
-        });
+        console.error('Error processing import:', error);
+
         // Call onComplete with the error
-        console.log('DEBUG: Calling onComplete with error');
+
         onComplete && onComplete({
           success: false,
           message: error.message,
@@ -381,7 +371,7 @@ export default function Main(props: CSVImporterProps) {
                           errors: results.errors.map((error) => error.message),
                         });
                         goNext();
-                      },
+                      }
                     });
                     break;
                   case "xlsx":
