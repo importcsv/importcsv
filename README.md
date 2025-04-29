@@ -1,74 +1,45 @@
+<div align="center">
+
 # ImportCSV
 
-An intuitive, flexible, open-source CSV importer focused on exceptional developer experience, leveraging LLMs to simplify tedious import tasks, improve data quality, and speed up integration.
+<p align="center">
+  <em>CSV import solution for web applications</em>
+</p>
 
-## Features
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 
-- **Dynamic Schema & Columns**
-  - Auto-detect schema from uploaded CSVs
-  - Runtime addition/editing of columns and field types
+</div>
 
-- **Multiple File Support**
-  - CSV, XLS, XLSX, TSV
+## Overview
 
-- **Embeddable UI & SDK**
-  - One-line embed (React, Vue, Angular)
-  - SDK methods for advanced integrations
+ImportCSV helps users import CSV and spreadsheet data into web applications. It provides a React frontend for file uploads and column mapping, with a FastAPI backend for processing and storage.
 
-- **Intelligent LLM-powered Column Matching & Data Cleaning**
-  - Auto-match column names/types via GPT
-  - Smart column mapping with AI-powered suggestions
-  - One-click auto-correction & validation fixes
+> **Note**: The CSV Importer component was forked from [TableFlow's CSV Import](https://github.com/tableflowhq/csv-import) and enhanced with additional features.
 
-- **Comprehensive Validation**
-  - Client-side immediate validation feedback
-  - Server-side JSON Schema-based validation
+## Key Features
 
-- **Extensible Webhooks & Integration**
-  - Webhook events (import start, validation errors, completion)
-  - Direct integrations (Postgres, APIs, Airtable)
-
-- **Self-hosting & Cloud Option**
-  - Docker-compose for easy self-hosting
-  - Separate managed cloud version (SaaS) available
+- **Column Mapping** - Match source columns to destination fields
+- **Multiple File Formats** - Support for CSV, XLS, XLSX, and TSV files
+- **Background Processing** - Redis Queue for handling large imports
+- **Authentication** - JWT-based auth with token refresh
+- **Embeddable Components** - React components for easy integration
+- **Data Validation** - Client-side validation with feedback
+- **Webhooks** - Integration points for custom workflows
 
 ## Architecture
 
-```
-Frontend Embeddable Widget (React SDK)
-              │
-              └─── Backend API (FastAPI Python)
-                      │─── Authentication (JWT, OAuth for cloud)
-                      │─── Schema & Column Detection (OpenAI API or local LLM)
-                      │─── Data Validation & Cleaning (JSON Schema, GPT-driven corrections)
-                      │─── Destination Integration Layer (Postgres, Airtable, custom API)
-                      │─── Webhook Service
-                      │
-                      └─── Data Storage Layer (Postgres/SQLite for OSS, managed Postgres for cloud)
-```
+The project has three main components:
+
+- **Backend** - FastAPI server with Redis Queue for background processing
+- **Frontend** - React SDK for file uploads and column mapping
+- **Admin** - Next.js dashboard for managing imports
 
 ## Tech Stack
 
-- **Backend**: Python 3.11+, FastAPI, SQLAlchemy, Pydantic
+- **Backend**: Python, FastAPI, SQLAlchemy, Redis Queue
 - **Frontend**: TypeScript, React, Tailwind CSS
-- **LLM Integration**: LiteLLM
-- **Deployment**: Docker & Docker-compose
-
-## LLM-Enhanced Column Mapping
-
-ImportCSV now features AI-powered column mapping that intelligently matches CSV columns to your schema:
-
-- **Smart Semantic Matching**: Understands relationships between column names beyond string similarity
-- **Context-Aware**: Uses sample data to improve matching accuracy
-- **User Control**: Toggle between AI and traditional matching
-
-### Configuration
-
-1. Set your OpenAI API key in the backend `.env` file:
-   ```
-   OPENAI_API_KEY=your-api-key-here
-   OPENAI_MODEL=gpt-3.5-turbo  # or gpt-4 for higher accuracy
-   ```
+- **Admin**: Next.js, TypeScript, Shadcn
+- **Deployment**: Docker & Docker Compose
 
 ## Getting Started
 
@@ -77,47 +48,101 @@ ImportCSV now features AI-powered column mapping that intelligently matches CSV 
 - Python 3.11+
 - Node.js 18+
 - Docker & Docker Compose (for deployment)
-- OpenAI API key (for LLM-enhanced features)
 
-### Installation
+### Quick Start with Docker
 
-1. Clone the repository
+The easiest way to get started is using Docker Compose:
+
 ```bash
+# Clone the repository
 git clone https://github.com/yourusername/importcsv.git
 cd importcsv
+
+# Start all services
+docker-compose up -d
 ```
 
-2. Set up the backend
+This will start:
+
+- PostgreSQL database
+- Redis for queue management
+- Backend API server
+- Frontend development server
+- Admin dashboard
+
+Visit http://localhost:3000 for the admin dashboard.
+
+### Manual Setup
+
+For development, you can set up each component individually:
+
+1. **Backend Setup**
+
 ```bash
 cd backend
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate
 pip install -r requirements.txt
-```
-
-3. Set up the frontend
-```bash
-cd ../frontend
-npm install
-```
-
-4. Configure environment variables
-```bash
 cp .env.example .env
 # Edit .env with your configuration
+uvicorn app.main:app --reload
 ```
 
-5. Start the development servers
-```bash
-# Backend
-cd backend
-uvicorn app.main:app --reload
+2. **Frontend Setup**
 
-# Frontend
-cd ../frontend
+See frontend publishing instructions below.
+
+4. **Admin Dashboard Setup**
+
+```bash
+cd admin
+npm install
 npm run dev
 ```
 
+## Documentation
+
+For detailed documentation on each component, please refer to the README in each directory:
+
+- [Backend Documentation](./backend/README.md)
+- [Frontend SDK Documentation](./frontend/README.md)
+- [Admin Dashboard Documentation](./admin/README.md)
+
+## Publishing the Frontend Library
+
+### Using Yalc (for Local Development)
+
+```bash
+cd frontend
+yarn publish:local:react
+
+
+cd {YOUR_PROJECT_PATH}
+yalc add csv-import-react
+```
+
+See the [Frontend README](./frontend/README.md) for more detailed instructions.
+
+## Roadmap
+
+Future development plans include:
+
+- **Multiple Destinations** - Support for exporting to different target systems
+- **Dynamic CSV Schemas** - Runtime schema detection and configuration
+- **Enhanced Validation** - Improved server-side validation rules
+- **Data Transformations** - Custom transformations during import
+- **Analytics** - Import statistics and performance tracking
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
 ## License
 
-[MIT](LICENSE)
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.

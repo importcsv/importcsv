@@ -1,33 +1,56 @@
 <div align="center">
 
-<img src="https://tableflow-assets-cdn.s3.amazonaws.com/csv-import.jpg" width="600" alt="CSV Import">
+# ImportCSV Frontend
 
-<em>Open-source CSV and XLS/XLSX file importer for React and JavaScript</em>
+<em>React-based embeddable CSV and spreadsheet importer with streamlined column mapping</em>
+
+[![React](https://img.shields.io/badge/React-18.0+-61DAFB?logo=react&logoColor=white)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-4.9+-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
 </div>
 
-## How It Works
+## 🚀 Overview
 
-1. Embed the CSV Importer in your app with the [React](https://www.npmjs.com/package/csv-import-react)
-   or [JavaScript](https://www.npmjs.com/package/csv-import-js) SDK
-2. Define the columns your users can import (via the `template` parameter)
-3. Your users import their files in your app
-4. Retrieve the imported data from the `onComplete` event
+The ImportCSV Frontend provides a polished, user-friendly interface for importing CSV, XLS, XLSX, and TSV files. It can be embedded in any React application and offers intuitive column mapping functionality.
 
-![Importer Modal](https://tableflow-assets-cdn.s3.amazonaws.com/importer-modal-20230613b.png)
+> **Note**: This component was forked from [TableFlow's CSV Import](https://github.com/tableflowhq/csv-import) and enhanced with additional features.
 
-## Get Started
+## ✨ Key Features
 
-### 1. Install SDK
+- **📊 Multi-Format Support** - Import from CSV, XLS, XLSX, and TSV files
+- **🔄 Smart Column Mapping** - Intuitive interface for mapping columns
+- **🔍 Data Validation** - Immediate feedback on data quality issues
+- **🎨 Customizable UI** - Theming and component customization options
+- **🔌 Flexible Integration** - Available as React component or vanilla JavaScript
 
-Use NPM or Yarn to install the SDK for [React](https://www.npmjs.com/package/csv-import-react)
-or [JavaScript](https://www.npmjs.com/package/csv-import-js).
+## 🏗️ Architecture
+
+The frontend is built as a React library with TypeScript and can be used in two ways:
+
+1. **React Component** - Direct integration into React applications
+2. **JavaScript SDK** - For use in non-React applications
+
+## 🛠️ Technical Details
+
+### Key Components
+
+- **CSVImporter** - Main React component for the import flow
+- **ColumnMapper** - Handles column mapping with smart suggestions
+- **DataValidator** - Validates data against schema requirements
+- **ImportSummary** - Displays import results and validation issues
+
+## 🚀 Getting Started
+
+### Installation
+
+Use NPM or Yarn to install the SDK:
 
 **NPM**
 
 ```bash
 npm install csv-import-react
-# or
+# or for non-React applications
 npm install csv-import-js
 ```
 
@@ -35,11 +58,11 @@ npm install csv-import-js
 
 ```bash
 yarn add csv-import-react
-# or
+# or for non-React applications
 yarn add csv-import-js
 ```
 
-### 2. Add the importer to your application
+### Basic Usage
 
 #### Using React
 
@@ -233,7 +256,7 @@ Toggle between dark mode (`true`) and light mode (`false`).
 Specifies the primary color for the importer in hex format. Use `customStyles` to customize the UI in more detail.
 
 ```jsx
-primaryColor="#7A5EF8"
+primaryColor = "#7A5EF8";
 ```
 
 ### customStyles (_object_)
@@ -271,6 +294,7 @@ customStyles={{
 ## Internationalization
 
 ### Predefined languages
+
 - Out-of-the-box support for various languages.
 - Common languages are available through the language prop (i.e., `language="fr"` for French).
 - Available predefined languages:
@@ -279,6 +303,7 @@ customStyles={{
   - fr
 
 ### Customizable language
+
 - Language keys can be exported and overridden.
 - Labels and messages can be customized to any text.
 - Translations key examples can be found in `src/i18n/es.ts`
@@ -317,31 +342,36 @@ When set to `true`, the importer will not display and skip the Header Row Select
 To set up the project locally, follow these steps:
 
 1. **Clone the repository**
+
 ```bash
 git clone https://github.com/tableflowhq/csv-import.git
 cd csv-import
 ```
 
 2. **Install dependencies**
+
 ```bash
 yarn install
 ```
 
 3. **Build the project**
+
 ```bash
 yarn build
 ```
 
 ### Running Storybook
+
 To run Storybook locally, follow these steps:
 
 1. **Start Storybook**
+
 ```bash
 yarn storybook
 ```
 
 2. **Open Storybook in your browser:**
-Storybook should automatically open in your default browser. If it doesn't, navigate to [http://localhost:6006](http://localhost:6006).
+   Storybook should automatically open in your default browser. If it doesn't, navigate to [http://localhost:6006](http://localhost:6006).
 
 ### Modifying the project and testing with the demo app
 
@@ -351,6 +381,88 @@ The project includes a demo app that you can use to test your changes. The demo 
 2. Follow the instructions in the demo app's `README.md` to set up and run the demo app. This will help you verify that your changes work as expected in a real application.
 3. Commit your changes and push them to your forked repository.
 4. Create a pull request to the main repository.
+
+## Publishing the Library
+
+### Using Yarn Publish
+
+To publish the library to npm:
+
+1. Update the version in `package.json`:
+
+   ```bash
+   # Increment version - choose one of:
+   npm version patch  # for bug fixes
+   npm version minor  # for new features
+   npm version major  # for breaking changes
+   ```
+
+2. Build the library:
+
+   ```bash
+   yarn build
+   ```
+
+3. Publish to npm:
+
+   ```bash
+   # If you're publishing for the first time
+   npm login
+
+   # Publish the package
+   yarn publish
+   ```
+
+4. To use the published package in another project:
+   ```bash
+   # In your project
+   yarn add csv-import-react
+   ```
+
+### Using Yalc (for Local Development)
+
+[Yalc](https://github.com/wclr/yalc) is a tool for local package development and sharing. It's useful when you want to test your library in another project without publishing to npm.
+
+1. Install yalc globally:
+
+   ```bash
+   npm install -g yalc
+   ```
+
+2. Build the library:
+
+   ```bash
+   yarn build
+   ```
+
+3. Publish to local yalc store:
+
+   ```bash
+   yalc publish
+   ```
+
+4. Add to your project:
+
+   ```bash
+   # In your project directory
+   yalc add csv-import-react
+   yarn install  # or npm install
+   ```
+
+5. When you make changes to the library:
+
+   ```bash
+   # In the library directory
+   yarn build
+   yalc push  # Updates all linked projects
+   ```
+
+6. To remove the yalc link:
+   ```bash
+   # In your project directory
+   yalc remove csv-import-react
+   yarn install  # Restore to regular dependencies
+   ```
 
 ## Get In Touch
 
