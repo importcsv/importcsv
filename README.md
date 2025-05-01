@@ -11,7 +11,6 @@
 </p>
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
-[![Docs](https://img.shields.io/badge/Docs-docs.importcsv.com-blue?logo=bookstack)](https://docs.importcsv.com)
 [![Slack](https://img.shields.io/badge/Slack-Join%20Community-4A154B?logo=slack)](https://importcsv.slack.com)
 
 <p align="center">
