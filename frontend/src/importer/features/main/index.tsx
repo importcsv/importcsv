@@ -93,30 +93,30 @@ export default function Main(props: CSVImporterProps) {
         }
         
         const schemaData = await response.json();
-        console.log('Fetched schema from backend:', schemaData);
+
         
         // Store the include_unmatched_columns setting from the importer configuration
         if (schemaData.include_unmatched_columns !== undefined) {
           setIncludeUnmatchedColumns(schemaData.include_unmatched_columns);
-          console.log('Include unmatched columns setting:', schemaData.include_unmatched_columns);
+
         }
         
         // Store the filter_invalid_rows setting from the importer configuration
         if (schemaData.filter_invalid_rows !== undefined) {
           setFilterInvalidRows(schemaData.filter_invalid_rows);
-          console.log('Filter invalid rows setting:', schemaData.filter_invalid_rows);
+
         }
         
         // Store the disable_on_invalid_rows setting from the importer configuration
         if (schemaData.disable_on_invalid_rows !== undefined) {
           setDisableOnInvalidRows(schemaData.disable_on_invalid_rows);
-          console.log('Disable on invalid rows setting:', schemaData.disable_on_invalid_rows);
+
         }
         
         // Convert the schema to the format expected by the importer
         const schemaTemplate = {
           columns: schemaData.fields.map((field: any) => {
-            console.log('Processing backend field:', field);
+
             return {
               name: field.name,
               key: field.key || field.name.toLowerCase().replace(/\s+/g, '_'), // Convert to snake_case for keys if key is not provided
@@ -128,7 +128,7 @@ export default function Main(props: CSVImporterProps) {
             };
           })
         };
-        console.log('Converted schema template:', schemaTemplate);
+
         
         const [parsedTemplate, parsedTemplateError] = convertRawTemplate(schemaTemplate);
         if (parsedTemplateError) {
@@ -137,7 +137,7 @@ export default function Main(props: CSVImporterProps) {
           setParsedTemplate(parsedTemplate);
         }
       } catch (error) {
-        console.error('Error fetching schema:', error);
+
         setInitializationError(`Failed to fetch schema: ${error instanceof Error ? error.message : String(error)}`);
       } finally {
         setIsLoadingSchema(false);
@@ -229,7 +229,7 @@ export default function Main(props: CSVImporterProps) {
 
     // Check if importerKey is provided - it's required
     if (!importerKey) {
-      console.error('ERROR: importerKey is required for CSV import');
+
       setDataError('ImporterKey is required for CSV import. Please provide a valid importer key.');
       setIsSubmitting(false);
       return;
@@ -307,7 +307,7 @@ export default function Main(props: CSVImporterProps) {
         }
       })
       .catch(error => {
-        console.error('Error processing import:', error);
+
 
         // Call onComplete with the error
 
