@@ -1,19 +1,6 @@
 # Production-ready Dockerfile for admin app
 
-# Stage 1: Build frontend (csv-import-react package)
-FROM node:20 AS frontend-builder
-WORKDIR /app
-
-# Copy frontend source files
-COPY frontend/package.json ./
-COPY frontend/yarn.lock ./
-RUN yarn install --ignore-engines
-COPY frontend/ ./
-
-# Build the frontend package
-RUN yarn build:react:prod
-
-# Stage 2: Admin app build
+# Admin app build
 FROM node:20 AS builder
 WORKDIR /app
 
@@ -28,20 +15,9 @@ ENV NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up
 ENV NEXT_PUBLIC_POSTHOG_KEY=phc_LkCjHOTsu2RZoYxnyPWEbycR8nFJlGZgtnl4bDQIws6
 ENV NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 
-# Copy package files and install dependencies
-COPY admin/package.json ./
-COPY admin/package-lock.json ./
-RUN npm ci --legacy-peer-deps
-
-# Remove the @importcsv/react package if it exists
-RUN rm -rf ./node_modules/@importcsv/react
-
-# Create the directory structure for the @importcsv/react package
-RUN mkdir -p ./node_modules/@importcsv/react/build
-
-# Copy the built frontend package
-COPY --from=frontend-builder /app/build/ ./node_modules/@importcsv/react/build/
-COPY --from=frontend-builder /app/package.json ./node_modules/@importcsv/react/
+# Copy production package files and install dependencies
+COPY admin/package.prod.json ./package.json
+RUN npm install --legacy-peer-deps
 
 # Copy admin source files (after handling node_modules)
 COPY admin/ ./
