@@ -343,17 +343,8 @@ async def transform_data(
         target_columns = request_data.get("targetColumns")
         validation_errors = request_data.get("validationErrors")
         
-        # Log incoming request details
-        logger.info(f"=== TRANSFORM API REQUEST ===")
-        logger.info(f"Importer: {importer_key}")
-        logger.info(f"Prompt: '{prompt}'")
-        logger.info(f"Data rows: {len(data)}")
-        logger.info(f"Column mapping: {list(column_mapping.keys())}")
-        logger.info(f"Target columns: {target_columns}")
-        logger.info(f"Validation errors: {len(validation_errors) if validation_errors else 0}")
-        
-        if validation_errors:
-            logger.debug(f"Validation error details (first 3): {validation_errors[:3]}...")
+        # Log incoming request summary
+        logger.info(f"Transform request - Rows: {len(data)}, Columns: {len(column_mapping)}, Errors: {len(validation_errors) if validation_errors else 0}")
         
         # Validate prompt
         if not prompt or len(prompt.strip()) < 3:
@@ -379,13 +370,11 @@ async def transform_data(
             max_rows=max_rows
         )
         
-        # Log result
-        logger.info(f"=== TRANSFORM API RESULT ===")
-        logger.info(f"Success: {not result.error}")
-        logger.info(f"Changes generated: {len(result.changes) if result.changes else 0}")
-        logger.info(f"Summary: {result.summary}")
+        # Log result summary
         if result.error:
-            logger.error(f"Error: {result.error}")
+            logger.error(f"Transformation failed: {result.error}")
+        else:
+            logger.info(f"Generated {len(result.changes) if result.changes else 0} transformations")
         
         # Return result
         if result.error:

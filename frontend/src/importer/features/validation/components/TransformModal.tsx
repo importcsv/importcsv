@@ -59,10 +59,15 @@ export default function TransformModal({
   const [error, setError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
+  
+  // Determine if we're in error-fixing mode
+  const hasValidationErrors = validationErrors && validationErrors.length > 0;
 
   // Generate transformations
-  const handleGenerate = useCallback(async () => {
-    if (!prompt.trim()) {
+  const handleGenerate = useCallback(async (customPrompt?: string) => {
+    const effectivePrompt = customPrompt || prompt;
+    
+    if (!effectivePrompt.trim()) {
       setError('Please describe the transformation');
       return;
     }
@@ -74,7 +79,7 @@ export default function TransformModal({
 
     try {
       const result = await generateTransformations(
-        prompt,
+        effectivePrompt,
         data,
         columnMapping,
         backendUrl,
@@ -96,7 +101,12 @@ export default function TransformModal({
     } finally {
       setIsGenerating(false);
     }
-  }, [prompt, data, columnMapping, backendUrl, importerKey]);
+  }, [prompt, data, columnMapping, backendUrl, importerKey, validationErrors]);
+  
+  // Fix all validation errors with one click
+  const handleFixAllErrors = useCallback(() => {
+    handleGenerate('fix errors');
+  }, [handleGenerate]);
 
   // Apply transformations
   const handleApply = useCallback((applyAll: boolean) => {
@@ -156,66 +166,84 @@ export default function TransformModal({
         </DialogHeader>
         
         <div className="space-y-4">
-            {/* Show validation error context if available */}
-            {validationErrors && validationErrors.length > 0 && (
-              <Alert>
-                <PiInfo className="h-4 w-4" />
-                <AlertDescription>
-                  {validationErrors.length} validation error{validationErrors.length > 1 ? 's' : ''} detected. 
-                  Mention "fix errors" to focus on these rows.
-                </AlertDescription>
-              </Alert>
+            {/* Simplified UI when validation errors exist */}
+            {hasValidationErrors && !hasChanges && (
+              <>
+                <Alert>
+                  <PiInfo className="h-4 w-4" />
+                  <AlertDescription>
+                    <strong>{validationErrors.length} validation error{validationErrors.length > 1 ? 's' : ''} detected</strong>
+                    <br />
+                    Click "Fix All Errors" to automatically correct validation issues in your data.
+                  </AlertDescription>
+                </Alert>
+                
+                <div className="flex justify-center py-4">
+                  <Button
+                    size="lg"
+                    onClick={handleFixAllErrors}
+                    isLoading={isGenerating}
+                    disabled={isGenerating}
+                    className="px-8"
+                  >
+                    <PiSparkle className="mr-2 h-5 w-5" />
+                    {isGenerating ? t('Fixing errors...') : t('Fix All Errors')}
+                  </Button>
+                </div>
+              </>
             )}
             
-            {/* Prompt Input */}
-            <div>
-              <div className="flex gap-2 mb-2">
-                <Input
-                  ref={promptInputRef}
-                  placeholder={t("Describe the transformation (e.g., 'Convert dates to MM/DD/YYYY')")}
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleGenerate()}
-                  disabled={isGenerating}
-                  className="h-10"
-                />
-                <Button
-                  onClick={handleGenerate}
-                  isLoading={isGenerating}
-                  disabled={isGenerating}
-                >
-                  <PiSparkle className="mr-2 h-4 w-4" />
-                  {isGenerating ? t('Generating') : t('Generate')}
-                </Button>
-              </div>
-              
-              {/* Example prompts */}
-              <button
-                className="text-xs text-blue-600 hover:underline"
-                onClick={() => setShowExamples(!showExamples)}
-              >
-                {showExamples ? t('Hide examples') : t('Show examples')}
-              </button>
-              
-              {showExamples && (
-                <div className="mt-2 p-2 bg-gray-50 rounded-md">
-                  <p className="text-xs mb-1 font-bold">
-                    {t('Click to use:')}
-                  </p>
-                  <div className="flex flex-wrap gap-1">
-                    {COMMON_PROMPTS.slice(0, 5).map((example, i) => (
-                      <span
-                        key={i}
-                        className="px-2 py-1 text-xs bg-gray-200 rounded cursor-pointer hover:bg-blue-100"
-                        onClick={() => handleUseExample(example)}
-                      >
-                        {example}
-                      </span>
-                    ))}
-                  </div>
+            {/* Standard prompt input (only shown when no validation errors) */}
+            {!hasValidationErrors && !hasChanges && (
+              <div>
+                <div className="flex gap-2 mb-2">
+                  <Input
+                    ref={promptInputRef}
+                    placeholder={t("Describe the transformation (e.g., 'Convert dates to MM/DD/YYYY')")}
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleGenerate()}
+                    disabled={isGenerating}
+                    className="h-10"
+                  />
+                  <Button
+                    onClick={() => handleGenerate()}
+                    isLoading={isGenerating}
+                    disabled={isGenerating}
+                  >
+                    <PiSparkle className="mr-2 h-4 w-4" />
+                    {isGenerating ? t('Generating') : t('Generate')}
+                  </Button>
                 </div>
-              )}
-            </div>
+                
+                {/* Example prompts */}
+                <button
+                  className="text-xs text-blue-600 hover:underline"
+                  onClick={() => setShowExamples(!showExamples)}
+                >
+                  {showExamples ? t('Hide examples') : t('Show examples')}
+                </button>
+                
+                {showExamples && (
+                  <div className="mt-2 p-2 bg-gray-50 rounded-md">
+                    <p className="text-xs mb-1 font-bold">
+                      {t('Click to use:')}
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {COMMON_PROMPTS.slice(0, 5).map((example, i) => (
+                        <span
+                          key={i}
+                          className="px-2 py-1 text-xs bg-gray-200 rounded cursor-pointer hover:bg-blue-100"
+                          onClick={() => handleUseExample(example)}
+                        >
+                          {example}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Error Alert */}
             {error && (
@@ -240,7 +268,7 @@ export default function TransformModal({
                 <div>
                   <div className="flex justify-between items-center mb-2">
                     <span className="font-bold">
-                      {summary || `${changes.length} transformations`}
+                      {summary || `${changes.length} transformation${changes.length !== 1 ? 's' : ''} generated`}
                     </span>
                     <div className="flex gap-2">
                       <Button
