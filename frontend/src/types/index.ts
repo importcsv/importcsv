@@ -30,6 +30,10 @@ export type CSVImporterProps = {
   user?: Record<string, any>; // User details to identify the user in webhooks
   metadata?: Record<string, any>; // Additional data to associate with the import
   useIframe?: boolean; // Whether to use iframe for CSS isolation (default: true)
+  demoData?: {
+    fileName: string;
+    csvContent: string; // Raw CSV string content
+  }; // Demo data to skip upload step and go directly to configure
   // You might want to explicitly allow specific data-* attributes if needed
   // 'data-testid'?: string;
 } & ModalParams;

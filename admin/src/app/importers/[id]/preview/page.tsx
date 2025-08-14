@@ -104,7 +104,7 @@ export default function ImporterPreviewPage() {
       <div className="container mx-auto p-4">
         <div className="mb-6">
           <Link
-            href={`/dashboard/importers/${params.id}`}
+            href={`/importers/${params.id}`}
             className="flex items-center text-sm text-gray-500 hover:text-gray-700"
           >
             <ChevronLeft className="h-4 w-4 mr-1" />
@@ -122,7 +122,7 @@ export default function ImporterPreviewPage() {
       <div className="container mx-auto p-4">
         <div className="mb-6">
           <Link
-            href={`/dashboard/importers/${params.id}`}
+            href={`/importers/${params.id}`}
             className="flex items-center text-sm text-gray-500 hover:text-gray-700"
           >
             <ChevronLeft className="h-4 w-4 mr-1" />
@@ -139,7 +139,7 @@ export default function ImporterPreviewPage() {
     <div className="container mx-auto p-4">
       <div className="mb-6">
         <Link
-          href={`/dashboard/importers/${params.id}`}
+          href={`/importers/${params.id}`}
           className="flex items-center text-sm text-gray-500 hover:text-gray-700"
         >
           <ChevronLeft className="h-4 w-4 mr-1" />

@@ -252,7 +252,7 @@ export default function ImporterDetailPage() {
       await importersApi.deleteImporter(importerId);
 
       // Redirect to importers list
-      router.push("/dashboard/importers");
+      router.push("/importers");
     } catch (err: any) {
       console.error("Error deleting importer:", err);
 
@@ -281,7 +281,7 @@ export default function ImporterDetailPage() {
       <div className="p-6">
         <div className="flex items-center space-x-2 mb-6">
           <Link
-            href="/dashboard/importers"
+            href="/importers"
             className="text-blue-600 hover:text-blue-800 flex items-center"
           >
             <ChevronLeft className="h-4 w-4 mr-1" />
@@ -300,7 +300,7 @@ export default function ImporterDetailPage() {
       <div className="p-6">
         <div className="flex items-center space-x-2 mb-6">
           <Link
-            href="/dashboard/importers"
+            href="/importers"
             className="text-blue-600 hover:text-blue-800 flex items-center"
           >
             <ChevronLeft className="h-4 w-4 mr-1" />
@@ -319,7 +319,7 @@ export default function ImporterDetailPage() {
       <div className="p-6">
         <div className="flex items-center space-x-2 mb-6">
           <Link
-            href="/dashboard/importers"
+            href="/importers"
             className="text-blue-600 hover:text-blue-800 flex items-center"
           >
             <ChevronLeft className="h-4 w-4 mr-1" />
@@ -338,7 +338,7 @@ export default function ImporterDetailPage() {
       {/* Header with back button */}
       <div className="flex items-center space-x-2 mb-6">
         <Link
-          href="/dashboard/importers"
+          href="/importers"
           className="text-blue-600 hover:text-blue-800 flex items-center"
         >
           <ChevronLeft className="h-4 w-4 mr-1" />
@@ -353,7 +353,7 @@ export default function ImporterDetailPage() {
           <Button
             variant="outline"
             onClick={() =>
-              router.push(`/dashboard/importers/${importerId}/preview`)
+              router.push(`/importers/${importerId}/preview`)
             }
           >
             Preview <ExternalLink className="ml-2 h-4 w-4" />

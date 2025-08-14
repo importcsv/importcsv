@@ -4,10 +4,11 @@ export interface ConfigureImportProps {
   template: Template;
   data: any;
   onSuccess: (mapping: any, headerRow: number) => void;
-  onCancel: () => void;
+  onCancel?: () => void;
   isSubmitting?: boolean;
   importerKey?: string;
   backendUrl?: string;
+  isDemoMode?: boolean;
 }
 
 export interface TemplateColumnMapping {

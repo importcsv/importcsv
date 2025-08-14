@@ -692,7 +692,7 @@ export default function ImportersPage() {
         {/* Create Importer Button */}
         <Button
           className="font-medium"
-          onClick={() => router.push('/dashboard/importers/new')}
+          onClick={() => router.push('/importers/new')}
         >
           Create Importer
         </Button>
@@ -718,10 +718,10 @@ export default function ImportersPage() {
                 <TableRow key={importer.id}>
                   <TableCell className="py-4">
                     <a
-                      href={`/dashboard/importers/${importer.id}`}
+                      href={`/importers/${importer.id}`}
                       onClick={(e) => {
                         e.preventDefault();
-                        router.push(`/dashboard/importers/${importer.id}`);
+                        router.push(`/importers/${importer.id}`);
                       }}
                       className="text-blue-600 hover:text-blue-800 hover:underline font-medium text-lg"
                     >

@@ -37,8 +37,10 @@ export default function Main(props: CSVImporterProps) {
     user,
     metadata,
     useIframe = true, // Default to using iframe for CSS isolation
+    demoData,
   } = props;
   const skipHeader = skipHeaderRowSelection ?? false;
+  const isDemoMode = !!demoData;
 
   const { t } = useTranslation();
 
@@ -47,7 +49,9 @@ export default function Main(props: CSVImporterProps) {
 
   // Stepper handler - using consolidated flow
   const useConsolidatedFlow = true; // Using consolidated flow to combine header selection and mapping
-  const { currentStep, setStep, goNext, goBack, stepper, setStorageStep } = useStepNavigation(StepEnum.Upload, skipHeader, useConsolidatedFlow);
+  // Start at MapColumns step if demo mode is active
+  const initialStep = isDemoMode ? StepEnum.MapColumns : StepEnum.Upload;
+  const { currentStep, setStep, goNext, goBack, stepper, setStorageStep } = useStepNavigation(initialStep, skipHeader, useConsolidatedFlow, isDemoMode);
 
   // Error handling
   const [initializationError, setInitializationError] = useState<string | null>(null);
@@ -78,6 +82,30 @@ export default function Main(props: CSVImporterProps) {
   const [includeUnmatchedColumns, setIncludeUnmatchedColumns] = useState<boolean>(false);
   const [filterInvalidRows, setFilterInvalidRows] = useState<boolean>(false);
   const [disableOnInvalidRows, setDisableOnInvalidRows] = useState<boolean>(false);
+
+  // Initialize demo data if provided
+  useEffect(() => {
+    if (isDemoMode && demoData) {
+      // Parse the demo CSV content
+      Papa.parse(demoData.csvContent, {
+        complete: function (results) {
+          const csvData = results.data as Array<Array<string>>;
+          const isNotBlankRow = (row: string[]) => row.some((cell) => cell.toString().trim() !== "");
+          const rows: FileRow[] = csvData.filter(isNotBlankRow).map((row: string[], index: number) => ({ index, values: row }));
+          
+          setData({
+            fileName: demoData.fileName,
+            rows: rows,
+            sheetList: [],
+            errors: results.errors.map((error) => error.message),
+          });
+        },
+        error: function(error: any) {
+          console.error('Papa.parse error:', error);
+        }
+      });
+    }
+  }, [isDemoMode, demoData]);
 
   // Fetch schema from the backend using importerKey
   useEffect(() => {
@@ -149,10 +177,11 @@ export default function Main(props: CSVImporterProps) {
   useEffect(() => {
     // TODO (client-sdk): Have the importer continue where left off if closed
     // Temporary solution to reload state if closed and opened again
-    if (data.rows.length === 0 && currentStep !== StepEnum.Upload) {
+    // Don't reload in demo mode - let the demo data load
+    if (!isDemoMode && data.rows.length === 0 && currentStep !== StepEnum.Upload) {
       reload();
     }
-  }, [data]);
+  }, [data, isDemoMode]);
 
   // Actions
   const reload = () => {
@@ -421,10 +450,11 @@ export default function Main(props: CSVImporterProps) {
                 setSelectedHeaderRow(headerRow);
                 goNext();
               }}
-              onCancel={() => goBack(StepEnum.Upload)}
+              onCancel={isDemoMode ? undefined : () => goBack(StepEnum.Upload)}
               isSubmitting={isSubmitting}
               importerKey={importerKey}
               backendUrl={backendUrl}
+              isDemoMode={isDemoMode}
             />
           );
         }

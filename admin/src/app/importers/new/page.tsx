@@ -67,7 +67,7 @@ export default function NewImporterPage() {
       });
       
       // Navigate to the new importer's detail page
-      router.push(`/dashboard/importers/${data.id}`);
+      router.push(`/importers/${data.id}`);
     } catch (err: any) {
       console.error('Error creating importer:', err);
       
@@ -95,7 +95,7 @@ export default function NewImporterPage() {
     <div className="p-6">
       {/* Header with back button */}
       <div className="flex items-center space-x-2 mb-6">
-        <Link href="/dashboard/importers" className="text-blue-600 hover:text-blue-800 flex items-center">
+        <Link href="/importers" className="text-blue-600 hover:text-blue-800 flex items-center">
           <ChevronLeft className="h-4 w-4 mr-1" />
           Back to list
         </Link>
@@ -145,7 +145,7 @@ export default function NewImporterPage() {
         <div className="flex justify-end space-x-4">
           <Button 
             variant="outline" 
-            onClick={() => router.push('/dashboard/importers')}
+            onClick={() => router.push('/importers')}
           >
             Cancel
           </Button>

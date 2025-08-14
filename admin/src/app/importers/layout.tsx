@@ -36,14 +36,8 @@ export default function DashboardLayout({
   // Navigation items for the sidebar
   const navItems = [
     {
-      name: 'Dashboard',
-      href: '/dashboard',
-      icon: <LayoutGrid className="h-5 w-5 mr-2" />,
-      exact: true
-    },
-    {
       name: 'Importers',
-      href: '/dashboard/importers',
+      href: '/importers',
       icon: <FileSpreadsheet className="h-5 w-5 mr-2" />,
       exact: false
     },

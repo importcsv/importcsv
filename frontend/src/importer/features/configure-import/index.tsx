@@ -21,10 +21,11 @@ interface ConfigureImportProps {
   template: Template;
   data: any;
   onSuccess: (mapping: any, headerRow: number) => void;
-  onCancel: () => void;
+  onCancel?: () => void;
   isSubmitting?: boolean;
   importerKey?: string;
   backendUrl?: string;
+  isDemoMode?: boolean;
 }
 
 interface ColumnMapping {
@@ -43,6 +44,7 @@ export default function ConfigureImport({
   isSubmitting = false,
   importerKey,
   backendUrl,
+  isDemoMode = false,
 }: ConfigureImportProps) {
   const { t } = useTranslation();
   const selectedHeaderRow = 0; // Always use first row as headers
@@ -359,14 +361,17 @@ export default function ConfigureImport({
 
         {/* Action Buttons */}
         <Flex justify="between" className="w-full pt-6 border-t border-gray-200">
-          <Button
-            variant="outline"
-            onClick={onCancel}
-            disabled={isSubmitting}
-            size="default"
-          >
-            {t('Back')}
-          </Button>
+          {!isDemoMode && onCancel && (
+            <Button
+              variant="outline"
+              onClick={onCancel}
+              disabled={isSubmitting}
+              size="default"
+            >
+              {t('Back')}
+            </Button>
+          )}
+          {isDemoMode && <div />}
           <Button
             onClick={handleSubmit}
             isLoading={isSubmitting}

@@ -28,6 +28,7 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
     backendUrl,
     user,
     metadata,
+    demoData,
     // Any remaining props will be valid DOM props
     ...domProps
   } = importerProps;
@@ -104,6 +105,7 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
         backendUrl={backendUrl}
         user={user}
         metadata={metadata}
+        demoData={demoData}
       />
     </Providers>
   );

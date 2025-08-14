@@ -37,14 +37,22 @@ const getStepConfig = (skipHeader: boolean, useConsolidated: boolean = true) => 
   ];
 };
 
-function useStepNavigation(initialStep: number, skipHeader: boolean, useConsolidated: boolean = true) {
+function useStepNavigation(initialStep: number, skipHeader: boolean, useConsolidated: boolean = true, isDemoMode: boolean = false) {
   const { t } = useTranslation();
   const translatedSteps = getStepConfig(skipHeader, useConsolidated).map((step) => ({
     ...step,
     label: t(step.label),
   }));
-  const stepper = useStepper(translatedSteps, StepEnum.Upload, skipHeader);
-  const [storageStep, setStorageStep] = useMutableLocalStorage(`tf_steps`, "");
+  // Map initial step to stepper index for consolidated flow
+  const initialStepperIndex = useConsolidated && initialStep === StepEnum.MapColumns ? 1 : 
+                             useConsolidated && initialStep === StepEnum.Validation ? 2 : 
+                             useConsolidated && initialStep === StepEnum.Complete ? 3 : 0;
+  const stepper = useStepper(translatedSteps, initialStepperIndex, skipHeader);
+  // Don't use localStorage in demo mode - use a dummy state instead
+  const localStorageResult = isDemoMode ? 
+    [null, () => {}] : 
+    useMutableLocalStorage(`tf_steps`, "");
+  const [storageStep, setStorageStep] = localStorageResult as [any, any];
   const [currentStep, setCurrentStep] = useState(initialStep);
 
   const goBack = (backStep?: number) => {
@@ -72,6 +80,10 @@ function useStepNavigation(initialStep: number, skipHeader: boolean, useConsolid
   };
 
   useEffect(() => {
+    // In demo mode or when storageStep is null, don't update from localStorage
+    if (isDemoMode || storageStep === null) {
+      return;
+    }
     const step = storageStep || 0;
     // Map the step to the correct stepper index for consolidated flow
     const stepperIndex = useConsolidated ? 
@@ -82,10 +94,10 @@ function useStepNavigation(initialStep: number, skipHeader: boolean, useConsolid
       : step;
     stepper.setCurrent(stepperIndex);
     setCurrentStep(step);
-  }, [storageStep]);
+  }, [storageStep, isDemoMode]);
 
   return {
-    currentStep: storageStep || currentStep,
+    currentStep: isDemoMode ? currentStep : (storageStep ?? currentStep),
     setStep,
     goBack,
     goNext,
