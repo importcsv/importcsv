@@ -685,8 +685,8 @@ export default function ImportersPage() {
 
   // --- Main Render ---
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
+    <div className="p-8">
+      <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Importers</h1>
 
         {/* Create Importer Button */}

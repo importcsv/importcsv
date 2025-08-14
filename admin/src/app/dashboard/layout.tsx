@@ -89,7 +89,7 @@ export default function DashboardLayout({
         <aside
           className={`bg-white shadow-sm w-64 transition-all duration-300 ease-in-out ${
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          } md:translate-x-0 fixed md:static h-[calc(100vh-4rem)] z-10`}
+          } md:translate-x-0 fixed md:relative h-[calc(100vh-4rem)] z-10`}
         >
           <nav className="p-4 space-y-1">
             {navItems.map((item) => (
@@ -110,9 +110,7 @@ export default function DashboardLayout({
         </aside>
 
         {/* Main Content */}
-        <main className={`flex-1 p-6 transition-all duration-300 ease-in-out ${
-          sidebarOpen ? 'md:ml-64' : 'md:ml-0'
-        }`}>
+        <main className="flex-1 transition-all duration-300 ease-in-out">
           {children}
         </main>
       </div>
