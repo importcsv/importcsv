@@ -4,6 +4,7 @@
 
 // Validation rule structure for different data types
 class ValidationRule {
+  error_type string  // The error message type (e.g., "email must be a valid email address")
   type string
   rule string
   pattern string?
@@ -70,7 +71,7 @@ function FixValidationErrors(
   user_prompt: string,
   validation_errors: ValidationError[],
   row_data: RowData[],
-  validation_rules: map<string, ValidationRule>
+  validation_rules: ValidationRule[]  // Changed from map to array
 ) -> TransformationResult {
   client "openai/gpt-4o-mini"
   prompt #"
@@ -83,8 +84,8 @@ function FixValidationErrors(
     {{ row_data }}
 
     VALIDATION RULES:
-    {% for error_type, rule in validation_rules.items() %}
-    For '{{ error_type }}':
+    {% for rule in validation_rules %}
+    For '{{ rule.error_type }}':
     - Rule: {{ rule.rule }}
     - Pattern: {{ rule.pattern }}
     {% if rule.regex %}
@@ -93,10 +94,7 @@ function FixValidationErrors(
     {% endif %}
     - Valid examples: {{ rule.valid_examples }}
     - Invalid examples: {{ rule.invalid_examples }}
-    - Common fixes:
-      {% for pattern, fix in rule.common_fixes.items() %}
-      * {{ pattern }}: {{ fix }}
-      {% endfor %}
+    - Common fixes: {{ rule.common_fixes }}
     {% endfor %}
 
     User request: {{ user_prompt }}

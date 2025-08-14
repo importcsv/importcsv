@@ -53,9 +53,12 @@ class ValidationError(BaseModel):
     error_message: typing.Optional[str] = None
 
 class ValidationRule(BaseModel):
+    error_type: typing.Optional[str] = None
     type: typing.Optional[str] = None
     rule: typing.Optional[str] = None
     pattern: typing.Optional[str] = None
+    regex: typing.Optional[str] = None
+    regex_description: typing.Optional[str] = None
     valid_examples: typing.List[str]
     invalid_examples: typing.List[str]
     common_fixes: typing.Dict[str, str]

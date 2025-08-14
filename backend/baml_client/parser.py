@@ -40,18 +40,6 @@ class LlmResponseParser:
         result = self.__options.merge_options(baml_options).parse_response(function_name="IdentifyRelevantColumns", llm_response=llm_response, mode="request")
         return typing.cast(typing.List[str], result)
 
-    def TestFixValidationErrors(
-        self, llm_response: str, baml_options: BamlCallOptions = {},
-    ) -> str:
-        result = self.__options.merge_options(baml_options).parse_response(function_name="TestFixValidationErrors", llm_response=llm_response, mode="request")
-        return typing.cast(str, result)
-
-    def TestTransformDataGeneral(
-        self, llm_response: str, baml_options: BamlCallOptions = {},
-    ) -> str:
-        result = self.__options.merge_options(baml_options).parse_response(function_name="TestTransformDataGeneral", llm_response=llm_response, mode="request")
-        return typing.cast(str, result)
-
     def TransformDataGeneral(
         self, llm_response: str, baml_options: BamlCallOptions = {},
     ) -> types.TransformationResult:
@@ -83,18 +71,6 @@ class LlmStreamParser:
     ) -> typing.List[str]:
         result = self.__options.merge_options(baml_options).parse_response(function_name="IdentifyRelevantColumns", llm_response=llm_response, mode="stream")
         return typing.cast(typing.List[str], result)
-
-    def TestFixValidationErrors(
-        self, llm_response: str, baml_options: BamlCallOptions = {},
-    ) -> str:
-        result = self.__options.merge_options(baml_options).parse_response(function_name="TestFixValidationErrors", llm_response=llm_response, mode="stream")
-        return typing.cast(str, result)
-
-    def TestTransformDataGeneral(
-        self, llm_response: str, baml_options: BamlCallOptions = {},
-    ) -> str:
-        result = self.__options.merge_options(baml_options).parse_response(function_name="TestTransformDataGeneral", llm_response=llm_response, mode="stream")
-        return typing.cast(str, result)
 
     def TransformDataGeneral(
         self, llm_response: str, baml_options: BamlCallOptions = {},

@@ -312,7 +312,7 @@ class ValidationRuleAst:
     def __init__(self, tb: type_builder.TypeBuilder):
         _tb = tb._tb # type: ignore (we know how to use this private attribute)
         self._bldr = _tb.class_("ValidationRule")
-        self._properties: typing.Set[str] = set([  "type",  "rule",  "pattern",  "valid_examples",  "invalid_examples",  "common_fixes",  ])
+        self._properties: typing.Set[str] = set([  "error_type",  "type",  "rule",  "pattern",  "regex",  "regex_description",  "valid_examples",  "invalid_examples",  "common_fixes",  ])
         self._props = ValidationRuleProperties(self._bldr, self._properties)
 
     def type(self) -> baml_py.FieldType:
@@ -341,6 +341,10 @@ class ValidationRuleProperties:
     
     
     @property
+    def error_type(self) -> type_builder.ClassPropertyViewer:
+        return type_builder.ClassPropertyViewer(self.__bldr.property("error_type"))
+    
+    @property
     def type(self) -> type_builder.ClassPropertyViewer:
         return type_builder.ClassPropertyViewer(self.__bldr.property("type"))
     
@@ -351,6 +355,14 @@ class ValidationRuleProperties:
     @property
     def pattern(self) -> type_builder.ClassPropertyViewer:
         return type_builder.ClassPropertyViewer(self.__bldr.property("pattern"))
+    
+    @property
+    def regex(self) -> type_builder.ClassPropertyViewer:
+        return type_builder.ClassPropertyViewer(self.__bldr.property("regex"))
+    
+    @property
+    def regex_description(self) -> type_builder.ClassPropertyViewer:
+        return type_builder.ClassPropertyViewer(self.__bldr.property("regex_description"))
     
     @property
     def valid_examples(self) -> type_builder.ClassPropertyViewer:
