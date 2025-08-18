@@ -1,31 +1,29 @@
 import json
 import logging
 import uuid
+from datetime import datetime
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Form
+from fastapi import APIRouter, Depends, HTTPException, Form, Request
 from sqlalchemy.orm import Session
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from app.auth.clerk import get_current_active_user
 from app.db.base import get_db
 from app.models.user import User
 from app.models.import_job import ImportJob as ImportJobModel, ImportStatus
+from app.models.webhook import WebhookEventType
 from app.schemas.import_job import (
     ImportJob as ImportJobSchema,
     ImportByKeyRequest,
     ImportProcessResponse,
 )
-from app.services.import_service import (
-    import_service,
-    log_import_started,
-)
+from app.services.import_service import import_service
 from app.services.importer import get_importer_by_key
 from app.services.queue import enqueue_job
 from app.services.mapping import enhance_column_mappings
 from app.services.transformation import generate_transformations
-from fastapi import Request
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
 logger = logging.getLogger(__name__)
 
@@ -103,19 +101,19 @@ async def create_import_job(
 
         return import_job
 
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=400, detail="Invalid column mapping JSON")
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=400, detail="Invalid column mapping JSON") from exc
     except ValueError as ve:
-        logger.error(f"Validation error creating import job: {str(ve)}")
-        raise HTTPException(status_code=400, detail=str(ve))
+        logger.error("Validation error creating import job: %s", str(ve))
+        raise HTTPException(status_code=400, detail=str(ve)) from ve
     except FileNotFoundError as fnf:
-        logger.error(f"File not found: {str(fnf)}")
-        raise HTTPException(status_code=404, detail=str(fnf))
+        logger.error("File not found: %s", str(fnf))
+        raise HTTPException(status_code=404, detail=str(fnf)) from fnf
     except Exception as e:
-        logger.error(f"Error creating import job: {str(e)}", exc_info=True)
+        logger.error("Error creating import job: %s", str(e), exc_info=True)
         raise HTTPException(
             status_code=500, detail=f"Error creating import job: {str(e)}"
-        )
+        ) from e
 
 
 @router.get("/{import_job_id}", response_model=ImportJobSchema)
@@ -148,11 +146,13 @@ async def read_import_job(
         if not import_job:
             raise HTTPException(status_code=404, detail="Import job not found")
         return import_job
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"Error retrieving import job {import_job_id}: {str(e)}")
+        logger.error("Error retrieving import job %s: %s", import_job_id, str(e))
         raise HTTPException(
             status_code=500, detail=f"Error retrieving import job: {str(e)}"
-        )
+        ) from e
 
 
 # The process_import_data function has been moved to import_service.py as process_import_data_worker
@@ -208,6 +208,32 @@ async def process_import_by_key(
     db.commit()
     db.refresh(import_job)
 
+    # Queue import.started webhook if configured
+    if importer.webhook_enabled and importer.webhook_url:
+        # Queue the webhook to be sent asynchronously
+        webhook_payload = {
+            "user": user_data or {},
+            "metadata": metadata or {},
+            "source": "api",
+        }
+
+        webhook_job_id = enqueue_job(
+            "app.workers.webhook_worker.send_webhook",
+            import_job_id=str(import_job.id),
+            event_type=WebhookEventType.IMPORT_STARTED.value,
+            payload_data=webhook_payload,
+        )
+
+        if webhook_job_id:
+            logger.info(
+                "Queued import.started webhook for job %s (webhook job: %s)",
+                import_job.id, webhook_job_id
+            )
+        else:
+            logger.warning(
+                "Failed to queue import.started webhook for job %s", import_job.id
+            )
+
     # Enqueue processing job in Redis Queue using the worker function in import_service
     job_id = enqueue_job(
         "app.services.import_service.process_import_data_worker",
@@ -217,52 +243,39 @@ async def process_import_by_key(
     )
 
     if job_id:
-        logger.info(f"Import job {import_job.id} enqueued with RQ job ID: {job_id}")
+        logger.info("Import job %s enqueued with RQ job ID: %s", import_job.id, job_id)
     else:
-        logger.error(f"Failed to enqueue import job {import_job.id}")
+        logger.error("Failed to enqueue import job %s", import_job.id)
         # Update job status to indicate queueing failure
         import_job.status = ImportStatus.FAILED
         import_job.error_message = "Failed to enqueue job for processing"
         db.commit()
 
-    # Log the import started event
-    log_import_started(
-        importer_id=importer.id,
-        import_job_id=import_job.id,
-        row_count=total_rows,
-        user_data=user_data,
-        metadata=metadata,
-    )
-
     # Return simplified response
-    if import_job.status == ImportStatus.FAILED:
-        return ImportProcessResponse(
-            success=False,
-        )
-    else:
-        return ImportProcessResponse(
-            success=True,
-        )
+    return ImportProcessResponse(
+        success=import_job.status != ImportStatus.FAILED
+    )
 
 
 @key_router.post("/mapping-suggestions")
 @limiter.limit("20/hour")
 async def get_mapping_suggestions(
     request_data: dict,
-    request: Request,
+    _request: Request,  # Prefix with _ to indicate it's required by limiter but unused
     db: Session = Depends(get_db),
 ):
     """
     Get enhanced column mapping suggestions using LLM.
-    
+
     This endpoint uses LiteLLM to intelligently map CSV columns to template fields
     based on column names and sample data. It includes rate limiting and caching
     to prevent abuse and reduce costs.
-    
+
     Parameters:
-        request: Dict containing importerKey, uploadColumns, and templateColumns
+        request_data: Dict containing importerKey, uploadColumns, and templateColumns
+        _request: FastAPI request object (required for rate limiting)
         db: Database session
-    
+
     Returns:
         Dict with success flag and list of mapping suggestions
     """
@@ -271,55 +284,49 @@ async def get_mapping_suggestions(
         importer_key = request_data.get("importerKey")
         if not importer_key:
             return {"success": False, "mappings": []}
-        
-        # Verify the importer exists
-        importer = get_importer_by_key(db, importer_key)
-        
+
+        # Verify the importer exists (raises HTTPException if not found)
+        get_importer_by_key(db, importer_key)
+
         # Get client IP for rate limiting
         # Note: In production, you might want to combine this with importer_key
         # for more granular rate limiting
-        
+
         upload_columns = request_data.get("uploadColumns", [])
         template_columns = request_data.get("templateColumns", [])
-        
+
         # Get enhanced mappings
         mappings = await enhance_column_mappings(upload_columns, template_columns)
-        
-        return {
-            "success": True,
-            "mappings": mappings
-        }
-        
+
+        return {"success": True, "mappings": mappings}
+
     except HTTPException:
         # Re-raise HTTP exceptions (like 404 for invalid key)
         raise
     except Exception as e:
-        logger.error(f"Error in mapping suggestions: {str(e)}")
+        logger.error("Error in mapping suggestions: %s", str(e))
         # Return empty mappings on error - frontend will fallback to string similarity
-        return {
-            "success": False,
-            "mappings": []
-        }
+        return {"success": False, "mappings": []}
 
 
 @key_router.post("/transform")
 @limiter.limit("20/hour")
 async def transform_data(
     request_data: dict,
-    request: Request,
+    _request: Request,  # Prefix with _ to indicate it's required by limiter but unused
     db: Session = Depends(get_db),
 ):
     """
     Generate data transformations based on natural language prompt.
-    
+
     This endpoint uses LLM to understand transformation requests and generate
     specific changes to apply to the data. Includes rate limiting and caching.
-    
+
     Parameters:
         request_data: Dict containing prompt, data, columnMapping, and optionally targetColumns
         request: FastAPI request object
         db: Database session
-    
+
     Returns:
         Dict with changes array and summary
     """
@@ -330,35 +337,38 @@ async def transform_data(
             return {
                 "success": False,
                 "error": "Importer key is required",
-                "changes": []
+                "changes": [],
             }
-        
-        # Verify the importer exists
-        importer = get_importer_by_key(db, importer_key)
-        
+
+        # Verify the importer exists (raises HTTPException if not found)
+        get_importer_by_key(db, importer_key)
+
         # Extract request data
         prompt = request_data.get("prompt", "")
         data = request_data.get("data", [])
         column_mapping = request_data.get("columnMapping", {})
         target_columns = request_data.get("targetColumns")
         validation_errors = request_data.get("validationErrors")
-        
+
         # Log incoming request summary
-        logger.info(f"Transform request - Rows: {len(data)}, Columns: {len(column_mapping)}, Errors: {len(validation_errors) if validation_errors else 0}")
-        
+        logger.info(
+            "Transform request - Rows: %d, Columns: %d, Errors: %d",
+            len(data), len(column_mapping), len(validation_errors) if validation_errors else 0
+        )
+
         # Validate prompt
         if not prompt or len(prompt.strip()) < 3:
             return {
                 "success": False,
                 "error": "Please provide a transformation description",
-                "changes": []
+                "changes": [],
             }
-        
+
         # Limit data size for safety
         max_rows = 1000
         if len(data) > max_rows:
-            logger.warning(f"Data truncated from {len(data)} to {max_rows} rows")
-        
+            logger.warning("Data truncated from %d to %d rows", len(data), max_rows)
+
         # Generate transformations
         logger.info("Calling transformation service...")
         result = await generate_transformations(
@@ -367,39 +377,38 @@ async def transform_data(
             column_mapping=column_mapping,
             target_columns=target_columns,
             validation_errors=validation_errors,
-            max_rows=max_rows
+            max_rows=max_rows,
         )
-        
+
         # Log result summary
         if result.error:
-            logger.error(f"Transformation failed: {result.error}")
+            logger.error("Transformation failed: %s", result.error)
         else:
-            logger.info(f"Generated {len(result.changes) if result.changes else 0} transformations")
-        
+            logger.info(
+                "Generated %d transformations",
+                len(result.changes) if result.changes else 0
+            )
+
         # Return result
         if result.error:
-            return {
-                "success": False,
-                "error": result.error,
-                "changes": []
-            }
-        
+            return {"success": False, "error": result.error, "changes": []}
+
         return {
             "success": True,
             "changes": result.changes,
             "summary": result.summary,
-            "tokensUsed": result.tokens_used
+            "tokensUsed": result.tokens_used,
         }
-        
+
     except HTTPException:
         # Re-raise HTTP exceptions (like 404 for invalid key)
         raise
     except Exception as e:
-        logger.error(f"Error in data transformation: {str(e)}")
+        logger.error("Error in data transformation: %s", str(e))
         return {
             "success": False,
             "error": "Failed to generate transformations",
-            "changes": []
+            "changes": [],
         }
 
 

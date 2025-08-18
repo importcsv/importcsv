@@ -18,9 +18,7 @@ from app.db.base import Base
 
 class WebhookEventType(str, enum.Enum):
     IMPORT_STARTED = "import.started"
-    IMPORT_VALIDATION_ERROR = "import.validation_error"
-    IMPORT_PROGRESS = "import.progress"
-    IMPORT_FINISHED = "import.finished"
+    IMPORT_COMPLETED = "import.completed"
     IMPORT_FAILED = "import.failed"
 
 

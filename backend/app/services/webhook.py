@@ -110,6 +110,16 @@ class WebhookService:
         """Send webhook to specified URL with payload and signature"""
         try:
             webhook_logger.info(f"Sending webhook to URL: {url}")
+            
+            # Log the payload details for debugging
+            event_type = payload.get("event", payload.get("event_type", "unknown"))
+            data_count = len(payload.get("data", [])) if isinstance(payload.get("data"), list) else 0
+            webhook_logger.info(f"Webhook payload: event={event_type}, data_rows={data_count}, keys={list(payload.keys())}")
+            
+            # Log sample of first data row if present (for debugging)
+            if data_count > 0 and isinstance(payload.get("data"), list):
+                first_row = payload["data"][0] if payload["data"] else {}
+                webhook_logger.debug(f"First data row keys: {list(first_row.keys()) if isinstance(first_row, dict) else 'N/A'}")
 
             # Validate URL before sending
             if not url or not url.strip() or not (url.startswith('http://') or url.startswith('https://')):
@@ -124,7 +134,7 @@ class WebhookService:
             headers = {
                 "Content-Type": "application/json",
                 "X-ImportCSV-Signature": signature,
-                "X-ImportCSV-Event": payload.get("event_type", "")
+                "X-ImportCSV-Event": payload.get("event", payload.get("event_type", ""))
             }
 
             # Create a client with adequate timeout
