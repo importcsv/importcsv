@@ -4,10 +4,8 @@ import uuid
 from datetime import datetime
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Form, Request
+from fastapi import APIRouter, Depends, HTTPException, Form
 from sqlalchemy.orm import Session
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 
 from app.auth.clerk import get_current_active_user
 from app.db.base import get_db
@@ -26,9 +24,6 @@ from app.services.mapping import enhance_column_mappings
 from app.services.transformation import generate_transformations
 
 logger = logging.getLogger(__name__)
-
-# Rate limiter will be initialized from the app state
-limiter = Limiter(key_func=get_remote_address)
 
 # Router for user-authenticated endpoints
 router = APIRouter()
@@ -258,22 +253,18 @@ async def process_import_by_key(
 
 
 @key_router.post("/mapping-suggestions")
-@limiter.limit("20/hour")
 async def get_mapping_suggestions(
     request_data: dict,
-    _request: Request,  # Prefix with _ to indicate it's required by limiter but unused
     db: Session = Depends(get_db),
 ):
     """
     Get enhanced column mapping suggestions using LLM.
 
     This endpoint uses LiteLLM to intelligently map CSV columns to template fields
-    based on column names and sample data. It includes rate limiting and caching
-    to prevent abuse and reduce costs.
+    based on column names and sample data.
 
     Parameters:
         request_data: Dict containing importerKey, uploadColumns, and templateColumns
-        _request: FastAPI request object (required for rate limiting)
         db: Database session
 
     Returns:
@@ -310,21 +301,18 @@ async def get_mapping_suggestions(
 
 
 @key_router.post("/transform")
-@limiter.limit("20/hour")
 async def transform_data(
     request_data: dict,
-    _request: Request,  # Prefix with _ to indicate it's required by limiter but unused
     db: Session = Depends(get_db),
 ):
     """
     Generate data transformations based on natural language prompt.
 
     This endpoint uses LLM to understand transformation requests and generate
-    specific changes to apply to the data. Includes rate limiting and caching.
+    specific changes to apply to the data.
 
     Parameters:
         request_data: Dict containing prompt, data, columnMapping, and optionally targetColumns
-        request: FastAPI request object
         db: Database session
 
     Returns:
