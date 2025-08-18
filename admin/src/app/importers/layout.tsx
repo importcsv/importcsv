@@ -78,12 +78,12 @@ export default function DashboardLayout({
         </div>
       </header>
 
-      <div className="flex flex-1">
-        {/* Sidebar */}
+      <div className="flex flex-1 relative">
+        {/* Sidebar - Mobile: absolute positioning with transform, Desktop: static in flex */}
         <aside
-          className={`bg-white shadow-sm w-64 transition-all duration-300 ease-in-out ${
+          className={`bg-white shadow-sm w-64 flex-shrink-0 transition-transform duration-300 ease-in-out ${
             sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          } md:translate-x-0 fixed md:relative h-[calc(100vh-4rem)] z-10`}
+          } absolute md:static md:translate-x-0 h-[calc(100vh-4rem)] z-10`}
         >
           <nav className="p-4 space-y-1">
             {navItems.map((item) => (
@@ -103,8 +103,16 @@ export default function DashboardLayout({
           </nav>
         </aside>
 
-        {/* Main Content */}
-        <main className="flex-1 transition-all duration-300 ease-in-out">
+        {/* Overlay for mobile when sidebar is open */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50 z-0 md:hidden"
+            onClick={toggleSidebar}
+          />
+        )}
+
+        {/* Main Content - uses remaining space after sidebar */}
+        <main className="flex-1 min-w-0 md:ml-0 overflow-x-hidden">
           {children}
         </main>
       </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -39,6 +40,13 @@ import { Switch } from '@/components/ui/switch';
 import { useUser, useAuth } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import apiClient, { importersApi } from '@/utils/apiClient';
+
+// Dynamically import the CSV Importer component
+const CSVImporter = dynamic(
+  () =>
+    import("@importcsv/react").then((mod) => ({ default: mod.CSVImporter })),
+  { ssr: false },
+);
 
 // Define Field structure to match backend ImporterField
 interface ImporterField {
@@ -84,6 +92,33 @@ export default function ImportersPage() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [importerToDelete, setImporterToDelete] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [showDemo, setShowDemo] = useState(false);
+
+  // Sample CSV data for demo - includes various validation issues for testing
+  const demoData = {
+    fileName: "test-data-with-errors.csv",
+    csvContent: `first,last,email,age,date_of_joining
+John,Doe,john@example.com,28,2021-05-14
+Jane,Smith,jane.smith@example.com,31,2020-02-30
+Bob,Brown,bob.example.com,40,2019-11-01
+Alice,Johnson,alice@,twenty,2018-09-10
+Mike,Williams,mike@sample,17,2017-07-22
+Sara,Jones,sara@example.com,-5,2016-03-03
+Tom,Garcia,tom@example.com,130,2015-01-01
+Emma,Miller,emma@example,29,2014-12-12
+Liam,Davis,liam@example.com,35,12/12/2014
+Noah,Martinez,noah@example..com,42,2013-08-19
+Ava,Lopez,avaexample.com,30,2012-10-25
+Mia,Gonzalez,,27,2011-07-07
+Ethan,Wilson,ethan@example.com,33,2010-02-29
+Sophia,Anderson,sophia@example.com,25,not-a-date
+Mason,Thomas,mason@example.com,29,2022-04-31
+Isabella,Taylor,isabella@example,thirty,2023-01-15
+Logan,Moore,log an@example.com,22,2020-06-20
+Lucas,Jackson,lucas@example.com,45,2020/06/20
+Charlotte,Martin,charlotte@.com,32,2021-13-01
+Oliver,Lee,oliver@example.com,38,2021-05-20`
+  };
 
   const { isSignedIn, isLoaded: authLoaded } = useAuth();
   const { user } = useUser();
@@ -689,14 +724,46 @@ export default function ImportersPage() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Importers</h1>
 
-        {/* Create Importer Button */}
-        <Button
-          className="font-medium"
-          onClick={() => router.push('/importers/new')}
-        >
-          Create Importer
-        </Button>
+        <div className="flex gap-2">
+          {/* Demo Toggle Button */}
+          <Button
+            variant="outline"
+            onClick={() => setShowDemo(!showDemo)}
+          >
+            {showDemo ? 'Hide' : 'Show'} Demo
+          </Button>
+          {/* Create Importer Button */}
+          <Button
+            className="font-medium"
+            onClick={() => router.push('/importers/new')}
+          >
+            Create Importer
+          </Button>
+        </div>
       </div>
+
+      {/* Demo Section */}
+      {showDemo && importers.length > 0 && (
+        <div className="mb-8 p-6 bg-blue-50 border border-blue-200 rounded-lg">
+          <h2 className="text-lg font-semibold mb-2">CSV Importer Demo</h2>
+          <p className="text-sm text-gray-600 mb-4">
+            This demo uses pre-filled CSV data and the first importer's configuration. 
+            The upload step is skipped and you go directly to the configure/mapping step.
+          </p>
+          <div className="bg-white rounded border border-gray-200 p-4">
+            <CSVImporter
+              isModal={false}
+              importerKey={importers[0].id}
+              demoData={demoData}
+              primaryColor="#0284c7"
+              onComplete={(data) => {
+                console.log('Demo import complete:', data);
+                alert(`Demo completed! Processed ${data.num_rows || 0} rows. Check console for details.`);
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Loading and Error States */}
       {isLoading && <p className="text-gray-500">Loading importers...</p>}

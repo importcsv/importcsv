@@ -101,7 +101,7 @@ export default function ImporterPreviewPage() {
 
   if (error)
     return (
-      <div className="container mx-auto p-4">
+      <div className="p-6">
         <div className="mb-6">
           <Link
             href={`/importers/${params.id}`}
@@ -119,7 +119,7 @@ export default function ImporterPreviewPage() {
 
   if (loading)
     return (
-      <div className="container mx-auto p-4">
+      <div className="p-6">
         <div className="mb-6">
           <Link
             href={`/importers/${params.id}`}
@@ -136,7 +136,7 @@ export default function ImporterPreviewPage() {
     );
 
   return (
-    <div className="container mx-auto p-4">
+    <div className="p-6">
       <div className="mb-6">
         <Link
           href={`/importers/${params.id}`}
@@ -148,18 +148,14 @@ export default function ImporterPreviewPage() {
       </div>
 
       <div className="bg-white rounded-lg shadow p-6">
-        {
-          <>
-            <div className="w-full min-h-[500px]">
-              {importer?.key && (
-                <ImporterComponent
-                  importerKey={importer.key}
-                  onComplete={handleImportComplete}
-                />
-              )}
-            </div>
-          </>
-        }
+        <div className="w-full min-h-[500px]">
+          {importer?.key && (
+            <ImporterComponent
+              importerKey={importer.key}
+              onComplete={handleImportComplete}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
