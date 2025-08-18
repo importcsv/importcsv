@@ -165,7 +165,7 @@ export default function TransformModal({
           </DialogTitle>
         </DialogHeader>
         
-        <div className="space-y-4">
+        <div className="flex-1 overflow-y-auto min-h-0 space-y-4">
             {/* Simplified UI when validation errors exist */}
             {hasValidationErrors && !hasChanges && (
               <>
@@ -180,6 +180,7 @@ export default function TransformModal({
                 
                 <div className="flex justify-center py-4">
                   <Button
+                    type="button"
                     size="lg"
                     onClick={handleFixAllErrors}
                     isLoading={isGenerating}
@@ -207,6 +208,7 @@ export default function TransformModal({
                     className="h-10"
                   />
                   <Button
+                    type="button"
                     onClick={() => handleGenerate()}
                     isLoading={isGenerating}
                     disabled={isGenerating}
@@ -272,6 +274,7 @@ export default function TransformModal({
                     </span>
                     <div className="flex gap-2">
                       <Button
+                        type="button"
                         size="sm"
                         variant="outline"
                         onClick={() => handleSelectAll(true)}
@@ -279,6 +282,7 @@ export default function TransformModal({
                         {t('Select all')}
                       </Button>
                       <Button
+                        type="button"
                         size="sm"
                         variant="outline"
                         onClick={() => handleSelectAll(false)}
@@ -340,13 +344,14 @@ export default function TransformModal({
 
         <DialogFooter>
           <div className="flex gap-3">
-            <Button variant="outline" onClick={handleClose}>
+            <Button type="button" variant="outline" onClick={handleClose}>
               {t('Cancel')}
             </Button>
             
             {hasChanges && (
               <>
                 <Button
+                  type="button"
                   variant="outline"
                   onClick={() => handleApply(false)}
                   disabled={selectedCount === 0}
@@ -354,6 +359,7 @@ export default function TransformModal({
                   {t(`Apply ${selectedCount} selected`)}
                 </Button>
                 <Button
+                  type="button"
                   onClick={() => handleApply(true)}
                 >
                   <PiCheck className="mr-2 h-4 w-4" />
