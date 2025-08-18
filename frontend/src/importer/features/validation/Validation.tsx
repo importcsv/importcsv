@@ -27,7 +27,7 @@ export default function Validation({
   const [errors, setErrors] = useState<Array<{rowIndex: number, columnIndex: number, message: string}>>([]);
   const [filterMode, setFilterMode] = useState<'all' | 'valid' | 'error'>('all');
   const [isTransformModalOpen, setIsTransformModalOpen] = useState(false);
-  
+
   // Ref for scrollable section to reset scroll position
   const scrollableSectionRef = useRef<HTMLDivElement>(null);
 
@@ -270,10 +270,10 @@ export default function Validation({
     const errorRowIndices = new Set(
       errors.map(err => err.rowIndex - headerRowIndex - 1)
     );
-    
+
     const validRows = dataRows.filter((_, idx) => !errorRowIndices.has(idx));
     const errorRows = dataRows.filter((_, idx) => errorRowIndices.has(idx));
-    
+
     let filtered: typeof dataRows;
     if (filterMode === 'valid') {
       filtered = validRows;
@@ -282,7 +282,7 @@ export default function Validation({
     } else {
       filtered = dataRows;
     }
-    
+
     return {
       visibleRows: filtered,
       validCount: validRows.length,
@@ -374,7 +374,7 @@ export default function Validation({
                 Error <span className={style.count}>{errorCount}</span>
               </button>
             </div>
-            <div className="flex gap-3 items-center">
+            <div className={style.toolbarActions}>
               {backendUrl && importerKey && errorCount > 0 && (
                 <Tooltip content="Use AI to automatically fix validation errors">
                   <Button
@@ -395,13 +395,13 @@ export default function Validation({
       </div>
 
       <div className={style.scrollableSection} ref={scrollableSectionRef}>
-        <div className={style.tableScrollContainer}>
-            <table className="w-full border-collapse min-w-[900px]">
-              <thead className="bg-gray-50 border-b border-gray-200">
+            <div className={style.tableWidth}>
+            <table className="border-collapse" style={{ minWidth: '100%' }}>
+              <thead className="bg-gray-50 border-b-2 border-gray-200" style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                 <tr>
-                  <th className="text-left px-6 py-3 text-sm font-semibold text-gray-700">#</th>
+                  <th className="text-left px-6 py-3 text-sm font-semibold text-gray-700 bg-gray-50 border-r border-gray-200" style={{ position: 'sticky', left: 0, zIndex: 11, minWidth: '60px', width: '60px' }}>#</th>
                   {headers.map((header, idx) => (
-                    <th key={idx} className="text-left px-6 py-3 text-sm font-semibold text-gray-700">
+                    <th key={idx} className="text-left px-6 py-3 text-sm font-semibold text-gray-700 bg-gray-50" style={{ minWidth: '150px' }}>
                       <div>{header}</div>
                     </th>
                   ))}
@@ -415,7 +415,7 @@ export default function Validation({
 
                     return (
                       <tr key={rowIdx} className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${rowHasError ? 'bg-red-50 hover:bg-red-100' : ''}`}>
-                        <td className="px-6 py-3 text-sm text-gray-700">
+                        <td className="px-6 py-3 text-sm text-gray-700 border-r border-gray-200" style={{ position: 'sticky', left: 0, zIndex: 5, backgroundColor: rowHasError ? '#FEF2F2' : '#F9FAFB', minWidth: '60px', width: '60px' }}>
                           <span>{displayRowIndex + 1}</span>
                         </td>
                         {includedColumns.map((colIdx, idx) => {
@@ -426,7 +426,7 @@ export default function Validation({
                           );
 
                           return (
-                            <td key={idx} className="px-6 py-3">
+                            <td key={idx} className="px-6 py-3" style={{ minWidth: '150px' }}>
                               <div className="relative">
                                 <input
                                   type="text"
@@ -455,16 +455,16 @@ export default function Validation({
                   })}
                 </tbody>
             </table>
+            </div>
             {visibleRows.length === 0 && (
               <div className="p-8 text-center">
                 <span className="text-gray-500">
-                  {filterMode === 'error' ? 'No rows with errors found' : 
-                   filterMode === 'valid' ? 'No valid rows found' : 
+                  {filterMode === 'error' ? 'No rows with errors found' :
+                   filterMode === 'valid' ? 'No valid rows found' :
                    'No data to display'}
                 </span>
               </div>
             )}
-          </div>
       </div>
 
       <div className={style.footerSection}>

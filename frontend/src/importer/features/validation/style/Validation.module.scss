@@ -24,7 +24,6 @@ $focus-color: #3b82f6;
   height: calc(100vh - 2rem);
   max-width: 100%;
   box-sizing: border-box;
-  overflow: hidden; // Prevent children from expanding parent
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
   margin: 1rem 0;
 }
@@ -33,6 +32,19 @@ $focus-color: #3b82f6;
   @extend .headerSection;
   flex-shrink: 0;
   padding: 1.5rem 1.5rem 0 1.5rem;
+
+  // Mobile responsive - reduce padding on small screens
+  @media (max-width: 640px) {
+    padding: 1rem 1rem 0 1rem;
+
+    h2 {
+      font-size: 1.125rem;
+    }
+
+    p {
+      font-size: 0.8125rem;
+    }
+  }
 }
 
 // Toolbar section - fixed below header
@@ -40,15 +52,60 @@ $focus-color: #3b82f6;
   flex-shrink: 0;
   padding: 1rem 1.5rem 0 1.5rem;
   background: transparent;
+
+  // Mobile responsive - reduce padding on small screens
+  @media (max-width: 640px) {
+    padding: 0.75rem 1rem 0 1rem;
+  }
 }
 
-// Scrollable middle section - only for table
+// Scrollable middle section - pure scroll container
 .scrollableSection {
   flex: 1 1 auto;
-  overflow-y: auto;
-  overflow-x: hidden;
-  min-height: 200px; // Minimum height for usability
-  padding: 1rem 1.5rem;
+  min-width: 0; // CRITICAL: Allow flex item to shrink below content width
+  overflow: auto; // Both horizontal and vertical scrolling
+  min-height: 200px;
+  margin: 1rem 1.5rem 0;
+  background: white;
+  border: 1px solid $border-color;
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  -webkit-overflow-scrolling: touch;
+
+  // Direct table styling - no width constraints
+  > table {
+    border-collapse: collapse;
+    // Table will size to its content naturally
+
+    // Sticky header
+    thead {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+
+      th {
+        background: $header-bg;
+        border-bottom: 2px solid $border-color;
+      }
+    }
+
+    // Sticky first column
+    th:first-child,
+    td:first-child {
+      position: sticky;
+      left: 0;
+      z-index: 5;
+    }
+
+    thead th:first-child {
+      z-index: 11; // Higher z-index for header-column intersection
+    }
+  }
+
+  // Mobile responsive
+  @media (max-width: 640px) {
+    margin: 0.75rem;
+  }
 }
 
 .validationContent {
@@ -67,6 +124,18 @@ $focus-color: #3b82f6;
   margin-bottom: 0;
   margin-top: 0.5rem;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+
+  // Mobile responsive toolbar
+  @media (max-width: 640px) {
+    padding: 0.75rem;
+
+    // Stack toolbar items vertically on mobile
+    & > div {
+      flex-direction: column;
+      gap: 0.75rem;
+      align-items: stretch;
+    }
+  }
 }
 
 // Error badge - prominent display
@@ -106,6 +175,12 @@ $focus-color: #3b82f6;
   background: #f3f4f6;
   padding: 0.125rem;
   border-radius: 2rem;
+
+  // Mobile responsive - full width on small screens
+  @media (max-width: 640px) {
+    width: 100%;
+    justify-content: space-between;
+  }
 }
 
 .tab {
@@ -124,6 +199,14 @@ $focus-color: #3b82f6;
   transition: all 0.2s ease;
   outline: none;
   margin: 0;
+
+  // Mobile responsive - smaller padding on mobile
+  @media (max-width: 640px) {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+    flex: 1;
+    justify-content: center;
+  }
 
   &:hover:not(.active) {
     color: #374151;
@@ -177,17 +260,8 @@ $focus-color: #3b82f6;
   }
 }
 
-// Table scroll container
-.tableScrollContainer {
-  width: 100%;
-  overflow-x: auto;
-  overflow-y: visible;
-  -webkit-overflow-scrolling: touch;
-  background: white;
-  border: 1px solid $border-color;
-  border-radius: 0.5rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-}
+// Table scroll container - removed (no longer needed)
+// The scrollableSection now handles all scrolling directly
 
 // Spreadsheet Container - simple direct styles like Configure
 .spreadsheetContainer {
@@ -527,6 +601,23 @@ $focus-color: #3b82f6;
   background: white;
 }
 
+// Toolbar actions container - for Fix errors button
+.toolbarActions {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+
+  // Mobile responsive - full width button
+  @media (max-width: 640px) {
+    width: 100%;
+
+    button {
+      flex: 1;
+      justify-content: center;
+    }
+  }
+}
+
 // Footer section for buttons
 .footerSection {
   flex-shrink: 0;
@@ -536,4 +627,9 @@ $focus-color: #3b82f6;
   padding: 1.5rem;
   border-top: 1px solid #e5e7eb;
   background: transparent;
+}
+
+.tableWidth {
+  width: max-content;
+  min-width: 100%;
 }

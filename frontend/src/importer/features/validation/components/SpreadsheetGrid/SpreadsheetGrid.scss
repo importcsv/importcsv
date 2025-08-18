@@ -20,11 +20,14 @@
     border: 1px solid #e2e8f0;
     border-radius: 4px;
     min-height: 0; // Important for flex child
+    max-height: 600px; // Set a reasonable max height for better scrolling
 
     table {
-      width: 100%;
+      width: max-content; // Allow table to expand based on content
+      min-width: 100%; // But at least fill the container
       border-collapse: collapse; // Changed from separate to collapse
       border-spacing: 0;
+      table-layout: auto; // Let columns size based on content
     }
 
     thead {
@@ -45,7 +48,8 @@
       user-select: none;
       padding: 0.5rem 0.75rem;
       text-align: left;
-      height: 32px;
+      height: 40px;
+      min-width: 120px; // Minimum width for headers
       
       &:hover {
         background: #edf2f7;
@@ -53,7 +57,12 @@
       
       &:first-child {
         width: 50px;
+        min-width: 50px;
         text-align: center;
+        position: sticky;
+        left: 0;
+        z-index: 11;
+        background: #f7fafc;
       }
     }
 
@@ -61,16 +70,26 @@
       border-right: 1px solid #e2e8f0;
       border-bottom: 1px solid #e2e8f0;
       padding: 0;
-      height: 32px; // Reduced from 35px
+      height: 40px; // Increased for better usability
+      min-width: 120px; // Minimum width for readability
       position: relative;
       vertical-align: middle;
+      
+      &:first-child {
+        min-width: 50px; // Row number column
+        width: 50px;
+        position: sticky;
+        left: 0;
+        z-index: 1;
+        background: #f7fafc;
+      }
     }
   }
 
   .spreadsheet-cell {
     width: 100%;
-    height: 32px; // Fixed height
-    min-height: 32px;
+    height: 40px; // Fixed height
+    min-height: 40px;
     display: flex;
     align-items: center;
     position: relative;
@@ -156,11 +175,11 @@
 
     input {
       width: 100%;
-      height: 28px;
+      height: 36px;
       border: none;
       background: white;
-      font-size: 0.8125rem;
-      padding: 0 0.25rem;
+      font-size: 0.875rem;
+      padding: 0 0.5rem;
       
       &:focus {
         outline: none;

@@ -92,7 +92,7 @@ export default function Main(props: CSVImporterProps) {
           const csvData = results.data as Array<Array<string>>;
           const isNotBlankRow = (row: string[]) => row.some((cell) => cell.toString().trim() !== "");
           const rows: FileRow[] = csvData.filter(isNotBlankRow).map((row: string[], index: number) => ({ index, values: row }));
-          
+
           setData({
             fileName: demoData.fileName,
             rows: rows,
@@ -158,7 +158,7 @@ export default function Main(props: CSVImporterProps) {
         };
 
         const [parsedTemplate, parsedTemplateError] = convertRawTemplate(schemaTemplate);
-        
+
         if (parsedTemplateError) {
           setInitializationError(parsedTemplateError);
         } else if (parsedTemplate) {
@@ -530,8 +530,10 @@ export default function Main(props: CSVImporterProps) {
   // Wrap in iframe for complete CSS isolation if enabled
   if (useIframe) {
     return (
-      <IframeWrapper className="importcsv-iframe">
-        {content}
+      <IframeWrapper className="importcsv-iframe" primaryColor={props.primaryColor}>
+        <div className="csv-importer" data-theme={props.darkMode ? 'dark' : 'light'}>
+          {content}
+        </div>
       </IframeWrapper>
     );
   }

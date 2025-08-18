@@ -4,6 +4,11 @@ import Providers from "../../importer/providers";
 import useThemeStore from "../../importer/stores/theme";
 import { darkenColor, isValidColor } from "../../importer/utils/utils";
 import { CSVImporterProps } from "../../types";
+// Import styles so they are available for the importer. We will transfer
+// these styles into the iframe and remove them from the host document to
+// prevent leakage (handled by IframeWrapper). The base reset is disabled
+// in index.css to avoid global overrides before transfer.
+// Ensure styles are bundled for injection into iframe
 import "../../index.css";
 import "../../importer/style/index.scss";
 import "./style/csv-importer.css";
@@ -28,6 +33,7 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
     backendUrl,
     user,
     metadata,
+    useIframe,
     demoData,
     // Any remaining props will be valid DOM props
     ...domProps
@@ -54,14 +60,18 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
     setTheme(theme);
   }, [darkMode]);
 
-  // Apply primary color
+  // Apply primary color to component root
+  // These variables are needed for components like Stepper that rely on CSS variables
   useEffect(() => {
-    if (primaryColor && isValidColor(primaryColor)) {
-      const root = document.documentElement;
-      root.style.setProperty("--color-primary", primaryColor);
-      root.style.setProperty("--color-primary-hover", darkenColor(primaryColor, 20));
+    if (primaryColor && isValidColor(primaryColor) && ref?.current) {
+      // Apply styles to the component's root element
+      const componentRoot = ref.current as HTMLElement;
+      if (componentRoot) {
+        componentRoot.style.setProperty("--color-primary", primaryColor);
+        componentRoot.style.setProperty("--color-primary-hover", darkenColor(primaryColor, 20));
+      }
     }
-  }, [primaryColor]);
+  }, [primaryColor, ref]);
 
   const backdropClick = (event: { target: any }) => {
     if (modalCloseOnOutsideClick && event.target === current) {
@@ -105,6 +115,7 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
         backendUrl={backendUrl}
         user={user}
         metadata={metadata}
+        useIframe={useIframe}
         demoData={demoData}
       />
     </Providers>

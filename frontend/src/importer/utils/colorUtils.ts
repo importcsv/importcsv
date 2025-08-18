@@ -73,26 +73,33 @@ export function generateColorPalette(baseColor: string) {
 
 /**
  * Apply color palette to CSS variables
+ * @param primaryColor - The primary color to generate palette from
+ * @param targetElement - The element to apply styles to (defaults to a scoped container, not document root)
  */
-export function applyColorPalette(primaryColor: string) {
+export function applyColorPalette(primaryColor: string, targetElement?: HTMLElement) {
   const palette = generateColorPalette(primaryColor);
-  const root = document.documentElement;
+  // Don't apply to document.documentElement to prevent style leakage
+  // Only apply if a specific target element is provided
+  if (!targetElement) {
+    console.warn('applyColorPalette: No target element provided, skipping style application to prevent leakage');
+    return;
+  }
 
   // Set primary color variations
-  root.style.setProperty('--color-primary', primaryColor);
-  root.style.setProperty('--color-primary-50', palette[50]);
-  root.style.setProperty('--color-primary-100', palette[100]);
-  root.style.setProperty('--color-primary-200', palette[200]);
-  root.style.setProperty('--color-primary-300', palette[300]);
-  root.style.setProperty('--color-primary-400', palette[400]);
-  root.style.setProperty('--color-primary-500', palette[500]);
-  root.style.setProperty('--color-primary-600', palette[600]);
-  root.style.setProperty('--color-primary-700', palette[700]);
-  root.style.setProperty('--color-primary-800', palette[800]);
-  root.style.setProperty('--color-primary-900', palette[900]);
+  targetElement.style.setProperty('--color-primary', primaryColor);
+  targetElement.style.setProperty('--color-primary-50', palette[50]);
+  targetElement.style.setProperty('--color-primary-100', palette[100]);
+  targetElement.style.setProperty('--color-primary-200', palette[200]);
+  targetElement.style.setProperty('--color-primary-300', palette[300]);
+  targetElement.style.setProperty('--color-primary-400', palette[400]);
+  targetElement.style.setProperty('--color-primary-500', palette[500]);
+  targetElement.style.setProperty('--color-primary-600', palette[600]);
+  targetElement.style.setProperty('--color-primary-700', palette[700]);
+  targetElement.style.setProperty('--color-primary-800', palette[800]);
+  targetElement.style.setProperty('--color-primary-900', palette[900]);
   
   // Set hover and focus states
-  root.style.setProperty('--color-primary-hover', palette[700]);
-  root.style.setProperty('--color-primary-focus', palette[600]);
-  root.style.setProperty('--color-primary-disabled', palette[200]);
+  targetElement.style.setProperty('--color-primary-hover', palette[700]);
+  targetElement.style.setProperty('--color-primary-focus', palette[600]);
+  targetElement.style.setProperty('--color-primary-disabled', palette[200]);
 }
