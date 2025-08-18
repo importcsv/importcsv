@@ -28,10 +28,10 @@ export default {
     resolve({
       browser: true,
     }),
-    commonjs(),
+    commonjs({ include: /node_modules/, extensions: [".js", ".cjs"] }),
     typescript({ useTsconfigDeclarationDir: true }),
     image(),
-    postcss({}),
+    postcss({ inject: true, autoModules: true }),
     json(),
   ],
 };

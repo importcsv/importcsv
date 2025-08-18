@@ -32,13 +32,16 @@ export default {
     resolve({
       browser: true,
     }),
+    commonjs({
+      include: /node_modules/,
+      extensions: ['.js', '.cjs']
+    }),
     replace({
       preventAssignment: true,
       'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
       'process.env.NPM_PACKAGE_BUILD': JSON.stringify(process.env.NPM_PACKAGE_BUILD || 'false'),
       delimiters: ['', '']
     }),
-    commonjs(),
     typescript({ useTsconfigDeclarationDir: true }),
     image(),
     postcss({
@@ -48,9 +51,9 @@ export default {
         autoprefixer(),
       ],
       extensions: ['.css', '.scss'],
-      extract: false,
-      inject: true,
-      modules: false,
+      extract: 'build/bundle.css', // Extract all CSS including modules
+      inject: false,
+      autoModules: true, // only *.module.(css|scss) treated as modules
       use: ['sass'],
     }),
     json(),
