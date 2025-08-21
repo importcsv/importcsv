@@ -5,7 +5,7 @@ import Table from "../../components/Table";
 import UploaderWrapper from "../../components/UploaderWrapper/UploaderWrapper";
 import useTemplateTable from "./hooks/useTemplateTable";
 import { UploaderProps } from "./types";
-import { PiDownloadSimple, PiInfo } from "react-icons/pi";
+import { Download, Info } from "lucide-react";
 import { cn } from "../../../utils/cn";
 
 export default function Uploader({
