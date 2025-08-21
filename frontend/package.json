@@ -102,17 +102,14 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "i18next": "^23.10.1",
-    "immer": "^10.1.1",
     "lucide-react": "^0.507.0",
     "papaparse": "^5.4.1",
     "postcss": "^8.5.3",
-    "react-data-grid": "^7.0.0-beta.52",
     "react-dropzone": "^14.2.3",
     "react-frame-component": "^5.2.7",
     "react-hotkeys-hook": "^5.1.0",
     "react-i18next": "^14.1.0",
     "tailwind-merge": "^3.2.0",
-    "use-immer": "^0.11.0",
     "zustand": "^4.4.7"
   },
   "type": "module"
