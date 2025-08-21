@@ -159,13 +159,13 @@ export function validateBatch(
   
   // Check uniqueness for columns with unique validator
   columns.forEach((column, colIndex) => {
-    const hasUniqueValidator = column.validators?.some(v => v.validate === 'unique');
+    const hasUniqueValidator = column.validators?.some(v => v.type === 'unique');
     if (hasUniqueValidator) {
       const duplicateIndices = validateUniqueness(rows, colIndex, column);
       duplicateIndices.forEach(rowIndex => {
         const key = `${rowIndex}-${colIndex}`;
         if (!errors.has(key)) {
-          const validator = column.validators?.find(v => v.validate === 'unique');
+          const validator = column.validators?.find(v => v.type === 'unique');
           errors.set(key, validator?.message || `${column.label} must be unique`);
         }
       });

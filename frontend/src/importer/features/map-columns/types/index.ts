@@ -1,4 +1,4 @@
-import { Template } from "../../../types";
+import { Column } from "../../../../types";
 import { FileData } from "../../main/types";
 
 export type TemplateColumnMapping = {
@@ -8,7 +8,7 @@ export type TemplateColumnMapping = {
 };
 
 export type MapColumnsProps = {
-  template: Template;
+  columns?: Column[];
   data: FileData;
   columnMapping: { [index: number]: TemplateColumnMapping };
   selectedHeaderRow: number | null;

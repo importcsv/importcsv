@@ -8,9 +8,6 @@ import Stepper from "../../components/Stepper";
 import Validation from "../validation/Validation";
 import { CSVImporterProps, Column } from "../../../types";
 import useCustomStyles from "../../hooks/useCustomStyles";
-import { Template } from "../../types";
-import { convertRawTemplate } from "../../utils/template";
-import { columnsToTemplate, backendFieldToColumn } from "../../../utils/columnConverter";
 import { parseObjectOrStringJSON } from "../../utils/utils";
 import { TemplateColumnMapping } from "../map-columns/types";
 import useStepNavigation, { StepEnum } from "./hooks/useStepNavigation";
@@ -25,6 +22,23 @@ import { X } from "lucide-react";
 import { useTranslation } from "../../../i18n/useTranslation";
 import config from "../../../config";
 import IframeWrapper from "../../components/IframeWrapper";
+
+// Helper function to map backend field type to Column type
+function mapBackendType(backendType: string): Column['type'] {
+  const mapping: Record<string, Column['type']> = {
+    'text': 'string',
+    'string': 'string',
+    'number': 'number',
+    'email': 'email',
+    'date': 'date',
+    'phone': 'phone',
+    'select': 'select',
+    'boolean': 'string', // Map boolean to string for now
+    'custom_regex': 'string' // Map custom_regex to string
+  };
+  
+  return mapping[backendType] || 'string';
+}
 
 export default function Main(props: CSVImporterProps) {
   const {
@@ -82,9 +96,8 @@ export default function Main(props: CSVImporterProps) {
   // Loading state for Excel parser
   const [isLoadingExcelParser, setIsLoadingExcelParser] = useState<boolean>(false);
 
-  const [parsedTemplate, setParsedTemplate] = useState<Template>({
-    columns: [],
-  });
+  // Store columns directly - either from props or fetched from backend
+  const [importColumns, setImportColumns] = useState<Column[]>([]);
   const [isLoadingSchema, setIsLoadingSchema] = useState<boolean>(false);
   const [includeUnmatchedColumns, setIncludeUnmatchedColumns] = useState<boolean>(false);
   const [filterInvalidRows, setFilterInvalidRows] = useState<boolean>(false);
@@ -124,9 +137,8 @@ export default function Main(props: CSVImporterProps) {
           return;
         }
         
-        // Convert columns to template format for compatibility
-        const template = columnsToTemplate(propColumns);
-        setParsedTemplate(template);
+        // Use columns directly
+        setImportColumns(propColumns);
         setIsLoadingSchema(false);
         return;
       }
@@ -163,28 +175,47 @@ export default function Main(props: CSVImporterProps) {
           setDisableOnInvalidRows(schemaData.disable_on_invalid_rows);
         }
 
-        // Convert the schema to the format expected by the importer
-        const schemaTemplate = {
-          columns: schemaData.fields.map((field: any) => {
-            return {
-              name: field.name,
-              key: field.key || field.name.toLowerCase().replace(/\s+/g, "_"), // Convert to snake_case for keys if key is not provided
-              required: field.required || false,
-              description: field.description || `${field.name} field`,
-              type: field.type, // Use the type directly from backend
-              data_type: field.type, // Also store as data_type for compatibility
-              validation_format: field.validation_format,
-            };
-          }),
-        };
-
-        const [parsedTemplate, parsedTemplateError] = convertRawTemplate(schemaTemplate);
-
-        if (parsedTemplateError) {
-          setInitializationError(parsedTemplateError);
-        } else if (parsedTemplate) {
-          setParsedTemplate(parsedTemplate);
-        }
+        // Convert backend fields to Column format
+        const backendColumns: Column[] = schemaData.fields.map((field: any) => {
+          const column: Column = {
+            id: field.key || field.name.toLowerCase().replace(/\s+/g, "_"),
+            label: field.name,
+            type: mapBackendType(field.type),
+            description: field.description
+          };
+          
+          // Build validators array
+          const validators = [];
+          
+          if (field.required) {
+            validators.push({ 
+              type: 'required' as const,
+              message: field.validation_error_message
+            });
+          }
+          
+          if (field.validation_format) {
+            // If it's a select field, set options
+            if (field.type === 'select') {
+              column.options = field.validation_format.split(',').map((o: string) => o.trim());
+            } else {
+              // Otherwise treat as regex pattern
+              validators.push({
+                type: 'regex' as const,
+                pattern: field.validation_format,
+                message: field.validation_error_message
+              });
+            }
+          }
+          
+          if (validators.length > 0) {
+            column.validators = validators;
+          }
+          
+          return column;
+        });
+        
+        setImportColumns(backendColumns);
       } catch (error) {
         setInitializationError(`Failed to fetch schema: ${error instanceof Error ? error.message : String(error)}`);
       } finally {
@@ -394,7 +425,7 @@ export default function Main(props: CSVImporterProps) {
       case StepEnum.Upload:
         return (
           <Uploader
-            template={parsedTemplate}
+            columns={importColumns || propColumns}
             skipHeaderRowSelection={skipHeader || false}
             showDownloadTemplateButton={showDownloadTemplateButton}
             setDataError={setDataError}
@@ -495,7 +526,7 @@ export default function Main(props: CSVImporterProps) {
         if (useConsolidatedFlow) {
           return (
             <ConfigureImport
-              template={parsedTemplate}
+              columns={importColumns || propColumns}
               data={data}
               onSuccess={(mapping, headerRow) => {
                 setColumnMapping(mapping);
@@ -513,7 +544,7 @@ export default function Main(props: CSVImporterProps) {
         // Legacy flow
         return (
           <MapColumns
-            template={parsedTemplate}
+            columns={importColumns || propColumns}
             data={data}
             columnMapping={columnMapping}
             skipHeaderRowSelection={skipHeader}
@@ -531,7 +562,7 @@ export default function Main(props: CSVImporterProps) {
       case StepEnum.Validation:
         return (
           <Validation
-            template={parsedTemplate}
+            columns={importColumns || propColumns}
             data={data}
             columnMapping={columnMapping}
             selectedHeaderRow={selectedHeaderRow}

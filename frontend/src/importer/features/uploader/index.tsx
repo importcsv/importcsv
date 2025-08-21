@@ -7,15 +7,26 @@ import useTemplateTable from "./hooks/useTemplateTable";
 import { UploaderProps } from "./types";
 import { Download, Info } from "lucide-react";
 import { cn } from "../../../utils/cn";
+import { Column } from "../../../types";
+import { TemplateColumn } from "../../types";
 
 export default function Uploader({
-  template,
+  columns,
   skipHeaderRowSelection,
   onSuccess,
   showDownloadTemplateButton,
   setDataError
 }: UploaderProps) {
-  const fields = useTemplateTable(template.columns);
+  // Convert Column[] to TemplateColumn[] for useTemplateTable
+  const templateColumns: TemplateColumn[] = (columns || []).map(col => ({
+    name: col.label,
+    key: col.id,
+    description: col.description,
+    required: col.validators?.some(v => v.type === 'required'),
+    type: col.type || 'string'
+  }));
+  
+  const fields = useTemplateTable(templateColumns);
   const uploaderWrapper = (
     <UploaderWrapper
       onSuccess={onSuccess}
@@ -27,12 +38,13 @@ export default function Uploader({
   const { t } = useTranslation();
 
   function downloadTemplate() {
-    const { columns } = template;
-    const csvData = `${columns.map((obj) => obj.name).join(",")}`;
+    // Use column labels for CSV headers
+    const headers = (columns || []).map(col => col.label);
+    const csvData = headers.join(",");
 
     const link = document.createElement("a");
     link.href = URL.createObjectURL(new Blob([csvData], { type: "text/csv" }));
-    link.download = "example.csv";
+    link.download = "template.csv";
     link.click();
   }
 
@@ -48,7 +60,9 @@ export default function Uploader({
           {t("Upload a CSV file")}
         </Text>
         <Text className="text-sm text-gray-600">
-          {t("Make sure file includes contact name and phone number")}
+          {columns 
+            ? `${t("Required fields")}: ${columns.filter(c => c.validators?.some(v => v.type === 'required')).map(c => c.label).join(', ') || t('None')}` 
+            : t("Make sure file includes contact name and phone number")}
         </Text>
       </Box>
 

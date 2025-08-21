@@ -12,12 +12,13 @@ import {
 // Using native HTML table elements instead of Chakra UI
 import { CheckCircle } from 'lucide-react';
 import { useTranslation } from '../../../i18n/useTranslation';
-import { Template } from '../../types';
+import { TemplateColumn } from '../../types';
+import { Column } from '../../../types';
 import stringSimilarity from '../../utils/stringSimilarity';
 import { getMappingSuggestions } from '../../services/mapping';
 
 interface ConfigureImportProps {
-  template: Template;
+  columns?: Column[];
   data: any;
   onSuccess: (mapping: any, headerRow: number) => void;
   onCancel?: () => void;
@@ -36,7 +37,7 @@ interface ColumnMapping {
 }
 
 export default function ConfigureImport({
-  template,
+  columns,
   data,
   onSuccess,
   onCancel,
@@ -86,6 +87,15 @@ export default function ConfigureImport({
     return samples.join(', ');
   };
 
+  // Convert Column[] to TemplateColumn[]
+  const templateColumns: TemplateColumn[] = (columns || []).map(col => ({
+    name: col.label,
+    key: col.id,
+    description: col.description,
+    required: col.validators?.some(v => v.type === 'required'),
+    type: col.type || 'string'
+  }));
+
   // Auto-map columns based on name similarity
   useEffect(() => {
     const autoMap: ColumnMapping = {};
@@ -93,7 +103,7 @@ export default function ConfigureImport({
     columnHeaders.forEach((header: string, index: number) => {
       let bestMatch = { column: null as any, score: 0 };
 
-      template.columns.forEach((templateCol) => {
+      templateColumns.forEach((templateCol) => {
         const score = stringSimilarity(
           header.toLowerCase().trim(),
           templateCol.name.toLowerCase().trim()
@@ -106,7 +116,7 @@ export default function ConfigureImport({
 
       if (bestMatch.column) {
         autoMap[index] = {
-          key: bestMatch.column.key,
+          key: bestMatch.column.key || '',
           name: bestMatch.column.name,
           include: true,
         };
@@ -114,7 +124,7 @@ export default function ConfigureImport({
     });
 
     setColumnMapping(autoMap);
-  }, [columnHeaders, template.columns]);
+  }, [columnHeaders, templateColumns]);
 
   // Enhance mappings with LLM suggestions after initial load
   useEffect(() => {
@@ -125,7 +135,7 @@ export default function ConfigureImport({
       }
       
       // Only run if we have columns, backend URL, and importer key
-      if (!uploadColumns.length || !template.columns.length || !backendUrl || !importerKey) {
+      if (!uploadColumns.length || !templateColumns.length || !backendUrl || !importerKey) {
         return;
       }
 
@@ -136,7 +146,7 @@ export default function ConfigureImport({
         // Get LLM-enhanced mapping suggestions
         const suggestions = await getMappingSuggestions(
           uploadColumns,
-          template.columns,
+          templateColumns,
           backendUrl,
           importerKey
         );
@@ -167,7 +177,7 @@ export default function ConfigureImport({
                 (!currentMapping?.key || hasWeakMatch) &&
                 !usedTemplateKeys.has(suggestion.templateKey)
               ) {
-                const templateCol = template.columns.find(col => col.key === suggestion.templateKey);
+                const templateCol = templateColumns.find(col => col.key === suggestion.templateKey);
                 if (templateCol) {
                   newMapping[suggestion.uploadIndex] = {
                     key: suggestion.templateKey,
@@ -188,7 +198,7 @@ export default function ConfigureImport({
     };
 
     enhanceWithLLM();
-  }, [uploadColumns, template.columns, backendUrl, importerKey]);
+  }, [uploadColumns, templateColumns, backendUrl, importerKey]);
 
   // Handle column mapping change
   const handleMappingChange = (templateFieldKey: string, csvColumnIndex: string) => {
@@ -204,7 +214,7 @@ export default function ConfigureImport({
     // Set new mapping if column selected (and not "none")
     if (csvColumnIndex !== '' && csvColumnIndex !== 'none') {
       const colIndex = parseInt(csvColumnIndex);
-      const templateField = template.columns.find(col => col.key === templateFieldKey);
+      const templateField = templateColumns.find(col => col.key === templateFieldKey);
 
       if (templateField) {
         newMapping[colIndex] = {
@@ -228,11 +238,11 @@ export default function ConfigureImport({
 
   // Check if all required fields are mapped
   const allRequiredFieldsMapped = useMemo(() => {
-    const requiredFields = template.columns.filter((col: any) => col.required);
+    const requiredFields = templateColumns.filter((col: any) => col.required);
     return requiredFields.every((field: any) =>
       Object.values(columnMapping).some(mapping => mapping.key === field.key)
     );
-  }, [template.columns, columnMapping]);
+  }, [templateColumns, columnMapping]);
 
   // Handle form submission
   const handleSubmit = () => {
@@ -278,7 +288,7 @@ export default function ConfigureImport({
               </tr>
             </thead>
             <tbody>
-              {template.columns.map((field: any, index: number) => {
+              {templateColumns.map((field: any, index: number) => {
                 const mappedColumn = getMappedColumn(field.key);
                 const isMapped = mappedColumn !== '';
 

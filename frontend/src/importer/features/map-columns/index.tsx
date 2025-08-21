@@ -7,12 +7,13 @@ import { Tooltip } from "../../components/ui/tooltip";
 import { Info } from "lucide-react";
 import Errors from "../../components/Errors";
 import Table from "../../components/Table";
-import { Template, UploadColumn } from "../../types";
+import { UploadColumn, TemplateColumn } from "../../types";
+import { Column } from "../../../types";
 import useMapColumnsTable from "./hooks/useMapColumnsTable";
 import { MapColumnsProps, TemplateColumnMapping } from "./types";
 
 export default function MapColumns({
-  template,
+  columns,
   data,
   columnMapping,
   selectedHeaderRow,
@@ -51,9 +52,18 @@ export default function MapColumns({
       sample_data,
     };
   });
+  // Convert Column[] to TemplateColumn[]
+  const templateColumns: TemplateColumn[] = (columns || []).map(col => ({
+    name: col.label,
+    key: col.id,
+    description: col.description,
+    required: col.validators?.some(v => v.type === 'required'),
+    type: col.type || 'string'
+  }));
+  
   const { rows, formValues } = useMapColumnsTable(
     uploadColumns,
-    template.columns,
+    templateColumns,
     columnMapping,
     isSubmitting,
     importerKey,
@@ -61,8 +71,8 @@ export default function MapColumns({
   );
   const [error, setError] = useState<string | null>(null);
 
-  const verifyRequiredColumns = (template: Template, formValues: { [uploadColumnIndex: number]: TemplateColumnMapping }): boolean => {
-    const requiredColumns = template.columns.filter((column: any) => column.required);
+  const verifyRequiredColumns = (templateCols: TemplateColumn[], formValues: { [uploadColumnIndex: number]: TemplateColumnMapping }): boolean => {
+    const requiredColumns = templateCols.filter((column: any) => column.required);
     const includedValues = Object.values(formValues).filter((value: any) => value.include);
     return requiredColumns.every((requiredColumn: any) => includedValues.some((includedValue: any) => includedValue.key === requiredColumn.key));
   };
@@ -82,7 +92,7 @@ export default function MapColumns({
       {}
     );
 
-    const isRequiredColumnsIncluded = verifyRequiredColumns(template, formValues);
+    const isRequiredColumnsIncluded = verifyRequiredColumns(templateColumns, formValues);
     if (!isRequiredColumnsIncluded) {
       setError(t("Please include all required columns"));
       return;

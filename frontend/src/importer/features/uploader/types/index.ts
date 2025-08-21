@@ -1,8 +1,8 @@
-import { Template } from "../../../types";
+import { Column } from "../../../../types";
 import { Dispatch, SetStateAction } from "react";
 
 export type UploaderProps = {
-  template: Template;
+  columns?: Column[];
   skipHeaderRowSelection: boolean;
   onSuccess: (file: File) => void;
   showDownloadTemplateButton?: boolean;

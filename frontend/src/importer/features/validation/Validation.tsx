@@ -10,7 +10,7 @@ import TransformModal from './components/TransformModal';
 
 // Validation component for checking imported data
 export default function Validation({
-  template,
+  columns,
   data: fileData,
   columnMapping,
   selectedHeaderRow,
@@ -61,17 +61,18 @@ export default function Validation({
 
   // Validate column mappings
   React.useEffect(() => {
-    // Check if mappings match template fields
-    const templateKeys = template.columns.map(col => col.key);
+    if (!columns) return;
+    // Check if mappings match column ids
+    const columnIds = columns.map(col => col.id);
     const mismatches = Object.entries(columnMapping).filter(([_, mapping]) => {
       if (!mapping.include) return false;
-      return !templateKeys.includes(mapping.key);
+      return !columnIds.includes(mapping.key);
     });
 
     if (mismatches.length > 0) {
-
+      // Handle mismatches if needed
     }
-  }, [template, columnMapping]);
+  }, [columns, columnMapping]);
 
   // Data validation
   const validateData = React.useCallback(() => {
@@ -91,34 +92,35 @@ export default function Validation({
         const colIdx = parseInt(colIndexStr);
         if (isNaN(colIdx)) return;
 
-        // The key in the template
-        const templateField = mapping.key;
+        // The key in the column mapping
+        const columnId = mapping.key;
 
-        // Find the corresponding template field
-        const field = template.columns.find(col => col.key === templateField);
-        if (!field) {
-
+        // Find the corresponding column
+        const column = columns?.find(col => col.id === columnId);
+        if (!column) {
           return;
         }
 
         // Get the value directly from the row
         const value = row.values[colIdx];
 
-        // Access field properties safely
-        const fieldAny = field as any;
-        const fieldType = fieldAny.type || fieldAny.data_type || '';
+        // Get column type
+        const fieldType = column.type || 'string';
 
+        // Check if field is required
+        const isRequired = column.validators?.some(v => v.type === 'required');
+        
         // Skip validation if value is empty and not required
-        if ((value === '' || value === null || value === undefined) && !field.required) {
+        if ((value === '' || value === null || value === undefined) && !isRequired) {
           return;
         }
 
         // Required field validation
-        if (field.required && (value === '' || value === null || value === undefined)) {
+        if (isRequired && (value === '' || value === null || value === undefined)) {
           newErrors.push({
             rowIndex: displayRowIndex,
             columnIndex: colIdx,
-            message: `${field.name} is required`
+            message: `${column.label} is required`
           });
           return;
         }
@@ -128,20 +130,20 @@ export default function Validation({
           newErrors.push({
             rowIndex: displayRowIndex,
             columnIndex: colIdx,
-            message: `${field.name} must be a number`
+            message: `${column.label} must be a number`
           });
         }
 
-        // Boolean validation with template support
+        // Boolean validation
         if ((fieldType === 'boolean' || fieldType === 'bool') && value !== '') {
-          const template = fieldAny.template || 'true/false';
+          const booleanFormat = 'true/false'; // Default for boolean
           let isValid = false;
 
-          if (template === 'true/false') {
+          if (booleanFormat === 'true/false') {
             isValid = ['true', 'false', true, false].includes(value);
-          } else if (template === 'yes/no') {
+          } else if (booleanFormat === 'yes/no') {
             isValid = ['yes', 'no', 'Yes', 'No', 'YES', 'NO'].includes(value);
-          } else if (template === '1/0') {
+          } else if (booleanFormat === '1/0') {
             isValid = ['1', '0', 1, 0].includes(value);
           }
 
@@ -149,7 +151,7 @@ export default function Validation({
             newErrors.push({
               rowIndex: displayRowIndex,
               columnIndex: colIdx,
-              message: `${field.name} must be a valid boolean value (${template})`
+              message: `${column.label} must be a valid boolean value (${booleanFormat})`
             });
           }
         }
@@ -169,7 +171,7 @@ export default function Validation({
               newErrors.push({
                 rowIndex: displayRowIndex,
                 columnIndex: colIdx,
-                message: `${field.name} must be a valid date format (not just numbers)`
+                message: `${column.label} must be a valid date format (not just numbers)`
               });
               return; // Skip further validation
             }
@@ -194,7 +196,7 @@ export default function Validation({
             newErrors.push({
               rowIndex: displayRowIndex,
               columnIndex: colIdx,
-              message: `${field.name} must be a valid date format`
+              message: `${column.label} must be a valid date format`
             });
           }
         }
@@ -209,21 +211,21 @@ export default function Validation({
             newErrors.push({
               rowIndex: displayRowIndex,
               columnIndex: colIdx,
-              message: `${field.name} must be a valid email address`
+              message: `${column.label} must be a valid email address`
             });
           }
         }
 
         // Select validation
         if ((fieldType === 'select' || fieldType === 'enum') && value !== '') {
-          // Get options from validation_format
-          const options = fieldAny.validation_format ? fieldAny.validation_format.split(',').map((opt: string) => opt.trim()) : [];
+          // Get options from column
+          const options = column.options || [];
 
           if (options.length > 0 && !options.map((o: string) => o.toLowerCase()).includes(String(value).toLowerCase())) {
             newErrors.push({
               rowIndex: displayRowIndex,
               columnIndex: colIdx,
-              message: `${field.name} must be one of: ${options.join(', ')}`
+              message: `${column.label} must be one of: ${options.join(', ')}`
             });
           }
         }
@@ -232,7 +234,7 @@ export default function Validation({
 
     setErrors(newErrors);
     shouldValidateRef.current = false;
-  }, [dataRows, columnMapping, template, headerRowIndex]);
+  }, [dataRows, columnMapping, columns, headerRowIndex]);
 
   // Trigger validation when data changes
   React.useEffect(() => {

@@ -1,6 +1,6 @@
 import { FileData } from "../main/types";
 import { TemplateColumnMapping } from "../map-columns/types";
-import { Template } from "../../types";
+import { Column } from "../../../types";
 
 export interface ValidationError {
   rowIndex: number;
@@ -10,7 +10,7 @@ export interface ValidationError {
 }
 
 export interface ValidationProps {
-  template: Template;
+  columns?: Column[];
   data: FileData;
   columnMapping: { [index: number]: TemplateColumnMapping };
   selectedHeaderRow: number | null;
