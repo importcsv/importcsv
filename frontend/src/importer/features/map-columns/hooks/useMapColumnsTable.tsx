@@ -7,7 +7,6 @@ import { TemplateColumn, UploadColumn } from "../../../types";
 import stringsSimilarity from "../../../utils/stringSimilarity";
 import { TemplateColumnMapping } from "../types";
 import { getMappingSuggestions } from "../../../services/mapping";
-import style from "../style/MapColumns.module.scss";
 
 
 export default function useMapColumnsTable(
@@ -194,7 +193,7 @@ export default function useMapColumnsTable(
         [yourSampleData]: {
           raw: "",
           content: (
-            <div title={samples.join(", ")} className={style.samples}>
+            <div title={samples.join(", ")} className="text-sm text-gray-500 truncate">
               {samples.map((d, i) => (
                 <small key={i}>{d}</small>
               ))}

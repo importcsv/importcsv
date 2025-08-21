@@ -15,7 +15,6 @@ import { useTranslation } from '../../../i18n/useTranslation';
 import { Template } from '../../types';
 import stringSimilarity from '../../utils/stringSimilarity';
 import { getMappingSuggestions } from '../../services/mapping';
-import style from './style/ConfigureImport.module.scss';
 
 interface ConfigureImportProps {
   template: Template;
@@ -247,7 +246,7 @@ export default function ConfigureImport({
   };
 
   return (
-    <div className={style.configureImport}>
+    <div className="flex flex-col h-full">
       <VStack className="gap-6 w-full">
         {/* Title Section */}
         <Box>

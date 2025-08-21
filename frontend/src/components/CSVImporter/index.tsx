@@ -10,7 +10,6 @@ import { CSVImporterProps } from "../../types";
 // in index.css to avoid global overrides before transfer.
 // Ensure styles are bundled for injection into iframe
 import "../../index.css";
-import "../../importer/style/index.scss";
 import "./style/csv-importer.css";
 
 const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: any) => {

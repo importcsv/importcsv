@@ -11,4 +11,5 @@ export type StepperProps = {
   step: Step;
   clickable?: boolean;
   skipHeader: boolean;
+  hide?: boolean;
 };

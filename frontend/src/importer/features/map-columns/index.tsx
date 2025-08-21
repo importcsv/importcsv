@@ -10,7 +10,6 @@ import Table from "../../components/Table";
 import { Template, UploadColumn } from "../../types";
 import useMapColumnsTable from "./hooks/useMapColumnsTable";
 import { MapColumnsProps, TemplateColumnMapping } from "./types";
-import style from "./style/MapColumns.module.scss";
 
 export default function MapColumns({
   template,
@@ -101,18 +100,18 @@ export default function MapColumns({
   };
 
   return (
-    <div className={style.content}>
+    <div className="flex flex-col h-full">
       {/* LLM matching removed for better UX */}
       <form onSubmit={onSubmit}>
         {data ? (
-          <div className={style.tableWrapper}>
+          <div className="flex-1 overflow-auto border rounded-lg">
             <Table data={rows} background="dark" fixHeader columnWidths={getColumnWidths()} columnAlignments={["", "", "", "center"]} />
           </div>
         ) : (
           <>{t("Loading...")}</>
         )}
 
-        <div className={style.actions}>
+        <div className="px-6 py-4 border-t bg-gray-50 flex justify-between items-center">
           <Button 
             type="button" 
             variant="outline"
@@ -122,7 +121,7 @@ export default function MapColumns({
             {skipHeaderRowSelection ? t("Cancel") : t("Back")}
           </Button>
           {!!error && (
-            <div className={style.errorContainer}>
+            <div className="flex-1">
               <Errors error={error} />
             </div>
           )}

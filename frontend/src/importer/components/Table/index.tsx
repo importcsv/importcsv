@@ -1,7 +1,6 @@
 import React, { createContext, useContext } from "react";
 import classes from "../../utils/classes";
 import { CellProps, RowProps, TableProps } from "./types";
-import themeDefault from "./style/Default.module.scss";
 import Tooltip from "../Tooltip";
 
 const TableContext = createContext<any>({});
@@ -21,13 +20,6 @@ export default function Table({
   fixHeader = false,
   onRowClick,
 }: TableProps): React.ReactElement {
-  // THEME
-  // Tables receive a full CSS module as theme or applies default styles
-  // depending on mergeThemes being true it will merge both themes or use only the custom one
-  // use a copy of ./style/Default.module.scss as base to make a custom theme
-  // another example of the theme lives in src/features/contents/versions/style/TableTheme.module.scss
-
-  const style = !theme ? themeDefault : mergeThemes ? { ...themeDefault, ...theme } : theme;
 
   // TABLE HEADINGS
   // Hide column title if the item has an action (action button) or the title starts with underscore
@@ -48,21 +40,24 @@ export default function Table({
       })
     : {};
   const context = {
-    style,
     highlightColumns,
     hideColumns,
     columnWidths,
     columnAlignments,
   };
 
-  if (!data || !data?.length) return <div className={style.emptyMsg}>{emptyState || null}</div>;
+  if (!data || !data?.length) return <div className="text-center text-gray-500 py-8">{emptyState || null}</div>;
 
-  const tableStyle = classes([style?.table, style?.[background], fixHeader && style?.fixHeader]);
+  const tableStyle = classes([
+    "w-full border-collapse",
+    background === "zebra" && "[&>div:nth-child(even)]:bg-gray-50",
+    fixHeader && "relative"
+  ]);
 
   const headingContent = heading ? (
-    <div className={style.caption}>{heading}</div>
+    <div className="px-4 py-2 font-semibold text-lg border-b">{heading}</div>
   ) : (
-    <div className={style.thead} role="rowgroup">
+    <div className="sticky top-0 bg-gray-100 font-semibold border-b" role="rowgroup">
       <Row datum={thead} isHeading={true} />
     </div>
   );
@@ -71,7 +66,7 @@ export default function Table({
     <TableContext.Provider value={context}>
       <div className={tableStyle} role="table">
         {headingContent}
-        <div className={style.tbody} role="rowgroup">
+        <div className="divide-y divide-gray-200" role="rowgroup">
           {data.map((d, i) => {
             const key = keyAsId && d?.[keyAsId] ? d[keyAsId] : i;
             const props = { datum: d, onClick: onRowClick };
@@ -80,7 +75,7 @@ export default function Table({
         </div>
       </div>
       {!data.length && (
-        <div className={style.emptyMsg} role="empty-query">
+        <div className="text-center text-gray-500 py-8" role="empty-query">
           <p>Empty</p>
         </div>
       )}
@@ -89,9 +84,13 @@ export default function Table({
 }
 
 const Row = ({ datum, onClick, isHeading }: RowProps) => {
-  const { style, highlightColumns, hideColumns, columnWidths, columnAlignments } = useContext(TableContext);
+  const { highlightColumns, hideColumns, columnWidths, columnAlignments } = useContext(TableContext);
 
-  const className = classes([style?.tr]);
+  const className = classes([
+    "flex",
+    onClick && "cursor-pointer hover:bg-gray-50",
+    isHeading && "font-semibold"
+  ]);
   return (
     <div className={className} role="row" onClick={() => onClick?.(datum)}>
       {Object.keys(datum)
@@ -109,9 +108,10 @@ const Row = ({ datum, onClick, isHeading }: RowProps) => {
           const wrappedContent = content && typeof content === "string" ? <span>{content}</span> : content;
 
           const cellClass = classes([
-            highlightColumns?.includes(k) && style.highlight,
-            !wrappedContent && style.empty,
-            typeof content !== "string" && style.element,
+            "px-4 py-2",
+            highlightColumns?.includes(k) && "bg-blue-50 font-medium",
+            !wrappedContent && "text-gray-400",
+            typeof content !== "string" && "flex items-center",
           ]);
 
           const cellStyle = { width: columnWidths?.[i] || "auto", textAlign: columnAlignments?.[i] || "left" };
@@ -127,9 +127,8 @@ const Row = ({ datum, onClick, isHeading }: RowProps) => {
 };
 
 const Cell = ({ children, cellClass, cellStyle, tooltip }: CellProps) => {
-  const { style } = useContext(TableContext);
   const cellProps = {
-    className: classes([style?.td, cellClass, !children && style?.empty]),
+    className: classes(["flex-1", cellClass, !children && "text-gray-400"]),
     role: "cell",
     style: cellStyle,
     ...(tooltip ? { title: tooltip } : {}),

@@ -3,14 +3,13 @@ import ReactDOM from "react-dom";
 import classes from "../../utils/classes";
 import getStringLengthOfChildren from "../../utils/getStringLengthOfChildren";
 import { AsMap, TooltipProps } from "./types";
-import style from "./style/Tooltip.module.scss";
 import { Info } from "lucide-react";
 
 export default function Tooltip<T extends keyof AsMap>({ as, className, title, children, icon = <Info />, ...props }: TooltipProps<T>) {
   const Tag: any = as || "span";
 
   const length = getStringLengthOfChildren(title);
-  const wrapperClasses = classes([style.tooltip, className, length > 30 && style.multiline]);
+  const wrapperClasses = classes(["inline-flex items-center gap-1", className]);
 
   const [tooltipVisible, setTooltipVisible] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
@@ -45,7 +44,12 @@ export default function Tooltip<T extends keyof AsMap>({ as, className, title, c
   };
 
   const tooltipMessage = tooltipVisible && (
-    <span className={style.message} style={{ position: "fixed", top: `${position.top}px`, left: `${position.left}px` }}>
+    <span 
+      className={classes([
+        "absolute z-50 px-2 py-1 text-xs text-white bg-gray-900 rounded shadow-lg -translate-x-1/2 mt-1",
+        length > 30 && "max-w-xs whitespace-normal"
+      ])} 
+      style={{ position: "fixed", top: `${position.top}px`, left: `${position.left}px` }}>
       {title}
     </span>
   );
@@ -53,7 +57,7 @@ export default function Tooltip<T extends keyof AsMap>({ as, className, title, c
   return (
     <Tag {...props} className={wrapperClasses}>
       {children}
-      <span className={style.icon} onMouseEnter={showTooltip} onMouseLeave={hideTooltip} ref={targetRef}>
+      <span className="inline-flex cursor-help text-gray-400 hover:text-gray-600" onMouseEnter={showTooltip} onMouseLeave={hideTooltip} ref={targetRef}>
         {icon}
         {tooltipMessage}
       </span>

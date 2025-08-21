@@ -6,7 +6,6 @@ import { Tooltip } from '../../components/ui/tooltip';
 import { Wrench, AlertTriangle } from 'lucide-react';
 import { ValidationProps } from './types';
 import TransformModal from './components/TransformModal';
-import style from './style/Validation.module.scss';
 
 
 // Validation component for checking imported data
@@ -332,13 +331,13 @@ export default function Validation({
   };
 
   return (
-    <form onSubmit={handleSubmit} className={style.validationContainer}>
-      <div className={style.header}>
-        <h2>Validate Data</h2>
-        <p>Review and correct any errors in your data before importing.</p>
+    <form onSubmit={handleSubmit} className="flex flex-col h-full">
+      <div className="px-6 py-4 border-b">
+        <h2 className="text-xl font-semibold">Validate Data</h2>
+        <p className="text-sm text-gray-600 mt-1">Review and correct any errors in your data before importing.</p>
       </div>
 
-      <div className={style.toolbarSection}>
+      <div className="px-6 py-4 border-b bg-gray-50">
         {filterInvalidRows && errorTracking.count > 0 && (
           <Alert className="mb-4">
             <AlertTriangle className="h-4 w-4" />
@@ -349,32 +348,44 @@ export default function Validation({
           </Alert>
         )}
 
-        <div className={style.toolbar}>
+        <div className="">
           <div className="flex justify-between items-center">
-            <div className={style.tabFilter}>
+            <div className="flex space-x-1 p-1 bg-gray-100 rounded-lg">
               <button
                 type="button"
-                className={`${style.tab} ${filterMode === 'all' ? style.active : ''}`}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  filterMode === 'all' 
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
                 onClick={() => setFilterMode('all')}
               >
-                All <span className={style.count}>{dataRows.length}</span>
+                All <span className="ml-2 px-2 py-0.5 bg-gray-200 rounded-full text-xs">{dataRows.length}</span>
               </button>
               <button
                 type="button"
-                className={`${style.tab} ${filterMode === 'valid' ? style.active : ''}`}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  filterMode === 'valid' 
+                    ? 'bg-white text-gray-900 shadow-sm' 
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
                 onClick={() => setFilterMode('valid')}
               >
-                Valid <span className={style.count}>{validCount}</span>
+                Valid <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs">{validCount}</span>
               </button>
               <button
                 type="button"
-                className={`${style.tab} ${style.errorTab} ${filterMode === 'error' ? style.active : ''}`}
+                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                  filterMode === 'error' 
+                    ? 'bg-white text-red-600 shadow-sm' 
+                    : 'text-red-600 hover:text-red-700'
+                }`}
                 onClick={() => setFilterMode('error')}
               >
-                Error <span className={style.count}>{errorCount}</span>
+                Error <span className="ml-2 px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs">{errorCount}</span>
               </button>
             </div>
-            <div className={style.toolbarActions}>
+            <div className="flex items-center space-x-2">
               {backendUrl && importerKey && errorCount > 0 && (
                 <Tooltip content="Use AI to automatically fix validation errors">
                   <Button
@@ -394,8 +405,8 @@ export default function Validation({
         </div>
       </div>
 
-      <div className={style.scrollableSection} ref={scrollableSectionRef}>
-            <div className={style.tableWidth}>
+      <div className="flex-1 overflow-auto" ref={scrollableSectionRef}>
+            <div className="min-w-full">
             <table className="border-collapse" style={{ minWidth: '100%' }}>
               <thead className="bg-gray-50 border-b-2 border-gray-200" style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                 <tr>
@@ -467,7 +478,7 @@ export default function Validation({
             )}
       </div>
 
-      <div className={style.footerSection}>
+      <div className="px-6 py-4 border-t bg-gray-50 flex justify-between items-center">
         <Button
           type="button"
           variant="outline"

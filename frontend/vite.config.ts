@@ -57,14 +57,6 @@ export default defineConfig(({ mode }) => ({
       localsConvention: 'camelCaseOnly',
       generateScopedName: '[name]-module__[local]___[hash:base64:5]',
     },
-    preprocessorOptions: {
-      scss: {
-        // Use modern Sass API
-        api: 'modern',
-        // Silence deprecation warnings temporarily
-        silenceDeprecations: ['import', 'global-builtin', 'color-functions'],
-      },
-    },
     postcss: {
       plugins: [
         tailwindcss(),

@@ -5,7 +5,6 @@ import { Button } from "../../components/ui/button";
 import Table from "../../components/Table";
 import Tooltip from "../../components/Tooltip";
 import { RowSelectionProps } from "./types";
-import style from "./style/RowSelection.module.scss";
 import { AlertCircle } from "lucide-react";
 
 export default function RowSelection({ data, onSuccess, onCancel, selectedHeaderRow, setSelectedHeaderRow }: RowSelectionProps) {
@@ -22,7 +21,7 @@ export default function RowSelection({ data, onSuccess, onCancel, selectedHeader
         <input
           type="radio"
           id={`radio-${row.index}`}
-          className={style.inputRadio}
+          className="mr-2 cursor-pointer"
           name="rowSelection"
           value={row.index}
           checked={selectedHeaderRow === row.index}
@@ -59,26 +58,26 @@ export default function RowSelection({ data, onSuccess, onCancel, selectedHeader
   };
 
   return (
-    <div className={style.content}>
+    <div className="flex flex-col h-full">
       <form>
         {data ? (
           <>
             {hasMultipleExcelSheets ? (
               <Alert className="border-l-4 border-blue-500 bg-blue-50">
-                <AlertCircle className={style.warningIcon} />
+                <AlertCircle className="h-5 w-5 text-yellow-600 mr-2" />
                 {t(
                   "Only the first sheet (&quot;{{sheet}}&quot;) of the Excel file will be imported. To import multiple sheets, please upload each sheet individually.",
                   { sheet: data.sheetList[0] }
                 )}
               </Alert>
             ) : null}
-            <div className={style.tableWrapper}>
+            <div className="flex-1 overflow-auto border rounded-lg">
               <Table
                 fixHeader
                 mergeThemes={true}
                 data={dataWithRadios || []}
                 heading={
-                  <div className={style.headingCaption}>
+                  <div className="px-4 py-2 bg-gray-50 border-b font-semibold">
                     <Tooltip title={t("Select the row which contains the column headers")}>{t("Select Header Row")}</Tooltip>
                   </div>
                 }
@@ -94,7 +93,7 @@ export default function RowSelection({ data, onSuccess, onCancel, selectedHeader
           <>{t("Loading...")}</>
         )}
 
-        <div className={style.actions}>
+        <div className="px-6 py-4 border-t bg-gray-50 flex justify-between items-center">
           <Button 
             type="button" 
             variant="outline" 
@@ -112,7 +111,7 @@ export default function RowSelection({ data, onSuccess, onCancel, selectedHeader
           </Button>
         </div>
         {/*{!isLoading && !!error && (*/}
-        {/*  <div className={style.errorContainer}>*/}
+        {/*  <div className="error-container">*/}
         {/*    <Errors error={error} />*/}
         {/*  </div>*/}
         {/*)}*/}
