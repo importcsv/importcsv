@@ -23,6 +23,7 @@ The ImportCSV Frontend provides a polished, user-friendly interface for importin
 - **🔍 Data Validation** - Immediate feedback on data quality issues
 - **🎨 Customizable UI** - Theming and component customization options
 - **🔌 Flexible Integration** - Available as React component or vanilla JavaScript
+- **📦 Optimized Bundle Size** - Excel support is optional to keep bundle small
 
 ## 🏗️ Architecture
 
@@ -49,17 +50,26 @@ Use NPM or Yarn to install the SDK:
 **NPM**
 
 ```bash
-npm install csv-import-react
-# or for non-React applications
-npm install csv-import-js
+npm install @importcsv/react
 ```
+
+**For Excel Support (Optional)**
+
+Excel file support (.xls, .xlsx) requires an additional package:
+
+```bash
+npm install xlsx
+```
+
+> **Note**: The xlsx package is ~850KB. It's only required if you need Excel support. CSV files work without it.
 
 **Yarn**
 
 ```bash
-yarn add csv-import-react
-# or for non-React applications
-yarn add csv-import-js
+yarn add @importcsv/react
+
+# For Excel support (optional)
+yarn add xlsx
 ```
 
 ### Basic Usage

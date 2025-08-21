@@ -19,14 +19,16 @@ export default {
       file: packageJson.main,
       format: "cjs",
       sourcemap: true,
+      inlineDynamicImports: true,
     },
     {
       file: packageJson.module,
       format: "esm",
       sourcemap: true,
+      inlineDynamicImports: true,
     },
   ],
-  external: ["react", "react-dom", "react/jsx-runtime", "@emotion/react"],
+  external: ["react", "react-dom", "react/jsx-runtime", "@emotion/react", "xlsx"],
   plugins: [
     peerDepsExternal(),
     resolve({

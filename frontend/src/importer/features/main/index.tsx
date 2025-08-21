@@ -1,6 +1,7 @@
 import Papa from "papaparse";
 import { useEffect, useState } from "react";
-import * as XLSX from "xlsx";
+// Note: XLSX is dynamically imported when needed to reduce bundle size
+// Users must install 'xlsx' package separately for Excel support
 import { Button } from "../../components/ui/button";
 import Errors from "../../components/Errors";
 import Stepper from "../../components/Stepper";
@@ -74,6 +75,9 @@ export default function Main(props: CSVImporterProps) {
 
   // Used in the final step to show a loading indicator while the data is submitting
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  
+  // Loading state for Excel parser
+  const [isLoadingExcelParser, setIsLoadingExcelParser] = useState<boolean>(false);
 
   const [parsedTemplate, setParsedTemplate] = useState<Template>({
     columns: [],
@@ -396,17 +400,35 @@ export default function Main(props: CSVImporterProps) {
                     break;
                   case "xlsx":
                   case "xls":
-                    const workbook = XLSX.read(bstr as string, { type: "binary" });
-                    const sheetList = workbook.SheetNames;
-                    const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetList[0]], { header: 1 }) as Array<Array<string>>;
-                    const rows: FileRow[] = data.filter(isNotBlankRow).map((row: string[], index: number) => ({ index, values: row }));
-                    setData({
-                      fileName: file.name,
-                      rows: rows,
-                      sheetList: sheetList,
-                      errors: [], // TODO: Handle any parsing errors
+                    // Lazy load XLSX library only when needed
+                    setIsLoadingExcelParser(true);
+                    setDataError(null);
+                    import("xlsx").then((XLSX) => {
+                      const workbook = XLSX.read(bstr as string, { type: "binary" });
+                      const sheetList = workbook.SheetNames;
+                      const data = XLSX.utils.sheet_to_json(workbook.Sheets[sheetList[0]], { header: 1 }) as Array<Array<string>>;
+                      const rows: FileRow[] = data.filter(isNotBlankRow).map((row: string[], index: number) => ({ index, values: row }));
+                      setData({
+                        fileName: file.name,
+                        rows: rows,
+                        sheetList: sheetList,
+                        errors: [], // TODO: Handle any parsing errors
+                      });
+                      setIsLoadingExcelParser(false);
+                      goNext();
+                    }).catch((error) => {
+                      // Check if it's a module not found error
+                      const isModuleNotFound = error.message?.includes('Cannot find module') || 
+                                               error.message?.includes('Failed to fetch dynamically imported module');
+                      
+                      const errorMessage = isModuleNotFound
+                        ? "Excel support requires the 'xlsx' package. Please install it with: npm install xlsx"
+                        : "Failed to load Excel parser. Please try again or use CSV format.";
+                      
+                      setDataError(errorMessage);
+                      setIsLoadingExcelParser(false);
+                      console.error("Failed to load XLSX library:", error);
                     });
-                    goNext();
                     break;
                 }
               };
@@ -507,10 +529,21 @@ export default function Main(props: CSVImporterProps) {
 
       <div className={style.content}>{renderContent()}</div>
 
-      {!!dataError && (
+      {(!!dataError || isLoadingExcelParser) && (
         <div className={style.status}>
           <div></div>
-          <Errors error={dataError} centered />
+          {isLoadingExcelParser ? (
+            <div style={{ textAlign: 'center', padding: '20px' }}>
+              <div style={{ marginBottom: '8px' }}>
+                <span style={{ fontSize: '16px' }}>Loading Excel parser...</span>
+              </div>
+              <small style={{ opacity: 0.7, fontSize: '12px' }}>
+                This may take a moment on first use
+              </small>
+            </div>
+          ) : (
+            <Errors error={dataError} centered />
+          )}
           <div></div>
         </div>
       )}
