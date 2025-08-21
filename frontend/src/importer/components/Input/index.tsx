@@ -6,7 +6,7 @@ import useWindowSize from "../../hooks/useWindowSize";
 import classes from "../../utils/classes";
 import { InputProps } from "./types";
 import style from "./style/Input.module.scss";
-import { PiCaretDown, PiInfo } from "react-icons/pi";
+import { ChevronDown, Info } from "lucide-react";
 
 export default function Input({ as = "input", label, icon, iconAfter, error, options, className, variants = [], children, ...props }: InputProps) {
   const Element = as;
@@ -22,14 +22,14 @@ export default function Input({ as = "input", label, icon, iconAfter, error, opt
   ) : (
     error && (
       <span className={style.icon}>
-        <PiInfo />
+        <Info />
       </span>
     )
   );
 
   const iconSelect = options && (
     <span className={classes([style.icon, style.dropdownIcon])}>
-      <PiCaretDown />
+      <ChevronDown />
     </span>
   );
 

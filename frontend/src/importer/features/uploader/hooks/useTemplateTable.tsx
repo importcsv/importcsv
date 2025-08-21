@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useTranslation } from "../../../../i18n/useTranslation";
 import Tooltip from "../../../components/Tooltip";
 import { TemplateColumn } from "../../../types";
-import { PiCheckBold } from "react-icons/pi";
+import { Check } from "lucide-react";
 
 export default function useTemplateTable(fields: TemplateColumn[] = []) {
   if (!fields) {
@@ -23,7 +23,7 @@ export default function useTemplateTable(fields: TemplateColumn[] = []) {
             ),
           }
         : item.name,
-      [requiredKey]: { raw: item?.required ? 1 : 0, content: item?.required ? <PiCheckBold /> : <></> },
+      [requiredKey]: { raw: item?.required ? 1 : 0, content: item?.required ? <Check /> : <></> },
     }));
   }, [fields]);
 

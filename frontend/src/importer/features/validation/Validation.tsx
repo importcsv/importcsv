@@ -3,7 +3,7 @@ import { Button } from '../../components/ui/button';
 import { Switch } from '../../components/ui/switch';
 import { Alert, AlertTitle, AlertDescription } from '../../components/ui/alert';
 import { Tooltip } from '../../components/ui/tooltip';
-import { PiWrench, PiWarning } from 'react-icons/pi';
+import { Wrench, AlertTriangle } from 'lucide-react';
 import { ValidationProps } from './types';
 import TransformModal from './components/TransformModal';
 import style from './style/Validation.module.scss';
@@ -341,7 +341,7 @@ export default function Validation({
       <div className={style.toolbarSection}>
         {filterInvalidRows && errorTracking.count > 0 && (
           <Alert className="mb-4">
-            <PiWarning className="h-4 w-4" />
+            <AlertTriangle className="h-4 w-4" />
             <AlertTitle>Invalid Rows Will Be Filtered</AlertTitle>
             <AlertDescription>
               {`${errorTracking.count} ${errorTracking.count === 1 ? 'row' : 'rows'} with validation errors will be excluded from the import. You can fix the errors to include these rows.`}
@@ -384,7 +384,7 @@ export default function Validation({
                     variant="default"
                     className="shadow-sm"
                   >
-                    <PiWrench className="mr-2 h-4 w-4" />
+                    <Wrench className="mr-2 h-4 w-4" />
                     Fix errors
                   </Button>
                 </Tooltip>

@@ -6,7 +6,7 @@ import Table from "../../components/Table";
 import Tooltip from "../../components/Tooltip";
 import { RowSelectionProps } from "./types";
 import style from "./style/RowSelection.module.scss";
-import { PiWarningCircle } from "react-icons/pi";
+import { AlertCircle } from "lucide-react";
 
 export default function RowSelection({ data, onSuccess, onCancel, selectedHeaderRow, setSelectedHeaderRow }: RowSelectionProps) {
   const { t } = useTranslation();
@@ -65,7 +65,7 @@ export default function RowSelection({ data, onSuccess, onCancel, selectedHeader
           <>
             {hasMultipleExcelSheets ? (
               <Alert className="border-l-4 border-blue-500 bg-blue-50">
-                <PiWarningCircle className={style.warningIcon} />
+                <AlertCircle className={style.warningIcon} />
                 {t(
                   "Only the first sheet (&quot;{{sheet}}&quot;) of the Excel file will be imported. To import multiple sheets, please upload each sheet individually.",
                   { sheet: data.sheetList[0] }

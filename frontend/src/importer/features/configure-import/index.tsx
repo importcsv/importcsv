@@ -10,7 +10,7 @@ import {
   SelectValue,
 } from '../../components/ui/select';
 // Using native HTML table elements instead of Chakra UI
-import { PiCheckCircle } from 'react-icons/pi';
+import { CheckCircle } from 'lucide-react';
 import { useTranslation } from '../../../i18n/useTranslation';
 import { Template } from '../../types';
 import stringSimilarity from '../../utils/stringSimilarity';
@@ -288,7 +288,7 @@ export default function ConfigureImport({
                     <td className="px-6 py-4">
                       <HStack className="gap-2 items-center">
                         {isMapped && (
-                          <PiCheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                          <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                         )}
                         {!isMapped && field.required && (
                           <Box className="w-5 h-5 rounded-full border-2 border-gray-300 flex-shrink-0" />

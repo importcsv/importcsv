@@ -14,8 +14,8 @@ import { parseObjectOrStringJSON } from "../../utils/utils";
 import { TemplateColumnMapping } from "../map-columns/types";
 import useStepNavigation, { StepEnum } from "./hooks/useStepNavigation";
 import { FileData, FileRow } from "./types";
-import style from "./style/Main.module.scss";
 import Complete from "../complete";
+import { cn } from "../../../utils/cn";
 import MapColumns from "../map-columns";
 import RowSelection from "../row-selection";
 import ConfigureImport from "../configure-import";
@@ -353,7 +353,7 @@ export default function Main(props: CSVImporterProps) {
 
   if (initializationError) {
     return (
-      <div className={style.wrapper}>
+      <div className="flex flex-col h-auto min-h-[400px] p-4 w-full box-border overflow-auto">
         <Errors error={initializationError} centered />
       </div>
     );
@@ -522,22 +522,24 @@ export default function Main(props: CSVImporterProps) {
   };
 
   const content = (
-    <div className={style.wrapper}>
+    <div className={cn(
+      "flex flex-col h-auto min-h-[400px] p-4 w-full box-border overflow-auto"
+    )}>
       <div>
         <Stepper {...stepper} />
       </div>
 
-      <div className={style.content}>{renderContent()}</div>
+      <div className="flex-1 overflow-visible min-w-0 w-full">{renderContent()}</div>
 
       {(!!dataError || isLoadingExcelParser) && (
-        <div className={style.status}>
+        <div className="flex items-center justify-between gap-4 px-2 pb-2">
           <div></div>
           {isLoadingExcelParser ? (
-            <div style={{ textAlign: 'center', padding: '20px' }}>
-              <div style={{ marginBottom: '8px' }}>
-                <span style={{ fontSize: '16px' }}>Loading Excel parser...</span>
+            <div className="text-center p-5">
+              <div className="mb-2">
+                <span className="text-base">Loading Excel parser...</span>
               </div>
-              <small style={{ opacity: 0.7, fontSize: '12px' }}>
+              <small className="opacity-70 text-xs">
                 This may take a moment on first use
               </small>
             </div>
@@ -550,7 +552,11 @@ export default function Main(props: CSVImporterProps) {
 
       {isModal && (
         <button
-          className={`${style.close} rounded-full p-2 hover:bg-gray-100 transition-colors`}
+          className={cn(
+            "absolute right-2 top-2 rounded-full",
+            "min-w-[36px] h-[36px] aspect-square text-xl p-0",
+            "hover:bg-gray-100 transition-colors"
+          )}
           aria-label="Close"
           onClick={requestClose}
         >

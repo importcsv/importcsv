@@ -11,7 +11,7 @@ import { Input } from '../../../components/ui/input';
 import { Checkbox } from '../../../components/ui/checkbox';
 import { Alert, AlertDescription } from '../../../components/ui/alert';
 import { useToast } from '../../../components/ui/use-toast';
-import { PiSparkle, PiX, PiCheck, PiInfo } from 'react-icons/pi';
+import { Sparkles, X, Check, Info } from 'lucide-react';
 import { useTranslation } from '../../../../i18n/useTranslation';
 import {
   generateTransformations,
@@ -160,7 +160,7 @@ export default function TransformModal({
       <DialogContent className="max-w-[800px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <PiSparkle className="h-5 w-5" />
+            <Sparkles className="h-5 w-5" />
             {t('Transform data with AI')}
           </DialogTitle>
         </DialogHeader>
@@ -170,7 +170,7 @@ export default function TransformModal({
             {hasValidationErrors && !hasChanges && (
               <>
                 <Alert>
-                  <PiInfo className="h-4 w-4" />
+                  <Info className="h-4 w-4" />
                   <AlertDescription>
                     <strong>{validationErrors.length} validation error{validationErrors.length > 1 ? 's' : ''} detected</strong>
                     <br />
@@ -187,7 +187,7 @@ export default function TransformModal({
                     disabled={isGenerating}
                     className="px-8"
                   >
-                    <PiSparkle className="mr-2 h-5 w-5" />
+                    <Sparkles className="mr-2 h-5 w-5" />
                     {isGenerating ? t('Fixing errors...') : t('Fix All Errors')}
                   </Button>
                 </div>
@@ -213,7 +213,7 @@ export default function TransformModal({
                     isLoading={isGenerating}
                     disabled={isGenerating}
                   >
-                    <PiSparkle className="mr-2 h-4 w-4" />
+                    <Sparkles className="mr-2 h-4 w-4" />
                     {isGenerating ? t('Generating') : t('Generate')}
                   </Button>
                 </div>
@@ -362,7 +362,7 @@ export default function TransformModal({
                   type="button"
                   onClick={() => handleApply(true)}
                 >
-                  <PiCheck className="mr-2 h-4 w-4" />
+                  <Check className="mr-2 h-4 w-4" />
                   {t('Apply all')}
                 </Button>
               </>

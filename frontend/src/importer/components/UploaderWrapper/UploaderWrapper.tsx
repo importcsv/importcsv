@@ -3,7 +3,7 @@ import { useDropzone } from "react-dropzone";
 import { useTranslation } from "../../../i18n/useTranslation";
 import { Box, Text } from "../ui/flex";
 import { UploaderWrapperProps } from "./types";
-import { PiCloudArrowUp } from "react-icons/pi";
+import { CloudUpload } from "lucide-react";
 
 export default function UploaderWrapper({ onSuccess, setDataError, ...props }: UploaderWrapperProps) {
   const [loading, setLoading] = useState(false);
@@ -58,7 +58,7 @@ export default function UploaderWrapper({ onSuccess, setDataError, ...props }: U
           isDragActive ? 'text-blue-600 shadow-md' : 'text-gray-400'
         }`}
       >
-        <PiCloudArrowUp size={isMobile ? 28 : 32} />
+        <CloudUpload size={isMobile ? 28 : 32} />
       </Box>
       
       {isDragActive ? (

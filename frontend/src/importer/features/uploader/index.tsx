@@ -5,8 +5,8 @@ import Table from "../../components/Table";
 import UploaderWrapper from "../../components/UploaderWrapper/UploaderWrapper";
 import useTemplateTable from "./hooks/useTemplateTable";
 import { UploaderProps } from "./types";
-import style from "./style/Uploader.module.scss";
 import { PiDownloadSimple, PiInfo } from "react-icons/pi";
+import { cn } from "../../../utils/cn";
 
 export default function Uploader({
   template,
@@ -37,7 +37,11 @@ export default function Uploader({
   }
 
   return (
-    <div className={style.modernContent}>
+    <div className={cn(
+      "flex flex-col w-full max-w-[560px] mx-auto p-8",
+      "sm:px-4 sm:py-6",
+      "max-[480px]:p-4"
+    )}>
       {/* Title Section */}
       <Box className="mb-6 text-center">
         <Text className="text-2xl font-semibold text-gray-900 mb-2">
