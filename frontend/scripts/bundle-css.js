@@ -8,7 +8,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Read the bundled CSS file
-const cssPath = path.join(__dirname, '../build/build/bundle.css');
+const cssPath = path.join(__dirname, '../build/bundle.css');
 const outputPath = path.join(__dirname, '../src/bundled-styles.ts');
 
 if (fs.existsSync(cssPath)) {
