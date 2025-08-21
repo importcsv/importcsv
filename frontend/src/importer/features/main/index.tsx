@@ -6,10 +6,11 @@ import { Button } from "../../components/ui/button";
 import Errors from "../../components/Errors";
 import Stepper from "../../components/Stepper";
 import Validation from "../validation/Validation";
-import { CSVImporterProps } from "../../../types";
+import { CSVImporterProps, Column } from "../../../types";
 import useCustomStyles from "../../hooks/useCustomStyles";
 import { Template } from "../../types";
 import { convertRawTemplate } from "../../utils/template";
+import { columnsToTemplate, backendFieldToColumn } from "../../../utils/columnConverter";
 import { parseObjectOrStringJSON } from "../../utils/utils";
 import { TemplateColumnMapping } from "../map-columns/types";
 import useStepNavigation, { StepEnum } from "./hooks/useStepNavigation";
@@ -34,14 +35,16 @@ export default function Main(props: CSVImporterProps) {
     showDownloadTemplateButton,
     skipHeaderRowSelection,
     importerKey,
+    columns: propColumns, // HelloCSV-style columns for standalone mode
     backendUrl = config.apiBaseUrl,
     user,
     metadata,
     useIframe = true, // Default to using iframe for CSS isolation
-    demoData,
+    demoData
   } = props;
   const skipHeader = skipHeaderRowSelection ?? false;
   const isDemoMode = !!demoData;
+  const isStandaloneMode = !importerKey; // Standalone if no importerKey
 
   const { t } = useTranslation();
 
@@ -111,12 +114,26 @@ export default function Main(props: CSVImporterProps) {
     }
   }, [isDemoMode, demoData]);
 
-  // Fetch schema from the backend using importerKey
+  // Load schema from props or backend
   useEffect(() => {
     const fetchSchema = async () => {
-      // ImporterKey is required
+      // Standalone mode: use provided columns
+      if (isStandaloneMode) {
+        if (!propColumns) {
+          setInitializationError("Please provide 'columns' for standalone mode or 'importerKey' for backend mode.");
+          return;
+        }
+        
+        // Convert columns to template format for compatibility
+        const template = columnsToTemplate(propColumns);
+        setParsedTemplate(template);
+        setIsLoadingSchema(false);
+        return;
+      }
+      
+      // Backend mode: fetch from API
       if (!importerKey) {
-        setInitializationError("ImporterKey is required for CSV import. Please provide a valid importer key.");
+        setInitializationError("ImporterKey is required for backend mode.");
         return;
       }
 
@@ -176,7 +193,7 @@ export default function Main(props: CSVImporterProps) {
     };
 
     fetchSchema();
-  }, [importerKey, backendUrl]);
+  }, [importerKey, backendUrl, isStandaloneMode, propColumns]);
 
   useEffect(() => {
     // TODO (client-sdk): Have the importer continue where left off if closed
@@ -259,9 +276,22 @@ export default function Main(props: CSVImporterProps) {
       rows: mappedRows,
     };
 
-    // Check if importerKey is provided - it's required
+    // Standalone mode: directly call onComplete with data
+    if (isStandaloneMode) {
+      onComplete && onComplete({
+        success: true,
+        data: mappedRows,
+        num_rows: mappedRows.length,
+        num_columns: includedColumns.length,
+      });
+      setIsSubmitting(false);
+      goNext();
+      return;
+    }
+    
+    // Backend mode: send to API
     if (!importerKey) {
-      setDataError("ImporterKey is required for CSV import. Please provide a valid importer key.");
+      setDataError("ImporterKey is required for backend mode.");
       setIsSubmitting(false);
       return;
     }

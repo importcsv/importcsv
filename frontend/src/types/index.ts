@@ -1,5 +1,31 @@
-// import { Resource } from "i18next";
+// HelloCSV-inspired Column definition
+export interface Column {
+  id: string;              // Unique identifier for the column
+  label: string;           // Display name for the column
+  type?: 'string' | 'number' | 'email' | 'date' | 'phone' | 'select';  // Default: 'string'
+  
+  // Validation rules (HelloCSV-style validators array)
+  validators?: Validator[];
+  
+  // For select type
+  options?: string[];
+  
+  // Optional helpers
+  description?: string;
+  placeholder?: string;
+}
 
+// Validator types (HelloCSV-inspired)
+export type Validator = 
+  | { type: 'required'; message?: string }
+  | { type: 'unique'; message?: string }
+  | { type: 'regex'; pattern: string; message?: string }
+  | { type: 'min'; value: number; message?: string }
+  | { type: 'max'; value: number; message?: string }
+  | { type: 'min_length'; value: number; message?: string }
+  | { type: 'max_length'; value: number; message?: string };
+
+// Modal parameters
 type ModalParams = {
   isModal?: boolean;
   modalIsOpen?: boolean;
@@ -7,33 +33,47 @@ type ModalParams = {
   modalCloseOnOutsideClick?: boolean;
 };
 
-// Create a custom Resource type to replace i18next's
+// Custom translation resource type
 type CustomTranslationResource = {
   [language: string]: {
     [key: string]: string;
   };
 };
 
+// Main CSV Importer Props
 export type CSVImporterProps = {
+  // Mode determination (one or the other)
+  columns?: Column[];          // For standalone mode (HelloCSV-style)
+  importerKey?: string;        // For backend mode
+  
+  // Required callback
+  onComplete?: (data: any) => void;
+  
+  // Optional configuration
+  backendUrl?: string;         // API endpoint (default from config)
+  user?: Record<string, any>;  // User context for backend
+  metadata?: Record<string, any>; // Additional data
+  
+  // UI customization
   darkMode?: boolean;
   primaryColor?: string;
-  className?: string; // Keep className as it's often used for styling wrappers
-  onComplete?: (data: any) => void;
-  waitOnComplete?: boolean;
+  className?: string;
   customStyles?: Record<string, string> | string;
+  
+  // Behavior options
   showDownloadTemplateButton?: boolean;
   skipHeaderRowSelection?: boolean;
+  waitOnComplete?: boolean;
+  useIframe?: boolean;         // CSS isolation (default: true)
+  
+  // Localization
   language?: string;
   customTranslations?: CustomTranslationResource;
-  importerKey?: string; // Key of the importer from the admin/backend
-  backendUrl?: string; // URL of the backend API
-  user?: Record<string, any>; // User details to identify the user in webhooks
-  metadata?: Record<string, any>; // Additional data to associate with the import
-  useIframe?: boolean; // Whether to use iframe for CSS isolation (default: true)
+  
+  // Demo mode
   demoData?: {
     fileName: string;
-    csvContent: string; // Raw CSV string content
-  }; // Demo data to skip upload step and go directly to configure
-  // You might want to explicitly allow specific data-* attributes if needed
-  // 'data-testid'?: string;
+    csvContent: string;
+  };
+  
 } & ModalParams;

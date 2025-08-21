@@ -37,7 +37,8 @@
     "publish:local:react:prod": "yarn build:react:prod && yalc publish",
     "publish:js": "yarn build:js && cd build && npm publish",
     "publish:react": "NPM_PACKAGE_BUILD=true yarn build:react:prod && yarn publish --access public",
-    "build:watch": "vite build --watch --mode development"
+    "build:watch": "vite build --watch --mode development",
+    "dev:examples": "cd examples && npm install && npm run dev"
   },
   "peerDependencies": {
     "react": ">=18.0.0",

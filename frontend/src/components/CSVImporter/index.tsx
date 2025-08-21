@@ -35,19 +35,19 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
     metadata,
     useIframe,
     demoData,
+    columns,
     // Any remaining props will be valid DOM props
     ...domProps
   } = importerProps;
   const ref = forwardRef ?? useRef(null);
 
-  const current = ref?.current as any;
-
   useEffect(() => {
+    const current = ref?.current as any;
     if (isModal && current) {
       if (modalIsOpen) current?.showModal?.();
       else current?.close?.();
     }
-  }, [isModal, modalIsOpen, current]);
+  }, [isModal, modalIsOpen, ref]);
   const baseClass = "CSVImporter";
   const themeClass = darkMode ? `${baseClass}-dark` : `${baseClass}-light`;
   const domElementClass = ["csv-importer", `${baseClass}-${isModal ? "dialog" : "div"}`, themeClass, className].filter((i) => i).join(" ");
@@ -74,14 +74,23 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
   }, [primaryColor, ref]);
 
   const backdropClick = (event: { target: any }) => {
-    if (modalCloseOnOutsideClick && event.target === current) {
+    if (modalCloseOnOutsideClick && event.target === ref?.current) {
       modalOnCloseTriggered();
     }
   };
 
-  current?.addEventListener("cancel", () => {
-    modalOnCloseTriggered();
-  });
+  useEffect(() => {
+    const current = ref?.current as any;
+    if (current && isModal) {
+      const handleCancel = () => {
+        modalOnCloseTriggered();
+      };
+      current.addEventListener("cancel", handleCancel);
+      return () => {
+        current.removeEventListener("cancel", handleCancel);
+      };
+    }
+  }, [isModal, modalOnCloseTriggered, ref]);
 
   // Since we've already destructured all known props above,
   // domProps should only contain valid DOM attributes
@@ -117,6 +126,7 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
         metadata={metadata}
         useIframe={useIframe}
         demoData={demoData}
+        columns={columns}
       />
     </Providers>
   );
