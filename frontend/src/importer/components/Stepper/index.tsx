@@ -2,63 +2,70 @@ import { StepperProps } from "./types";
 import { Check } from "lucide-react";
 import { cn } from "../../../utils/cn";
 
-export default function Stepper({ steps, current, clickable, setCurrent, skipHeader }: StepperProps) {
+export default function Stepper({ steps, current, hide, skipHeader }: StepperProps) {
+  // Hide if requested
+  if (hide) {
+    return null;
+  }
+
+  // Filter out disabled steps
+  const activeSteps = steps.filter(step => !step.disabled);
+  const currentActiveIndex = steps.slice(0, current + 1).filter(s => !s.disabled).length - 1;
+
   return (
     <div className={cn(
-      "flex items-center justify-center gap-0 w-full mx-auto my-8 px-8 relative",
-      "sm:my-4 sm:px-4",
-      "max-[480px]:hidden" // Hide on mobile
+      "w-full flex items-center justify-center",
+      "h-8 px-4 py-2"
     )}>
-      {steps.map((step, i) => {
-        if (step.disabled) return null;
-        const done = i < current;
-        const isActive = i === current;
-
-        const Element = clickable ? "button" : "div";
-
-        const buttonProps: any = clickable
-          ? {
-              onClick: () => setCurrent(i),
-              type: "button",
-            }
-          : {};
-
-        let displayNumber = i + 1;
-        if (skipHeader && displayNumber > 1) {
-          displayNumber--;
-        }
-
-        return (
-          <Element
-            key={i}
-            className={cn(
-              "flex flex-col items-center relative flex-1 max-w-[200px] bg-transparent border-none cursor-pointer p-0 transition-all duration-300 ease-out",
-              "after:content-[''] after:absolute after:top-5 after:left-[calc(50%+30px)] after:w-[calc(100%-60px)] after:h-0.5 after:transition-all after:duration-300 after:-z-10",
-              i !== steps.length - 1 && "after:bg-gray-200",
-              done && i !== steps.length - 1 && "after:bg-[var(--color-primary)]",
-              i === steps.length - 1 && "after:hidden"
-            )}
-            {...buttonProps}>
-            <div className={cn(
-              "w-10 h-10 rounded-full flex items-center justify-center bg-white border-2 border-gray-200 text-gray-500 font-semibold text-sm transition-all duration-300 relative z-10",
-              isActive && "bg-white text-[var(--color-primary)] border-[var(--color-primary)] border-2 shadow-[0_0_0_4px_rgba(122,94,248,0.1)]",
-              done && "bg-purple-100 border-[var(--color-primary)] text-[var(--color-primary)]",
-              !isActive && !done && "hover:border-purple-300 hover:bg-purple-50"
-            )}>
-              {done ? <Check className="w-4 h-4 text-[var(--color-primary)]" /> : displayNumber}
+      {/* Step indicators with labels */}
+      <div className="flex items-center">
+        {activeSteps.map((step, index) => {
+          const isActive = index === currentActiveIndex;
+          const isDone = index < currentActiveIndex;
+          
+          return (
+            <div key={index} className="flex items-center">
+              {/* Step with number and label together */}
+              <div className={cn(
+                "flex items-center gap-1 transition-all duration-200",
+                isActive && "scale-105"
+              )}>
+                {/* Step circle */}
+                <div className={cn(
+                  "w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-medium transition-all duration-200",
+                  isActive && "bg-blue-600 text-white shadow-sm border-2 border-blue-600",
+                  isDone && "bg-white border-2 border-blue-600 text-blue-600",
+                  !isActive && !isDone && "bg-white border border-gray-300 text-gray-500"
+                )}>
+                  {isDone ? (
+                    <Check className="w-3 h-3 stroke-2" />
+                  ) : (
+                    index + 1
+                  )}
+                </div>
+                
+                {/* Step label */}
+                <span className={cn(
+                  "text-xs tracking-wide transition-all duration-200",
+                  isActive && "text-blue-600 font-semibold",
+                  isDone && "text-gray-700 font-medium",
+                  !isActive && !isDone && "text-gray-500"
+                )}>
+                  {step.label}
+                </span>
+              </div>
+              
+              {/* Connector line */}
+              {index < activeSteps.length - 1 && (
+                <div className={cn(
+                  "mx-3 w-12 h-[1px] transition-all duration-200",
+                  isDone ? "bg-blue-600" : "bg-gray-300"
+                )} />
+              )}
             </div>
-            <div className={cn(
-              "mt-2 text-[13px] text-gray-500 font-medium transition-all duration-300 text-center whitespace-nowrap",
-              "sm:hidden", // Hide labels on small screens
-              isActive && "text-[var(--color-primary)] font-semibold",
-              done && "text-gray-900",
-              steps.length < 4 && "md:block" // Show labels for fewer steps on medium screens
-            )}>
-              {step.label}
-            </div>
-          </Element>
-        );
-      })}
+          );
+        })}
+      </div>
     </div>
   );
 }
