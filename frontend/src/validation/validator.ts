@@ -95,6 +95,18 @@ function runValidator(value: string, validator: Validator, column: Column): stri
         return validator.message || `${column.label} must be at most ${validator.value}`;
       }
       break;
+      
+    case 'min_length':
+      if (value && value.length < validator.value) {
+        return validator.message || `${column.label} must be at least ${validator.value} characters`;
+      }
+      break;
+      
+    case 'max_length':
+      if (value && value.length > validator.value) {
+        return validator.message || `${column.label} must be at most ${validator.value} characters`;
+      }
+      break;
   }
   
   return null;

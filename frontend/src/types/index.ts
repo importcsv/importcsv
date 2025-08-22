@@ -7,6 +7,9 @@ export interface Column {
   // Validation rules (HelloCSV-style validators array)
   validators?: Validator[];
   
+  // Transformation rules (applied after submit, before sending to parent)
+  transformations?: Transformer[];
+  
   // For select type
   options?: string[];
   
@@ -24,6 +27,19 @@ export type Validator =
   | { type: 'max'; value: number; message?: string }
   | { type: 'min_length'; value: number; message?: string }
   | { type: 'max_length'; value: number; message?: string };
+
+// Transformer types (applied after validation, before sending to parent)
+export type Transformer = 
+  | { type: 'trim' }
+  | { type: 'uppercase' }
+  | { type: 'lowercase' }
+  | { type: 'capitalize' }
+  | { type: 'remove_special_chars' }
+  | { type: 'normalize_phone' }
+  | { type: 'normalize_date'; format?: string }
+  | { type: 'default'; value: string }
+  | { type: 'replace'; find: string; replace: string }
+  | { type: 'custom'; fn: (value: any) => any };
 
 // Modal parameters
 type ModalParams = {

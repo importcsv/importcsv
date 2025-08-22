@@ -105,6 +105,5 @@ export function applyMappingSuggestions(
     }
   }
   
-  console.log(`Applied ${appliedCount} high-confidence mapping suggestions`);
   return appliedCount;
 }

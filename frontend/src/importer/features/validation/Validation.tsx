@@ -6,6 +6,8 @@ import { Tooltip } from '../../components/ui/tooltip';
 import { Wrench, AlertTriangle } from 'lucide-react';
 import { ValidationProps } from './types';
 import TransformModal from './components/TransformModal';
+import { validateColumn, validateUniqueness } from '../../../validation/validator';
+import { applyTransformations } from '../../../validation/transformer';
 
 
 // Validation component for checking imported data
@@ -104,132 +106,51 @@ export default function Validation({
         // Get the value directly from the row
         const value = row.values[colIdx];
 
-        // Get column type
-        const fieldType = column.type || 'string';
+        // Use the validateColumn function from validator.ts
+        const validationError = validateColumn(value, column);
+        if (validationError) {
+          newErrors.push({
+            rowIndex: displayRowIndex,
+            columnIndex: colIdx,
+            message: validationError
+          });
+        }
+      });
+    });
 
-        // Check if field is required
-        const isRequired = column.validators?.some(v => v.type === 'required');
+    // Check uniqueness for columns with unique validator
+    columns?.forEach((column) => {
+      const hasUniqueValidator = column.validators?.some(v => v.type === 'unique');
+      if (hasUniqueValidator) {
+        // Find the column index in the mapping
+        const mappingEntry = Object.entries(columnMapping).find(([_, mapping]) => 
+          mapping.include && mapping.key === column.id
+        );
         
-        // Skip validation if value is empty and not required
-        if ((value === '' || value === null || value === undefined) && !isRequired) {
-          return;
-        }
-
-        // Required field validation
-        if (isRequired && (value === '' || value === null || value === undefined)) {
-          newErrors.push({
-            rowIndex: displayRowIndex,
-            columnIndex: colIdx,
-            message: `${column.label} is required`
-          });
-          return;
-        }
-
-        // Number validation
-        if ((fieldType === 'number' || fieldType === 'numeric') && value !== '' && isNaN(Number(value))) {
-          newErrors.push({
-            rowIndex: displayRowIndex,
-            columnIndex: colIdx,
-            message: `${column.label} must be a number`
-          });
-        }
-
-        // Boolean validation
-        if ((fieldType === 'boolean' || fieldType === 'bool') && value !== '') {
-          const booleanFormat = 'true/false'; // Default for boolean
-          let isValid = false;
-
-          if (booleanFormat === 'true/false') {
-            isValid = ['true', 'false', true, false].includes(value);
-          } else if (booleanFormat === 'yes/no') {
-            isValid = ['yes', 'no', 'Yes', 'No', 'YES', 'NO'].includes(value);
-          } else if (booleanFormat === '1/0') {
-            isValid = ['1', '0', 1, 0].includes(value);
-          }
-
-          if (!isValid) {
-            newErrors.push({
-              rowIndex: displayRowIndex,
-              columnIndex: colIdx,
-              message: `${column.label} must be a valid boolean value (${booleanFormat})`
-            });
-          }
-        }
-
-        // Date validation
-        if ((fieldType === 'date' || fieldType === 'datetime') && value !== '') {
-          // Robust date validation
-          let isValidDate = false;
-
-          try {
-            // Test common date formats
-            const dateValue = String(value).trim();
-
-            // Reject numeric-only values (like "1234")
-            const isNumeric = /^\d+$/.test(dateValue);
-            if (isNumeric) {
+        if (mappingEntry) {
+          const colIdx = parseInt(mappingEntry[0]);
+          
+          // Prepare data for uniqueness check
+          const rowValues = dataRows.map(row => row.values);
+          const duplicateIndices = validateUniqueness(rowValues, colIdx, column);
+          
+          duplicateIndices.forEach(rowIdx => {
+            const displayRowIndex = rowIdx + headerRowIndex + 1;
+            const existingError = newErrors.find(
+              err => err.rowIndex === displayRowIndex && err.columnIndex === colIdx
+            );
+            
+            if (!existingError) {
+              const validator = column.validators?.find(v => v.type === 'unique');
               newErrors.push({
                 rowIndex: displayRowIndex,
                 columnIndex: colIdx,
-                message: `${column.label} must be a valid date format (not just numbers)`
+                message: validator?.message || `${column.label} must be unique`
               });
-              return; // Skip further validation
             }
-
-            // Basic validation
-            const date = new Date(value);
-            isValidDate = !isNaN(date.getTime());
-
-            // Additional validation for year-only inputs
-            if (isValidDate) {
-              const isoString = date.toISOString();
-              // If input was just a year but ISO date is January 1st, it's not a valid date format
-              if (/^\d{4}-01-01T00:00:00.000Z$/.test(isoString) && !/^\d{4}-\d{2}-\d{2}/.test(String(value))) {
-                isValidDate = false;
-              }
-            }
-          } catch (e) {
-            isValidDate = false;
-          }
-
-          if (!isValidDate) {
-            newErrors.push({
-              rowIndex: displayRowIndex,
-              columnIndex: colIdx,
-              message: `${column.label} must be a valid date format`
-            });
-          }
+          });
         }
-
-        // Email validation
-        if (fieldType === 'email' && value !== '') {
-          // Regular expression for validating an Email
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          const isValidEmail = emailRegex.test(String(value));
-
-          if (!isValidEmail) {
-            newErrors.push({
-              rowIndex: displayRowIndex,
-              columnIndex: colIdx,
-              message: `${column.label} must be a valid email address`
-            });
-          }
-        }
-
-        // Select validation
-        if ((fieldType === 'select' || fieldType === 'enum') && value !== '') {
-          // Get options from column
-          const options = column.options || [];
-
-          if (options.length > 0 && !options.map((o: string) => o.toLowerCase()).includes(String(value).toLowerCase())) {
-            newErrors.push({
-              rowIndex: displayRowIndex,
-              columnIndex: colIdx,
-              message: `${column.label} must be one of: ${options.join(', ')}`
-            });
-          }
-        }
-      });
+      }
     });
 
     setErrors(newErrors);
@@ -325,10 +246,33 @@ export default function Validation({
       ? dataRows.filter((_, rowIdx) => !errorTracking.indices.has(rowIdx))
       : dataRows;
 
-    // Call onSuccess with the updated data
+    // Apply transformations to the filtered data
+    const transformedData = filteredData.map(row => {
+      const newRow = { ...row };
+      const transformedValues = row.values.map((value, colIdx) => {
+        // Only transform included columns
+        if (!includedColumns.includes(colIdx)) return value;
+        
+        // Get the column mapping
+        const mapping = columnMapping[colIdx];
+        if (!mapping || !mapping.key) return value;
+        
+        // Find the column definition
+        const column = columns?.find(c => c.id === mapping.key);
+        if (!column || !column.transformations) return value;
+        
+        // Apply transformations
+        return applyTransformations(value, column.transformations);
+      });
+      
+      newRow.values = transformedValues;
+      return newRow;
+    });
+    
+    // Call onSuccess with the transformed data
     onSuccess({
       ...fileData,
-      rows: [headerRow, ...filteredData]
+      rows: [headerRow, ...transformedData]
     });
   };
 
@@ -521,9 +465,6 @@ export default function Validation({
             };
           })}
           onApplyTransformations={(changes) => {
-            console.log('=== APPLYING TRANSFORMATIONS ===');
-            console.log('Total changes received:', changes.length);
-            console.log('Current dataRows length:', dataRows.length);
 
             // Create a copy of dataRows and apply all changes
             const updatedRows = [...dataRows];
@@ -558,13 +499,8 @@ export default function Validation({
                 }
                 updatedRows[rowIndex].values[columnIndex] = newValue;
                 appliedCount++;
-                console.log(`Applied change to row ${rowIndex}, column ${columnIndex}: ${newValue}`);
               }
             });
-
-            console.log(`=== TRANSFORMATION SUMMARY ===`);
-            console.log(`Applied: ${appliedCount} changes`);
-            console.log(`Skipped: ${skippedCount} changes`);
 
             // Update the state with all changes at once
             setDataRows(updatedRows);

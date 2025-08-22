@@ -27,9 +27,18 @@ export default function useMapColumnsTable(
     });
   }, []);
 
-  const checkSimilarity = (templateColumnKey: string, uploadColumnName: string) => {
-    const templateColumnKeyFormatted = templateColumnKey.replace(/_/g, " ");
-    return stringsSimilarity(templateColumnKeyFormatted, uploadColumnName.toLowerCase()) > 0.9;
+  const checkSimilarity = (templateColumnName: string, uploadColumnName: string) => {
+    // Compare both names in lowercase for case-insensitive matching
+    const templateNameLower = templateColumnName.toLowerCase();
+    const uploadNameLower = uploadColumnName.toLowerCase();
+    
+    // Check for exact match first
+    if (templateNameLower === uploadNameLower) {
+      return true;
+    }
+    
+    // Then check for high similarity
+    return stringsSimilarity(templateNameLower, uploadNameLower) > 0.8;
   };
 
   // Simple string matching function - always returns false since suggested_mappings were removed
@@ -56,7 +65,8 @@ export default function useMapColumnsTable(
       }
 
       const similarTemplateColumn = templateColumns?.find((tc) => {
-        if (tc.key && !usedTemplateColumns.has(tc.key) && checkSimilarity(tc.key, uc.name)) {
+        // Use tc.name (label) for similarity check, not tc.key (id)
+        if (tc.key && !usedTemplateColumns.has(tc.key) && checkSimilarity(tc.name, uc.name)) {
           usedTemplateColumns.add(tc.key);
           return true;
         }

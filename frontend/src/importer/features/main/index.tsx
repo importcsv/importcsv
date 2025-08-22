@@ -309,11 +309,18 @@ export default function Main(props: CSVImporterProps) {
 
     // Standalone mode: directly call onComplete with data
     if (isStandaloneMode) {
+      // For standalone mode, preserve the original row structure with values array
+      // This ensures compatibility with examples that expect rows with values
+      const standaloneData = validatedData.rows.slice(startIndex);
+      
       onComplete && onComplete({
         success: true,
-        data: mappedRows,
+        data: standaloneData,  // Send rows with values array intact
+        mappedData: mappedRows,  // Also include mapped data for compatibility
         num_rows: mappedRows.length,
         num_columns: includedColumns.length,
+        headers: headerRow.values,
+        columnMapping: columnMapping
       });
       setIsSubmitting(false);
       goNext();
