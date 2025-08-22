@@ -1,14 +1,12 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "../../../../i18n/useTranslation";
 import useStepper from "../../../components/Stepper/hooks/useStepper";
-import { Steps } from "../types";
 import useMutableLocalStorage from "./useMutableLocalStorage";
 
 export const StepEnum = {
   Upload: 0,
-  RowSelection: 1,
-  MapColumns: 2,
-  ConfigureImport: 2, // Consolidated step
+  RowSelection: 1, // Deprecated - kept for backwards compatibility
+  MapColumns: 2,    // Now uses ConfigureImport component
   Validation: 3,
   Complete: 4,
 };
@@ -20,33 +18,25 @@ const calculateNextStep = (nextStep: number, skipHeader: boolean) => {
   return nextStep;
 };
 
-const getStepConfig = (skipHeader: boolean, useConsolidated: boolean = true) => {
-  if (useConsolidated) {
-    return [
-      { label: "Upload", id: 0 },
-      { label: "Configure", id: 1 },
-      { label: "Validation", id: 2 },
-    ];
-  }
-  // Legacy flow
+const getStepConfig = (skipHeader: boolean) => {
+  // Consolidated flow: Upload → Configure → Validation
   return [
-    { label: "Upload", id: Steps.Upload },
-    { label: "Select Header", id: Steps.RowSelection, disabled: skipHeader },
-    { label: "Map Columns", id: Steps.MapColumns },
-    { label: "Validation", id: Steps.Validation },
+    { label: "Upload", id: 0 },
+    { label: "Configure", id: 1 },
+    { label: "Validation", id: 2 },
   ];
 };
 
-function useStepNavigation(initialStep: number, skipHeader: boolean, useConsolidated: boolean = true, isDemoMode: boolean = false) {
+function useStepNavigation(initialStep: number, skipHeader: boolean, isDemoMode: boolean = false) {
   const { t } = useTranslation();
-  const translatedSteps = getStepConfig(skipHeader, useConsolidated).map((step) => ({
+  const translatedSteps = getStepConfig(skipHeader).map((step) => ({
     ...step,
     label: t(step.label),
   }));
-  // Map initial step to stepper index for consolidated flow
-  const initialStepperIndex = useConsolidated && initialStep === StepEnum.MapColumns ? 1 : 
-                             useConsolidated && initialStep === StepEnum.Validation ? 2 : 
-                             useConsolidated && initialStep === StepEnum.Complete ? 3 : 0;
+  // Map initial step to stepper index
+  const initialStepperIndex = initialStep === StepEnum.MapColumns ? 1 : 
+                             initialStep === StepEnum.Validation ? 2 : 
+                             initialStep === StepEnum.Complete ? 3 : 0;
   const stepper = useStepper(translatedSteps, initialStepperIndex, skipHeader);
   // Don't use localStorage in demo mode - use a dummy state instead
   const localStorageResult = isDemoMode ? 
@@ -69,13 +59,11 @@ function useStepNavigation(initialStep: number, skipHeader: boolean, useConsolid
   const setStep = (newStep: number) => {
     setCurrentStep(newStep);
     setStorageStep(newStep);
-    // Map the step to the correct stepper index for consolidated flow
-    const stepperIndex = useConsolidated ? 
-      (newStep === StepEnum.Upload ? 0 : 
-       newStep === StepEnum.MapColumns ? 1 : 
-       newStep === StepEnum.Validation ? 2 : 
-       newStep === StepEnum.Complete ? 3 : newStep) 
-      : newStep;
+    // Map the step to the correct stepper index
+    const stepperIndex = newStep === StepEnum.Upload ? 0 : 
+                        newStep === StepEnum.MapColumns ? 1 : 
+                        newStep === StepEnum.Validation ? 2 : 
+                        newStep === StepEnum.Complete ? 3 : newStep;
     stepper.setCurrent(stepperIndex);
   };
 
@@ -85,13 +73,11 @@ function useStepNavigation(initialStep: number, skipHeader: boolean, useConsolid
       return;
     }
     const step = storageStep || 0;
-    // Map the step to the correct stepper index for consolidated flow
-    const stepperIndex = useConsolidated ? 
-      (step === StepEnum.Upload ? 0 : 
-       step === StepEnum.MapColumns ? 1 : 
-       step === StepEnum.Validation ? 2 : 
-       step === StepEnum.Complete ? 3 : step) 
-      : step;
+    // Map the step to the correct stepper index
+    const stepperIndex = step === StepEnum.Upload ? 0 : 
+                        step === StepEnum.MapColumns ? 1 : 
+                        step === StepEnum.Validation ? 2 : 
+                        step === StepEnum.Complete ? 3 : step;
     stepper.setCurrent(stepperIndex);
     setCurrentStep(step);
   }, [storageStep, isDemoMode]);

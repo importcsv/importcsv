@@ -14,8 +14,6 @@ import useStepNavigation, { StepEnum } from "./hooks/useStepNavigation";
 import { FileData, FileRow } from "./types";
 import Complete from "../complete";
 import { cn } from "../../../utils/cn";
-import MapColumns from "../map-columns";
-import RowSelection from "../row-selection";
 import ConfigureImport from "../configure-import";
 import Uploader from "../uploader";
 import { X } from "lucide-react";
@@ -65,11 +63,10 @@ export default function Main(props: CSVImporterProps) {
   // Apply custom styles
   useCustomStyles(parseObjectOrStringJSON("customStyles", customStyles));
 
-  // Stepper handler - using consolidated flow
-  const useConsolidatedFlow = true; // Using consolidated flow to combine header selection and mapping
+  // Stepper handler
   // Start at MapColumns step if demo mode is active
   const initialStep = isDemoMode ? StepEnum.MapColumns : StepEnum.Upload;
-  const { currentStep, setStep, goNext, goBack, stepper, setStorageStep } = useStepNavigation(initialStep, skipHeader, useConsolidatedFlow, isDemoMode);
+  const { currentStep, setStep, goNext, goBack, stepper } = useStepNavigation(initialStep, skipHeader, isDemoMode);
 
   // Error handling
   const [initializationError, setInitializationError] = useState<string | null>(null);
@@ -98,7 +95,6 @@ export default function Main(props: CSVImporterProps) {
 
   // Store columns directly - either from props or fetched from backend
   const [importColumns, setImportColumns] = useState<Column[]>([]);
-  const [isLoadingSchema, setIsLoadingSchema] = useState<boolean>(false);
   const [includeUnmatchedColumns, setIncludeUnmatchedColumns] = useState<boolean>(false);
   const [filterInvalidRows, setFilterInvalidRows] = useState<boolean>(false);
   const [disableOnInvalidRows, setDisableOnInvalidRows] = useState<boolean>(false);
@@ -139,7 +135,6 @@ export default function Main(props: CSVImporterProps) {
         
         // Use columns directly
         setImportColumns(propColumns);
-        setIsLoadingSchema(false);
         return;
       }
       
@@ -150,7 +145,6 @@ export default function Main(props: CSVImporterProps) {
       }
 
       try {
-        setIsLoadingSchema(true);
         // Fetch schema from the backend
         const response = await fetch(`${backendUrl}/api/v1/imports/key/schema?importer_key=${importerKey}`);
 
@@ -218,8 +212,6 @@ export default function Main(props: CSVImporterProps) {
         setImportColumns(backendColumns);
       } catch (error) {
         setInitializationError(`Failed to fetch schema: ${error instanceof Error ? error.message : String(error)}`);
-      } finally {
-        setIsLoadingSchema(false);
       }
     };
 
@@ -298,14 +290,6 @@ export default function Main(props: CSVImporterProps) {
     });
 
     const includedColumns = Object.values(columnMapping).filter(({ include }) => include);
-
-    const onCompleteData = {
-      num_rows: mappedRows.length,
-      num_columns: includedColumns.length,
-      error: null,
-      columns: includedColumns.map(({ key }) => ({ key, name: key })),
-      rows: mappedRows,
-    };
 
     // Standalone mode: directly call onComplete with data
     if (isStandaloneMode) {
@@ -514,56 +498,25 @@ export default function Main(props: CSVImporterProps) {
           />
         );
       case StepEnum.RowSelection:
-        // Skip if using consolidated flow
-        if (useConsolidatedFlow) {
-          goNext();
-          return null;
-        }
-        return (
-          <RowSelection
-            data={data}
-            onCancel={reload}
-            onSuccess={() => goNext()}
-            selectedHeaderRow={selectedHeaderRow}
-            setSelectedHeaderRow={setSelectedHeaderRow}
-          />
-        );
+        // This step is deprecated - skip to next
+        goNext();
+        return null;
       case StepEnum.MapColumns:
-        // Use consolidated ConfigureImport component if enabled
-        if (useConsolidatedFlow) {
-          return (
-            <ConfigureImport
-              columns={importColumns || propColumns}
-              data={data}
-              onSuccess={(mapping, headerRow) => {
-                setColumnMapping(mapping);
-                setSelectedHeaderRow(headerRow);
-                goNext();
-              }}
-              onCancel={isDemoMode ? undefined : () => goBack(StepEnum.Upload)}
-              isSubmitting={isSubmitting}
-              importerKey={importerKey}
-              backendUrl={backendUrl}
-              isDemoMode={isDemoMode}
-            />
-          );
-        }
-        // Legacy flow
+        // Use ConfigureImport component for column mapping and configuration
         return (
-          <MapColumns
+          <ConfigureImport
             columns={importColumns || propColumns}
             data={data}
-            columnMapping={columnMapping}
-            skipHeaderRowSelection={skipHeader}
-            selectedHeaderRow={selectedHeaderRow}
-            onSuccess={(columns) => {
-              setColumnMapping(columns);
+            onSuccess={(mapping, headerRow) => {
+              setColumnMapping(mapping);
+              setSelectedHeaderRow(headerRow);
               goNext();
             }}
+            onCancel={isDemoMode ? undefined : () => goBack(StepEnum.Upload)}
             isSubmitting={isSubmitting}
             importerKey={importerKey}
             backendUrl={backendUrl}
-            onCancel={skipHeader ? reload : () => goBack(StepEnum.RowSelection)}
+            isDemoMode={isDemoMode}
           />
         );
       case StepEnum.Validation:
