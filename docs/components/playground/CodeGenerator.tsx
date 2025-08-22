@@ -86,15 +86,22 @@ import { useState } from 'react';`;
         </div>
         <button
           onClick={copyToClipboard}
-          className="px-3 py-1 text-sm bg-fd-primary text-fd-primary-foreground rounded-md hover:opacity-90"
+          className="px-3 py-1 text-sm bg-fd-primary text-white rounded-md hover:bg-fd-primary/90 transition-colors font-medium"
         >
           {copied ? '✓ Copied' : 'Copy Code'}
         </button>
       </div>
 
-      <div className="relative">
-        <pre className="overflow-x-auto rounded-lg border bg-fd-muted/30 p-4">
-          <code className="text-sm text-fd-foreground">{generateCode()}</code>
+      <div className="relative rounded-lg border border-fd-border bg-fd-code overflow-hidden">
+        <div className="bg-fd-muted/50 px-4 py-2 border-b border-fd-border flex justify-between items-center">
+          <span className="text-xs text-fd-muted-foreground font-mono">
+            {showTypeScript ? 'TypeScript' : 'JavaScript'}
+          </span>
+        </div>
+        <pre className="overflow-x-auto p-4 bg-fd-background/50">
+          <code className="text-sm font-mono text-fd-foreground" style={{ whiteSpace: 'pre' }}>
+            {generateCode()}
+          </code>
         </pre>
       </div>
 

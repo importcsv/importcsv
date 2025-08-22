@@ -8,9 +8,20 @@ import SampleDataSelector from './SampleDataSelector';
 interface PropConfiguratorProps {
   config: PlaygroundConfig;
   onChange: (config: PlaygroundConfig) => void;
+  onOpenImporter: () => void;
+  importedData: any;
+  CSVImporter: any;
+  onImportComplete: (data: any) => void;
 }
 
-export default function PropConfigurator({ config, onChange }: PropConfiguratorProps) {
+export default function PropConfigurator({ 
+  config, 
+  onChange, 
+  onOpenImporter, 
+  importedData, 
+  CSVImporter, 
+  onImportComplete 
+}: PropConfiguratorProps) {
   const updateConfig = (updates: Partial<PlaygroundConfig>) => {
     onChange({ ...config, ...updates });
   };
@@ -196,6 +207,37 @@ export default function PropConfigurator({ config, onChange }: PropConfiguratorP
               </div>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Test Importer Section */}
+      <div className="space-y-4">
+        <h3 className="font-semibold text-sm text-fd-foreground">Test Importer</h3>
+        
+        <div className="space-y-3">
+          <button 
+            onClick={onOpenImporter}
+            className="inline-flex items-center justify-center px-4 py-2 bg-fd-primary text-white rounded-md hover:bg-fd-primary/90 transition-colors font-medium shadow-sm"
+          >
+            Open CSV Importer
+          </button>
+
+          {importedData && (
+            <div className="p-3 rounded-md bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
+              <p className="text-green-800 dark:text-green-200 text-sm">
+                ✓ Imported {importedData.num_rows} rows successfully
+              </p>
+            </div>
+          )}
+
+          {!config.isModal && CSVImporter && (
+            <div className="border-2 border-fd-border rounded-lg overflow-hidden" style={{ height: '400px' }}>
+              <CSVImporter
+                {...config}
+                onComplete={onImportComplete}
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

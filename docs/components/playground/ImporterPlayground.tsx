@@ -5,6 +5,7 @@ import PropConfigurator from './PropConfigurator';
 import CodeGenerator from './CodeGenerator';
 import { loadCSVImporter } from '@/lib/load-importer';
 import type { Column } from '@importcsv/react';
+import '@importcsv/react/build/bundle.css';
 
 export interface PlaygroundConfig {
   darkMode: boolean;
@@ -50,7 +51,7 @@ export default function ImporterPlayground() {
   const [config, setConfig] = useState<PlaygroundConfig>(defaultConfig);
   const [importedData, setImportedData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'configure' | 'preview' | 'code'>('configure');
+  const [activeTab, setActiveTab] = useState<'configure' | 'code'>('configure');
 
   useEffect(() => {
     loadCSVImporter().then(module => {
@@ -105,17 +106,7 @@ export default function ImporterPlayground() {
               : 'text-fd-muted-foreground hover:text-fd-foreground'
           }`}
         >
-          Configure
-        </button>
-        <button
-          onClick={() => setActiveTab('preview')}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === 'preview' 
-              ? 'border-b-2 border-fd-primary text-fd-foreground' 
-              : 'text-fd-muted-foreground hover:text-fd-foreground'
-          }`}
-        >
-          Preview
+          Configure & Test
         </button>
         <button
           onClick={() => setActiveTab('code')}
@@ -135,45 +126,11 @@ export default function ImporterPlayground() {
           <PropConfigurator 
             config={config} 
             onChange={setConfig}
+            onOpenImporter={openImporter}
+            importedData={importedData}
+            CSVImporter={CSVImporter}
+            onImportComplete={handleImportComplete}
           />
-        )}
-
-        {activeTab === 'preview' && (
-          <div className="space-y-4">
-            <div className="rounded-lg border p-6">
-              <h3 className="text-lg font-semibold mb-4">Try It</h3>
-              
-              <button 
-                onClick={openImporter}
-                className="px-4 py-2 bg-fd-primary text-fd-primary-foreground rounded-md hover:opacity-90 transition-opacity"
-              >
-                Open CSV Importer
-              </button>
-
-              {importedData && (
-                <div className="mt-4 p-3 rounded-md bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
-                  <p className="text-green-800 dark:text-green-200">
-                    ✓ Imported {importedData.num_rows} rows successfully
-                  </p>
-                </div>
-              )}
-
-              {!config.isModal && (
-                <div className="mt-6 border rounded-lg overflow-hidden" style={{ height: '400px' }}>
-                  <CSVImporter
-                    {...config}
-                    onComplete={handleImportComplete}
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="rounded-lg border p-4 bg-fd-muted/30">
-              <p className="text-sm text-fd-muted-foreground">
-                💡 <strong>Tip:</strong> Download sample CSV files from the Configure tab to test different scenarios.
-              </p>
-            </div>
-          </div>
         )}
 
         {activeTab === 'code' && (
