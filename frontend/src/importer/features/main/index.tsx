@@ -51,7 +51,6 @@ export default function Main(props: CSVImporterProps) {
     backendUrl = config.apiBaseUrl,
     user,
     metadata,
-    useIframe = true, // Default to using iframe for CSS isolation
     demoData
   } = props;
   const skipHeader = skipHeaderRowSelection ?? false;
@@ -587,28 +586,12 @@ export default function Main(props: CSVImporterProps) {
     </div>
   );
 
-  // Wrap in iframe for complete CSS isolation if enabled
-  if (useIframe) {
-    return (
-      <IframeWrapper className="importcsv-iframe" primaryColor={props.primaryColor}>
-        <div className="csv-importer" data-theme={props.darkMode ? 'dark' : 'light'}>
-          {content}
-        </div>
-      </IframeWrapper>
-    );
-  }
-
-  // Legacy mode without iframe (for backwards compatibility)
+  // Always wrap in iframe for complete CSS isolation
   return (
-    <div style={{
-      width: '100%',
-      overflow: 'visible',
-      position: 'relative',
-      isolation: 'isolate',
-      contain: 'layout style',
-      boxSizing: 'border-box'
-    }}>
-      {content}
-    </div>
+    <IframeWrapper className="importcsv-iframe" primaryColor={props.primaryColor}>
+      <div className="csv-importer" data-theme={props.darkMode ? 'dark' : 'light'}>
+        {content}
+      </div>
+    </IframeWrapper>
   );
 }

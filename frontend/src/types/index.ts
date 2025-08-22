@@ -93,7 +93,6 @@ export type CSVImporterProps = {
   showDownloadTemplateButton?: boolean;
   skipHeaderRowSelection?: boolean;
   waitOnComplete?: boolean;
-  useIframe?: boolean;         // CSS isolation (default: true)
   
   // Localization
   language?: string;
