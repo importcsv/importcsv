@@ -32,7 +32,6 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
     backendUrl,
     user,
     metadata,
-    useIframe,
     demoData,
     columns,
     // Any remaining props will be valid DOM props
@@ -123,7 +122,6 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
         backendUrl={backendUrl}
         user={user}
         metadata={metadata}
-        useIframe={useIframe}
         demoData={demoData}
         columns={columns}
       />
