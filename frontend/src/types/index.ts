@@ -41,6 +41,19 @@ export type Transformer =
   | { type: 'replace'; find: string; replace: string }
   | { type: 'custom'; fn: (value: any) => any };
 
+// Column mapping types
+export interface ColumnMapping {
+  id: string;              // Column identifier
+  label?: string;          // Display name (optional)
+  include: boolean;        // Whether to include this column
+  selected?: boolean;      // Whether column is selected (UI state)
+}
+
+// Mapping of upload column index to template column
+export interface ColumnMappingDictionary {
+  [uploadColumnIndex: number]: ColumnMapping;
+}
+
 // Modal parameters
 type ModalParams = {
   isModal?: boolean;

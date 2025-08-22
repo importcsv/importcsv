@@ -3,6 +3,13 @@
  */
 
 /**
+ * Validate hex color format
+ */
+export function isValidColor(color: string): boolean {
+  return /^#([0-9A-F]{3}){1,2}$/i.test(color);
+}
+
+/**
  * Convert hex color to RGB
  */
 export function hexToRgb(hex: string): { r: number; g: number; b: number } | null {

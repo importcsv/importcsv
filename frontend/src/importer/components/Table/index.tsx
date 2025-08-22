@@ -1,5 +1,5 @@
 import React, { createContext, useContext } from "react";
-import classes from "../../utils/classes";
+import { cn } from "../../../utils/cn";
 import { CellProps, RowProps, TableProps } from "./types";
 import Tooltip from "../Tooltip";
 
@@ -48,11 +48,11 @@ export default function Table({
 
   if (!data || !data?.length) return <div className="text-center text-gray-500 py-8">{emptyState || null}</div>;
 
-  const tableStyle = classes([
+  const tableStyle = cn(
     "w-full border-collapse",
     background === "zebra" && "[&>div:nth-child(even)]:bg-gray-50",
     fixHeader && "relative"
-  ]);
+  );
 
   const headingContent = heading ? (
     <div className="px-4 py-2 font-semibold text-lg border-b">{heading}</div>
@@ -86,11 +86,11 @@ export default function Table({
 const Row = ({ datum, onClick, isHeading }: RowProps) => {
   const { highlightColumns, hideColumns, columnWidths, columnAlignments } = useContext(TableContext);
 
-  const className = classes([
+  const className = cn(
     "flex",
     onClick && "cursor-pointer hover:bg-gray-50",
     isHeading && "font-semibold"
-  ]);
+  );
   return (
     <div className={className} role="row" onClick={() => onClick?.(datum)}>
       {Object.keys(datum)
@@ -107,12 +107,12 @@ const Row = ({ datum, onClick, isHeading }: RowProps) => {
           content = isHeading && captionInfo ? <Tooltip title={captionInfo}>{headingKey}</Tooltip> : content;
           const wrappedContent = content && typeof content === "string" ? <span>{content}</span> : content;
 
-          const cellClass = classes([
+          const cellClass = cn(
             "px-4 py-2",
             highlightColumns?.includes(k) && "bg-blue-50 font-medium",
             !wrappedContent && "text-gray-400",
-            typeof content !== "string" && "flex items-center",
-          ]);
+            typeof content !== "string" && "flex items-center"
+          );
 
           const cellStyle = { width: columnWidths?.[i] || "auto", textAlign: columnAlignments?.[i] || "left" };
 
@@ -128,7 +128,7 @@ const Row = ({ datum, onClick, isHeading }: RowProps) => {
 
 const Cell = ({ children, cellClass, cellStyle, tooltip }: CellProps) => {
   const cellProps = {
-    className: classes(["flex-1", cellClass, !children && "text-gray-400"]),
+    className: cn("flex-1", cellClass, !children && "text-gray-400"),
     role: "cell",
     style: cellStyle,
     ...(tooltip ? { title: tooltip } : {}),

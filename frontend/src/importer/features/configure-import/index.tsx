@@ -12,27 +12,19 @@ import {
 // Using native HTML table elements instead of Chakra UI
 import { CheckCircle } from 'lucide-react';
 import { useTranslation } from '../../../i18n/useTranslation';
-import { Column } from '../../../types';
+import { Column, ColumnMapping, ColumnMappingDictionary } from '../../../types';
 import stringSimilarity from '../../utils/stringSimilarity';
 import { getMappingSuggestions } from '../../services/mapping';
 
 interface ConfigureImportProps {
   columns?: Column[];
   data: any;
-  onSuccess: (mapping: any, headerRow: number) => void;
+  onSuccess: (mapping: ColumnMappingDictionary, headerRow: number) => void;
   onCancel?: () => void;
   isSubmitting?: boolean;
   importerKey?: string;
   backendUrl?: string;
   isDemoMode?: boolean;
-}
-
-interface ColumnMapping {
-  [uploadColumnIndex: number]: {
-    id: string;
-    label: string;
-    include: boolean;
-  };
 }
 
 export default function ConfigureImport({
@@ -47,7 +39,7 @@ export default function ConfigureImport({
 }: ConfigureImportProps) {
   const { t } = useTranslation();
   const selectedHeaderRow = 0; // Always use first row as headers
-  const [columnMapping, setColumnMapping] = useState<ColumnMapping>({});
+  const [columnMapping, setColumnMapping] = useState<ColumnMappingDictionary>({});
   const [error, setError] = useState<string | null>(null);
   const llmEnhancementCalled = useRef(false);
 
@@ -91,7 +83,7 @@ export default function ConfigureImport({
 
   // Auto-map columns based on name similarity
   useEffect(() => {
-    const autoMap: ColumnMapping = {};
+    const autoMap: ColumnMappingDictionary = {};
 
     columnHeaders.forEach((header: string, index: number) => {
       let bestMatch = { column: null as any, score: 0 };

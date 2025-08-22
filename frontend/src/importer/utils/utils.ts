@@ -1,7 +1,20 @@
-// Allows for the user to pass in JSON as either an object or a string
-export const parseObjectOrStringJSON = (name: string, param?: Record<string, unknown> | string): string => {
+/**
+ * Parse JSON input that can be either an object or a string
+ * @param param - The parameter to parse (object or JSON string)
+ * @param options - Options for parsing
+ * @returns Parsed object or stringified JSON based on options
+ */
+export function parseJSON<T extends 'object' | 'string' = 'object'>(
+  param?: Record<string, unknown> | string,
+  options?: {
+    returnType?: T;
+    escapePercent?: boolean;
+  }
+): T extends 'string' ? string : Record<string, unknown> {
+  const { returnType = 'object', escapePercent = false } = options || {};
+  
   if (typeof param === "undefined") {
-    return "";
+    return (returnType === 'string' ? "" : {}) as any;
   }
 
   let parsedObj: Record<string, unknown> = {};
@@ -11,42 +24,30 @@ export const parseObjectOrStringJSON = (name: string, param?: Record<string, unk
       parsedObj = JSON.parse(param);
     } catch (e) {
       // Error parsing JSON
-      return "";
+      return (returnType === 'string' ? "" : {}) as any;
     }
   } else {
     parsedObj = param;
   }
 
-  // Replace % symbols with %25
-  for (const key in parsedObj) {
-    if (typeof parsedObj[key] === "string") {
-      parsedObj[key] = (parsedObj[key] as string).replace(/%(?!25)/g, "%25");
+  // Replace % symbols with %25 if requested
+  if (escapePercent) {
+    for (const key in parsedObj) {
+      if (typeof parsedObj[key] === "string") {
+        parsedObj[key] = (parsedObj[key] as string).replace(/%(?!25)/g, "%25");
+      }
     }
   }
 
-  return JSON.stringify(parsedObj);
-};
+  return (returnType === 'string' ? JSON.stringify(parsedObj) : parsedObj) as any;
+}
 
-export const parseObjectOrStringJSONToRecord = (name: string, param?: Record<string, unknown> | string): Record<string, unknown> => {
-  if (typeof param === "undefined") {
-    return {};
-  }
+// Backward compatibility exports
+export const parseObjectOrStringJSON = (name: string, param?: Record<string, unknown> | string): string => 
+  parseJSON(param, { returnType: 'string', escapePercent: true });
 
-  let parsedObj: Record<string, unknown> = {};
-
-  if (typeof param === "string") {
-    try {
-      parsedObj = JSON.parse(param);
-    } catch (e) {
-      // Error parsing JSON
-      return {};
-    }
-  } else {
-    parsedObj = param;
-  }
-
-  return parsedObj;
-};
+export const parseObjectOrStringJSONToRecord = (name: string, param?: Record<string, unknown> | string): Record<string, unknown> => 
+  parseJSON(param, { returnType: 'object' });
 
 export const validateJSON = (str: string, paramName: string) => {
   if (!str || str === "undefined") {
@@ -77,34 +78,6 @@ export const strToOptionalBoolean = (str: string) => (str ? str.toLowerCase() ==
 
 export const strToDefaultBoolean = (str: string, defaultValue: boolean) => (str ? str.toLowerCase() === "true" || str === "1" : defaultValue);
 
-// Check if a hex color is valid
-export const isValidColor = (color: string) => /^#([0-9A-F]{3}){1,2}$/i.test(color);
-
-// Expand a three-character hex to six characters
-export const expandHex = (color: string) => {
-  if (color.length === 4) {
-    // #rgb => #rrggbb
-    color = "#" + color[1] + color[1] + color[2] + color[2] + color[3] + color[3];
-  }
-  return color;
-};
-
-// Darken a hex color by a certain percent
-export const darkenColor = (color: string, percent: number) => {
-  if (!isValidColor(color)) return color;
-
-  color = expandHex(color); // Ensure the color is in 6-character format
-
-  const num = parseInt(color.replace("#", ""), 16),
-    amt = Math.round(2.55 * percent),
-    R = (num >> 16) - amt,
-    B = ((num >> 8) & 0x00ff) - amt,
-    G = (num & 0x0000ff) - amt;
-
-  return (
-    "#" +
-    (0x1000000 + (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 + (B < 255 ? (B < 1 ? 0 : B) : 255) * 0x100 + (G < 255 ? (G < 1 ? 0 : G) : 255))
-      .toString(16)
-      .slice(1)
-  );
-};
+// Color utilities moved to colorUtils.ts
+// Export from there for backward compatibility if needed
+export { isValidColor, darkenColor } from './colorUtils';

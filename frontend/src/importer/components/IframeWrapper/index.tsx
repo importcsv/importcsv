@@ -1,7 +1,7 @@
 import React, { useRef } from 'react';
 import Frame, { FrameContextConsumer } from 'react-frame-component';
 import { importcsvStyles } from '../../../styles';
-import { darkenColor } from '../../utils/utils';
+import { darkenColor } from '../../utils/colorUtils';
 
 /**
  * IframeWrapper Component

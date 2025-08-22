@@ -9,7 +9,7 @@ import Validation from "../validation/Validation";
 import { CSVImporterProps, Column } from "../../../types";
 import useCustomStyles from "../../hooks/useCustomStyles";
 import { parseObjectOrStringJSON } from "../../utils/utils";
-import { TemplateColumnMapping } from "../map-columns/types";
+import { ColumnMapping, ColumnMappingDictionary } from "../../../types";
 import useStepNavigation, { StepEnum } from "./hooks/useStepNavigation";
 import { FileData, FileRow } from "./types";
 import Complete from "../complete";
@@ -84,8 +84,8 @@ export default function Main(props: CSVImporterProps) {
   // Header row selection state
   const [selectedHeaderRow, setSelectedHeaderRow] = useState<number | null>(0);
 
-  // Map of upload column index -> TemplateColumnMapping
-  const [columnMapping, setColumnMapping] = useState<{ [index: number]: TemplateColumnMapping }>({});
+  // Map of upload column index -> ColumnMapping
+  const [columnMapping, setColumnMapping] = useState<ColumnMappingDictionary>({});
 
   // Used in the final step to show a loading indicator while the data is submitting
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -278,7 +278,7 @@ export default function Main(props: CSVImporterProps) {
 
         if (mapping && mapping.include) {
           // Add to mapped data
-          resultingRow.data[mapping.key] = normalizedValue;
+          resultingRow.data[mapping.id] = normalizedValue;
         } else if (includeUnmatchedColumns && headerValue) {
           // Add to unmapped data if setting is enabled
           const columnKey = headerValue.toString().toLowerCase().replace(/\s+/g, "_");
@@ -328,7 +328,7 @@ export default function Main(props: CSVImporterProps) {
     const columnMappingForBackend: Record<string, string> = {};
     Object.entries(columnMapping).forEach(([index, mapping]) => {
       if (mapping.include) {
-        columnMappingForBackend[index] = mapping.key;
+        columnMappingForBackend[index] = mapping.id;
       }
     });
 

@@ -1,11 +1,9 @@
-import classes from "../../utils/classes";
+import { cn } from "../../../utils/cn";
 import { CheckboxProps } from "./types";
 
 export default function Checkbox({ label, className, ...props }: CheckboxProps) {
-  const containerClasses = classes(["flex items-center", className]);
-
   return (
-    <label className={containerClasses}>
+    <label className={cn("flex items-center", className)}>
       <input type="checkbox" className="mr-2" {...props} />
       <span>{label}</span>
     </label>

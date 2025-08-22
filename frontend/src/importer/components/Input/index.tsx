@@ -3,14 +3,14 @@ import { createPortal } from 'react-dom';
 import useClickOutside from "../../hooks/useClickOutside";
 import useRect from "../../hooks/useRect";
 import useWindowSize from "../../hooks/useWindowSize";
-import classes from "../../utils/classes";
+import { cn } from "../../../utils/cn";
 import { InputProps } from "./types";
 import { ChevronDown, Info } from "lucide-react";
 
 export default function Input({ as = "input", label, icon, iconAfter, error, options, className, variants = [], children, ...props }: InputProps) {
   const Element = as;
 
-  const containerClassName = classes(["flex flex-col", className]);
+  const containerClassName = cn("flex flex-col", className);
 
   const icon1 = icon && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">{icon}</span>;
 
@@ -33,9 +33,9 @@ export default function Input({ as = "input", label, icon, iconAfter, error, opt
   const selectElement = options && options && <Select options={options} {...props} />;
 
   const inputWrapper = (
-    <div className={classes(["relative flex items-center", error && "border-red-500"])}>
+    <div className={cn("relative flex items-center", error && "border-red-500")}>
       {icon1}
-      {selectElement || <Element className={classes(["w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500", icon && "pl-10", (iconAfter || error) && "pr-10"])} {...props} {...(options ? { type: "text" } : {})} />}
+      {selectElement || <Element className={cn("w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500", icon && "pl-10", (iconAfter || error) && "pr-10")} {...props} {...(options ? { type: "text" } : {})} />}
       {iconSelect}
       {icon2}
     </div>
@@ -95,7 +95,7 @@ function Select({ options = {}, placeholder, ...props }: InputProps) {
       <input
         {...props}
         value={selectedKey}
-        className={classes(["w-full px-3 py-2 border rounded-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500", open && "ring-2 ring-blue-500"])}
+        className={cn("w-full px-3 py-2 border rounded-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500", open && "ring-2 ring-blue-500")}
         readOnly
         onFocus={onFocus}
         placeholder={placeholder}
@@ -114,7 +114,7 @@ function Select({ options = {}, placeholder, ...props }: InputProps) {
             {Object.keys(options).map((k, i) => (
               <button
                 key={k}
-                className={classes(["w-full px-3 py-2 text-left hover:bg-gray-100", options[k].value === props.value && "bg-blue-50 text-blue-600"])}
+                className={cn("w-full px-3 py-2 text-left hover:bg-gray-100", options[k].value === props.value && "bg-blue-50 text-blue-600")}
                 type="button"
                 {...options[k]}
                 onClick={onChangeOption}

@@ -23,7 +23,7 @@ export default function useMapColumnsTable(
   useEffect(() => {
     Object.keys(columnsValues).map((uploadColumnIndexStr) => {
       const uploadColumnIndex = Number(uploadColumnIndexStr);
-      const templateId = (columnsValues[uploadColumnIndex] as any).id || columnsValues[uploadColumnIndex].key;
+      const templateId = columnsValues[uploadColumnIndex].id;
       handleTemplateChange(uploadColumnIndex, templateId);
     });
   }, []);

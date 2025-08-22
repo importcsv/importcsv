@@ -2,7 +2,7 @@ import React, { forwardRef, useEffect, useRef, useState } from "react";
 import Importer from "../../importer/features/main";
 import Providers from "../../importer/providers";
 import useThemeStore from "../../importer/stores/theme";
-import { darkenColor, isValidColor } from "../../importer/utils/utils";
+import { darkenColor, isValidColor } from "../../importer/utils/colorUtils";
 import { CSVImporterProps } from "../../types";
 // Import styles so they are available for the importer. We will transfer
 // these styles into the iframe and remove them from the host document to

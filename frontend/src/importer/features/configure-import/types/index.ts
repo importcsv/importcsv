@@ -1,9 +1,10 @@
 import { Template } from '../../../types';
+import { ColumnMapping, ColumnMappingDictionary } from '../../../../types';
 
 export interface ConfigureImportProps {
   template: Template;
   data: any;
-  onSuccess: (mapping: any, headerRow: number) => void;
+  onSuccess: (mapping: ColumnMappingDictionary, headerRow: number) => void;
   onCancel?: () => void;
   isSubmitting?: boolean;
   importerKey?: string;
@@ -11,12 +12,5 @@ export interface ConfigureImportProps {
   isDemoMode?: boolean;
 }
 
-export interface TemplateColumnMapping {
-  key: string;
-  name: string;
-  include: boolean;
-}
-
-export interface ColumnMapping {
-  [uploadColumnIndex: number]: TemplateColumnMapping;
-}
+// Re-export from main types
+export type { ColumnMapping, ColumnMappingDictionary };
