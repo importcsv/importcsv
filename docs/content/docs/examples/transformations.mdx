@@ -1,0 +1,125 @@
+---
+title: Transformations Example
+description: Transform data during import
+---
+
+```tsx
+import { CSVImporter } from '@importcsv/react';
+import type { Column } from '@importcsv/react';
+
+const columns: Column[] = [
+  {
+    id: 'name',
+    label: 'Name',
+    transformations: [
+      { type: 'trim' },
+      { type: 'capitalize' }
+    ]
+  },
+  {
+    id: 'email',
+    label: 'Email',
+    type: 'email',
+    transformations: [
+      { type: 'trim' },
+      { type: 'lowercase' }
+    ]
+  },
+  {
+    id: 'phone',
+    label: 'Phone',
+    transformations: [
+      { type: 'normalize_phone' }
+    ]
+  },
+  {
+    id: 'country_code',
+    label: 'Country',
+    transformations: [
+      { type: 'uppercase' },
+      { type: 'default', value: 'US' }
+    ]
+  },
+  {
+    id: 'start_date',
+    label: 'Start Date',
+    type: 'date',
+    transformations: [
+      { type: 'normalize_date', format: 'YYYY-MM-DD' }
+    ]
+  },
+  {
+    id: 'product_sku',
+    label: 'SKU',
+    transformations: [
+      { type: 'remove_special_chars' },
+      { type: 'replace', find: ' ', replace: '-' },
+      { type: 'uppercase' }
+    ]
+  },
+  {
+    id: 'price',
+    label: 'Price',
+    type: 'number',
+    transformations: [
+      { 
+        type: 'custom', 
+        fn: (value) => {
+          // Remove $ and convert to number
+          return parseFloat(value.replace('$', ''));
+        }
+      }
+    ]
+  }
+];
+
+export default function TransformationsExample() {
+  return (
+    <CSVImporter
+      columns={columns}
+      onComplete={(data) => {
+        console.log('Transformed data:', data);
+      }}
+    />
+  );
+}
+```
+
+## Input CSV
+
+```csv
+Name,Email,Phone,Country,Start Date,SKU,Price
+  john doe  ,JOHN@EXAMPLE.COM,(555) 123-4567,us,01/15/2024,PRD #123!,$99.99
+JANE SMITH,Jane@Example.Com,555.987.6543,,2024-02-20,item 456,$149.50
+```
+
+## Output After Transformations
+
+```json
+{
+  "rows": [
+    {
+      "values": {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "phone": "+15551234567",
+        "country_code": "US",
+        "start_date": "2024-01-15",
+        "product_sku": "PRD-123",
+        "price": 99.99
+      }
+    },
+    {
+      "values": {
+        "name": "Jane Smith",
+        "email": "jane@example.com",
+        "phone": "+15559876543",
+        "country_code": "US",
+        "start_date": "2024-02-20",
+        "product_sku": "ITEM-456",
+        "price": 149.50
+      }
+    }
+  ]
+}
+```

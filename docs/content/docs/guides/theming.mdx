@@ -1,0 +1,88 @@
+---
+title: Theming
+description: CSS variables for customization
+---
+
+## Quick Setup
+
+```tsx
+<CSVImporter
+  darkMode={true}
+  primaryColor="#8B5CF6"
+/>
+```
+
+## CSS Variables
+
+```tsx
+<CSVImporter
+  customStyles={{
+    // Typography
+    'font-family': 'Inter, sans-serif',
+    'font-size': '14px',
+    'base-spacing': '1rem',
+    
+    // Shape
+    'border-radius': '8px',
+    
+    // Primary colors
+    'color-primary': '#3B82F6',
+    'color-primary-hover': '#2563EB',
+    
+    // Secondary colors  
+    'color-secondary': '#10B981',
+    'color-secondary-hover': '#059669',
+    
+    // Tertiary colors
+    'color-tertiary': '#8B5CF6',
+    'color-tertiary-hover': '#7C3AED',
+    
+    // Text colors
+    'color-text': '#111827',
+    'color-text-soft': '#6B7280',
+    'color-text-on-primary': '#FFFFFF',
+    'color-text-on-secondary': '#FFFFFF',
+    
+    // Backgrounds
+    'color-background': '#FFFFFF',
+    'color-background-modal': '#F9FAFB',
+    'color-input-background': '#F3F4F6',
+    'color-input-background-soft': '#F9FAFB',
+    'color-background-menu-hover': '#F3F4F6',
+    
+    // Borders
+    'color-border': '#E5E7EB',
+    
+    // Misc
+    'color-importer-link': '#3B82F6',
+    'color-progress-bar': '#10B981'
+  }}
+/>
+```
+
+## Preset Themes
+
+```tsx
+// Minimal
+const minimal = {
+  'border-radius': '0px',
+  'color-primary': '#000000',
+  'color-border': '#000000'
+};
+
+// Gradient
+const gradient = {
+  'border-radius': '16px',
+  'color-primary': '#667EEA',
+  'color-primary-hover': '#5A67D8',
+  'color-secondary': '#ED64A6'
+};
+
+// Corporate
+const corporate = {
+  'font-family': 'Arial, sans-serif',
+  'border-radius': '4px',
+  'color-primary': '#0066CC',
+  'color-border': '#CCCCCC'
+};
+```

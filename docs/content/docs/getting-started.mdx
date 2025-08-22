@@ -1,0 +1,89 @@
+---
+title: Getting Started
+description: Install and use ImportCSV in your React application
+---
+
+## Installation
+
+```bash
+npm install @importcsv/react
+```
+
+Excel support (optional):
+```bash
+npm install xlsx
+```
+
+## Basic Usage
+
+```tsx
+import { CSVImporter } from '@importcsv/react';
+import { useState } from 'react';
+
+function App() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <>
+      <button onClick={() => setIsOpen(true)}>Import CSV</button>
+
+      <CSVImporter
+        modalIsOpen={isOpen}
+        modalOnCloseTriggered={() => setIsOpen(false)}
+        onComplete={(data) => {
+          console.log(data);
+          // data.rows = [{ values: { name: "John", email: "john@example.com" } }]
+        }}
+        columns={[
+          { id: 'name', label: 'Name', validators: [{ type: 'required' }] },
+          { id: 'email', label: 'Email', type: 'email' }
+        ]}
+      />
+    </>
+  );
+}
+```
+
+## Framework Setup
+
+### Next.js App Router
+
+```tsx
+'use client';
+import { CSVImporter } from '@importcsv/react';
+```
+
+### Next.js Pages Router
+
+```tsx
+import dynamic from 'next/dynamic';
+
+const CSVImporter = dynamic(
+  () => import('@importcsv/react').then(mod => mod.CSVImporter),
+  { ssr: false }
+);
+```
+
+### Vanilla JavaScript
+
+```html
+<script src="https://unpkg.com/@importcsv/react@latest/build/index.js"></script>
+<script>
+  const importer = CSVImporter.createCSVImporter({
+    domElement: document.getElementById('app'),
+    columns: [
+      { id: 'name', label: 'Name' },
+      { id: 'email', label: 'Email' }
+    ],
+    onComplete: (data) => console.log(data)
+  });
+
+  importer.showModal();
+</script>
+```
+
+## What's Next?
+
+- [API Reference](/api) - All props and options
+- [Examples](/examples/basic) - Working examples
+- [Theming](/guides/theming) - Customize appearance

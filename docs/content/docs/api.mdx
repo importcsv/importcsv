@@ -1,0 +1,208 @@
+---
+title: API Reference
+description: Complete API documentation for ImportCSV
+---
+
+## CSVImporter Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `columns` | `Column[]` | required | Column definitions |
+| `onComplete` | `(data: ImportData) => void` | - | Callback when import completes |
+| `isModal` | `boolean` | `true` | Show as modal vs embedded |
+| `modalIsOpen` | `boolean` | `false` | Control modal state |
+| `modalOnCloseTriggered` | `() => void` | - | Modal close callback |
+| `modalCloseOnOutsideClick` | `boolean` | `false` | Close on outside click |
+| `darkMode` | `boolean` | `false` | Enable dark theme |
+| `primaryColor` | `string` | - | Primary color (hex) |
+| `customStyles` | `object` | - | CSS variable overrides |
+| `showDownloadTemplateButton` | `boolean` | `true` | Show template download |
+| `skipHeaderRowSelection` | `boolean` | `false` | Auto-select first row as header |
+
+## Column Interface
+
+```tsx
+interface Column {
+  id: string;                      // Unique identifier
+  label: string;                   // Display name
+  type?: 'string' | 'number' | 'email' | 'date' | 'phone' | 'select';
+  validators?: Validator[];        // Validation rules
+  transformations?: Transformer[]; // Data transformations
+  options?: string[];              // For select type
+  description?: string;            // Help text
+  placeholder?: string;            // Example value
+}
+```
+
+## Validators
+
+```tsx
+type Validator = 
+  | { type: 'required'; message?: string }
+  | { type: 'unique'; message?: string }
+  | { type: 'regex'; pattern: string; message?: string }
+  | { type: 'min'; value: number; message?: string }
+  | { type: 'max'; value: number; message?: string }
+  | { type: 'min_length'; value: number; message?: string }
+  | { type: 'max_length'; value: number; message?: string };
+```
+
+### Examples
+
+```tsx
+validators: [
+  { type: 'required' },
+  { type: 'unique', message: 'Must be unique' },
+  { type: 'regex', pattern: '^[A-Z]+$', message: 'Uppercase only' },
+  { type: 'min', value: 0 },
+  { type: 'max', value: 100 },
+  { type: 'min_length', value: 3 },
+  { type: 'max_length', value: 50 }
+]
+```
+
+## Transformers
+
+```tsx
+type Transformer = 
+  | { type: 'trim' }
+  | { type: 'uppercase' }
+  | { type: 'lowercase' }
+  | { type: 'capitalize' }
+  | { type: 'remove_special_chars' }
+  | { type: 'normalize_phone' }
+  | { type: 'normalize_date'; format?: string }
+  | { type: 'default'; value: string }
+  | { type: 'replace'; find: string; replace: string }
+  | { type: 'custom'; fn: (value: any) => any };
+```
+
+### Examples
+
+```tsx
+transformations: [
+  { type: 'trim' },
+  { type: 'uppercase' },
+  { type: 'normalize_phone' },
+  { type: 'normalize_date', format: 'YYYY-MM-DD' },
+  { type: 'default', value: 'N/A' },
+  { type: 'replace', find: ' ', replace: '_' },
+  { type: 'custom', fn: (val) => val.toLowerCase() }
+]
+```
+
+## Response Format
+
+```tsx
+interface ImportData {
+  rows: Array<{
+    index: number;
+    values: Record<string, any>;
+  }>;
+  columns: Array<{
+    id: string;
+    label: string;
+  }>;
+  num_rows: number;
+  num_columns: number;
+}
+```
+
+### Example Response
+
+```json
+{
+  "num_rows": 2,
+  "num_columns": 2,
+  "columns": [
+    { "id": "name", "label": "Name" },
+    { "id": "email", "label": "Email" }
+  ],
+  "rows": [
+    {
+      "index": 0,
+      "values": {
+        "name": "John Doe",
+        "email": "john@example.com"
+      }
+    },
+    {
+      "index": 1,
+      "values": {
+        "name": "Jane Smith",
+        "email": "jane@example.com"
+      }
+    }
+  ]
+}
+```
+
+## Custom Styles
+
+Override CSS variables:
+
+```tsx
+customStyles={{
+  'font-family': 'Inter',
+  'font-size': '14px',
+  'border-radius': '8px',
+  'color-primary': '#3B82F6',
+  'color-primary-hover': '#2563EB',
+  'color-border': '#E5E7EB',
+  'color-text': '#111827',
+  'color-background': '#FFFFFF',
+  'color-background-modal': '#F9FAFB'
+}}
+```
+
+### All CSS Variables
+
+```css
+--font-family
+--font-size
+--base-spacing
+--border-radius
+--color-primary
+--color-primary-hover
+--color-secondary
+--color-secondary-hover
+--color-tertiary
+--color-tertiary-hover
+--color-border
+--color-text
+--color-text-soft
+--color-text-on-primary
+--color-text-on-secondary
+--color-background
+--color-background-modal
+--color-input-background
+--color-input-background-soft
+--color-background-menu-hover
+--color-importer-link
+--color-progress-bar
+```
+
+## TypeScript
+
+```tsx
+import { CSVImporter } from '@importcsv/react';
+import type { Column, Validator, Transformer } from '@importcsv/react';
+
+const columns: Column[] = [
+  {
+    id: 'email',
+    label: 'Email',
+    type: 'email',
+    validators: [{ type: 'required' }] as Validator[]
+  }
+];
+```
+
+## Methods (JavaScript SDK)
+
+```javascript
+const importer = CSVImporter.createCSVImporter(config);
+
+importer.showModal();   // Open modal
+importer.closeModal();  // Close modal
+```

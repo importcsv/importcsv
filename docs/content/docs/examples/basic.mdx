@@ -1,0 +1,73 @@
+---
+title: Basic Example
+description: Simple CSV import example
+---
+
+```tsx
+import { CSVImporter } from '@importcsv/react';
+import { useState } from 'react';
+
+export default function BasicImport() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [data, setData] = useState(null);
+
+  return (
+    <>
+      <button onClick={() => setIsOpen(true)}>
+        Import Data
+      </button>
+
+      <CSVImporter
+        modalIsOpen={isOpen}
+        modalOnCloseTriggered={() => setIsOpen(false)}
+        onComplete={(result) => {
+          setData(result);
+          setIsOpen(false);
+        }}
+        columns={[
+          { id: 'name', label: 'Name' },
+          { id: 'email', label: 'Email' },
+          { id: 'phone', label: 'Phone' }
+        ]}
+      />
+
+      {data && (
+        <pre>{JSON.stringify(data, null, 2)}</pre>
+      )}
+    </>
+  );
+}
+```
+
+## Sample CSV
+
+```csv
+Name,Email,Phone
+John Doe,john@example.com,555-0100
+Jane Smith,jane@example.com,555-0101
+```
+
+## Result
+
+```json
+{
+  "rows": [
+    {
+      "index": 0,
+      "values": {
+        "name": "John Doe",
+        "email": "john@example.com",
+        "phone": "555-0100"
+      }
+    },
+    {
+      "index": 1,
+      "values": {
+        "name": "Jane Smith",
+        "email": "jane@example.com",
+        "phone": "555-0101"
+      }
+    }
+  ]
+}
+```

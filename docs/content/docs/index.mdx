@@ -1,0 +1,39 @@
+---
+title: ImportCSV
+description: React CSV importer with column mapping and validation
+---
+
+React component for importing CSV, XLS, XLSX files with column mapping and validation.
+
+```bash
+npm install @importcsv/react
+```
+
+```tsx
+import { CSVImporter } from '@importcsv/react';
+
+<CSVImporter
+  columns={[
+    { id: 'name', label: 'Name', validators: [{ type: 'required' }] },
+    { id: 'email', label: 'Email', type: 'email' }
+  ]}
+  onComplete={data => console.log(data)}
+/>
+```
+
+## Features
+
+- CSV, XLS, XLSX, TSV support
+- Smart column mapping
+- Data validation & transformations
+- TypeScript support
+- Dark mode & theming
+
+## Quick Links
+
+<Cards>
+  <Card title="🎮 Playground" href="/playground" description="Interactive demo" />
+  <Card title="Getting Started" href="/getting-started" />
+  <Card title="API Reference" href="/api" />
+  <Card title="Examples" href="/examples/basic" />
+</Cards>

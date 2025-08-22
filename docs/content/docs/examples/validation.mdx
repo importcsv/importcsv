@@ -1,0 +1,84 @@
+---
+title: Validation Example
+description: CSV import with data validation
+---
+
+```tsx
+import { CSVImporter } from '@importcsv/react';
+import type { Column } from '@importcsv/react';
+
+const columns: Column[] = [
+  {
+    id: 'employee_id',
+    label: 'Employee ID',
+    validators: [
+      { type: 'required' },
+      { type: 'unique' },
+      { type: 'regex', pattern: '^EMP[0-9]{3}$', message: 'Format: EMP001' }
+    ]
+  },
+  {
+    id: 'email',
+    label: 'Email',
+    type: 'email',
+    validators: [
+      { type: 'required' },
+      { type: 'unique' }
+    ]
+  },
+  {
+    id: 'age',
+    label: 'Age',
+    type: 'number',
+    validators: [
+      { type: 'required' },
+      { type: 'min', value: 18, message: 'Must be 18+' },
+      { type: 'max', value: 65, message: 'Must be under 65' }
+    ]
+  },
+  {
+    id: 'department',
+    label: 'Department',
+    type: 'select',
+    options: ['Engineering', 'Sales', 'Marketing', 'HR'],
+    validators: [{ type: 'required' }]
+  },
+  {
+    id: 'phone',
+    label: 'Phone',
+    validators: [
+      { type: 'regex', pattern: '^\\+?[1-9]\\d{1,14}$', message: 'Invalid phone' }
+    ]
+  }
+];
+
+export default function ValidationExample() {
+  return (
+    <CSVImporter
+      columns={columns}
+      onComplete={(data) => {
+        console.log('Valid data imported:', data);
+      }}
+    />
+  );
+}
+```
+
+## Invalid Data Example
+
+```csv
+Employee ID,Email,Age,Department,Phone
+EMP001,john@example.com,25,Engineering,+1234567890
+INVALID,not-an-email,17,Unknown,abc
+EMP001,duplicate@example.com,70,Sales,555
+```
+
+## Validation Errors Shown
+
+- Row 2: "INVALID" → Must match pattern EMP###
+- Row 2: "not-an-email" → Invalid email format
+- Row 2: "17" → Must be 18+
+- Row 2: "Unknown" → Must be one of: Engineering, Sales, Marketing, HR
+- Row 2: "abc" → Invalid phone
+- Row 3: "EMP001" → Must be unique
+- Row 3: "70" → Must be under 65
