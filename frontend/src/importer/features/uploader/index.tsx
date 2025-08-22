@@ -43,8 +43,8 @@ export default function Uploader({
   return (
     <div className="w-full max-w-[1000px] mx-auto p-8">
       {/* Title Section */}
-      <h2 className="text-center text-2xl font-semibold text-gray-900 mb-8">
-        {t("Upload a CSV file")}
+      <h2 className="text-center text-2xl font-semibold text-gray-900 p-2">
+        {t("Upload file")}
       </h2>
 
       {/* Grid Container */}
@@ -68,9 +68,9 @@ export default function Uploader({
             {/* Required Columns */}
             {requiredColumns.length > 0 && (
               <div className="mb-8">
-                <h3 className="text-xs font-normal text-gray-700 mb-4 tracking-wider">
+                <div className="text-xs font-normal text-gray-700 mb-4 uppercase tracking-wider">
                   {t("Required")}
-                </h3>
+                </div>
                 <div className="flex flex-col gap-3">
                   {requiredColumns.map((col) => (
                     <div key={col.id} className="flex items-center justify-between">
@@ -91,10 +91,10 @@ export default function Uploader({
 
             {/* Optional Columns */}
             {optionalColumns.length > 0 && (
-              <div className="mb-8">
-                <h3 className="text-xs font-normal text-gray-700 mt-2 mb-2 tracking-wider">
+              <div className="pb-2">
+                <div className="text-xs font-normal text-gray-700 mt-4 mb-2 uppercase tracking-wider">
                   {t("Optional")}
-                </h3>
+                </div>
                 <div className="flex flex-col gap-3">
                   {optionalColumns.map((col) => (
                     <div key={col.id} className="flex items-center justify-between">
@@ -114,7 +114,7 @@ export default function Uploader({
             )}
 
             {/* Info Box */}
-            <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-md border border-blue-200">
+            <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-md border border-blue-200 mt-4">
               <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
               <p className="text-sm text-blue-900 leading-tight">
                 {t("Make sure your file includes all the required columns.")}

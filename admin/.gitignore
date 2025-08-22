@@ -72,3 +72,6 @@ logs
 # Yalc local package management
 .yalc/
 yalc.lock
+
+# clerk configuration (can include secrets)
+/.clerk/
