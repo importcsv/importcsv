@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { CSVImporter } from '../../src';
-import { Column } from '../../src/types';
+import { useState } from 'react';
+import { CSVImporter } from '@importcsv/react';
+import type { Column } from '@importcsv/react';
 
 export default function ProductCatalogWithTransformations() {
   const [data, setData] = useState<any>(null);
@@ -144,7 +144,7 @@ HDR-4004,Noise Cancelling Headphones,electronics,199,50.5,sony,Active,audio; wir
 CAM-6006,Webcam HD,electronics,59.99,200,,inactive,video, streaming, HD, USB
 chg 7007,USB-C Charger,ELECTRONICS,$19.99,500 pieces,anker,ACTIVE,charger, usb-c, fast charging, usb-c
 CBL-8008,HDMI Cable 6ft,Electronics,$12.50,1000,amazonbasics,Active,cable;hdmi;video;4k;hdmi`;
-    
+
     return csvContent;
   };
 
@@ -161,7 +161,7 @@ CBL-8008,HDMI Cable 6ft,Electronics,$12.50,1000,amazonbasics,Active,cable;hdmi;v
 
   const handleComplete = (importedData: any) => {
     console.log('Transformed product data:', importedData);
-    
+
     // Handle both data structures
     let processedData;
     if (importedData.data) {
@@ -173,7 +173,7 @@ CBL-8008,HDMI Cable 6ft,Electronics,$12.50,1000,amazonbasics,Active,cable;hdmi;v
     } else if (importedData.rows) {
       processedData = importedData;
     }
-    
+
     setData(processedData);
     setIsOpen(false);
   };
@@ -182,7 +182,7 @@ CBL-8008,HDMI Cable 6ft,Electronics,$12.50,1000,amazonbasics,Active,cable;hdmi;v
     <div className="space-y-6">
       <div className="bg-white p-6 rounded-lg shadow">
         <h2 className="text-2xl font-bold mb-4">Product Catalog Import with Transformations</h2>
-        
+
         <div className="mb-4 p-4 bg-purple-50 rounded">
           <h3 className="font-semibold mb-2">E-commerce Transformations:</h3>
           <ul className="list-disc list-inside space-y-1 text-sm">
@@ -258,8 +258,8 @@ CBL-8008,HDMI Cable 6ft,Electronics,$12.50,1000,amazonbasics,Active,cable;hdmi;v
                                           cellIdx === 5 || // Brand
                                           cellIdx === 7;   // Tags
                       return (
-                        <td 
-                          key={cellIdx} 
+                        <td
+                          key={cellIdx}
                           className={`px-3 py-2 text-sm ${isTransformed ? 'font-semibold text-purple-700' : 'text-gray-900'}`}
                         >
                           {cell}
@@ -271,7 +271,7 @@ CBL-8008,HDMI Cable 6ft,Electronics,$12.50,1000,amazonbasics,Active,cable;hdmi;v
               </tbody>
             </table>
           </div>
-          
+
           <div className="mt-4 p-3 bg-green-50 rounded">
             <strong>Transformations Applied:</strong>
             <ul className="list-disc list-inside text-sm mt-1">

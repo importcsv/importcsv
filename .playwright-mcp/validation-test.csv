@@ -1,0 +1,13 @@
+Required Field,Unique Field,Email Field,Number (1-100),Text (5-20 chars),Pattern (ABC-123),Select Option,Date Field,Phone Field
+Required,Unique1,test@email.com,50,ValidLength,ABC-123,Option A,2024-01-15,+14155551234
+,Unique2,test2@email.com,50,ValidLength,ABC-123,Option A,2024-01-15,+14155551234
+Required,Unique1,test3@email.com,50,ValidLength,ABC-123,Option B,2024-01-15,+14155551234
+Required,Unique3,not-an-email,50,ValidLength,ABC-123,Option A,2024-01-15,+14155551234
+Required,Unique4,test4@email.com,0,ValidLength,ABC-123,Option A,2024-01-15,+14155551234
+Required,Unique5,test5@email.com,101,ValidLength,ABC-123,Option A,2024-01-15,+14155551234
+Required,Unique6,test6@email.com,50,Short,ABC-123,Option A,2024-01-15,+14155551234
+Required,Unique7,test7@email.com,50,ThisTextIsWayTooLongForTheLimit,ABC-123,Option A,2024-01-15,+14155551234
+Required,Unique8,test8@email.com,50,ValidLength,INVALID,Option A,2024-01-15,+14155551234
+Required,Unique9,test9@email.com,50,ValidLength,ABC-123,Invalid Option,2024-01-15,+14155551234
+Required,Unique10,test10@email.com,50,ValidLength,ABC-123,Option A,not-a-date,+14155551234
+Required,Unique11,test11@email.com,50,ValidLength,ABC-123,Option A,2024-01-15,123

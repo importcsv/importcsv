@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { CSVImporter } from '../../src';
-import { Column } from '../../src/types';
+import { useState } from 'react';
+import { CSVImporter } from '@importcsv/react';
+import type { Column } from '@importcsv/react';
 
 export default function EmployeeImportWithTransformations() {
   const [data, setData] = useState<any>(null);
@@ -126,7 +126,7 @@ EMP002,JANE SMITH,Jane.Smith@Example.Com,ENGINEERING,75000,02-20-2023,(555) 987-
 emp003,robert johnson  ,Robert@Example.com,sales,45000,March 10 2023,555-555-5555,Active,temp to perm
   EMP004,Sarah Wilson,sarah@EXAMPLE.COM,finance,85000,2023-05-12,+1 555 444 3333,,Remote worker
 emp005  ,Michael Brown,MICHAEL.BROWN@EXAMPLE.COM,hr,55000,06/01/2023,555.222.1111,active,Part-time temp`;
-    
+
     return csvContent;
   };
 
@@ -138,7 +138,7 @@ EMP002,Jane Smith,jane.smith@example.com,Engineering,75000,2023-02-20,(555) 987-
 EMP003,Robert Johnson,robert@example.com,Sales,45000,2023-03-10,(555) 555-5555,active,temporary to perm
 EMP004,Sarah Wilson,sarah@example.com,Finance,85000,2023-05-12,(555) 444-3333,active,Remote worker
 EMP005,Michael Brown,michael.brown@example.com,HR,55000,2023-06-01,(555) 222-1111,active,Part-time temporary`;
-    
+
     return csvContent;
   };
 
@@ -156,16 +156,16 @@ EMP005,Michael Brown,michael.brown@example.com,HR,55000,2023-06-01,(555) 222-111
   const handleComplete = (importedData: any) => {
     console.log('=== DATA RECEIVED IN PARENT ===');
     console.log('importedData structure:', importedData);
-    
+
     // Handle the standalone mode data structure
     // Standalone mode now returns {data: [...rows with values...], headers: [...], ...}
     let processedData;
-    
+
     if (importedData.data && Array.isArray(importedData.data)) {
       // Standalone mode: data contains rows with values property
       const headers = importedData.headers || [];
       const dataRows = importedData.data;
-      
+
       // Create rows structure with headers as first row
       processedData = {
         rows: [
@@ -173,7 +173,7 @@ EMP005,Michael Brown,michael.brown@example.com,HR,55000,2023-06-01,(555) 222-111
           ...dataRows
         ]
       };
-      
+
       console.log('Processed data with', processedData.rows.length, 'rows');
       console.log('First row (headers):', processedData.rows[0]?.values);
       console.log('First data row:', processedData.rows[1]?.values);
@@ -185,7 +185,7 @@ EMP005,Michael Brown,michael.brown@example.com,HR,55000,2023-06-01,(555) 222-111
       processedData = { rows: [] };
       console.warn('No data found in imported data');
     }
-    
+
     setData(processedData);
     setIsOpen(false);
   };
@@ -194,7 +194,7 @@ EMP005,Michael Brown,michael.brown@example.com,HR,55000,2023-06-01,(555) 222-111
     <div className="space-y-6">
       <div className="bg-white p-6 rounded-lg shadow">
         <h2 className="text-2xl font-bold mb-4">Employee Import with Transformations</h2>
-        
+
         <div className="mb-4 p-4 bg-blue-50 rounded">
           <h3 className="font-semibold mb-2">How Transformations Work:</h3>
           <ol className="list-decimal list-inside space-y-1 text-sm">
@@ -268,7 +268,7 @@ EMP005,Michael Brown,michael.brown@example.com,HR,55000,2023-06-01,(555) 222-111
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  {data.rows[0]?.values && Array.isArray(data.rows[0].values) && 
+                  {data.rows[0]?.values && Array.isArray(data.rows[0].values) &&
                     data.rows[0].values.map((header: string, idx: number) => (
                       <th key={idx} className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
                         {header}
@@ -280,7 +280,7 @@ EMP005,Michael Brown,michael.brown@example.com,HR,55000,2023-06-01,(555) 222-111
               <tbody className="bg-white divide-y divide-gray-200">
                 {data.rows.slice(1).map((row: any, rowIdx: number) => (
                   <tr key={rowIdx}>
-                    {row.values && Array.isArray(row.values) && 
+                    {row.values && Array.isArray(row.values) &&
                       row.values.map((cell: string, cellIdx: number) => (
                         <td key={cellIdx} className="px-3 py-2 text-sm text-gray-900">
                           {cell || ''}
@@ -292,7 +292,7 @@ EMP005,Michael Brown,michael.brown@example.com,HR,55000,2023-06-01,(555) 222-111
               </tbody>
             </table>
           </div>
-          
+
           <div className="mt-4 p-3 bg-green-50 rounded">
             <strong>Notice the transformations applied:</strong>
             <ul className="list-disc list-inside text-sm mt-1">

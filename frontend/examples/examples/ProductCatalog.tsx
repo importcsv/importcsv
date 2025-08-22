@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { CSVImporter } from '@importcsv/react'
 import type { Column } from '@importcsv/react'
 
@@ -103,9 +103,9 @@ const ProductCatalog: React.FC = () => {
 
   const generateTestCSV = (type: TestDataType): string => {
     const headers = columns.map(col => col.label).join(',')
-    
+
     let rows: string[] = []
-    
+
     switch (type) {
       case 'valid':
         rows = [
@@ -116,7 +116,7 @@ const ProductCatalog: React.FC = () => {
           'HOM-5001-BB,Garden Hose,Home & Garden,24.99,12.00,100,55443322,SUP-MX-5001,No'
         ]
         break
-        
+
       case 'errors':
         rows = [
           // Invalid SKU format
@@ -145,7 +145,7 @@ const ProductCatalog: React.FC = () => {
           'PRD-0001-ST,AB,Clothing,19.99,8.50,300,87654322,SUP-CN-2001,Yes'
         ]
         break
-        
+
       case 'edge-cases':
         rows = [
           // Minimum valid values
@@ -170,7 +170,7 @@ const ProductCatalog: React.FC = () => {
         ]
         break
     }
-    
+
     return [headers, ...rows].join('\n')
   }
 
@@ -196,40 +196,40 @@ const ProductCatalog: React.FC = () => {
     <div>
       <div className="section">
         <h2 className="section-title">Product Catalog Import - SKU & Price Validation</h2>
-        
+
         <div className="test-controls">
-          <button 
+          <button
             className={`test-btn ${testDataType === 'valid' ? 'active' : ''}`}
             onClick={() => setTestDataType('valid')}
           >
             Valid Products
           </button>
-          <button 
+          <button
             className={`test-btn ${testDataType === 'errors' ? 'active' : ''}`}
             onClick={() => setTestDataType('errors')}
           >
             Validation Errors
           </button>
-          <button 
+          <button
             className={`test-btn ${testDataType === 'edge-cases' ? 'active' : ''}`}
             onClick={() => setTestDataType('edge-cases')}
           >
             Edge Cases
           </button>
         </div>
-        
+
         <p style={{ marginBottom: '1rem', color: '#6b7280' }}>
           {testDataType === 'valid' && 'Valid product data with proper SKUs, prices, and stock levels'}
           {testDataType === 'errors' && 'Products with various validation errors: invalid SKUs, negative prices, duplicate barcodes'}
           {testDataType === 'edge-cases' && 'Boundary values: minimum/maximum prices, special characters, empty optional fields'}
         </p>
-        
+
         <button onClick={downloadTestCSV} className="download-btn">
           Download {testDataType === 'valid' ? 'Valid' : testDataType === 'errors' ? 'Error' : 'Edge Case'} Products CSV
         </button>
 
-        <button 
-          onClick={() => setShowImporter(true)} 
+        <button
+          onClick={() => setShowImporter(true)}
           className="download-btn"
           style={{ marginLeft: '1rem' }}
         >
@@ -241,7 +241,6 @@ const ProductCatalog: React.FC = () => {
             <CSVImporter
               columns={columns}
               onComplete={handleImportComplete}
-              onCancel={() => setShowImporter(false)}
               modalIsOpen={showImporter}
               modalOnCloseTriggered={() => setShowImporter(false)}
               primaryColor="#10b981"
@@ -254,7 +253,7 @@ const ProductCatalog: React.FC = () => {
       {importedData.length > 0 && (
         <div className="section results">
           <h3 className="result-title">Imported Products</h3>
-          
+
           <div className="stats" style={{ marginBottom: '1.5rem' }}>
             <div className="stat">
               <span className="stat-label">Total Products</span>
@@ -273,7 +272,7 @@ const ProductCatalog: React.FC = () => {
               </span>
             </div>
           </div>
-          
+
           <table className="data-table">
             <thead>
               <tr>

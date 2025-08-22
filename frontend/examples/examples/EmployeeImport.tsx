@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { CSVImporter } from '@importcsv/react'
 import type { Column } from '@importcsv/react'
 
@@ -109,9 +109,9 @@ const EmployeeImport: React.FC = () => {
 
   const generateTestCSV = (type: TestDataType): string => {
     const headers = columns.map(col => col.label).join(',')
-    
+
     let rows: string[] = []
-    
+
     switch (type) {
       case 'valid':
         rows = [
@@ -122,7 +122,7 @@ const EmployeeImport: React.FC = () => {
           'EMP005,Charlie Brown,charlie.brown@company.com,Finance,110000,2020-07-15,+14155553456,SF-2020-A,false'
         ]
         break
-        
+
       case 'errors':
         rows = [
           // Invalid employee ID pattern
@@ -150,7 +150,7 @@ const EmployeeImport: React.FC = () => {
           'EMP014,Duplicate Email,john.smith@company.com,Engineering,90000,2022-01-15,+14155551234,NY-2022-A,true'
         ]
         break
-        
+
       case 'edge-cases':
         rows = [
           // Minimum valid values
@@ -170,7 +170,7 @@ const EmployeeImport: React.FC = () => {
         ]
         break
     }
-    
+
     return [headers, ...rows].join('\n')
   }
 
@@ -194,7 +194,7 @@ const EmployeeImport: React.FC = () => {
       errors: 0,
       errorDetails: [] as string[]
     }
-    
+
     if (testDataType === 'errors') {
       results.valid = 0
       results.errors = data.length
@@ -212,7 +212,7 @@ const EmployeeImport: React.FC = () => {
         'Row 12: Duplicate email address'
       ]
     }
-    
+
     setValidationResults(results)
   }
 
@@ -233,40 +233,40 @@ const EmployeeImport: React.FC = () => {
     <div>
       <div className="section">
         <h2 className="section-title">Employee Import - Comprehensive Validation Testing</h2>
-        
+
         <div className="test-controls">
-          <button 
+          <button
             className={`test-btn ${testDataType === 'valid' ? 'active' : ''}`}
             onClick={() => setTestDataType('valid')}
           >
             Valid Data
           </button>
-          <button 
+          <button
             className={`test-btn ${testDataType === 'errors' ? 'active' : ''}`}
             onClick={() => setTestDataType('errors')}
           >
             With Errors
           </button>
-          <button 
+          <button
             className={`test-btn ${testDataType === 'edge-cases' ? 'active' : ''}`}
             onClick={() => setTestDataType('edge-cases')}
           >
             Edge Cases
           </button>
         </div>
-        
+
         <p style={{ marginBottom: '1rem', color: '#6b7280' }}>
           {testDataType === 'valid' && 'Test with clean, valid data that should pass all validations'}
           {testDataType === 'errors' && 'Test with various validation errors to see error handling'}
           {testDataType === 'edge-cases' && 'Test boundary conditions and special cases'}
         </p>
-        
+
         <button onClick={downloadTestCSV} className="download-btn">
           Download {testDataType === 'valid' ? 'Valid' : testDataType === 'errors' ? 'Error' : 'Edge Case'} Test CSV
         </button>
 
-        <button 
-          onClick={() => setShowImporter(true)} 
+        <button
+          onClick={() => setShowImporter(true)}
           className="download-btn"
           style={{ marginLeft: '1rem' }}
         >
@@ -278,7 +278,6 @@ const EmployeeImport: React.FC = () => {
             <CSVImporter
               columns={columns}
               onComplete={handleImportComplete}
-              onCancel={handleCancel}
               modalIsOpen={showImporter}
               modalOnCloseTriggered={handleCancel}
               metadata={{
@@ -295,7 +294,7 @@ const EmployeeImport: React.FC = () => {
       {validationResults && (
         <div className="section">
           <h3 className="result-title">Validation Results</h3>
-          
+
           <div className="validation-summary">
             <div className="validation-stat success">
               ✓ Valid: {validationResults.valid}
@@ -307,7 +306,7 @@ const EmployeeImport: React.FC = () => {
               Total: {validationResults.total}
             </div>
           </div>
-          
+
           {validationResults.errorDetails.length > 0 && (
             <div className="error-list">
               <h4 style={{ marginBottom: '0.5rem' }}>Error Details:</h4>
@@ -322,7 +321,7 @@ const EmployeeImport: React.FC = () => {
       {importedData.length > 0 && (
         <div className="section results">
           <h3 className="result-title">Imported Data</h3>
-          
+
           <div className="result-section">
             <table className="data-table">
               <thead>

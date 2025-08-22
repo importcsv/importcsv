@@ -1,11 +1,11 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { CSVImporter } from '@importcsv/react'
 import type { Column, Validator } from '@importcsv/react'
 
 const ValidationTester: React.FC = () => {
   const [showImporter, setShowImporter] = useState(false)
   const [customColumns, setCustomColumns] = useState<Column[]>([])
-  
+
   // Pre-defined test scenarios
   const testScenarios = [
     {
@@ -106,7 +106,7 @@ const ValidationTester: React.FC = () => {
       // Invalid phone
       'Required,Unique11,test11@email.com,50,ValidLength,ABC-123,Option A,2024-01-15,123'
     ]
-    
+
     return [headers, ...rows].join('\n')
   }
 
@@ -125,7 +125,7 @@ const ValidationTester: React.FC = () => {
     <div>
       <div className="section">
         <h2 className="section-title">Validation Tester - Test All Validator Types</h2>
-        
+
         <p style={{ marginBottom: '1rem', color: '#6b7280' }}>
           This tool tests all available validators with a comprehensive test file containing various validation errors.
         </p>
@@ -144,16 +144,16 @@ const ValidationTester: React.FC = () => {
             <li><strong>Phone Field:</strong> Tests phone number validation</li>
           </ul>
         </div>
-        
+
         <button onClick={downloadTestCSV} className="download-btn">
           Download Test CSV (12 rows, 11 with errors)
         </button>
 
-        <button 
+        <button
           onClick={() => {
             setCustomColumns(testScenarios[0].columns)
             setShowImporter(true)
-          }} 
+          }}
           className="download-btn"
           style={{ marginLeft: '1rem' }}
         >

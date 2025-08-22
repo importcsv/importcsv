@@ -10,6 +10,10 @@ export default defineConfig({
     }
   },
   server: {
-    port: 3001
+    port: 3001,
+    // Allow Vite dev server to serve and watch files from parent frontend/src
+    fs: {
+      allow: [resolve(__dirname, '..')],
+    },
   }
 })

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { CSVImporter } from '@importcsv/react'
 import type { Column } from '@importcsv/react'
 
@@ -97,18 +97,18 @@ C007,Very Long Name That Exceeds The Maximum Character Limit For Names,toolong@e
     <div>
       <div className="section">
         <h2 className="section-title">Customer Data Import - Email, Phone & Postal Validation</h2>
-        
+
         <p style={{ marginBottom: '1rem', color: '#6b7280' }}>
           Tests email validation, phone number format, postal codes, and duplicate detection.
           The test file includes both valid and invalid data to demonstrate validation.
         </p>
-        
+
         <button onClick={downloadTestCSV} className="download-btn">
           Download Test CSV (with errors)
         </button>
 
-        <button 
-          onClick={() => setShowImporter(true)} 
+        <button
+          onClick={() => setShowImporter(true)}
           className="download-btn"
           style={{ marginLeft: '1rem' }}
         >
@@ -123,7 +123,6 @@ C007,Very Long Name That Exceeds The Maximum Character Limit For Names,toolong@e
               setImportedData(result.data || result)
               setShowImporter(false)
             }}
-            onCancel={() => setShowImporter(false)}
             modalIsOpen={showImporter}
             modalOnCloseTriggered={() => setShowImporter(false)}
             primaryColor="#8b5cf6"
