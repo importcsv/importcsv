@@ -3,7 +3,8 @@ import { useTranslation } from "../../../../i18n/useTranslation";
 import Checkbox from "../../../components/Checkbox";
 import { InputOption } from "../../../components/Input/types";
 import DropdownFields from "../components/DropDownFields";
-import { TemplateColumn, UploadColumn } from "../../../types";
+import { UploadColumn } from "../../../types";
+import { Column } from "../../../../types";
 import stringsSimilarity from "../../../utils/stringSimilarity";
 import { TemplateColumnMapping } from "../types";
 import { getMappingSuggestions } from "../../../services/mapping";
@@ -11,7 +12,7 @@ import { getMappingSuggestions } from "../../../services/mapping";
 
 export default function useMapColumnsTable(
   uploadColumns: UploadColumn[],
-  templateColumns: TemplateColumn[] = [],
+  templateColumns: Column[] = [],
   columnsValues: { [uploadColumnIndex: number]: TemplateColumnMapping },
   isLoading?: boolean,
   importerKey?: string,
@@ -22,8 +23,8 @@ export default function useMapColumnsTable(
   useEffect(() => {
     Object.keys(columnsValues).map((uploadColumnIndexStr) => {
       const uploadColumnIndex = Number(uploadColumnIndexStr);
-      const templateKey = columnsValues[uploadColumnIndex].key;
-      handleTemplateChange(uploadColumnIndex, templateKey);
+      const templateId = (columnsValues[uploadColumnIndex] as any).id || columnsValues[uploadColumnIndex].key;
+      handleTemplateChange(uploadColumnIndex, templateId);
     });
   }, []);
 
@@ -42,7 +43,7 @@ export default function useMapColumnsTable(
   };
 
   // Simple string matching function - always returns false since suggested_mappings were removed
-  const isSuggestedMapping = (templateColumn: TemplateColumn, uploadColumnName: string) => {
+  const isSuggestedMapping = (templateColumn: Column, uploadColumnName: string) => {
     return false; // No longer using suggested mappings
   };
 
@@ -54,10 +55,10 @@ export default function useMapColumnsTable(
     const initialMappings = uploadColumns.reduce((acc, uc) => {
       const matchedSuggestedTemplateColumn = templateColumns?.find((tc) => isSuggestedMapping(tc, uc.name));
 
-      if (matchedSuggestedTemplateColumn && matchedSuggestedTemplateColumn.key) {
-        usedTemplateColumns.add(matchedSuggestedTemplateColumn.key);
+      if (matchedSuggestedTemplateColumn && matchedSuggestedTemplateColumn.id) {
+        usedTemplateColumns.add(matchedSuggestedTemplateColumn.id);
         acc[uc.index] = {
-          key: matchedSuggestedTemplateColumn.key,
+          id: matchedSuggestedTemplateColumn.id,
           include: true,
           selected: true
         };
@@ -65,17 +66,17 @@ export default function useMapColumnsTable(
       }
 
       const similarTemplateColumn = templateColumns?.find((tc) => {
-        // Use tc.name (label) for similarity check, not tc.key (id)
-        if (tc.key && !usedTemplateColumns.has(tc.key) && checkSimilarity(tc.name, uc.name)) {
-          usedTemplateColumns.add(tc.key);
+        // Use tc.label for similarity check, not tc.id
+        if (tc.id && !usedTemplateColumns.has(tc.id) && checkSimilarity(tc.label, uc.name)) {
+          usedTemplateColumns.add(tc.id);
           return true;
         }
         return false;
       });
 
       acc[uc.index] = {
-        key: similarTemplateColumn?.key || "",
-        include: !!similarTemplateColumn?.key,
+        id: similarTemplateColumn?.id || "",
+        include: !!similarTemplateColumn?.id,
         selected: true,
       };
       return acc;
@@ -84,8 +85,8 @@ export default function useMapColumnsTable(
     return initialMappings;
   });
 
-  const [selectedValues, setSelectedValues] = useState<{ key: string; selected: boolean | undefined }[]>(
-    Object.values(values).map(({ key, selected }) => ({ key, selected }))
+  const [selectedValues, setSelectedValues] = useState<{ id?: string; key?: string; selected: boolean | undefined }[]>(
+    Object.values(values).map((v) => ({ id: (v as any).id, key: (v as any).key, selected: v.selected }))
   );
 
   // Track if LLM enhancement has been called to prevent multiple API calls
@@ -122,8 +123,8 @@ export default function useMapColumnsTable(
             const newValues = { ...prevValues };
             const usedTemplateKeys = new Set(
               Object.values(prevValues)
-                .filter(v => v.key)
-                .map(v => v.key)
+                .filter(v => (v as any).id || (v as any).key)
+                .map(v => (v as any).id || (v as any).key)
             );
 
             // Sort by confidence (highest first)
@@ -135,15 +136,15 @@ export default function useMapColumnsTable(
               // 2. No existing mapping or low-confidence string match
               // 3. Template key not already used
               const currentMapping = prevValues[suggestion.uploadIndex];
-              const hasWeakMatch = currentMapping?.key && !currentMapping?.selected;
+              const hasWeakMatch = ((currentMapping as any)?.id || (currentMapping as any)?.key) && !currentMapping?.selected;
               
               if (
                 suggestion.confidence > 0.7 &&
-                (!currentMapping?.key || hasWeakMatch) &&
+                (!(currentMapping as any)?.id && !(currentMapping as any)?.key || hasWeakMatch) &&
                 !usedTemplateKeys.has(suggestion.templateKey)
               ) {
                 newValues[suggestion.uploadIndex] = {
-                  key: suggestion.templateKey,
+                  id: suggestion.templateKey,
                   include: true,
                   selected: true
                 };
@@ -152,7 +153,7 @@ export default function useMapColumnsTable(
             }
 
             // Update selected values
-            const templateFieldsObj = Object.values(newValues).map(({ key, selected }) => ({ key, selected }));
+            const templateFieldsObj = Object.values(newValues).map((v) => ({ id: (v as any).id, key: (v as any).key, selected: v.selected }));
             setSelectedValues(templateFieldsObj);
 
             return newValues;
@@ -167,21 +168,27 @@ export default function useMapColumnsTable(
   }, [uploadColumns, templateColumns, backendUrl, importerKey]);
 
   const templateFields: { [key: string]: InputOption } = useMemo(
-    () => templateColumns.reduce((acc, tc) => ({ ...acc, [tc.name]: { value: tc.key, required: tc.required } }), {}),
+    () => templateColumns.reduce((acc, tc) => ({ 
+      ...acc, 
+      [tc.label]: { 
+        value: tc.id, 
+        required: tc.validators?.some((v: any) => v.type === 'required') 
+      } 
+    }), {}),
     [JSON.stringify(templateColumns)]
   );
 
-  const handleTemplateChange = (uploadColumnIndex: number, key: string) => {
+  const handleTemplateChange = (uploadColumnIndex: number, id: string) => {
     setValues((prev) => {
-      const templatesFields = { ...prev, [uploadColumnIndex]: { ...prev[uploadColumnIndex], key: key, include: !!key, selected: !!key } };
-      const templateFieldsObj = Object.values(templatesFields).map(({ key, selected }) => ({ key, selected }));
+      const templatesFields = { ...prev, [uploadColumnIndex]: { ...prev[uploadColumnIndex], id: id, include: !!id, selected: !!id } };
+      const templateFieldsObj = Object.values(templatesFields).map((v) => ({ id: (v as any).id, key: (v as any).key, selected: v.selected }));
       setSelectedValues(templateFieldsObj);
       return templatesFields;
     });
   };
 
   const handleUseChange = (id: number, value: boolean) => {
-    setValues((prev) => ({ ...prev, [id]: { ...prev[id], include: !!prev[id].key && value } }));
+    setValues((prev) => ({ ...prev, [id]: { ...prev[id], include: !!((prev[id] as any).id || (prev[id] as any).key) && value } }));
   };
 
   const yourFileColumn = t("Your File Column");
@@ -215,7 +222,7 @@ export default function useMapColumnsTable(
           content: (
             <DropdownFields
               options={templateFields}
-              value={suggestion.key}
+              value={(suggestion as any).id || (suggestion as any).key}
               placeholder={t("- Select one -")}
               onChange={(key: string) => handleTemplateChange(index, key)}
               selectedValues={selectedValues}
@@ -229,7 +236,7 @@ export default function useMapColumnsTable(
             <div className="flex justify-center">
               <Checkbox
                 checked={suggestion.include}
-                disabled={!suggestion.key || isLoading}
+                disabled={!((suggestion as any).id || (suggestion as any).key) || isLoading}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleUseChange(index, e.target.checked)}
               />
             </div>

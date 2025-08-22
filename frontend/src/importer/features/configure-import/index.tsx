@@ -12,7 +12,6 @@ import {
 // Using native HTML table elements instead of Chakra UI
 import { CheckCircle } from 'lucide-react';
 import { useTranslation } from '../../../i18n/useTranslation';
-import { TemplateColumn } from '../../types';
 import { Column } from '../../../types';
 import stringSimilarity from '../../utils/stringSimilarity';
 import { getMappingSuggestions } from '../../services/mapping';
@@ -30,8 +29,8 @@ interface ConfigureImportProps {
 
 interface ColumnMapping {
   [uploadColumnIndex: number]: {
-    key: string;
-    name: string;
+    id: string;
+    label: string;
     include: boolean;
   };
 }
@@ -87,14 +86,8 @@ export default function ConfigureImport({
     return samples.join(', ');
   };
 
-  // Convert Column[] to TemplateColumn[]
-  const templateColumns: TemplateColumn[] = (columns || []).map(col => ({
-    name: col.label,
-    key: col.id,
-    description: col.description,
-    required: col.validators?.some(v => v.type === 'required'),
-    type: col.type || 'string'
-  }));
+  // Use columns directly - no conversion needed
+  const templateColumns = columns || [];
 
   // Auto-map columns based on name similarity
   useEffect(() => {
@@ -106,7 +99,7 @@ export default function ConfigureImport({
       templateColumns.forEach((templateCol) => {
         const score = stringSimilarity(
           header.toLowerCase().trim(),
-          templateCol.name.toLowerCase().trim()
+          templateCol.label.toLowerCase().trim()
         );
 
         if (score > bestMatch.score && score > 0.6) {
@@ -116,8 +109,8 @@ export default function ConfigureImport({
 
       if (bestMatch.column) {
         autoMap[index] = {
-          key: bestMatch.column.key || '',
-          name: bestMatch.column.name,
+          id: bestMatch.column.id || '',
+          label: bestMatch.column.label,
           include: true,
         };
       }
@@ -155,10 +148,10 @@ export default function ConfigureImport({
           // Apply high-confidence suggestions that don't override existing good matches
           setColumnMapping((prevMapping) => {
             const newMapping = { ...prevMapping };
-            const usedTemplateKeys = new Set(
+            const usedTemplateIds = new Set(
               Object.values(prevMapping)
-                .filter(v => v.key)
-                .map(v => v.key)
+                .filter(v => v.id)
+                .map(v => v.id)
             );
 
             // Sort by confidence (highest first)
@@ -170,21 +163,21 @@ export default function ConfigureImport({
               // 2. No existing mapping or low-confidence string match
               // 3. Template key not already used
               const currentMapping = prevMapping[suggestion.uploadIndex];
-              const hasWeakMatch = currentMapping?.key && !currentMapping?.include;
+              const hasWeakMatch = currentMapping?.id && !currentMapping?.include;
               
               if (
                 suggestion.confidence > 0.7 &&
-                (!currentMapping?.key || hasWeakMatch) &&
-                !usedTemplateKeys.has(suggestion.templateKey)
+                (!currentMapping?.id || hasWeakMatch) &&
+                !usedTemplateIds.has(suggestion.templateKey)
               ) {
-                const templateCol = templateColumns.find(col => col.key === suggestion.templateKey);
+                const templateCol = templateColumns.find(col => col.id === suggestion.templateKey);
                 if (templateCol) {
                   newMapping[suggestion.uploadIndex] = {
-                    key: suggestion.templateKey,
-                    name: templateCol.name,
+                    id: suggestion.templateKey,
+                    label: templateCol.label,
                     include: true,
                   };
-                  usedTemplateKeys.add(suggestion.templateKey);
+                  usedTemplateIds.add(suggestion.templateKey);
                 }
               }
             }
@@ -201,12 +194,12 @@ export default function ConfigureImport({
   }, [uploadColumns, templateColumns, backendUrl, importerKey]);
 
   // Handle column mapping change
-  const handleMappingChange = (templateFieldKey: string, csvColumnIndex: string) => {
+  const handleMappingChange = (templateFieldId: string, csvColumnIndex: string) => {
     const newMapping = { ...columnMapping };
 
     // Clear previous mapping for this template field
     Object.keys(newMapping).forEach((key) => {
-      if (newMapping[parseInt(key)].key === templateFieldKey) {
+      if (newMapping[parseInt(key)].id === templateFieldId) {
         delete newMapping[parseInt(key)];
       }
     });
@@ -214,12 +207,12 @@ export default function ConfigureImport({
     // Set new mapping if column selected (and not "none")
     if (csvColumnIndex !== '' && csvColumnIndex !== 'none') {
       const colIndex = parseInt(csvColumnIndex);
-      const templateField = templateColumns.find(col => col.key === templateFieldKey);
+      const templateField = templateColumns.find(col => col.id === templateFieldId);
 
       if (templateField) {
         newMapping[colIndex] = {
-          key: templateFieldKey,
-          name: templateField.name,
+          id: templateFieldId,
+          label: templateField.label,
           include: true,
         };
       }
@@ -229,18 +222,20 @@ export default function ConfigureImport({
   };
 
   // Get CSV column index for a template field
-  const getMappedColumn = (templateFieldKey: string): string => {
+  const getMappedColumn = (templateFieldId: string): string => {
     const entry = Object.entries(columnMapping).find(
-      ([_, mapping]) => mapping.key === templateFieldKey
+      ([_, mapping]) => mapping.id === templateFieldId
     );
     return entry ? entry[0] : '';
   };
 
   // Check if all required fields are mapped
   const allRequiredFieldsMapped = useMemo(() => {
-    const requiredFields = templateColumns.filter((col: any) => col.required);
+    const requiredFields = templateColumns.filter((col: any) => 
+      col.validators?.some((v: any) => v.type === 'required')
+    );
     return requiredFields.every((field: any) =>
-      Object.values(columnMapping).some(mapping => mapping.key === field.key)
+      Object.values(columnMapping).some(mapping => mapping.id === field.id)
     );
   }, [templateColumns, columnMapping]);
 
@@ -289,32 +284,33 @@ export default function ConfigureImport({
             </thead>
             <tbody>
               {templateColumns.map((field: any, index: number) => {
-                const mappedColumn = getMappedColumn(field.key);
+                const mappedColumn = getMappedColumn(field.id);
                 const isMapped = mappedColumn !== '';
+                const isRequired = field.validators?.some((v: any) => v.type === 'required');
 
                 return (
-                  <tr key={field.key} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
+                  <tr key={field.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4">
                       <HStack className="gap-2 items-center">
                         {isMapped && (
                           <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
                         )}
-                        {!isMapped && field.required && (
+                        {!isMapped && isRequired && (
                           <Box className="w-5 h-5 rounded-full border-2 border-gray-300 flex-shrink-0" />
                         )}
-                        {!isMapped && !field.required && (
+                        {!isMapped && !isRequired && (
                           <Box className="w-5 h-5 flex-shrink-0" />
                         )}
                         <Text className="text-sm font-medium text-gray-900">
-                          {field.name}
-                          {field.required && (
+                          {field.label}
+                          {isRequired && (
                             <span className="text-red-500 ml-1">*</span>
                           )}
                         </Text>
                       </HStack>
                     </td>
                     <td className="px-6 py-4">
-                      <Select value={mappedColumn} onValueChange={(value) => handleMappingChange(field.key, value)}>
+                      <Select value={mappedColumn} onValueChange={(value) => handleMappingChange(field.id, value)}>
                         <SelectTrigger className="h-9 w-full max-w-[250px]">
                           <SelectValue placeholder={t('Select...')} />
                         </SelectTrigger>
@@ -330,7 +326,7 @@ export default function ConfigureImport({
                           {/* Column options */}
                           {columnHeaders.map((header: string, idx: number) => {
                             const isAlreadyMapped = Object.keys(columnMapping).includes(idx.toString()) &&
-                              columnMapping[idx].key !== field.key;
+                              columnMapping[idx].id !== field.id;
 
                             return (
                               <SelectItem

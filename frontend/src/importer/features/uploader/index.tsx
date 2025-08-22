@@ -8,7 +8,6 @@ import { UploaderProps } from "./types";
 import { Download, Info } from "lucide-react";
 import { cn } from "../../../utils/cn";
 import { Column } from "../../../types";
-import { TemplateColumn } from "../../types";
 
 export default function Uploader({
   columns,
@@ -17,16 +16,8 @@ export default function Uploader({
   showDownloadTemplateButton,
   setDataError
 }: UploaderProps) {
-  // Convert Column[] to TemplateColumn[] for useTemplateTable
-  const templateColumns: TemplateColumn[] = (columns || []).map(col => ({
-    name: col.label,
-    key: col.id,
-    description: col.description,
-    required: col.validators?.some(v => v.type === 'required'),
-    type: col.type || 'string'
-  }));
-  
-  const fields = useTemplateTable(templateColumns);
+  // Use columns directly
+  const fields = useTemplateTable(columns);
   const uploaderWrapper = (
     <UploaderWrapper
       onSuccess={onSuccess}

@@ -7,7 +7,7 @@ import { Tooltip } from "../../components/ui/tooltip";
 import { Info } from "lucide-react";
 import Errors from "../../components/Errors";
 import Table from "../../components/Table";
-import { UploadColumn, TemplateColumn } from "../../types";
+import { UploadColumn } from "../../types";
 import { Column } from "../../../types";
 import useMapColumnsTable from "./hooks/useMapColumnsTable";
 import { MapColumnsProps, TemplateColumnMapping } from "./types";
@@ -52,14 +52,8 @@ export default function MapColumns({
       sample_data,
     };
   });
-  // Convert Column[] to TemplateColumn[]
-  const templateColumns: TemplateColumn[] = (columns || []).map(col => ({
-    name: col.label,
-    key: col.id,
-    description: col.description,
-    required: col.validators?.some(v => v.type === 'required'),
-    type: col.type || 'string'
-  }));
+  // Use columns directly - no conversion needed
+  const templateColumns = columns || [];
   
   const { rows, formValues } = useMapColumnsTable(
     uploadColumns,
@@ -71,10 +65,12 @@ export default function MapColumns({
   );
   const [error, setError] = useState<string | null>(null);
 
-  const verifyRequiredColumns = (templateCols: TemplateColumn[], formValues: { [uploadColumnIndex: number]: TemplateColumnMapping }): boolean => {
-    const requiredColumns = templateCols.filter((column: any) => column.required);
+  const verifyRequiredColumns = (templateCols: Column[], formValues: { [uploadColumnIndex: number]: TemplateColumnMapping }): boolean => {
+    const requiredColumns = templateCols.filter((column: any) => 
+      column.validators?.some((v: any) => v.type === 'required')
+    );
     const includedValues = Object.values(formValues).filter((value: any) => value.include);
-    return requiredColumns.every((requiredColumn: any) => includedValues.some((includedValue: any) => includedValue.key === requiredColumn.key));
+    return requiredColumns.every((requiredColumn: any) => includedValues.some((includedValue: any) => ((includedValue as any).id || (includedValue as any).key) === requiredColumn.id));
   };
 
   const onSubmit = (e: FormEvent<HTMLFormElement>) => {

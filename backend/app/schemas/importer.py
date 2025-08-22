@@ -26,6 +26,17 @@ class ImporterField(BaseModel):
         ..., description="Field data type"
     )  # Using str for backward compatibility
     required: bool = Field(False, description="Whether this field is required")
+    
+    # Support Column format (these are computed properties)
+    @property
+    def id(self) -> str:
+        """Alias for name to support Column format"""
+        return self.name
+    
+    @property
+    def label(self) -> str:
+        """Alias for display_name to support Column format"""
+        return self.display_name or self.name
     description: Optional[str] = Field(None, description="Field description")
     must_match: bool = Field(
         False, description="Require that users must match this column"
@@ -58,7 +69,25 @@ class ImporterField(BaseModel):
         # Ensure all fields are serializable
         result = super().dict(*args, **kwargs)
         # Remove None values to keep the JSON clean
-        return {k: v for k, v in result.items() if v is not None}
+        result = {k: v for k, v in result.items() if v is not None}
+        
+        # Add Column format fields
+        result['id'] = self.name
+        result['label'] = self.display_name or self.name
+        
+        # Build validators array for Column format
+        validators = []
+        if self.required:
+            validators.append({'type': 'required'})
+        if self.validation_format and self.type != 'select':
+            validators.append({
+                'type': 'regex',
+                'pattern': self.validation_format
+            })
+        if validators:
+            result['validators'] = validators
+            
+        return result
 
     class Config:
         from_attributes = True

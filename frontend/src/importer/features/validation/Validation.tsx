@@ -68,7 +68,7 @@ export default function Validation({
     const columnIds = columns.map(col => col.id);
     const mismatches = Object.entries(columnMapping).filter(([_, mapping]) => {
       if (!mapping.include) return false;
-      return !columnIds.includes(mapping.key);
+      return !columnIds.includes((mapping as any).id || (mapping as any).key);
     });
 
     if (mismatches.length > 0) {
@@ -95,7 +95,7 @@ export default function Validation({
         if (isNaN(colIdx)) return;
 
         // The key in the column mapping
-        const columnId = mapping.key;
+        const columnId = (mapping as any).id || (mapping as any).key;
 
         // Find the corresponding column
         const column = columns?.find(col => col.id === columnId);
@@ -124,7 +124,7 @@ export default function Validation({
       if (hasUniqueValidator) {
         // Find the column index in the mapping
         const mappingEntry = Object.entries(columnMapping).find(([_, mapping]) => 
-          mapping.include && mapping.key === column.id
+          mapping.include && ((mapping as any).id || (mapping as any).key) === column.id
         );
         
         if (mappingEntry) {
@@ -255,10 +255,10 @@ export default function Validation({
         
         // Get the column mapping
         const mapping = columnMapping[colIdx];
-        if (!mapping || !mapping.key) return value;
+        if (!mapping || !((mapping as any).id || (mapping as any).key)) return value;
         
         // Find the column definition
-        const column = columns?.find(c => c.id === mapping.key);
+        const column = columns?.find(c => c.id === ((mapping as any).id || (mapping as any).key));
         if (!column || !column.transformations) return value;
         
         // Apply transformations
@@ -459,7 +459,7 @@ export default function Validation({
             const dataRowIndex = e.rowIndex - headerRowIndex - 1;
             return {
               rowIndex: dataRowIndex,
-              columnKey: columnMapping[e.columnIndex]?.key || '',
+              columnKey: ((columnMapping[e.columnIndex] as any)?.id || (columnMapping[e.columnIndex] as any)?.key) || '',
               message: e.message,
               value: dataRows[dataRowIndex]?.values[e.columnIndex]
             };

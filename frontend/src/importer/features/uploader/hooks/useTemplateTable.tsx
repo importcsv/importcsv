@@ -1,10 +1,10 @@
 import { useMemo } from "react";
 import { useTranslation } from "../../../../i18n/useTranslation";
 import Tooltip from "../../../components/Tooltip";
-import { TemplateColumn } from "../../../types";
+import { Column } from "../../../../types";
 import { Check } from "lucide-react";
 
-export default function useTemplateTable(fields: TemplateColumn[] = []) {
+export default function useTemplateTable(fields: Column[] = []) {
   if (!fields) {
     return [];
   }
@@ -15,15 +15,15 @@ export default function useTemplateTable(fields: TemplateColumn[] = []) {
     return fields.map((item) => ({
       [expectedColumnKey]: item?.description
         ? {
-            raw: item.name,
+            raw: item.label,
             content: (
               <div>
-                <Tooltip title={item?.description}>{item.name}</Tooltip>
+                <Tooltip title={item?.description}>{item.label}</Tooltip>
               </div>
             ),
           }
-        : item.name,
-      [requiredKey]: { raw: item?.required ? 1 : 0, content: item?.required ? <Check /> : <></> },
+        : item.label,
+      [requiredKey]: { raw: item?.validators?.some((v: any) => v.type === 'required') ? 1 : 0, content: item?.validators?.some((v: any) => v.type === 'required') ? <Check /> : <></> },
     }));
   }, [fields]);
 

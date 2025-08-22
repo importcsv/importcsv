@@ -1,4 +1,5 @@
-import { Template, TemplateColumn } from "../types";
+import { Template } from "../types";
+import { Column, Validator } from "../../types";
 import { parseObjectOrStringJSONToRecord, sanitizeKey } from "./utils";
 
 export function convertRawTemplate(rawTemplate?: Record<string, unknown> | string): [Template | null, string | null] {
@@ -16,8 +17,8 @@ export function convertRawTemplate(rawTemplate?: Record<string, unknown> | strin
     return [null, "Invalid template: columns should be an array of objects"];
   }
 
-  const seenKeys: Record<string, boolean> = {};
-  const columns: TemplateColumn[] = [];
+  const seenIds: Record<string, boolean> = {};
+  const columns: Column[] = [];
 
   for (let i = 0; i < columnData.length; i++) {
     const item = columnData[i];
@@ -26,35 +27,56 @@ export function convertRawTemplate(rawTemplate?: Record<string, unknown> | strin
       return [null, `Invalid template: Each item in columns should be an object (check column ${i})`];
     }
 
-    const name: string = item.name || "";
-    let key: string = item.key || "";
+    // Support both old (key/name) and new (id/label) formats
+    const id: string = item.id || item.key || "";
+    const label: string = item.label || item.name || "";
     const description: string = item.description || "";
     const required: boolean = item.required || false;
     const data_type: string = item.data_type || "";
     const validation_format: string = item.validation_format || "";
-    const type: string = item.type || data_type || "";
+    const type: Column['type'] = item.type || data_type || 'string';
 
-    if (name === "") {
-      return [null, `Invalid template: The parameter "name" is required for each column (check column ${i})`];
+    if (label === "") {
+      return [null, `Invalid template: The parameter "label" or "name" is required for each column (check column ${i})`];
     }
-    if (key === "") {
-      key = sanitizeKey(name);
-    }
-    if (seenKeys[key]) {
-      return [null, `Invalid template: Duplicate keys are not allowed (check column ${i})`];
+    
+    const finalId = id || sanitizeKey(label);
+    
+    if (seenIds[finalId]) {
+      return [null, `Invalid template: Duplicate ids are not allowed (check column ${i})`];
     }
 
-    seenKeys[key] = true;
+    seenIds[finalId] = true;
 
-    columns.push({
-      name,
-      key,
+    // Build validators array from flat fields
+    const validators: Validator[] = [];
+    if (required) {
+      validators.push({ type: 'required' });
+    }
+    if (validation_format && type !== 'select') {
+      validators.push({ 
+        type: 'regex', 
+        pattern: validation_format 
+      });
+    }
+
+    const column: Column = {
+      id: finalId,
+      label,
+      type: type as Column['type'],
       description,
-      required,
-      data_type,
-      validation_format,
-      type
-    } as TemplateColumn);
+    };
+
+    if (validators.length > 0) {
+      column.validators = validators;
+    }
+
+    // Handle select options
+    if (type === 'select' && validation_format) {
+      column.options = validation_format.split(',').map(o => o.trim());
+    }
+
+    columns.push(column);
   }
 
   if (columns.length === 0) {

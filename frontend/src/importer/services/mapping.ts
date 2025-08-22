@@ -17,7 +17,7 @@ interface MappingResponse {
  * Get enhanced column mapping suggestions from the backend
  * 
  * @param uploadColumns - Array of upload columns with name and sample_data
- * @param templateColumns - Array of template columns with key, name, and required
+ * @param templateColumns - Array of Column objects with id, label, and validators
  * @param backendUrl - Backend API URL
  * @param importerKey - Importer key for authentication
  * @returns Array of mapping suggestions or empty array on error
@@ -42,7 +42,12 @@ export async function getMappingSuggestions(
       body: JSON.stringify({
         importerKey,
         uploadColumns,
-        templateColumns
+        // Transform Column[] to backend expected format
+        templateColumns: templateColumns.map((col: any) => ({
+          key: col.id,
+          name: col.label,
+          required: col.validators?.some((v: any) => v.type === 'required')
+        }))
       })
     });
 

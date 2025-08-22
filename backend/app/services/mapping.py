@@ -36,7 +36,7 @@ async def enhance_column_mappings(
 
     Args:
         upload_columns: List of upload column dicts with 'name' and optional 'sample_data'
-        template_columns: List of template column dicts with 'key', 'name', and 'required'
+        template_columns: List of column dicts with 'key'/'id', 'name'/'label', and 'required'/'validators'
 
     Returns:
         List of mapping suggestions with uploadIndex, templateKey, and confidence
@@ -98,7 +98,8 @@ def _get_cache_key(upload_cols: List[Dict], template_cols: List[Dict]) -> str:
     """Generate cache key from column structure."""
     data = {
         "upload": [c.get("name", "") for c in upload_cols],
-        "template": [c.get("key", "") for c in template_cols],
+        # Support both key/id formats
+        "template": [c.get("key", c.get("id", "")) for c in template_cols],
     }
     data_str = json.dumps(data, sort_keys=True)
     return f"mapping:{hashlib.md5(data_str.encode()).hexdigest()}"
@@ -116,14 +117,24 @@ def _build_mapping_prompt(upload_cols: List[Dict], template_cols: List[Dict]) ->
             info["sample"] = str(sample_data[0])
         upload_info.append(info)
 
-    # Prepare template field info
+    # Prepare template field info (support both formats)
     template_info = []
     for col in template_cols:
+        # Support both old (key/name) and new (id/label) formats
+        key = col.get("key", col.get("id", ""))
+        name = col.get("name", col.get("label", ""))
+        
+        # Check for required field (support validators array)
+        required = col.get("required", False)
+        validators = col.get("validators", [])
+        if validators:
+            required = any(v.get("type") == "required" for v in validators)
+        
         template_info.append(
             {
-                "key": col.get("key", ""),
-                "name": col.get("name", ""),
-                "required": col.get("required", False),
+                "key": key,
+                "name": name,
+                "required": required,
             }
         )
 
