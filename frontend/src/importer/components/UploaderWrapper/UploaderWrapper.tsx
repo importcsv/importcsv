@@ -44,34 +44,38 @@ export default function UploaderWrapper({ onSuccess, setDataError, ...props }: U
     <Box
       {...getRootProps()}
       className={`w-full flex justify-center items-center flex-col bg-gray-50 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200 hover:bg-gray-100 ${
-        isMobile ? 'min-h-[180px] py-8 px-6' : 'min-h-[240px] py-10 px-8'
+        isMobile ? 'min-h-[220px] py-8 px-6' : 'min-h-[380px] py-12 px-10'
       } ${
         isDragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
       }`}
+      style={{
+        minHeight: isMobile ? '220px' : '380px',
+        padding: isMobile ? '2rem 1.5rem' : '3rem 2.5rem'
+      }}
       onClick={open}
     >
       <input {...getInputProps()} />
       
       {/* Upload Icon */}
       <Box
-        className={`mb-3 p-3 rounded-full bg-white transition-all duration-200 ${
+        className={`mb-4 p-4 rounded-full bg-white transition-all duration-200 ${
           isDragActive ? 'text-blue-600 shadow-md' : 'text-gray-400'
         }`}
       >
-        <CloudUpload size={isMobile ? 28 : 32} />
+        <CloudUpload size={isMobile ? 32 : 48} />
       </Box>
       
       {isDragActive ? (
-        <Text className={`${isMobile ? 'text-sm' : 'text-base'} font-medium text-gray-700`}>
+        <Text className={`${isMobile ? 'text-base' : 'text-lg'} font-medium text-gray-700`}>
           {t("Drop your file here")}
         </Text>
       ) : loading ? (
-        <Text className={`${isMobile ? 'text-sm' : 'text-base'} font-medium text-gray-700`}>
+        <Text className={`${isMobile ? 'text-base' : 'text-lg'} font-medium text-gray-700`}>
           {t("Loading...")}
         </Text>
       ) : (
         <Text 
-          className={`${isMobile ? 'text-sm' : 'text-base'} font-medium text-gray-700`}
+          className={`${isMobile ? 'text-base' : 'text-lg'} font-medium text-gray-700`}
         >
           {t("Drop a file or click to browse")}
         </Text>
