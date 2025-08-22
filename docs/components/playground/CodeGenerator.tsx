@@ -1,7 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import dynamic from 'next/dynamic';
 import type { PlaygroundConfig } from './ImporterPlayground';
+
+const DynamicCodeBlock = dynamic(
+  () => import('fumadocs-ui/components/dynamic-codeblock').then(mod => mod.DynamicCodeBlock),
+  { ssr: false }
+);
 
 interface CodeGeneratorProps {
   config: PlaygroundConfig;
@@ -9,7 +15,6 @@ interface CodeGeneratorProps {
 
 export default function CodeGenerator({ config }: CodeGeneratorProps) {
   const [showTypeScript, setShowTypeScript] = useState(true);
-  const [copied, setCopied] = useState(false);
 
   const generateCode = () => {
     const imports = showTypeScript
@@ -53,57 +58,42 @@ import { useState } from 'react';`;
     return `${imports}\n\n${columnsCode}\n\n${componentCode}`;
   };
 
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(generateCode());
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowTypeScript(!showTypeScript)}
-            className={`px-3 py-1 text-sm rounded-md transition-colors ${
-              showTypeScript 
-                ? 'bg-fd-primary text-fd-primary-foreground' 
-                : 'bg-fd-muted text-fd-muted-foreground hover:bg-fd-muted/80'
-            }`}
-          >
-            TypeScript
-          </button>
-          <button
-            onClick={() => setShowTypeScript(!showTypeScript)}
-            className={`px-3 py-1 text-sm rounded-md transition-colors ${
-              !showTypeScript 
-                ? 'bg-fd-primary text-fd-primary-foreground' 
-                : 'bg-fd-muted text-fd-muted-foreground hover:bg-fd-muted/80'
-            }`}
-          >
-            JavaScript
-          </button>
-        </div>
+      <div className="flex gap-2 mb-2">
         <button
-          onClick={copyToClipboard}
-          className="px-3 py-1 text-sm bg-fd-primary text-white rounded-md hover:bg-fd-primary/90 transition-colors font-medium"
+          onClick={() => setShowTypeScript(true)}
+          className={`px-3 py-1 text-sm rounded-md transition-colors ${
+            showTypeScript 
+              ? 'bg-fd-primary text-fd-primary-foreground' 
+              : 'bg-fd-muted text-fd-muted-foreground hover:bg-fd-muted/80'
+          }`}
         >
-          {copied ? '✓ Copied' : 'Copy Code'}
+          TypeScript
+        </button>
+        <button
+          onClick={() => setShowTypeScript(false)}
+          className={`px-3 py-1 text-sm rounded-md transition-colors ${
+            !showTypeScript 
+              ? 'bg-fd-primary text-fd-primary-foreground' 
+              : 'bg-fd-muted text-fd-muted-foreground hover:bg-fd-muted/80'
+          }`}
+        >
+          JavaScript
         </button>
       </div>
 
-      <div className="relative rounded-lg border border-fd-border bg-fd-code overflow-hidden">
-        <div className="bg-fd-muted/50 px-4 py-2 border-b border-fd-border flex justify-between items-center">
-          <span className="text-xs text-fd-muted-foreground font-mono">
-            {showTypeScript ? 'TypeScript' : 'JavaScript'}
-          </span>
-        </div>
-        <pre className="overflow-x-auto p-4 bg-fd-background/50">
-          <code className="text-sm font-mono text-fd-foreground" style={{ whiteSpace: 'pre' }}>
-            {generateCode()}
-          </code>
-        </pre>
-      </div>
+      <DynamicCodeBlock 
+        lang={showTypeScript ? 'tsx' : 'jsx'}
+        code={generateCode()}
+        options={{
+          themes: {
+            light: 'github-light',
+            dark: 'github-dark'
+          }
+        }}
+      />
 
       <div className="rounded-lg border p-4 bg-fd-muted/30">
         <h4 className="font-medium text-sm mb-2">Quick Start</h4>

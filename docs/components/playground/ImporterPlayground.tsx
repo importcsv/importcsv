@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 import PropConfigurator from './PropConfigurator';
 import CodeGenerator from './CodeGenerator';
 import { loadCSVImporter } from '@/lib/load-importer';
@@ -51,7 +52,6 @@ export default function ImporterPlayground() {
   const [config, setConfig] = useState<PlaygroundConfig>(defaultConfig);
   const [importedData, setImportedData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'configure' | 'code'>('configure');
 
   useEffect(() => {
     loadCSVImporter().then(module => {
@@ -87,56 +87,34 @@ export default function ImporterPlayground() {
 
   if (!CSVImporter) {
     return (
-      <div className="not-prose rounded-lg border border-red-200 bg-red-50 p-4 text-red-600">
-        <p>Failed to load CSVImporter</p>
-        <p className="text-sm mt-1">Check console for errors</p>
+      <div className="not-prose rounded-lg border border-fd-destructive/20 bg-fd-destructive/10 p-4">
+        <p className="text-fd-destructive-foreground font-medium">Failed to load CSVImporter</p>
+        <p className="text-sm mt-1 text-fd-muted-foreground">Check console for errors</p>
       </div>
     );
   }
 
   return (
     <div className="not-prose">
-      {/* Tab Navigation */}
-      <div className="flex border-b mb-6">
-        <button
-          onClick={() => setActiveTab('configure')}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === 'configure' 
-              ? 'border-b-2 border-fd-primary text-fd-foreground' 
-              : 'text-fd-muted-foreground hover:text-fd-foreground'
-          }`}
-        >
-          Configure & Test
-        </button>
-        <button
-          onClick={() => setActiveTab('code')}
-          className={`px-4 py-2 text-sm font-medium transition-colors ${
-            activeTab === 'code' 
-              ? 'border-b-2 border-fd-primary text-fd-foreground' 
-              : 'text-fd-muted-foreground hover:text-fd-foreground'
-          }`}
-        >
-          Code
-        </button>
-      </div>
-
-      {/* Tab Content */}
-      <div className="min-h-[500px]">
-        {activeTab === 'configure' && (
-          <PropConfigurator 
-            config={config} 
-            onChange={setConfig}
-            onOpenImporter={openImporter}
-            importedData={importedData}
-            CSVImporter={CSVImporter}
-            onImportComplete={handleImportComplete}
-          />
-        )}
-
-        {activeTab === 'code' && (
-          <CodeGenerator config={config} />
-        )}
-      </div>
+      <Tabs items={['Configure & Test', 'Code']}>
+        <Tab value="Configure & Test">
+          <div className="mt-6">
+            <PropConfigurator 
+              config={config} 
+              onChange={setConfig}
+              onOpenImporter={openImporter}
+              importedData={importedData}
+              CSVImporter={CSVImporter}
+              onImportComplete={handleImportComplete}
+            />
+          </div>
+        </Tab>
+        <Tab value="Code">
+          <div className="mt-6">
+            <CodeGenerator config={config} />
+          </div>
+        </Tab>
+      </Tabs>
 
       {/* Hidden modal importer */}
       {config.isModal && CSVImporter && (
