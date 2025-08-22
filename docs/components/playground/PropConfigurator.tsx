@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import type { PlaygroundConfig } from './ImporterPlayground';
 import type { Column, Validator } from '@importcsv/react';
 import SampleDataSelector from './SampleDataSelector';
@@ -14,13 +13,13 @@ interface PropConfiguratorProps {
   onImportComplete: (data: any) => void;
 }
 
-export default function PropConfigurator({ 
-  config, 
-  onChange, 
-  onOpenImporter, 
-  importedData, 
-  CSVImporter, 
-  onImportComplete 
+export default function PropConfigurator({
+  config,
+  onChange,
+  onOpenImporter,
+  importedData,
+  CSVImporter,
+  onImportComplete
 }: PropConfiguratorProps) {
   const updateConfig = (updates: Partial<PlaygroundConfig>) => {
     onChange({ ...config, ...updates });
@@ -49,7 +48,7 @@ export default function PropConfigurator({
     const column = config.columns[columnIndex];
     const validators = column.validators || [];
     const hasValidator = validators.some(v => v.type === validatorType);
-    
+
     if (hasValidator) {
       column.validators = validators.filter(v => v.type !== validatorType);
     } else {
@@ -59,7 +58,7 @@ export default function PropConfigurator({
       }
       column.validators = [...validators, newValidator];
     }
-    
+
     updateColumn(columnIndex, { validators: column.validators });
   };
 
@@ -67,48 +66,48 @@ export default function PropConfigurator({
     <div className="space-y-6">
       {/* Sample Data Selector */}
       <SampleDataSelector />
-      
+
       {/* Display Options */}
       <div className="space-y-4">
         <h3 className="font-semibold text-sm text-fd-foreground">Display Options</h3>
-        
+
         <div className="grid grid-cols-2 gap-4">
           <label className="flex items-center gap-2 text-sm text-fd-foreground cursor-pointer">
             <input
               type="checkbox"
               checked={config.darkMode}
               onChange={(e) => updateConfig({ darkMode: e.target.checked })}
-              className="rounded w-4 h-4 cursor-pointer"
+              className="rounded border-fd-border text-fd-primary focus:ring-2 focus:ring-fd-primary focus:ring-offset-2 cursor-pointer"
             />
             Dark Mode
           </label>
-          
+
           <label className="flex items-center gap-2 text-sm text-fd-foreground cursor-pointer">
             <input
               type="checkbox"
               checked={config.isModal}
               onChange={(e) => updateConfig({ isModal: e.target.checked })}
-              className="rounded w-4 h-4 cursor-pointer"
+              className="rounded border-fd-border text-fd-primary focus:ring-2 focus:ring-fd-primary focus:ring-offset-2 cursor-pointer"
             />
             Modal Mode
           </label>
-          
+
           <label className="flex items-center gap-2 text-sm text-fd-foreground cursor-pointer">
             <input
               type="checkbox"
               checked={config.showDownloadTemplateButton}
               onChange={(e) => updateConfig({ showDownloadTemplateButton: e.target.checked })}
-              className="rounded w-4 h-4 cursor-pointer"
+              className="rounded border-fd-border text-fd-primary focus:ring-2 focus:ring-fd-primary focus:ring-offset-2 cursor-pointer"
             />
             Template Button
           </label>
-          
+
           <label className="flex items-center gap-2 text-sm text-fd-foreground cursor-pointer">
             <input
               type="checkbox"
               checked={config.skipHeaderRowSelection}
               onChange={(e) => updateConfig({ skipHeaderRowSelection: e.target.checked })}
-              className="rounded w-4 h-4 cursor-pointer"
+              className="rounded border-fd-border text-fd-primary focus:ring-2 focus:ring-fd-primary focus:ring-offset-2 cursor-pointer"
             />
             Skip Header Selection
           </label>
@@ -121,13 +120,13 @@ export default function PropConfigurator({
               type="color"
               value={config.primaryColor}
               onChange={(e) => updateConfig({ primaryColor: e.target.value })}
-              className="h-9 w-16 rounded border-2 border-fd-border cursor-pointer"
+              className="h-9 w-16 rounded border border-fd-border cursor-pointer hover:border-fd-primary transition-colors"
             />
             <input
               type="text"
               value={config.primaryColor}
               onChange={(e) => updateConfig({ primaryColor: e.target.value })}
-              className="flex-1 px-3 py-1.5 text-sm border-2 border-fd-border rounded-md bg-fd-background text-fd-foreground focus:border-fd-primary focus:outline-none"
+              className="flex-1 px-3 py-1.5 text-sm border border-fd-border rounded-md bg-fd-background text-fd-foreground focus:border-fd-primary focus:ring-2 focus:ring-fd-primary focus:ring-offset-2 focus:outline-none transition-colors"
               placeholder="#3B82F6"
             />
           </div>
@@ -141,7 +140,7 @@ export default function PropConfigurator({
           <h3 className="font-semibold text-sm text-fd-foreground">Columns ({config.columns.length})</h3>
           <button
             onClick={addColumn}
-            className="text-sm px-3 py-1 border-2 border-fd-border rounded-md hover:bg-fd-muted text-fd-foreground font-medium"
+            className="text-sm px-3 py-1 border border-fd-border rounded-md hover:bg-fd-muted text-fd-foreground font-medium transition-colors"
           >
             + Add Column
           </button>
@@ -149,19 +148,19 @@ export default function PropConfigurator({
 
         <div className="space-y-3">
           {config.columns.map((column, index) => (
-            <div key={index} className="border-2 border-fd-border rounded-md p-3 space-y-2 bg-fd-background">
+            <div key={index} className="border border-fd-border rounded-lg p-4 space-y-3 bg-fd-card">
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={column.label}
                   onChange={(e) => updateColumn(index, { label: e.target.value })}
-                  className="flex-1 px-2 py-1 text-sm border-2 border-fd-border rounded bg-fd-background text-fd-foreground focus:border-fd-primary focus:outline-none"
+                  className="flex-1 px-2 py-1 text-sm border border-fd-border rounded-md bg-fd-background text-fd-foreground focus:border-fd-primary focus:ring-2 focus:ring-fd-primary focus:ring-offset-2 focus:outline-none transition-colors"
                   placeholder="Label"
                 />
                 <select
                   value={column.type || 'string'}
                   onChange={(e) => updateColumn(index, { type: e.target.value as any })}
-                  className="px-2 py-1 text-sm border-2 border-fd-border rounded bg-fd-background text-fd-foreground focus:border-fd-primary focus:outline-none"
+                  className="px-2 py-1 text-sm border border-fd-border rounded-md bg-fd-background text-fd-foreground focus:border-fd-primary focus:ring-2 focus:ring-fd-primary focus:ring-offset-2 focus:outline-none transition-colors"
                 >
                   <option value="string">String</option>
                   <option value="number">Number</option>
@@ -171,12 +170,12 @@ export default function PropConfigurator({
                 </select>
                 <button
                   onClick={() => removeColumn(index)}
-                  className="px-2 py-1 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded font-bold"
+                  className="px-2 py-1 text-sm text-fd-destructive hover:bg-fd-destructive/10 rounded-md font-bold transition-colors"
                 >
                   ×
                 </button>
               </div>
-              
+
               <div className="flex flex-wrap gap-1">
                 {['required', 'unique'].map(validatorType => (
                   <button
@@ -184,7 +183,7 @@ export default function PropConfigurator({
                     onClick={() => toggleValidator(index, validatorType)}
                     className={`px-2 py-0.5 text-xs rounded font-medium transition-colors ${
                       column.validators?.some(v => v.type === validatorType)
-                        ? 'bg-fd-primary text-white'
+                        ? 'bg-fd-primary text-fd-primary-foreground'
                         : 'bg-fd-muted text-fd-foreground hover:bg-fd-muted/80'
                     }`}
                   >
@@ -197,7 +196,7 @@ export default function PropConfigurator({
                     onClick={() => toggleValidator(index, validatorType)}
                     className={`px-2 py-0.5 text-xs rounded font-medium transition-colors ${
                       column.validators?.some(v => v.type === validatorType)
-                        ? 'bg-fd-primary text-white'
+                        ? 'bg-fd-primary text-fd-primary-foreground'
                         : 'bg-fd-muted text-fd-foreground hover:bg-fd-muted/80'
                     }`}
                   >
@@ -212,26 +211,25 @@ export default function PropConfigurator({
 
       {/* Test Importer Section */}
       <div className="space-y-4">
-        <h3 className="font-semibold text-sm text-fd-foreground">Test Importer</h3>
-        
+
         <div className="space-y-3">
-          <button 
+          <button
             onClick={onOpenImporter}
             className="inline-flex items-center justify-center px-4 py-2 bg-fd-primary text-white rounded-md hover:bg-fd-primary/90 transition-colors font-medium shadow-sm"
           >
-            Open CSV Importer
+            Open Importer
           </button>
 
           {importedData && (
-            <div className="p-3 rounded-md bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800">
-              <p className="text-green-800 dark:text-green-200 text-sm">
+            <div className="p-3 rounded-lg bg-fd-success/10 border border-fd-success/20">
+              <p className="text-fd-success-foreground text-sm font-medium">
                 ✓ Imported {importedData.num_rows} rows successfully
               </p>
             </div>
           )}
 
           {!config.isModal && CSVImporter && (
-            <div className="border-2 border-fd-border rounded-lg overflow-hidden" style={{ height: '400px' }}>
+            <div className="border border-fd-border rounded-lg overflow-hidden" style={{ height: '400px' }}>
               <CSVImporter
                 {...config}
                 onComplete={onImportComplete}

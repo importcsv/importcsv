@@ -1,3 +1,225 @@
 @import 'tailwindcss';
 @import 'fumadocs-ui/css/neutral.css';
 @import 'fumadocs-ui/css/preset.css';
+
+:root {
+  /* Custom success colors (RGB format for compatibility) */
+  --color-fd-success: 34 197 94;
+  --color-fd-success-foreground: 22 101 52;
+  
+  /* Custom warning colors (RGB format for compatibility) */
+  --color-fd-warning: 251 146 60;
+  --color-fd-warning-foreground: 154 52 18;
+  
+  /* Custom destructive/error colors (HSL format to match Fumadocs) */
+  --color-fd-destructive: hsl(0, 84%, 60%);
+  --color-fd-destructive-foreground: hsl(0, 0%, 98%);
+}
+
+.dark {
+  /* Dark mode success colors */
+  --color-fd-success: 134 239 172;
+  --color-fd-success-foreground: 187 247 208;
+  
+  /* Dark mode warning colors */
+  --color-fd-warning: 252 211 77;
+  --color-fd-warning-foreground: 254 240 138;
+  
+  /* Dark mode destructive/error colors */
+  --color-fd-destructive: hsl(0, 63%, 31%);
+  --color-fd-destructive-foreground: hsl(0, 86%, 97%);
+}
+
+/* Fumadocs Core Utility Classes for Tailwind v4 */
+/* Background utilities */
+.bg-fd-primary {
+  background-color: var(--color-fd-primary);
+}
+
+.bg-fd-secondary {
+  background-color: var(--color-fd-secondary);
+}
+
+.bg-fd-muted {
+  background-color: var(--color-fd-muted);
+}
+
+.bg-fd-accent {
+  background-color: var(--color-fd-accent);
+}
+
+.bg-fd-card {
+  background-color: var(--color-fd-card);
+}
+
+.bg-fd-background {
+  background-color: var(--color-fd-background);
+}
+
+.bg-fd-popover {
+  background-color: var(--color-fd-popover);
+}
+
+/* Text color utilities */
+.text-fd-primary {
+  color: var(--color-fd-primary);
+}
+
+.text-fd-primary-foreground {
+  color: var(--color-fd-primary-foreground);
+}
+
+.text-fd-secondary-foreground {
+  color: var(--color-fd-secondary-foreground);
+}
+
+.text-fd-muted-foreground {
+  color: var(--color-fd-muted-foreground);
+}
+
+.text-fd-accent-foreground {
+  color: var(--color-fd-accent-foreground);
+}
+
+.text-fd-foreground {
+  color: var(--color-fd-foreground);
+}
+
+.text-fd-card-foreground {
+  color: var(--color-fd-card-foreground);
+}
+
+.text-fd-popover-foreground {
+  color: var(--color-fd-popover-foreground);
+}
+
+/* Border utilities */
+.border-fd-border {
+  border-color: var(--color-fd-border);
+}
+
+.border-fd-primary {
+  border-color: var(--color-fd-primary);
+}
+
+/* Ring utilities */
+.ring-fd-primary {
+  --tw-ring-color: var(--color-fd-primary);
+}
+
+/* Hover states */
+.hover\:bg-fd-primary:hover {
+  background-color: var(--color-fd-primary);
+}
+
+.hover\:bg-fd-primary\/90:hover {
+  background-color: hsl(from var(--color-fd-primary) h s l / 0.9);
+}
+
+.hover\:bg-fd-primary\/80:hover {
+  background-color: hsl(from var(--color-fd-primary) h s l / 0.8);
+}
+
+.hover\:bg-fd-secondary\/80:hover {
+  background-color: hsl(from var(--color-fd-secondary) h s l / 0.8);
+}
+
+.hover\:bg-fd-muted:hover {
+  background-color: var(--color-fd-muted);
+}
+
+.hover\:bg-fd-muted\/80:hover {
+  background-color: hsl(from var(--color-fd-muted) h s l / 0.8);
+}
+
+.hover\:bg-fd-accent:hover {
+  background-color: var(--color-fd-accent);
+}
+
+/* Opacity modifiers */
+.bg-fd-muted\/50 {
+  background-color: hsl(from var(--color-fd-muted) h s l / 0.5);
+}
+
+.bg-fd-muted\/30 {
+  background-color: hsl(from var(--color-fd-muted) h s l / 0.3);
+}
+
+.bg-fd-background\/50 {
+  background-color: hsl(from var(--color-fd-background) h s l / 0.5);
+}
+
+/* Focus states */
+.focus\:ring-fd-primary:focus {
+  --tw-ring-color: var(--color-fd-primary);
+}
+
+.focus\:border-fd-primary:focus {
+  border-color: var(--color-fd-primary);
+}
+
+.focus\:ring-2:focus {
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+}
+
+.focus\:ring-offset-2:focus {
+  --tw-ring-offset-width: 2px;
+}
+
+/* Custom color utilities */
+/* Success utilities (using RGB) */
+.bg-fd-success {
+  background-color: rgb(var(--color-fd-success));
+}
+
+.text-fd-success-foreground {
+  color: rgb(var(--color-fd-success-foreground));
+}
+
+.border-fd-success {
+  border-color: rgb(var(--color-fd-success));
+}
+
+.bg-fd-success\/10 {
+  background-color: rgb(var(--color-fd-success) / 0.1);
+}
+
+.border-fd-success\/20 {
+  border-color: rgb(var(--color-fd-success) / 0.2);
+}
+
+/* Destructive utilities (using direct variable since it's already HSL) */
+.bg-fd-destructive {
+  background-color: var(--color-fd-destructive);
+}
+
+.text-fd-destructive-foreground {
+  color: var(--color-fd-destructive-foreground);
+}
+
+.border-fd-destructive {
+  border-color: var(--color-fd-destructive);
+}
+
+.bg-fd-destructive\/10 {
+  background-color: hsl(from var(--color-fd-destructive) h s l / 0.1);
+}
+
+.border-fd-destructive\/20 {
+  border-color: hsl(from var(--color-fd-destructive) h s l / 0.2);
+}
+
+.hover\:bg-fd-destructive\/10:hover {
+  background-color: hsl(from var(--color-fd-destructive) h s l / 0.1);
+}
+
+/* Basic color utilities for common cases */
+.text-white {
+  color: hsl(0, 0%, 100%);
+}
+
+.text-black {
+  color: hsl(0, 0%, 0%);
+}
