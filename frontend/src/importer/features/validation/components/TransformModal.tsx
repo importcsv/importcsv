@@ -1,4 +1,5 @@
-import React, { useState, useCallback, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'preact/hooks';
+import type { ComponentChildren, FunctionComponent, JSX } from 'preact';
 import {
   Dialog,
   DialogContent,

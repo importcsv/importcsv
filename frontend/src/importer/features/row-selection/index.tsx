@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState } from "preact/hooks";
 import { useTranslation } from "../../../i18n/useTranslation";
 import { Alert } from "../../components/ui/alert";
 import { Button } from "../../components/ui/button";
@@ -10,7 +10,7 @@ import { AlertCircle } from "lucide-react";
 export default function RowSelection({ data, onSuccess, onCancel, selectedHeaderRow, setSelectedHeaderRow }: RowSelectionProps) {
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
-  const handleRadioChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRadioChange = (e: JSX.TargetedEvent<HTMLInputElement>) => {
     setSelectedHeaderRow(Number(e.target.value));
   };
   const rowLimit = 50;

@@ -1,4 +1,5 @@
-import React, { createContext, useContext } from "react";
+import { createContext } from 'preact';
+import type { JSX } from 'preact';
 import { cn } from "../../../utils/cn";
 import { CellProps, RowProps, TableProps } from "./types";
 import Tooltip from "../Tooltip";
@@ -19,7 +20,7 @@ export default function Table({
   columnAlignments = [],
   fixHeader = false,
   onRowClick,
-}: TableProps): React.ReactElement {
+}: TableProps): JSX.Element {
 
   // TABLE HEADINGS
   // Hide column title if the item has an action (action button) or the title starts with underscore

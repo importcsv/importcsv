@@ -1,5 +1,5 @@
 import { Column } from "../../../../types";
-import { Dispatch, SetStateAction } from "react";
+import { Dispatch, SetStateAction } from 'preact/hooks';
 
 export type UploaderProps = {
   columns?: Column[];

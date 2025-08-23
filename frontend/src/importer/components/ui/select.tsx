@@ -1,27 +1,28 @@
-import * as React from "react"
+import { h } from 'preact';
+import { forwardRef } from 'preact/compat'
 import { cn } from "../../../utils/cn"
 
-interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+interface SelectProps extends JSX.SelectHTMLAttributes<HTMLSelectElement> {
   placeholder?: string
   options?: Array<{ value: string; label: string; disabled?: boolean }>
   onValueChange?: (value: string) => void
 }
 
-const Select = React.forwardRef<HTMLSelectElement, SelectProps>(
+const Select = forwardRef<HTMLSelectElement, SelectProps>(
   ({ className, placeholder, options = [], onValueChange, onChange, ...props }, ref) => {
-    const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const handleChange = (e: JSX.TargetedEvent<HTMLSelectElement>) => {
       // Call both handlers if they exist
       onChange?.(e);
       onValueChange?.(e.target.value);
     };
 
-    const handleFocus = (e: React.FocusEvent<HTMLSelectElement>) => {
+    const handleFocus = (e: JSX.TargetedFocusEvent<HTMLSelectElement>) => {
       // Stop focus event from bubbling up to prevent aria-hidden issues
       e.stopPropagation();
       props.onFocus?.(e);
     };
 
-    const handleClick = (e: React.MouseEvent<HTMLSelectElement>) => {
+    const handleClick = (e: JSX.TargetedMouseEvent<HTMLSelectElement>) => {
       // Stop click event from bubbling up
       e.stopPropagation();
       props.onClick?.(e);

@@ -5,6 +5,7 @@ export default {
     "./src/**/*.{js,jsx,ts,tsx}",
     "./examples/**/*.{js,jsx,ts,tsx}",
   ],
+  important: '.importcsv',
   theme: {
     extend: {
       fontFamily: {

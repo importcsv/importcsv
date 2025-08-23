@@ -1,4 +1,4 @@
-import { RefObject, useEffect, useRef } from "react";
+import { RefObject, useEffect, useRef } from "preact/hooks";
 import useIsomorphicLayoutEffect from "./useIsomorphicLayoutEffect";
 
 function useEventListener<K extends keyof WindowEventMap>(eventName: K, handler: (event: WindowEventMap[K]) => void): void;

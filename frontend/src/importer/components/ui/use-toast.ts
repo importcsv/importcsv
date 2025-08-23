@@ -1,4 +1,6 @@
-import * as React from "react"
+import { h } from 'preact'
+import type { ComponentChildren } from 'preact';
+import { useEffect,useState } from 'preact/hooks';
 
 import type {
   ToastActionElement,
@@ -10,8 +12,8 @@ const TOAST_REMOVE_DELAY = 1000000
 
 type ToasterToast = ToastProps & {
   id: string
-  title?: React.ReactNode
-  description?: React.ReactNode
+  title?: ComponentChildren
+  description?: ComponentChildren
   action?: ToastActionElement
   open?: boolean
   onOpenChange?: (open: boolean) => void
@@ -169,9 +171,9 @@ function toast({ ...props }: Toast) {
 }
 
 function useToast() {
-  const [state, setState] = React.useState<State>(memoryState)
+  const [state, setState] = useState<State>(memoryState)
 
-  React.useEffect(() => {
+  useEffect(() => {
     listeners.push(setState)
     return () => {
       const index = listeners.indexOf(setState)

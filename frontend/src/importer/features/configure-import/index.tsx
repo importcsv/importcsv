@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'preact/hooks';
+import type { ComponentChildren, FunctionComponent, JSX } from 'preact';
 import { Button } from '../../components/ui/button';
 import { Box, Flex, Text, VStack, HStack } from '../../components/ui/flex';
 import { Switch } from '../../components/ui/switch';

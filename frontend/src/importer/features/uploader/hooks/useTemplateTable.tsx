@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo } from "preact/hooks";
 import { useTranslation } from "../../../../i18n/useTranslation";
 import Tooltip from "../../../components/Tooltip";
 import { Column } from "../../../../types";

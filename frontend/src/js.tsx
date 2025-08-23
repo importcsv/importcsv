@@ -1,5 +1,5 @@
-import { createRef } from "react";
-import ReactDOM from "react-dom";
+import { createRef } from "preact";
+import { render } from "preact";
 import CSVImporter from "./components/CSVImporter";
 import { CSVImporterProps } from "./types";
 
@@ -9,7 +9,7 @@ export function createCSVImporter(props: CreateImporterProps) {
   const ref = createRef<typeof CSVImporter & HTMLDialogElement>();
   const domElement = props.domElement || document.body;
 
-  ReactDOM.render(<CSVImporter ref={ref} {...props} />, domElement);
+  render(<CSVImporter ref={ref} {...props} />, domElement);
 
   return {
     instance: ref.current,

@@ -1,4 +1,5 @@
-import React, { forwardRef, useEffect, useRef, useState } from "react";
+import { forwardRef } from 'preact/compat';
+import { useRef, useEffect } from 'preact/hooks';
 import Importer from "../../importer/features/main";
 import Providers from "../../importer/providers";
 import useThemeStore from "../../importer/stores/theme";
@@ -48,7 +49,8 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
   }, [isModal, modalIsOpen, ref]);
   const baseClass = "CSVImporter";
   const themeClass = darkMode ? `${baseClass}-dark` : `${baseClass}-light`;
-  const domElementClass = ["csv-importer", `${baseClass}-${isModal ? "dialog" : "div"}`, themeClass, className].filter((i) => i).join(" ");
+  // Add importcsv class for proper CSS scoping
+  const domElementClass = ["importcsv", "csv-importer", `${baseClass}-${isModal ? "dialog" : "div"}`, themeClass, className].filter((i) => i).join(" ");
 
   // Set Light/Dark mode
   const setTheme = useThemeStore((state) => state.setTheme);
@@ -129,11 +131,9 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
   );
 
   return isModal ? (
-    <div className="csvImporter">
-      <dialog {...elementProps}>
-        <ImporterComponent />
-      </dialog>
-    </div>
+    <dialog {...elementProps}>
+      <ImporterComponent />
+    </dialog>
   ) : (
     <div {...elementProps}>
       <ImporterComponent />

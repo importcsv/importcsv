@@ -1,5 +1,5 @@
-import { useRef, useState } from "react";
-import { createPortal } from 'react-dom';
+import { useRef, useState } from "preact/hooks";
+import { createPortal } from 'preact/compat';
 import useClickOutside from "../../hooks/useClickOutside";
 import useRect from "../../hooks/useRect";
 import useWindowSize from "../../hooks/useWindowSize";

@@ -1,4 +1,5 @@
-import React, { useState, useMemo, FormEvent, useRef, useEffect } from 'react';
+import { useState, useMemo, FormEvent, useRef, useEffect, useCallback } from 'preact/hooks';
+import type { ComponentChildren, FunctionComponent, JSX } from 'preact';
 import { Button } from '../../components/ui/button';
 import { Switch } from '../../components/ui/switch';
 import { Alert, AlertTitle, AlertDescription } from '../../components/ui/alert';
@@ -52,7 +53,7 @@ export default function Validation({
   }, [includedColumns, headerRow]);
 
   // Validation tracking
-  const shouldValidateRef = React.useRef(true);
+  const shouldValidateRef = useRef(true);
 
   // Reset scroll position when component mounts
   useEffect(() => {
@@ -62,7 +63,7 @@ export default function Validation({
   }, []); // Empty dependency array ensures this runs only on mount
 
   // Validate column mappings
-  React.useEffect(() => {
+  useEffect(() => {
     if (!columns) return;
     // Check if mappings match column ids
     const columnIds = columns.map(col => col.id);
@@ -77,7 +78,7 @@ export default function Validation({
   }, [columns, columnMapping]);
 
   // Data validation
-  const validateData = React.useCallback(() => {
+  const validateData = useCallback(() => {
     if (!shouldValidateRef.current) return;
 
     const newErrors: Array<{rowIndex: number, columnIndex: number, message: string}> = [];
@@ -158,13 +159,13 @@ export default function Validation({
   }, [dataRows, columnMapping, columns, headerRowIndex]);
 
   // Trigger validation when data changes
-  React.useEffect(() => {
+  useEffect(() => {
     shouldValidateRef.current = true;
     validateData();
   }, [dataRows, validateData]);
 
   // Cell editing
-  const handleCellEdit = React.useCallback((rowIdx: number, colIdx: number, value: string) => {
+  const handleCellEdit = useCallback((rowIdx: number, colIdx: number, value: string) => {
     // Only update if value actually changed
     if (dataRows[rowIdx]?.values[colIdx] === value) return;
 
@@ -234,7 +235,7 @@ export default function Validation({
   }, [errors, headerRowIndex, dataRows]);
 
   // Form submission
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = (e: JSX.TargetedEvent) => {
     e.preventDefault();
 
     if (disableOnInvalidRows && errors.length > 0) {

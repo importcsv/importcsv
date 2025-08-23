@@ -1,10 +1,13 @@
-import * as React from "react"
+import { h } from 'preact';
+import { forwardRef } from 'preact/compat'
+import type { ComponentChildren } from 'preact';
+import { useEffect,useRef,useState } from 'preact/hooks';
 
 import { cn } from "../../../utils/cn"
 
 interface TooltipProps {
-  content: React.ReactNode
-  children: React.ReactNode
+  content: ComponentChildren
+  children: ComponentChildren
   delayDuration?: number
   side?: 'top' | 'bottom' | 'left' | 'right'
   className?: string
@@ -17,8 +20,8 @@ const Tooltip = ({
   side = 'top',
   className 
 }: TooltipProps) => {
-  const [isVisible, setIsVisible] = React.useState(false)
-  const timeoutRef = React.useRef<NodeJS.Timeout>()
+  const [isVisible, setIsVisible] = useState(false)
+  const timeoutRef = useRef<NodeJS.Timeout>()
   
   const showTooltip = () => {
     timeoutRef.current = setTimeout(() => {
@@ -33,7 +36,7 @@ const Tooltip = ({
     setIsVisible(false)
   }
   
-  React.useEffect(() => {
+  useEffect(() => {
     return () => {
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current)
@@ -76,19 +79,19 @@ const Tooltip = ({
 }
 
 // For backward compatibility - components that expect the old API
-const TooltipProvider = ({ children }: { children: React.ReactNode }) => <>{children}</>
+const TooltipProvider = ({ children }: { children: ComponentChildren }) => <>{children}</>
 const TooltipRoot = Tooltip
-const TooltipTrigger = React.forwardRef<
+const TooltipTrigger = forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & { asChild?: boolean }
+  JSX.HTMLAttributes<HTMLDivElement> & { asChild?: boolean }
 >(({ children, asChild, ...props }, ref) => (
   <div ref={ref} {...props}>{children}</div>
 ))
 TooltipTrigger.displayName = "TooltipTrigger"
 
-const TooltipContent = React.forwardRef<
+const TooltipContent = forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement> & { sideOffset?: number }
+  JSX.HTMLAttributes<HTMLDivElement> & { sideOffset?: number }
 >(({ children, className, sideOffset, ...props }, ref) => (
   <div ref={ref} className={className} {...props}>{children}</div>
 ))

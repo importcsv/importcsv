@@ -1,5 +1,6 @@
-import React from "react";
+import { h } from 'preact';
+import type { ComponentChildren } from 'preact';
 
-export type ProvidersProps = React.PropsWithChildren<{}>;
-export type QueriesProps = React.PropsWithChildren<{}>;
-export type ThemeProps = React.PropsWithChildren<{}>;
+export type ProvidersProps = { children: ComponentChildren };
+export type QueriesProps = { children: ComponentChildren };
+export type ThemeProps = { children: ComponentChildren };

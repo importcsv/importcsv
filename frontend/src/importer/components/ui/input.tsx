@@ -1,11 +1,12 @@
-import * as React from "react"
+import { h } from 'preact';
+import { forwardRef } from 'preact/compat'
 
 import { cn } from "../../../utils/cn"
 
 export interface InputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {}
+  extends JSX.HTMLAttributes<HTMLInputElement> {}
 
-const Input = React.forwardRef<HTMLInputElement, InputProps>(
+const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, ...props }, ref) => {
     return (
       <input

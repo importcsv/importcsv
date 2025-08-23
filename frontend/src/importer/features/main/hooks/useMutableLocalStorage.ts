@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "preact/hooks";
 
 export default function useMutableLocalStorage(key: string, initialValue: any) {
   // State to store our value

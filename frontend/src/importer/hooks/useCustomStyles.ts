@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef } from "preact/hooks";
 
 export default function useCustomStyles(customStyles?: string, targetElement?: HTMLElement | null) {
   useEffect(() => {

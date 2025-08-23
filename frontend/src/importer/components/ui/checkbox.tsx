@@ -1,21 +1,23 @@
-import * as React from "react"
+import { h } from 'preact';
+import { forwardRef } from 'preact/compat'
+import { useEffect,useState } from 'preact/hooks';
 import { Check } from "lucide-react"
 
 import { cn } from "../../../utils/cn"
 
-export interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface CheckboxProps extends JSX.HTMLAttributes<HTMLInputElement> {
   onCheckedChange?: (checked: boolean) => void
 }
 
-const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
+const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
   ({ className, checked, onCheckedChange, onChange, ...props }, ref) => {
-    const [isChecked, setIsChecked] = React.useState(checked || false)
+    const [isChecked, setIsChecked] = useState(checked || false)
 
-    React.useEffect(() => {
+    useEffect(() => {
       setIsChecked(checked || false)
     }, [checked])
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e: JSX.TargetedEvent<HTMLInputElement>) => {
       const newChecked = e.target.checked
       setIsChecked(newChecked)
       

@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect } from "preact/hooks";
 
 export default function useClickOutside(ref: any | null, callback: (...args: any[]) => any): void {
   const staticCallback = useCallback(callback, []);

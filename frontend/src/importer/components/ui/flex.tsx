@@ -1,7 +1,8 @@
-import * as React from "react"
+import { h } from 'preact';
+import { forwardRef } from 'preact/compat'
 import { cn } from "../../../utils/cn"
 
-interface FlexProps extends React.HTMLAttributes<HTMLDivElement> {
+interface FlexProps extends JSX.HTMLAttributes<HTMLDivElement> {
   direction?: "row" | "column" | "row-reverse" | "column-reverse"
   align?: "start" | "center" | "end" | "stretch" | "baseline"
   justify?: "start" | "center" | "end" | "between" | "around" | "evenly"
@@ -9,7 +10,7 @@ interface FlexProps extends React.HTMLAttributes<HTMLDivElement> {
   gap?: number | string
 }
 
-const Flex = React.forwardRef<HTMLDivElement, FlexProps>(
+const Flex = forwardRef<HTMLDivElement, FlexProps>(
   ({ className, direction = "row", align, justify, wrap, gap, style, ...props }, ref) => {
     const flexClasses = cn(
       "flex",
@@ -48,24 +49,24 @@ const Flex = React.forwardRef<HTMLDivElement, FlexProps>(
 )
 Flex.displayName = "Flex"
 
-const Box = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+const Box = forwardRef<HTMLDivElement, JSX.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => {
     return <div ref={ref} className={cn(className)} {...props} />
   }
 )
 Box.displayName = "Box"
 
-const HStack = React.forwardRef<HTMLDivElement, Omit<FlexProps, "direction">>(
+const HStack = forwardRef<HTMLDivElement, Omit<FlexProps, "direction">>(
   (props, ref) => <Flex ref={ref} direction="row" align="center" {...props} />
 )
 HStack.displayName = "HStack"
 
-const VStack = React.forwardRef<HTMLDivElement, Omit<FlexProps, "direction">>(
+const VStack = forwardRef<HTMLDivElement, Omit<FlexProps, "direction">>(
   (props, ref) => <Flex ref={ref} direction="column" {...props} />
 )
 VStack.displayName = "VStack"
 
-const Text = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+const Text = forwardRef<HTMLDivElement, JSX.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => {
     return <div ref={ref} className={cn(className)} {...props} />
   }

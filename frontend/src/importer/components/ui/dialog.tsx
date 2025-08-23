@@ -1,4 +1,7 @@
-import * as React from "react"
+import { createContext, h } from 'preact';
+import { forwardRef } from 'preact/compat';
+import type { ComponentChildren, JSX } from 'preact';
+import { useContext, useEffect, useRef, useImperativeHandle } from 'preact/hooks';
 import { X } from "lucide-react"
 
 import { cn } from "../../../utils/cn"
@@ -8,12 +11,12 @@ interface DialogContextType {
   onOpenChange: (open: boolean) => void
 }
 
-const DialogContext = React.createContext<DialogContextType | undefined>(undefined)
+const DialogContext = createContext<DialogContextType | undefined>(undefined)
 
 interface DialogProps {
   open?: boolean
   onOpenChange?: (open: boolean) => void
-  children: React.ReactNode
+  children: ComponentChildren
 }
 
 const Dialog = ({ open = false, onOpenChange, children }: DialogProps) => {
@@ -24,13 +27,13 @@ const Dialog = ({ open = false, onOpenChange, children }: DialogProps) => {
   )
 }
 
-const DialogTrigger = React.forwardRef<
+const DialogTrigger = forwardRef<
   HTMLButtonElement,
-  React.ButtonHTMLAttributes<HTMLButtonElement>
+  JSX.HTMLAttributes<HTMLButtonElement>
 >(({ children, onClick, ...props }, ref) => {
-  const context = React.useContext(DialogContext)
+  const context = useContext(DialogContext)
   
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleClick = (e: JSX.TargetedMouseEvent<HTMLButtonElement>) => {
     onClick?.(e)
     context?.onOpenChange(true)
   }
@@ -43,19 +46,19 @@ const DialogTrigger = React.forwardRef<
 })
 DialogTrigger.displayName = "DialogTrigger"
 
-interface DialogContentProps extends React.HTMLAttributes<HTMLDialogElement> {
+interface DialogContentProps extends JSX.HTMLAttributes<HTMLDialogElement> {
   onClose?: () => void
 }
 
-const DialogContent = React.forwardRef<HTMLDialogElement, DialogContentProps>(
+const DialogContent = forwardRef<HTMLDialogElement, DialogContentProps>(
   ({ className, children, onClose, ...props }, ref) => {
-    const dialogRef = React.useRef<HTMLDialogElement>(null)
-    const context = React.useContext(DialogContext)
+    const dialogRef = useRef<HTMLDialogElement>(null)
+    const context = useContext(DialogContext)
     
     // Combine refs
-    React.useImperativeHandle(ref, () => dialogRef.current!)
+    useImperativeHandle(ref, () => dialogRef.current!)
     
-    React.useEffect(() => {
+    useEffect(() => {
       const dialog = dialogRef.current
       if (!dialog) return
       
@@ -72,12 +75,12 @@ const DialogContent = React.forwardRef<HTMLDialogElement, DialogContentProps>(
     }
     
     // Handle escape key and backdrop click
-    const handleCancel = (e: React.SyntheticEvent) => {
+    const handleCancel = (e: JSX.TargetedEvent) => {
       e.preventDefault()
       handleClose()
     }
     
-    const handleBackdropClick = (e: React.MouseEvent<HTMLDialogElement>) => {
+    const handleBackdropClick = (e: JSX.TargetedMouseEvent<HTMLDialogElement>) => {
       if (e.target === dialogRef.current) {
         handleClose()
       }
@@ -117,7 +120,7 @@ DialogContent.displayName = "DialogContent"
 const DialogHeader = ({
   className,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
+}: JSX.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
       "flex flex-col space-y-1.5 text-center sm:text-left",
@@ -131,7 +134,7 @@ DialogHeader.displayName = "DialogHeader"
 const DialogFooter = ({
   className,
   ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
+}: JSX.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
       "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
@@ -142,9 +145,9 @@ const DialogFooter = ({
 )
 DialogFooter.displayName = "DialogFooter"
 
-const DialogTitle = React.forwardRef<
+const DialogTitle = forwardRef<
   HTMLHeadingElement,
-  React.HTMLAttributes<HTMLHeadingElement>
+  JSX.HTMLAttributes<HTMLHeadingElement>
 >(({ className, ...props }, ref) => (
   <h2
     ref={ref}
@@ -157,9 +160,9 @@ const DialogTitle = React.forwardRef<
 ))
 DialogTitle.displayName = "DialogTitle"
 
-const DialogDescription = React.forwardRef<
+const DialogDescription = forwardRef<
   HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
+  JSX.HTMLAttributes<HTMLParagraphElement>
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
@@ -170,7 +173,7 @@ const DialogDescription = React.forwardRef<
 DialogDescription.displayName = "DialogDescription"
 
 // For backward compatibility
-const DialogPortal = ({ children }: { children: React.ReactNode }) => children
+const DialogPortal = ({ children }: { children: ComponentChildren }) => children
 const DialogOverlay = () => null
 const DialogClose = DialogTrigger
 

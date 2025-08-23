@@ -1,6 +1,7 @@
-import { isValidElement } from "react";
+import { isValidElement } from "preact/hooks";
+import type { ComponentChildren } from 'preact';
 
-export default function getStringLengthOfChildren(children: React.ReactNode): number {
+export default function getStringLengthOfChildren(children: ComponentChildren): number {
   if (typeof children === "string") return children.length;
 
   if (Array.isArray(children)) return children.reduce((sum, child) => sum + getStringLengthOfChildren(child), 0);

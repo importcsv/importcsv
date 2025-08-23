@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'preact/compat';
+import { useEffect,useState } from 'preact/hooks';
 import { CSVImporter } from './components/CSVImporter'; // Adjust path as needed based on the actual structure
+import { useEffect,useState } from 'preact/hooks';
 import { authApi, schemaApi, importApi } from './services/api';
 
 function App() {

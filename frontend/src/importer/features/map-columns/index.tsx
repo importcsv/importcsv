@@ -1,4 +1,5 @@
-import { FormEvent, useState, useEffect } from "react";
+import { useState, useEffect } from "preact/hooks";
+import type { JSX } from "preact";
 import { useTranslation } from "../../../i18n/useTranslation";
 import { Button } from "../../components/ui/button";
 import { Flex, Text } from "../../components/ui/flex";
@@ -71,7 +72,7 @@ export default function MapColumns({
     return requiredColumns.every((requiredColumn: any) => includedValues.some((includedValue: any) => ((includedValue as any).id || (includedValue as any).key) === requiredColumn.id));
   };
 
-  const onSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const onSubmit = (e: JSX.TargetedEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
 

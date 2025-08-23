@@ -1,14 +1,15 @@
-import * as React from "react"
+import { h } from 'preact';
+import { forwardRef } from 'preact/compat'
 
 import { cn } from "../../../utils/cn"
 
-export interface SwitchProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type'> {
+export interface SwitchProps extends Omit<JSX.HTMLAttributes<HTMLInputElement>, 'type'> {
   onCheckedChange?: (checked: boolean) => void
 }
 
-const Switch = React.forwardRef<HTMLInputElement, SwitchProps>(
+const Switch = forwardRef<HTMLInputElement, SwitchProps>(
   ({ className, checked, onCheckedChange, onChange, disabled, ...props }, ref) => {
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e: JSX.TargetedEvent<HTMLInputElement>) => {
       const newChecked = e.target.checked
       
       // Call both handlers if they exist

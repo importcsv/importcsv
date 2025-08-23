@@ -1,4 +1,4 @@
-import { useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useState } from "preact/hooks";
 
 export default function useWindowSize(): number[] {
   const [size, setSize] = useState([0, 0]);

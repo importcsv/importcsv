@@ -1,5 +1,4 @@
-import { useEffect, useRef, useState } from "react";
-import ReactDOM from "react-dom";
+import { useEffect, useRef, useState } from "preact/hooks";
 import { cn } from "../../../utils/cn";
 import getStringLengthOfChildren from "../../utils/getStringLengthOfChildren";
 import { AsMap, TooltipProps } from "./types";

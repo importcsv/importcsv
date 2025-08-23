@@ -2,8 +2,32 @@
   "name": "@importcsv/react",
   "version": "0.2.1",
   "description": "Open-source CSV and XLS/XLSX file importer for React and JavaScript",
-  "main": "build/index.js",
-  "module": "build/index.esm.js",
+  "main": "build/preact/index.js",
+  "module": "build/preact/index.esm.js",
+  "exports": {
+    ".": {
+      "types": "./build/preact/types/index.d.ts",
+      "import": "./build/preact/index.esm.js",
+      "require": "./build/preact/index.js"
+    },
+    "./react": {
+      "types": "./build/react/types/index.d.ts",
+      "import": "./build/react/index.esm.js",
+      "require": "./build/react/index.js"
+    },
+    "./preact": {
+      "types": "./build/preact/types/index.d.ts",
+      "import": "./build/preact/index.esm.js",
+      "require": "./build/preact/index.js"
+    },
+    "./bundled": {
+      "types": "./build/bundled/types/index.d.ts",
+      "import": "./build/bundled/index.esm.js",
+      "require": "./build/bundled/index.js",
+      "script": "./build/bundled/index.umd.js"
+    },
+    "./style.css": "./build/preact/bundle.css"
+  },
   "files": [
     "build"
   ],
@@ -28,21 +52,32 @@
   "homepage": "https://github.com/abhishekray07/importcsv#readme",
   "types": "build/index.d.ts",
   "scripts": {
-    "build:js": "rollup --config rollup.config-js.js && cp package-js.json build/package.json",
-    "build:react": "vite build",
-    "build:react:dev": "vite build --mode development",
-    "build:react:prod": "vite build --mode production",
-    "publish:local:js": "yarn build:js && cd build && yalc publish",
-    "publish:local:react": "yarn build:react:dev && yalc publish",
-    "publish:local:react:prod": "yarn build:react:prod && yalc publish",
-    "publish:js": "yarn build:js && cd build && npm publish",
-    "publish:react": "NPM_PACKAGE_BUILD=true yarn build:react:prod && yarn publish --access public",
-    "build:watch": "vite build --watch --mode development",
-    "dev:examples": "cd examples && npm install && npm run dev"
+    "build:react": "vite build --mode react",
+    "build:preact": "vite build --mode preact",
+    "build:bundled": "vite build --mode bundled",
+    "build": "npm-run-all --parallel build:react build:preact build:bundled",
+    "build:legacy": "vite build --mode production",
+    "dev": "vite --mode preact",
+    "dev:examples": "cd examples && npm install && npm run dev",
+    "watch:react": "vite build --watch --mode react",
+    "watch:preact": "vite build --watch --mode preact",
+    "watch:bundled": "vite build --watch --mode bundled"
   },
   "peerDependencies": {
-    "react": ">=18.0.0",
-    "react-dom": ">=18.0.0"
+    "preact": "^10.0.0",
+    "react": "^16.8.0 || ^17 || ^18",
+    "react-dom": "^16.8.0 || ^17 || ^18"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    },
+    "preact": {
+      "optional": true
+    }
   },
   "optionalDependencies": {
     "xlsx": "^0.18.5"
@@ -51,6 +86,8 @@
     "@babel/preset-env": "^7.22.4",
     "@babel/preset-react": "^7.22.3",
     "@babel/preset-typescript": "^7.21.5",
+    "@preact/compat": "^18.3.1",
+    "@preact/preset-vite": "^2.10.2",
     "@trivago/prettier-plugin-sort-imports": "^4.1.1",
     "@types/babel__core": "^7.20.1",
     "@types/jest": "^24.9.1",
@@ -69,11 +106,10 @@
     "eslint-plugin-react": "^7.32.2",
     "identity-obj-proxy": "^3.0.0",
     "jest": "^26.6.3",
+    "npm-run-all": "^4.1.5",
     "postcss-import": "^16.1.1",
     "prettier": "^2.8.6",
     "prop-types": "^15.8.1",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
     "style-loader": "^3.3.3",
     "tailwindcss": "^3.4.0",
     "ts-jest": "^26.5.6",
@@ -90,8 +126,7 @@
     "lucide-react": "^0.507.0",
     "papaparse": "^5.4.1",
     "postcss": "^8.5.3",
-    "react-dropzone": "^14.2.3",
-    "react-frame-component": "^5.2.7",
+    "preact": "^10.0.0",
     "react-hotkeys-hook": "^5.1.0",
     "tailwind-merge": "^3.2.0",
     "zustand": "^4.4.7"

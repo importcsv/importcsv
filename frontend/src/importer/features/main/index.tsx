@@ -1,5 +1,5 @@
 import Papa from "papaparse";
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "preact/hooks";
 // Note: XLSX is dynamically imported when needed to reduce bundle size
 // Users must install 'xlsx' package separately for Excel support
 import { Button } from "../../components/ui/button";
@@ -19,7 +19,7 @@ import Uploader from "../uploader";
 import { X } from "lucide-react";
 import { useTranslation } from "../../../i18n/useTranslation";
 import config from "../../../config";
-import IframeWrapper from "../../components/IframeWrapper";
+import Root from "../../components/Root";
 
 // Helper function to map backend field type to Column type
 function mapBackendType(backendType: string): Column['type'] {
@@ -586,12 +586,12 @@ export default function Main(props: CSVImporterProps) {
     </div>
   );
 
-  // Always wrap in iframe for complete CSS isolation
+  // Wrap in Root component for isolation
   return (
-    <IframeWrapper className="importcsv-iframe" primaryColor={props.primaryColor}>
+    <Root primaryColor={props.primaryColor}>
       <div className="csv-importer" data-theme={props.darkMode ? 'dark' : 'light'}>
         {content}
       </div>
-    </IframeWrapper>
+    </Root>
   );
 }

@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useState } from "react";
+import { useCallback, useLayoutEffect, useState } from "preact/hooks";
 import useEventListener from "./useEventListener";
 import useIsomorphicLayoutEffect from "./useIsomorphicLayoutEffect";
 

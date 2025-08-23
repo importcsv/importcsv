@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "preact/hooks";
 import { useTranslation } from "../../../../i18n/useTranslation";
 import useStepper from "../../../components/Stepper/hooks/useStepper";
 import useMutableLocalStorage from "./useMutableLocalStorage";

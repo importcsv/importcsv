@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState } from "preact/hooks";
 import { Step, StepperProps } from "../types";
 
 export default function useStepper(steps: Step[], initialStep = 0, skipHeader: boolean): StepperProps {

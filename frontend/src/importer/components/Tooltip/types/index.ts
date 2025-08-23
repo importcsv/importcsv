@@ -1,9 +1,9 @@
-import { ReactNode } from "react";
+import { ReactNode } from "preact/hooks";
 
 export type AsMap = {
-  div: React.HTMLProps<HTMLDivElement>;
-  span: React.HTMLProps<HTMLSpanElement>;
-  p: React.HTMLProps<HTMLParagraphElement>;
+  div: JSX.HTMLAttributes<HTMLDivElement>;
+  span: JSX.HTMLAttributes<HTMLSpanElement>;
+  p: JSX.HTMLAttributes<HTMLParagraphElement>;
 };
 
 export type TooltipProps<T extends keyof AsMap = "span"> = {

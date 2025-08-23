@@ -1,4 +1,5 @@
-import { PropsWithChildren, ReactElement } from "react";
+import { h } from 'preact';
+import type { JSX } from 'preact';
 
 type Style = { readonly [key: string]: string };
 
@@ -6,7 +7,7 @@ type Primitive = string | number | boolean | null | undefined;
 
 export type TableComposite = {
     raw: Primitive;
-    content: Primitive | React.ReactElement;
+    content: Primitive | JSX.Element;
     tooltip?: string;
     captionInfo?: string;
 };

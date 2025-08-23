@@ -1,14 +1,16 @@
-import * as React from "react"
+import { h } from 'preact';
+import { forwardRef } from 'preact/compat'
+import type { JSX } from 'preact';
 import { X } from "lucide-react"
 
 import { cn } from "../../../utils/cn"
 
-export interface ToastProps extends React.HTMLAttributes<HTMLDivElement> {
+export interface ToastProps extends JSX.HTMLAttributes<HTMLDivElement> {
   variant?: 'default' | 'destructive'
   onClose?: () => void
 }
 
-const Toast = React.forwardRef<HTMLDivElement, ToastProps>(
+const Toast = forwardRef<HTMLDivElement, ToastProps>(
   ({ className, variant = 'default', onClose, children, ...props }, ref) => {
     const variantClasses = {
       default: 'bg-white border-gray-200 text-gray-900',
@@ -47,9 +49,9 @@ const Toast = React.forwardRef<HTMLDivElement, ToastProps>(
 )
 Toast.displayName = "Toast"
 
-const ToastAction = React.forwardRef<
+const ToastAction = forwardRef<
   HTMLButtonElement,
-  React.ButtonHTMLAttributes<HTMLButtonElement>
+  JSX.HTMLAttributes<HTMLButtonElement>
 >(({ className, ...props }, ref) => (
   <button
     ref={ref}
@@ -62,9 +64,9 @@ const ToastAction = React.forwardRef<
 ))
 ToastAction.displayName = "ToastAction"
 
-const ToastClose = React.forwardRef<
+const ToastClose = forwardRef<
   HTMLButtonElement,
-  React.ButtonHTMLAttributes<HTMLButtonElement>
+  JSX.HTMLAttributes<HTMLButtonElement>
 >(({ className, ...props }, ref) => (
   <button
     ref={ref}
@@ -79,9 +81,9 @@ const ToastClose = React.forwardRef<
 ))
 ToastClose.displayName = "ToastClose"
 
-const ToastTitle = React.forwardRef<
+const ToastTitle = forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  JSX.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
@@ -91,9 +93,9 @@ const ToastTitle = React.forwardRef<
 ))
 ToastTitle.displayName = "ToastTitle"
 
-const ToastDescription = React.forwardRef<
+const ToastDescription = forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
+  JSX.HTMLAttributes<HTMLDivElement>
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
@@ -103,7 +105,7 @@ const ToastDescription = React.forwardRef<
 ))
 ToastDescription.displayName = "ToastDescription"
 
-type ToastActionElement = React.ReactElement<typeof ToastAction>
+type ToastActionElement = JSX.Element<typeof ToastAction>
 
 export {
   Toast,

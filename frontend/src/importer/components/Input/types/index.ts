@@ -1,4 +1,4 @@
-import { ButtonHTMLAttributes, InputHTMLAttributes, ReactElement } from "react";
+import { ButtonHTMLAttributes, InputHTMLAttributes, ReactElement } from "preact/hooks";
 
 export type inputTypes =
   | "date"
