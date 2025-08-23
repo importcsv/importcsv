@@ -4,12 +4,14 @@ import { Button } from '../../components/ui/button';
 import { Box, Flex, Text, VStack, HStack } from '../../components/ui/flex';
 import { Switch } from '../../components/ui/switch';
 import { Select } from '../../components/ui/select';
-// Using native HTML table elements instead of Chakra UI
+import StepLayout from '../../components/StepLayout';
 import { CheckCircle } from 'lucide-react';
 import { useTranslation } from '../../../i18n/useTranslation';
 import { Column, ColumnMapping, ColumnMappingDictionary } from '../../../types';
 import stringSimilarity from '../../utils/stringSimilarity';
 import { getMappingSuggestions } from '../../services/mapping';
+import { designTokens } from '../../constants/design-tokens';
+import { cn } from '../../../utils/cn';
 
 interface ConfigureImportProps {
   columns?: Column[];
@@ -237,65 +239,93 @@ export default function ConfigureImport({
     onSuccess(columnMapping, selectedHeaderRow);
   };
 
+  const footerContent = (
+    <>
+      {!isDemoMode && onCancel && (
+        <Button
+          variant="outline"
+          onClick={onCancel}
+          disabled={isSubmitting}
+          size="default"
+        >
+          {t('Back')}
+        </Button>
+      )}
+      {isDemoMode && <div />}
+      {error && (
+        <div className="flex-1 mx-4">
+          <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-2">
+            <span className={cn(designTokens.typography.body, "text-red-700")}>{error}</span>
+          </div>
+        </div>
+      )}
+      <Button
+        onClick={handleSubmit}
+        isLoading={isSubmitting}
+        disabled={!allRequiredFieldsMapped}
+        size="default"
+        variant="default"
+      >
+        {t('Continue')}
+      </Button>
+    </>
+  );
+
   return (
-    <div className="flex flex-col h-full">
-      <VStack className="gap-6 w-full">
-        {/* Title Section */}
-        <Box>
-          <Text className="text-sm text-gray-600">
-            {t('Map columns from imported CSV.')}
-          </Text>
-        </Box>
+    <StepLayout
+      title={t('Configure Import')}
+      subtitle={t('Map your CSV columns to the required fields')}
+      footerContent={footerContent}
+      contentClassName="px-6 py-4"
+    >
+      <div className="overflow-x-auto border border-gray-200 rounded-lg">
+        <table className={cn(designTokens.components.table, "min-w-[600px]")}>
+          <thead className={designTokens.components.tableHeader}>
+            <tr>
+              <th className="text-left px-6 py-3 w-[30%]">
+                <span className={cn(designTokens.typography.label)}>
+                  {t('Fields')}
+                </span>
+              </th>
+              <th className="text-left px-6 py-3 w-[35%]">
+                <span className={cn(designTokens.typography.label)}>
+                  {t('CSV Column')}
+                </span>
+              </th>
+              <th className="text-left px-6 py-3 w-[35%]">
+                <span className={cn(designTokens.typography.label)}>
+                  {t('Preview')}
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {templateColumns.map((field: any, index: number) => {
+              const mappedColumn = getMappedColumn(field.id);
+              const isMapped = mappedColumn !== '';
+              const isRequired = field.validators?.some((v: any) => v.type === 'required');
 
-        {/* Mapping table */}
-        <Box className="border border-gray-200 rounded-lg overflow-x-auto bg-white w-full">
-          <table className="w-full border-collapse min-w-[600px]">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="text-left px-6 py-3 w-[30%]">
-                  <Text className="text-sm font-semibold text-gray-700">
-                    {t('Fields')}
-                  </Text>
-                </th>
-                <th className="text-left px-6 py-3 w-[35%]">
-                  <Text className="text-sm font-semibold text-gray-700">
-                    {t('CSV Column')}
-                  </Text>
-                </th>
-                <th className="text-left px-6 py-3 w-[35%]">
-                  <Text className="text-sm font-semibold text-gray-700">
-                    {t('Preview')}
-                  </Text>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {templateColumns.map((field: any, index: number) => {
-                const mappedColumn = getMappedColumn(field.id);
-                const isMapped = mappedColumn !== '';
-                const isRequired = field.validators?.some((v: any) => v.type === 'required');
-
-                return (
-                  <tr key={field.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <HStack className="gap-2 items-center">
-                        {isMapped && (
-                          <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+              return (
+                <tr key={field.id} className={designTokens.components.tableRow}>
+                  <td className="px-6 py-4">
+                    <HStack className="gap-2 items-center">
+                      {isMapped && (
+                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                      )}
+                      {!isMapped && isRequired && (
+                        <Box className="w-5 h-5 rounded-full border-2 border-gray-300 flex-shrink-0" />
+                      )}
+                      {!isMapped && !isRequired && (
+                        <Box className="w-5 h-5 flex-shrink-0" />
+                      )}
+                      <span className={designTokens.typography.body}>
+                        {field.label}
+                        {isRequired && (
+                          <span className="text-red-500 ml-1">*</span>
                         )}
-                        {!isMapped && isRequired && (
-                          <Box className="w-5 h-5 rounded-full border-2 border-gray-300 flex-shrink-0" />
-                        )}
-                        {!isMapped && !isRequired && (
-                          <Box className="w-5 h-5 flex-shrink-0" />
-                        )}
-                        <Text className="text-sm font-medium text-gray-900">
-                          {field.label}
-                          {isRequired && (
-                            <span className="text-red-500 ml-1">*</span>
-                          )}
-                        </Text>
-                      </HStack>
-                    </td>
+                      </span>
+                    </HStack>
+                  </td>
                     <td className="px-6 py-4">
                       <Select 
                         value={mappedColumn} 
@@ -317,49 +347,17 @@ export default function ConfigureImport({
                         ]}
                       />
                     </td>
-                    <td className="px-6 py-4">
-                      <Text className="text-sm text-gray-600 truncate max-w-[300px]" title={mappedColumn ? getSampleData(parseInt(mappedColumn)) : ''}>
-                        {mappedColumn ? (getSampleData(parseInt(mappedColumn)) || '-') : ''}
-                      </Text>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </Box>
-
-        {/* Error message */}
-        {error && (
-          <Box className="bg-red-50 border border-red-200 rounded-lg px-4 py-3">
-            <Text className="text-sm text-red-700">{error}</Text>
-          </Box>
-        )}
-
-        {/* Action Buttons */}
-        <Flex justify="between" className="w-full pt-6 border-t border-gray-200">
-          {!isDemoMode && onCancel && (
-            <Button
-              variant="outline"
-              onClick={onCancel}
-              disabled={isSubmitting}
-              size="default"
-            >
-              {t('Back')}
-            </Button>
-          )}
-          {isDemoMode && <div />}
-          <Button
-            onClick={handleSubmit}
-            isLoading={isSubmitting}
-            disabled={!allRequiredFieldsMapped}
-            size="default"
-            variant="default"
-          >
-            {t('Continue')}
-          </Button>
-        </Flex>
-      </VStack>
-    </div>
+                  <td className="px-6 py-4">
+                    <span className={cn(designTokens.typography.body, "text-gray-600 truncate block max-w-[300px]")} title={mappedColumn ? getSampleData(parseInt(mappedColumn)) : ''}>
+                      {mappedColumn ? (getSampleData(parseInt(mappedColumn)) || '-') : ''}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </StepLayout>
   );
 }

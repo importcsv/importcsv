@@ -4,12 +4,15 @@ import { Button } from '../../components/ui/button';
 import { Switch } from '../../components/ui/switch';
 import { Alert, AlertTitle, AlertDescription } from '../../components/ui/alert';
 import { Tooltip } from '../../components/ui/tooltip';
+import StepLayout from '../../components/StepLayout';
 import { Wrench, AlertTriangle } from 'lucide-react';
 import { ValidationProps } from './types';
 import TransformModal from './components/TransformModal';
 import { validateColumn, validateUniqueness } from '../../../validation/validator';
 import { applyTransformations } from '../../../validation/transformer';
 import VirtualTable from '../../components/VirtualTable';
+import { designTokens } from '../../constants/design-tokens';
+import { cn } from '../../../utils/cn';
 
 
 // Validation component for checking imported data
@@ -87,27 +90,27 @@ export default function Validation({
   // Progressive validation - validate visible rows first, then background
   const validateData = useCallback(() => {
     if (!shouldValidateRef.current || !columns) return;
-    
+
     setIsValidating(true);
     setValidationProgress(0);
-    
+
     const newErrors: Array<{rowIndex: number, columnIndex: number, message: string}> = [];
     const totalRows = dataRows.length;
-    
+
     // Phase 1: Validate first 50 rows immediately for quick feedback
     const immediateRows = Math.min(50, totalRows);
-    
+
     for (let rowIdx = 0; rowIdx < immediateRows; rowIdx++) {
       const row = dataRows[rowIdx];
       includedColumns.forEach(colIdx => {
         const value = row.values[colIdx];
         const mapping = columnMapping[colIdx];
         if (!mapping || !mapping.include) return;
-        
+
         const columnId = (mapping as any).id || (mapping as any).key;
         const column = columns.find(c => c.id === columnId);
         if (!column) return;
-        
+
         const error = validateColumn(value, column);
         if (error) {
           newErrors.push({
@@ -118,30 +121,30 @@ export default function Validation({
         }
       });
     }
-    
+
     // Update errors for immediate feedback
     setErrors(newErrors);
     setValidationProgress(Math.floor((immediateRows / totalRows) * 100));
-    
+
     // Phase 2: Validate remaining rows in chunks using setTimeout
     if (totalRows > immediateRows) {
       let currentRow = immediateRows;
       const chunkSize = 100;
-      
+
       const validateChunk = () => {
         const endRow = Math.min(currentRow + chunkSize, totalRows);
-        
+
         for (let rowIdx = currentRow; rowIdx < endRow; rowIdx++) {
           const row = dataRows[rowIdx];
           includedColumns.forEach(colIdx => {
             const value = row.values[colIdx];
             const mapping = columnMapping[colIdx];
             if (!mapping || !mapping.include) return;
-            
+
             const columnId = (mapping as any).id || (mapping as any).key;
             const column = columns.find(c => c.id === columnId);
             if (!column) return;
-            
+
             const error = validateColumn(value, column);
             if (error) {
               newErrors.push({
@@ -152,12 +155,12 @@ export default function Validation({
             }
           });
         }
-        
+
         currentRow = endRow;
         const progress = Math.floor((currentRow / totalRows) * 100);
         setValidationProgress(progress);
         setErrors([...newErrors]); // Update with accumulated errors
-        
+
         if (currentRow < totalRows) {
           // Schedule next chunk
           setTimeout(validateChunk, 0);
@@ -167,7 +170,7 @@ export default function Validation({
           shouldValidateRef.current = false;
         }
       };
-      
+
       // Start background validation
       setTimeout(validateChunk, 0);
     } else {
@@ -210,7 +213,7 @@ export default function Validation({
 
   // Row filtering with counts
   const { visibleRows, validCount, errorCount } = useMemo(() => {
-    
+
     const errorRowIndices = new Set(
       errors.map(err => err.rowIndex - headerRowIndex - 1)
     );
@@ -274,23 +277,23 @@ export default function Validation({
       const transformedValues = row.values.map((value, colIdx) => {
         // Only transform included columns
         if (!includedColumns.includes(colIdx)) return value;
-        
+
         // Get the column mapping
         const mapping = columnMapping[colIdx];
         if (!mapping || !((mapping as any).id || (mapping as any).key)) return value;
-        
+
         // Find the column definition
         const column = columns?.find(c => c.id === ((mapping as any).id || (mapping as any).key));
         if (!column || !column.transformations) return value;
-        
+
         // Apply transformations
         return applyTransformations(value, column.transformations);
       });
-      
+
       newRow.values = transformedValues;
       return newRow;
     });
-    
+
     // Call onSuccess with the transformed data
     onSuccess({
       ...fileData,
@@ -298,102 +301,138 @@ export default function Validation({
     });
   };
 
-  return (
-    <form onSubmit={handleSubmit} className="flex flex-col h-full">
-      <div className="px-6 py-4 border-b">
-        <h2 className="text-xl font-semibold">Validate Data</h2>
-        <p className="text-sm text-gray-600 mt-1">Review and correct any errors in your data before importing.</p>
-      </div>
+  const footerContent = (
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        onClick={onCancel}
+        disabled={isSubmitting}
+        size="default"
+      >
+        Back
+      </Button>
+      <Button
+        type="submit"
+        isLoading={isSubmitting}
+        disabled={isValidating || (disableOnInvalidRows && errors.length > 0)}
+        size="default"
+        variant="default"
+        onClick={handleSubmit}
+      >
+        {isValidating ? 'Validating...' : 'Submit'}
+      </Button>
+    </>
+  );
 
-      <div className="px-6 py-4 border-b bg-gray-50">
-        {/* Validation progress bar */}
-        {isValidating && (
-          <div className="mb-4">
-            <div className="flex justify-between text-sm text-gray-600 mb-1">
-              <span>Validating data...</span>
-              <span>{validationProgress}%</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${validationProgress}%` }}
-              />
-            </div>
+  const headerContent = (
+
+    <div className="">
+      {/* Validation progress bar */}
+      {isValidating && (
+        <div className={designTokens.spacing.section}>
+          <div className="flex justify-between mb-1">
+            <span className={designTokens.typography.body}>Validating data...</span>
+            <span className={designTokens.typography.body}>{validationProgress}%</span>
           </div>
-        )}
-        
-        {filterInvalidRows && errorTracking.count > 0 && (
-          <Alert className="mb-4">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Invalid Rows Will Be Filtered</AlertTitle>
-            <AlertDescription>
-              {`${errorTracking.count} ${errorTracking.count === 1 ? 'row' : 'rows'} with validation errors will be excluded from the import. You can fix the errors to include these rows.`}
-            </AlertDescription>
-          </Alert>
-        )}
+          <div className="w-full bg-gray-200 rounded-full h-2">
+            <div
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              style={{ width: `${validationProgress}%` }}
+            />
+          </div>
+        </div>
+      )}
 
-        {!isValidating && (
-          <div className="">
-            <div className="flex justify-between items-center">
-              <div className="flex space-x-1 p-1 bg-gray-100 rounded-lg">
-                <button
-                  type="button"
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    filterMode === 'all' 
-                      ? 'bg-white text-gray-900 shadow-sm' 
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                  onClick={() => setFilterMode('all')}
-                >
-                  All <span className="ml-2 px-2 py-0.5 bg-gray-200 rounded-full text-xs">{dataRows.length}</span>
-                </button>
-                <button
-                  type="button"
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    filterMode === 'valid' 
-                      ? 'bg-white text-gray-900 shadow-sm' 
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                  onClick={() => setFilterMode('valid')}
-                >
-                  Valid <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs">{validCount}</span>
-                </button>
-                <button
-                  type="button"
-                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                    filterMode === 'error' 
-                      ? 'bg-white text-red-600 shadow-sm' 
-                      : 'text-red-600 hover:text-red-700'
-                  }`}
-                  onClick={() => setFilterMode('error')}
-                >
-                  Error <span className="ml-2 px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs">{errorCount}</span>
-                </button>
-              </div>
-              <div className="flex items-center space-x-2">
-                {backendUrl && importerKey && errorCount > 0 && (
-                  <Tooltip content="Use AI to automatically fix validation errors">
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={() => setIsTransformModalOpen(true)}
-                      variant="default"
-                      className="shadow-sm"
-                    >
-                      <Wrench className="mr-2 h-4 w-4" />
-                      Fix errors
-                    </Button>
-                  </Tooltip>
+      {filterInvalidRows && errorTracking.count > 0 && (
+        <Alert className={designTokens.spacing.section}>
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Invalid Rows Will Be Filtered</AlertTitle>
+          <AlertDescription>
+            {`${errorTracking.count} ${errorTracking.count === 1 ? 'row' : 'rows'} with validation errors will be excluded from the import. You can fix the errors to include these rows.`}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {!isValidating && (
+        <div className="py-3">
+          <div className="flex justify-between items-center">
+            <div className="flex gap-1">
+              <button
+                type="button"
+                className={cn(
+                  "px-4 py-2 rounded-md transition-all",
+                  designTokens.typography.body,
+                  filterMode === 'all'
+                    ? 'bg-blue-50 text-blue-700 border-2 border-blue-500 font-medium'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-transparent'
                 )}
-              </div>
+                onClick={() => setFilterMode('all')}
+              >
+                All <span className={cn("ml-2 px-2 py-0.5 rounded-full", designTokens.typography.caption, filterMode === 'all' ? 'bg-blue-100 text-blue-700' : 'bg-gray-200')}>{dataRows.length}</span>
+              </button>
+              <button
+                type="button"
+                className={cn(
+                  "px-4 py-2 rounded-md transition-all",
+                  designTokens.typography.body,
+                  filterMode === 'valid'
+                    ? 'bg-blue-50 text-blue-700 border-2 border-blue-500 font-medium'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-transparent'
+                )}
+                onClick={() => setFilterMode('valid')}
+              >
+                Valid <span className={cn("ml-2 px-2 py-0.5 rounded-full", designTokens.typography.caption, filterMode === 'valid' ? 'bg-green-100 text-green-700' : 'bg-green-100 text-green-700')}>{validCount}</span>
+              </button>
+              <button
+                type="button"
+                className={cn(
+                  "px-4 py-2 rounded-md transition-all",
+                  designTokens.typography.body,
+                  filterMode === 'error'
+                    ? 'bg-blue-50 text-blue-700 border-2 border-blue-500 font-medium'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-transparent'
+                )}
+                onClick={() => setFilterMode('error')}
+              >
+                Error <span className={cn("ml-2 px-2 py-0.5 rounded-full", designTokens.typography.caption, filterMode === 'error' ? 'bg-red-100 text-red-700' : 'bg-red-100 text-red-700')}>{errorCount}</span>
+              </button>
+            </div>
+            <div className="flex items-center space-x-2">
+              {backendUrl && importerKey && errorCount > 0 && (
+                <Tooltip content="Use AI to automatically fix validation errors">
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => setIsTransformModalOpen(true)}
+                    variant="default"
+                    className="shadow-sm"
+                  >
+                    <Wrench className="mr-2 h-4 w-4" />
+                    Fix errors
+                  </Button>
+                </Tooltip>
+              )}
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+    </div>
+  );
 
-      <div className="flex-1 overflow-hidden" ref={scrollableSectionRef}>
-        {visibleRows.length > 0 ? (
-          <VirtualTable
+  return (
+    <StepLayout
+      title="Validate Data"
+      subtitle="Review and correct any errors in your data before importing."
+      headerContent={headerContent}
+      footerContent={footerContent}
+      contentClassName="px-6 py-4 overflow-hidden"
+    >
+      <form onSubmit={handleSubmit} className="h-full">
+
+        <div className="h-full overflow-x-auto border border-gray-200 rounded-lg" ref={scrollableSectionRef}>
+          {visibleRows.length > 0 ? (
+            <VirtualTable
             headers={headers}
             rows={visibleRows}
             headerRowIndex={headerRowIndex}
@@ -442,42 +481,21 @@ export default function Validation({
                 </div>
               );
             }}
-          />
-        ) : (
-          <div className="p-8 text-center">
-                <span className="text-gray-500">
-                  {filterMode === 'error' ? 'No rows with errors found' :
-                   filterMode === 'valid' ? 'No valid rows found' :
-                   'No data to display'}
-                </span>
-          </div>
-        )}
-      </div>
+            />
+          ) : (
+            <div className="p-8 text-center">
+              <span className={cn(designTokens.typography.body, "text-gray-500")}>
+                {filterMode === 'error' ? 'No rows with errors found' :
+                 filterMode === 'valid' ? 'No valid rows found' :
+                 'No data to display'}
+              </span>
+            </div>
+          )}
+        </div>
 
-      <div className="px-6 py-4 border-t bg-gray-50 flex justify-between items-center">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={onCancel}
-          disabled={isSubmitting}
-          size="default"
-        >
-          Back
-        </Button>
-        <Button
-          type="submit"
-          isLoading={isSubmitting}
-          disabled={isValidating || (disableOnInvalidRows && errors.length > 0)}
-          size="default"
-          variant="default"
-        >
-          {isValidating ? 'Validating...' : 'Submit'}
-        </Button>
-      </div>
-
-      {/* Transform Modal */}
-      {backendUrl && importerKey && (
-        <TransformModal
+        {/* Transform Modal */}
+        {backendUrl && importerKey && (
+          <TransformModal
           isOpen={isTransformModalOpen}
           onClose={() => setIsTransformModalOpen(false)}
           data={dataRows}
@@ -537,8 +555,9 @@ export default function Validation({
             shouldValidateRef.current = true;
             setIsTransformModalOpen(false);
           }}
-        />
-      )}
-    </form>
+          />
+        )}
+      </form>
+    </StepLayout>
   );
 }

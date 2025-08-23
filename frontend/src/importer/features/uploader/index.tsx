@@ -1,8 +1,12 @@
 import { useTranslation } from "../../../i18n/useTranslation";
 import { Box, Flex } from "../../components/ui/flex";
 import UploaderWrapper from "../../components/UploaderWrapper/UploaderWrapper";
+import StepLayout from "../../components/StepLayout";
+import { Button } from "../../components/ui/button";
 import { UploaderProps } from "./types";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Download } from "lucide-react";
+import { designTokens } from "../../constants/design-tokens";
+import { cn } from "../../../utils/cn";
 
 export default function Uploader({
   columns,
@@ -41,93 +45,83 @@ export default function Uploader({
   }
 
   return (
-    <div className="w-full max-w-[1000px] mx-auto p-8">
-      {/* Title Section */}
-      <h2 className="text-center text-2xl font-semibold text-gray-900 p-2">
-        {t("Upload file")}
-      </h2>
+    <StepLayout
+      title={t("Upload file")}
+      subtitle={t("Choose a CSV or Excel file to import your data")}
+      contentClassName="px-6 py-6"
+    >
+      <div className="w-full max-w-[1200px] mx-auto">
 
-      {/* Grid Container */}
-      <div
-        className="grid gap-12 w-full items-start"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '320px 1fr',
-          gap: '3rem',
-          alignItems: 'start'
-        }}>
-        {/* Schema Section (Left Side) */}
-        {columns && columns.length > 0 && (
-          <div
-            className="border border-gray-200 rounded-lg p-6 bg-white h-fit"
-            style={{
-              position: 'sticky',
-              top: '2rem',
-              height: 'fit-content'
-            }}>
-            {/* Required Columns */}
-            {requiredColumns.length > 0 && (
-              <div className="mb-8">
-                <div className="text-xs font-normal text-gray-700 mb-4 uppercase tracking-wider">
-                  {t("Required")}
+        {/* Grid Container */}
+        <div
+          className={cn(
+            "grid gap-8 w-full items-start",
+            columns && columns.length > 0 ? "grid-cols-[320px_1fr]" : "grid-cols-1"
+          )}>
+          {/* Schema Section (Left Side) */}
+          {columns && columns.length > 0 && (
+            <div
+              className={cn(designTokens.components.card, "p-6 h-fit sticky top-4")}>
+              {/* Required Columns */}
+              {requiredColumns.length > 0 && (
+                <div className={designTokens.spacing.section}>
+                  <div className={cn(designTokens.typography.caption, "mb-3 uppercase tracking-wider")}>
+                    {t("Required")}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {requiredColumns.map((col) => (
+                      <div key={col.id} className="flex items-center">
+                        <span className={designTokens.typography.body}>{col.label}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex flex-col gap-3">
-                  {requiredColumns.map((col) => (
-                    <div key={col.id} className="flex items-center">
-                      <span className="text-sm text-gray-900">{col.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+              )}
 
-            {/* Optional Columns */}
-            {optionalColumns.length > 0 && (
-              <div className="pb-2">
-                <div className="text-xs font-normal text-gray-700 mt-4 mb-2 uppercase tracking-wider">
-                  {t("Optional")}
+              {/* Optional Columns */}
+              {optionalColumns.length > 0 && (
+                <div className="">
+                  <div className={cn(designTokens.typography.caption, "mb-3 uppercase tracking-wider")}>
+                    {t("Optional")}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {optionalColumns.map((col) => (
+                      <div key={col.id} className="flex items-center">
+                        <span className={cn(designTokens.typography.body, "text-gray-600")}>{col.label}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex flex-col gap-3">
-                  {optionalColumns.map((col) => (
-                    <div key={col.id} className="flex items-center">
-                      <span className="text-sm text-gray-900">{col.label}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+              )}
 
-            {/* Info Box */}
-            <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-md border border-blue-200 mt-4">
-              <AlertCircle className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
-              <p className="text-sm text-blue-900 leading-tight">
-                {t("Make sure your file includes all the required columns.")}
-              </p>
+              {/* Info Box with Download Button */}
+              {showDownloadTemplateButton && (
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                  <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 mb-3">
+                    <AlertCircle className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                    <p className={cn(designTokens.typography.caption, "text-blue-700")}>
+                      {t("Make sure your file includes all the required columns.")}
+                    </p>
+                  </div>
+                  <Button
+                    onClick={downloadTemplate}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    <Download className="w-4 h-4 mr-2" />
+                    {t("Download CSV template")}
+                  </Button>
+                </div>
+              )}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Upload Section (Right Side) */}
-        <div className="flex flex-col w-full">
-          {/* Upload Area */}
-          <Box className="mb-4">
+          {/* Upload Section (Right Side or Full Width) */}
+          <div className="">
             {uploaderWrapper}
-          </Box>
-
-          {/* Footer Links */}
-          <Flex className="items-center justify-center flex-wrap gap-2 text-sm">
-            <span className="text-gray-400">or</span>
-            {showDownloadTemplateButton && (
-              <a
-                className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 transition-colors cursor-pointer"
-                onClick={downloadTemplate}
-              >
-                <span className="hover:underline">{t("Download a sample CSV file")}</span>
-              </a>
-            )}
-          </Flex>
+          </div>
         </div>
       </div>
-    </div>
+    </StepLayout>
   );
 }
