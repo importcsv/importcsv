@@ -289,6 +289,11 @@ export default function IframeWrapper({ children, className = '', primaryColor }
         border: 'none',
         display: 'block'
       }}
+      // Prevent focus-related aria issues by handling focus events
+      onFocus={(e: any) => {
+        // Prevent the event from bubbling up to parent document
+        e.stopPropagation();
+      }}
     >
       <FrameContextConsumer>
         {({ document, window }) => (

@@ -2,7 +2,7 @@ import { useTranslation } from "../../../i18n/useTranslation";
 import { Box, Flex } from "../../components/ui/flex";
 import UploaderWrapper from "../../components/UploaderWrapper/UploaderWrapper";
 import { UploaderProps } from "./types";
-import { Info, AlertCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 
 export default function Uploader({
   columns,
@@ -73,16 +73,8 @@ export default function Uploader({
                 </div>
                 <div className="flex flex-col gap-3">
                   {requiredColumns.map((col) => (
-                    <div key={col.id} className="flex items-center justify-between">
+                    <div key={col.id} className="flex items-center">
                       <span className="text-sm text-gray-900">{col.label}</span>
-                      {col.description && (
-                        <div className="group relative">
-                          <Info className="w-4 h-4 text-gray-400 cursor-help" />
-                          <div className="absolute right-0 bottom-full mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                            {col.description}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -97,16 +89,8 @@ export default function Uploader({
                 </div>
                 <div className="flex flex-col gap-3">
                   {optionalColumns.map((col) => (
-                    <div key={col.id} className="flex items-center justify-between">
+                    <div key={col.id} className="flex items-center">
                       <span className="text-sm text-gray-900">{col.label}</span>
-                      {col.description && (
-                        <div className="group relative">
-                          <Info className="w-4 h-4 text-gray-400 cursor-help" />
-                          <div className="absolute right-0 bottom-full mb-2 w-48 p-2 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                            {col.description}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   ))}
                 </div>

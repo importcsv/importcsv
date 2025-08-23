@@ -1,9 +1,7 @@
 import { FormEvent, useState, useEffect } from "react";
 import { useTranslation } from "../../../i18n/useTranslation";
 import { Button } from "../../components/ui/button";
-import { Switch } from "../../components/ui/switch";
 import { Flex, Text } from "../../components/ui/flex";
-import { Tooltip } from "../../components/ui/tooltip";
 import { Info } from "lucide-react";
 import Errors from "../../components/Errors";
 import Table from "../../components/Table";

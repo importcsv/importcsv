@@ -2,13 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Button } from '../../components/ui/button';
 import { Box, Flex, Text, VStack, HStack } from '../../components/ui/flex';
 import { Switch } from '../../components/ui/switch';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../../components/ui/select';
+import { Select } from '../../components/ui/select';
 // Using native HTML table elements instead of Chakra UI
 import { CheckCircle } from 'lucide-react';
 import { useTranslation } from '../../../i18n/useTranslation';
@@ -118,7 +112,7 @@ export default function ConfigureImport({
       if (llmEnhancementCalled.current) {
         return;
       }
-      
+
       // Only run if we have columns, backend URL, and importer key
       if (!uploadColumns.length || !templateColumns.length || !backendUrl || !importerKey) {
         return;
@@ -156,7 +150,7 @@ export default function ConfigureImport({
               // 3. Template key not already used
               const currentMapping = prevMapping[suggestion.uploadIndex];
               const hasWeakMatch = currentMapping?.id && !currentMapping?.include;
-              
+
               if (
                 suggestion.confidence > 0.7 &&
                 (!currentMapping?.id || hasWeakMatch) &&
@@ -223,7 +217,7 @@ export default function ConfigureImport({
 
   // Check if all required fields are mapped
   const allRequiredFieldsMapped = useMemo(() => {
-    const requiredFields = templateColumns.filter((col: any) => 
+    const requiredFields = templateColumns.filter((col: any) =>
       col.validators?.some((v: any) => v.type === 'required')
     );
     return requiredFields.every((field: any) =>
@@ -269,7 +263,7 @@ export default function ConfigureImport({
                 </th>
                 <th className="text-left px-6 py-3 w-[35%]">
                   <Text className="text-sm font-semibold text-gray-700">
-                    {t('CSV Example Data')}
+                    {t('Preview')}
                   </Text>
                 </th>
               </tr>
@@ -302,40 +296,25 @@ export default function ConfigureImport({
                       </HStack>
                     </td>
                     <td className="px-6 py-4">
-                      <Select value={mappedColumn} onValueChange={(value) => handleMappingChange(field.id, value)}>
-                        <SelectTrigger className="h-9 w-full max-w-[250px]">
-                          <SelectValue placeholder={t('Select...')} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {/* None option to unmap */}
-                          <SelectItem value="none">
-                            <span className="text-gray-500">— None —</span>
-                          </SelectItem>
-                          
-                          {/* Divider */}
-                          <div className="h-px bg-gray-200 my-1" />
-                          
-                          {/* Column options */}
-                          {columnHeaders.map((header: string, idx: number) => {
+                      <Select 
+                        value={mappedColumn} 
+                        onValueChange={(value) => handleMappingChange(field.id, value)}
+                        placeholder={t('Select...')}
+                        className="h-9 w-full max-w-[250px]"
+                        options={[
+                          { value: "none", label: "— None —" },
+                          ...columnHeaders.map((header: string, idx: number) => {
                             const isAlreadyMapped = Object.keys(columnMapping).includes(idx.toString()) &&
                               columnMapping[idx].id !== field.id;
-
-                            return (
-                              <SelectItem
-                                key={idx}
-                                value={idx.toString()}
-                                disabled={isAlreadyMapped}
-                              >
-                                {isAlreadyMapped ? (
-                                  <span className="text-gray-400">{header} (mapped)</span>
-                                ) : (
-                                  header
-                                )}
-                              </SelectItem>
-                            );
-                          })}
-                        </SelectContent>
-                      </Select>
+                            
+                            return {
+                              value: idx.toString(),
+                              label: isAlreadyMapped ? `${header} (mapped)` : header,
+                              disabled: isAlreadyMapped
+                            };
+                          })
+                        ]}
+                      />
                     </td>
                     <td className="px-6 py-4">
                       <Text className="text-sm text-gray-600 truncate max-w-[300px]" title={mappedColumn ? getSampleData(parseInt(mappedColumn)) : ''}>

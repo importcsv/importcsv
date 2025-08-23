@@ -1,11 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../../components/ui/select";
+import { Select } from "../../../components/ui/select";
 import { InputOption } from "../../../components/Input/types";
 
 type DropdownFieldsProps = {
@@ -81,19 +75,21 @@ export default function DropdownFields({
 
   const isEmpty = Object.keys(filteredOptions).length === 0;
 
+  // Convert options to array format for SimpleSelect
+  const selectOptions = [
+    ...(placeholder ? [{ value: "__placeholder__", label: placeholder }] : []),
+    ...Object.entries(filteredOptions).map(([key, option]) => ({
+      value: String(option.value || "__empty__"),
+      label: `${key}${option.required ? " *" : ""}`
+    }))
+  ];
+
   return (
-    <Select value={selectedOption} onValueChange={handleValueChange} disabled={isEmpty}>
-      <SelectTrigger className="h-9">
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value="__placeholder__">{placeholder}</SelectItem>
-        {Object.entries(filteredOptions).map(([key, option]) => (
-          <SelectItem key={String(option.value)} value={String(option.value || "__empty__")}>
-            {key}{option.required && " *"}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <Select
+      value={selectedOption}
+      onChange={(e) => handleValueChange(e.target.value)}
+      disabled={isEmpty}
+      options={selectOptions}
+    />
   );
 }
