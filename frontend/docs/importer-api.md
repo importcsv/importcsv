@@ -1,10 +1,31 @@
 # ImportCSV React - API Documentation
 
+## What's New (v0.2.1)
+
+✨ **34% smaller bundle size** - Now only ~68KB gzipped (down from 102KB)  
+🚀 **Native Preact implementation** - Better performance with smaller runtime  
+🎨 **Automatic CSS injection** - No separate CSS import needed  
+📦 **75 fewer dependencies** - Faster installs, removed Radix UI (3.8MB)  
+⚡ **Improved CSS isolation** - Automatic scoping without iframes
+
 ## Overview
 
 The ImportCSV React component supports two modes of operation:
 1. **Standalone Mode** - Frontend-only validation using the `columns` prop
 2. **Backend Mode** - Server-side validation using the `importerKey` prop
+
+## Installation
+
+```bash
+npm install @importcsv/react
+```
+
+Then import and use:
+
+```javascript
+import { CSVImporter } from '@importcsv/react';
+// CSS is automatically included - no separate import needed!
+```
 
 ## Component Props
 
@@ -52,7 +73,6 @@ import { CSVImporter } from '@importcsv/react';
 | `showDownloadTemplateButton` | `boolean` | `false` | Show template download button |
 | `skipHeaderRowSelection` | `boolean` | `false` | Skip header row selection step |
 | `waitOnComplete` | `boolean` | `false` | Wait for async completion |
-| `useIframe` | `boolean` | `true` | Use iframe for CSS isolation |
 
 #### Backend Configuration Props:
 
@@ -350,9 +370,40 @@ import type { Column, Validator, CSVImporterProps } from '@importcsv/react';
 - Safari (latest)
 - Edge (latest)
 
+## Plain JavaScript Usage
+
+For non-React environments, use the UMD build:
+
+```html
+<script src="https://unpkg.com/@importcsv/react/build/bundled/index.umd.js"></script>
+<script>
+  // Component is available as window.CSVImporter
+  const importer = new CSVImporter({
+    columns: [...],
+    onComplete: (data) => console.log(data)
+  });
+</script>
+```
+
+## CSS Isolation
+
+The component automatically scopes all styles using the `.importcsv` class. This means:
+- Parent styles won't leak into the importer
+- Importer styles won't affect your application
+- No iframe needed - better performance and no focus issues
+- CSS is automatically injected when the component loads
+
+## Performance
+
+The library now uses native Preact internally for optimal performance:
+- **68KB gzipped** - 34% smaller than previous versions
+- **Faster initial load** - Reduced JavaScript parsing time
+- **Better runtime performance** - Smaller virtual DOM overhead
+- **Quicker installs** - 75 fewer npm dependencies
+
 ## Notes
 
-- The component uses an iframe by default for CSS isolation (`useIframe={true}`)
+- CSS is automatically injected into the page when the component loads
 - Process.env checks are browser-safe
 - Dialog modal requires proper ref handling for automatic opening
 - Validation runs on the client side in standalone mode
