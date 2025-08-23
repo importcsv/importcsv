@@ -7,9 +7,10 @@ import FinancialTransactions from './examples/FinancialTransactions'
 import ValidationTester from './examples/ValidationTester'
 import EmployeeImportWithTransformations from './examples/EmployeeImportWithTransformations'
 import ProductCatalogWithTransformations from './examples/ProductCatalogWithTransformations'
+import LargeDatasetTest from './examples/LargeDatasetTest'
 import './styles.css'
 
-type ExampleType = 'employee' | 'product' | 'customer' | 'event' | 'financial' | 'tester' | 'employee-transform' | 'product-transform' | null
+type ExampleType = 'employee' | 'product' | 'customer' | 'event' | 'financial' | 'tester' | 'employee-transform' | 'product-transform' | 'large-dataset' | null
 
 const App: React.FC = () => {
   const [activeExample, setActiveExample] = useState<ExampleType>(null)
@@ -22,7 +23,8 @@ const App: React.FC = () => {
     { id: 'customer', name: 'Customer Data', description: 'Email, phone, postal code validations' },
     { id: 'event', name: 'Event Registration', description: 'Date validation, capacity limits, text length' },
     { id: 'financial', name: 'Financial Transactions', description: 'Decimal amounts, account patterns, transaction types' },
-    { id: 'tester', name: 'Validation Tester', description: 'Test individual validators with custom data' }
+    { id: 'tester', name: 'Validation Tester', description: 'Test individual validators with custom data' },
+    { id: 'large-dataset', name: '🚀 Large Dataset Test', description: 'Test performance with 10k-100k rows using virtual scrolling' }
   ]
 
   if (activeExample) {
@@ -46,6 +48,7 @@ const App: React.FC = () => {
         {activeExample === 'event' && <EventRegistration />}
         {activeExample === 'financial' && <FinancialTransactions />}
         {activeExample === 'tester' && <ValidationTester />}
+        {activeExample === 'large-dataset' && <LargeDatasetTest />}
       </div>
     )
   }

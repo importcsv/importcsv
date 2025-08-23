@@ -9,6 +9,7 @@ import { ValidationProps } from './types';
 import TransformModal from './components/TransformModal';
 import { validateColumn, validateUniqueness } from '../../../validation/validator';
 import { applyTransformations } from '../../../validation/transformer';
+import VirtualTable from '../../components/VirtualTable';
 
 
 // Validation component for checking imported data
@@ -29,6 +30,8 @@ export default function Validation({
   const [errors, setErrors] = useState<Array<{rowIndex: number, columnIndex: number, message: string}>>([]);
   const [filterMode, setFilterMode] = useState<'all' | 'valid' | 'error'>('all');
   const [isTransformModalOpen, setIsTransformModalOpen] = useState(false);
+  const [validationProgress, setValidationProgress] = useState(100);
+  const [isValidating, setIsValidating] = useState(false);
 
   // Ref for scrollable section to reset scroll position
   const scrollableSectionRef = useRef<HTMLDivElement>(null);
@@ -38,7 +41,9 @@ export default function Validation({
   const headerRow = fileData.rows[headerRowIndex];
 
   // Make dataRows a state variable so changes persist
-  const [dataRows, setDataRows] = useState(() => fileData.rows.slice(headerRowIndex + 1));
+  const [dataRows, setDataRows] = useState(() => {
+    return fileData.rows.slice(headerRowIndex + 1);
+  });
 
   // Column mapping
   const includedColumns = useMemo(() => {
@@ -54,6 +59,8 @@ export default function Validation({
 
   // Validation tracking
   const shouldValidateRef = useRef(true);
+  const validationBatchSize = 100; // Process 100 rows at a time
+  const validationTimeoutRef = useRef<number | null>(null);
 
   // Reset scroll position when component mounts
   useEffect(() => {
@@ -77,91 +84,104 @@ export default function Validation({
     }
   }, [columns, columnMapping]);
 
-  // Data validation
+  // Progressive validation - validate visible rows first, then background
   const validateData = useCallback(() => {
-    if (!shouldValidateRef.current) return;
-
+    if (!shouldValidateRef.current || !columns) return;
+    
+    setIsValidating(true);
+    setValidationProgress(0);
+    
     const newErrors: Array<{rowIndex: number, columnIndex: number, message: string}> = [];
-
-    // For each row in the data
-    dataRows.forEach((row, rowIdx) => {
-      const displayRowIndex = rowIdx + headerRowIndex + 1;
-
-      // For each column mapping
-      Object.entries(columnMapping).forEach(([colIndexStr, mapping]) => {
-        if (!mapping.include) return;
-
-        // The column index in the data
-        const colIdx = parseInt(colIndexStr);
-        if (isNaN(colIdx)) return;
-
-        // The key in the column mapping
-        const columnId = (mapping as any).id || (mapping as any).key;
-
-        // Find the corresponding column
-        const column = columns?.find(col => col.id === columnId);
-        if (!column) {
-          return;
-        }
-
-        // Get the value directly from the row
+    const totalRows = dataRows.length;
+    
+    // Phase 1: Validate first 50 rows immediately for quick feedback
+    const immediateRows = Math.min(50, totalRows);
+    
+    for (let rowIdx = 0; rowIdx < immediateRows; rowIdx++) {
+      const row = dataRows[rowIdx];
+      includedColumns.forEach(colIdx => {
         const value = row.values[colIdx];
-
-        // Use the validateColumn function from validator.ts
-        const validationError = validateColumn(value, column);
-        if (validationError) {
+        const mapping = columnMapping[colIdx];
+        if (!mapping || !mapping.include) return;
+        
+        const columnId = (mapping as any).id || (mapping as any).key;
+        const column = columns.find(c => c.id === columnId);
+        if (!column) return;
+        
+        const error = validateColumn(value, column);
+        if (error) {
           newErrors.push({
-            rowIndex: displayRowIndex,
+            rowIndex: rowIdx + headerRowIndex + 1,
             columnIndex: colIdx,
-            message: validationError
+            message: error
           });
         }
       });
-    });
-
-    // Check uniqueness for columns with unique validator
-    columns?.forEach((column) => {
-      const hasUniqueValidator = column.validators?.some(v => v.type === 'unique');
-      if (hasUniqueValidator) {
-        // Find the column index in the mapping
-        const mappingEntry = Object.entries(columnMapping).find(([_, mapping]) => 
-          mapping.include && ((mapping as any).id || (mapping as any).key) === column.id
-        );
+    }
+    
+    // Update errors for immediate feedback
+    setErrors(newErrors);
+    setValidationProgress(Math.floor((immediateRows / totalRows) * 100));
+    
+    // Phase 2: Validate remaining rows in chunks using setTimeout
+    if (totalRows > immediateRows) {
+      let currentRow = immediateRows;
+      const chunkSize = 100;
+      
+      const validateChunk = () => {
+        const endRow = Math.min(currentRow + chunkSize, totalRows);
         
-        if (mappingEntry) {
-          const colIdx = parseInt(mappingEntry[0]);
-          
-          // Prepare data for uniqueness check
-          const rowValues = dataRows.map(row => row.values);
-          const duplicateIndices = validateUniqueness(rowValues, colIdx, column);
-          
-          duplicateIndices.forEach(rowIdx => {
-            const displayRowIndex = rowIdx + headerRowIndex + 1;
-            const existingError = newErrors.find(
-              err => err.rowIndex === displayRowIndex && err.columnIndex === colIdx
-            );
+        for (let rowIdx = currentRow; rowIdx < endRow; rowIdx++) {
+          const row = dataRows[rowIdx];
+          includedColumns.forEach(colIdx => {
+            const value = row.values[colIdx];
+            const mapping = columnMapping[colIdx];
+            if (!mapping || !mapping.include) return;
             
-            if (!existingError) {
-              const validator = column.validators?.find(v => v.type === 'unique');
+            const columnId = (mapping as any).id || (mapping as any).key;
+            const column = columns.find(c => c.id === columnId);
+            if (!column) return;
+            
+            const error = validateColumn(value, column);
+            if (error) {
               newErrors.push({
-                rowIndex: displayRowIndex,
+                rowIndex: rowIdx + headerRowIndex + 1,
                 columnIndex: colIdx,
-                message: validator?.message || `${column.label} must be unique`
+                message: error
               });
             }
           });
         }
-      }
-    });
-
-    setErrors(newErrors);
-    shouldValidateRef.current = false;
-  }, [dataRows, columnMapping, columns, headerRowIndex]);
+        
+        currentRow = endRow;
+        const progress = Math.floor((currentRow / totalRows) * 100);
+        setValidationProgress(progress);
+        setErrors([...newErrors]); // Update with accumulated errors
+        
+        if (currentRow < totalRows) {
+          // Schedule next chunk
+          setTimeout(validateChunk, 0);
+        } else {
+          // Validation complete
+          setIsValidating(false);
+          shouldValidateRef.current = false;
+        }
+      };
+      
+      // Start background validation
+      setTimeout(validateChunk, 0);
+    } else {
+      // All rows validated immediately
+      setIsValidating(false);
+      shouldValidateRef.current = false;
+    }
+  }, [dataRows, columns, columnMapping, includedColumns, headerRowIndex]);
 
   // Trigger validation when data changes
   useEffect(() => {
-    shouldValidateRef.current = true;
-    validateData();
+    if (dataRows.length > 0 && shouldValidateRef.current) {
+      validateData();
+    }
   }, [dataRows, validateData]);
 
   // Cell editing
@@ -190,6 +210,7 @@ export default function Validation({
 
   // Row filtering with counts
   const { visibleRows, validCount, errorCount } = useMemo(() => {
+    
     const errorRowIndices = new Set(
       errors.map(err => err.rowIndex - headerRowIndex - 1)
     );
@@ -285,6 +306,22 @@ export default function Validation({
       </div>
 
       <div className="px-6 py-4 border-b bg-gray-50">
+        {/* Validation progress bar */}
+        {isValidating && (
+          <div className="mb-4">
+            <div className="flex justify-between text-sm text-gray-600 mb-1">
+              <span>Validating data...</span>
+              <span>{validationProgress}%</span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div 
+                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                style={{ width: `${validationProgress}%` }}
+              />
+            </div>
+          </div>
+        )}
+        
         {filterInvalidRows && errorTracking.count > 0 && (
           <Alert className="mb-4">
             <AlertTriangle className="h-4 w-4" />
@@ -295,134 +332,126 @@ export default function Validation({
           </Alert>
         )}
 
-        <div className="">
-          <div className="flex justify-between items-center">
-            <div className="flex space-x-1 p-1 bg-gray-100 rounded-lg">
-              <button
-                type="button"
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  filterMode === 'all' 
-                    ? 'bg-white text-gray-900 shadow-sm' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-                onClick={() => setFilterMode('all')}
-              >
-                All <span className="ml-2 px-2 py-0.5 bg-gray-200 rounded-full text-xs">{dataRows.length}</span>
-              </button>
-              <button
-                type="button"
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  filterMode === 'valid' 
-                    ? 'bg-white text-gray-900 shadow-sm' 
-                    : 'text-gray-600 hover:text-gray-900'
-                }`}
-                onClick={() => setFilterMode('valid')}
-              >
-                Valid <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs">{validCount}</span>
-              </button>
-              <button
-                type="button"
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-                  filterMode === 'error' 
-                    ? 'bg-white text-red-600 shadow-sm' 
-                    : 'text-red-600 hover:text-red-700'
-                }`}
-                onClick={() => setFilterMode('error')}
-              >
-                Error <span className="ml-2 px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs">{errorCount}</span>
-              </button>
-            </div>
-            <div className="flex items-center space-x-2">
-              {backendUrl && importerKey && errorCount > 0 && (
-                <Tooltip content="Use AI to automatically fix validation errors">
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => setIsTransformModalOpen(true)}
-                    variant="default"
-                    className="shadow-sm"
-                  >
-                    <Wrench className="mr-2 h-4 w-4" />
-                    Fix errors
-                  </Button>
-                </Tooltip>
-              )}
+        {!isValidating && (
+          <div className="">
+            <div className="flex justify-between items-center">
+              <div className="flex space-x-1 p-1 bg-gray-100 rounded-lg">
+                <button
+                  type="button"
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    filterMode === 'all' 
+                      ? 'bg-white text-gray-900 shadow-sm' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  onClick={() => setFilterMode('all')}
+                >
+                  All <span className="ml-2 px-2 py-0.5 bg-gray-200 rounded-full text-xs">{dataRows.length}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    filterMode === 'valid' 
+                      ? 'bg-white text-gray-900 shadow-sm' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                  onClick={() => setFilterMode('valid')}
+                >
+                  Valid <span className="ml-2 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs">{validCount}</span>
+                </button>
+                <button
+                  type="button"
+                  className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                    filterMode === 'error' 
+                      ? 'bg-white text-red-600 shadow-sm' 
+                      : 'text-red-600 hover:text-red-700'
+                  }`}
+                  onClick={() => setFilterMode('error')}
+                >
+                  Error <span className="ml-2 px-2 py-0.5 bg-red-100 text-red-700 rounded-full text-xs">{errorCount}</span>
+                </button>
+              </div>
+              <div className="flex items-center space-x-2">
+                {backendUrl && importerKey && errorCount > 0 && (
+                  <Tooltip content="Use AI to automatically fix validation errors">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={() => setIsTransformModalOpen(true)}
+                      variant="default"
+                      className="shadow-sm"
+                    >
+                      <Wrench className="mr-2 h-4 w-4" />
+                      Fix errors
+                    </Button>
+                  </Tooltip>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
-      <div className="flex-1 overflow-auto" ref={scrollableSectionRef}>
-            <div className="min-w-full">
-            <table className="border-collapse" style={{ minWidth: '100%' }}>
-              <thead className="bg-gray-50 border-b-2 border-gray-200" style={{ position: 'sticky', top: 0, zIndex: 10 }}>
-                <tr>
-                  <th className="text-left px-6 py-3 text-sm font-semibold text-gray-700 bg-gray-50 border-r border-gray-200" style={{ position: 'sticky', left: 0, zIndex: 11, minWidth: '60px', width: '60px' }}>#</th>
-                  {headers.map((header, idx) => (
-                    <th key={idx} className="text-left px-6 py-3 text-sm font-semibold text-gray-700 bg-gray-50" style={{ minWidth: '150px' }}>
-                      <div>{header}</div>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                  {visibleRows.map((row, rowIdx) => {
-                    const actualRowIdx = dataRows.indexOf(row);
-                    const displayRowIndex = actualRowIdx + headerRowIndex + 1;
-                    const rowHasError = errors.some(err => err.rowIndex === displayRowIndex);
+      <div className="flex-1 overflow-hidden" ref={scrollableSectionRef}>
+        {visibleRows.length > 0 ? (
+          <VirtualTable
+            headers={headers}
+            rows={visibleRows}
+            headerRowIndex={headerRowIndex}
+            includedColumns={includedColumns}
+            rowHeight={56}
+            overscan={5}
+            stickyHeader={true}
+            stickyFirstColumn={true}
+            getRowClassName={(row, actualRowIdx) => {
+              const displayRowIndex = actualRowIdx + headerRowIndex + 1;
+              const rowHasError = errors.some(err => err.rowIndex === displayRowIndex);
+              return rowHasError ? 'bg-red-50 hover:bg-red-100' : '';
+            }}
+            renderCell={(row, colIdx, actualRowIdx) => {
+              const value = row.values[colIdx];
+              const displayRowIndex = actualRowIdx + headerRowIndex + 1;
+              const error = errors.find(
+                err => err.rowIndex === displayRowIndex && err.columnIndex === colIdx
+              );
 
-                    return (
-                      <tr key={rowIdx} className={`border-b border-gray-200 hover:bg-gray-50 transition-colors ${rowHasError ? 'bg-red-50 hover:bg-red-100' : ''}`}>
-                        <td className="px-6 py-3 text-sm text-gray-700 border-r border-gray-200" style={{ position: 'sticky', left: 0, zIndex: 5, backgroundColor: rowHasError ? '#FEF2F2' : '#F9FAFB', minWidth: '60px', width: '60px' }}>
-                          <span>{displayRowIndex + 1}</span>
-                        </td>
-                        {includedColumns.map((colIdx, idx) => {
-                          const value = row.values[colIdx];
-
-                          const error = errors.find(
-                            err => err.rowIndex === displayRowIndex && err.columnIndex === colIdx
-                          );
-
-                          return (
-                            <td key={idx} className="px-6 py-3" style={{ minWidth: '150px' }}>
-                              <div className="relative">
-                                <input
-                                  type="text"
-                                  value={String(value || '')}
-                                  onChange={(e) => handleCellEdit(actualRowIdx, colIdx, e.target.value)}
-                                  tabIndex={0}
-                                  className={`w-full px-3 py-2 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${error ? 'border-red-500 bg-red-50' : 'border-gray-300 hover:border-gray-400'}`}
-                                />
-                                {error && (
-                                  <Tooltip content={error.message}>
-                                    <span className="absolute right-2 top-1/2 transform -translate-y-1/2">
-                                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                                        <circle cx="8" cy="8" r="7" fill="#DC2626"/>
-                                        <path d="M8 4.5V9" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
-                                        <circle cx="8" cy="11.5" r="0.75" fill="white"/>
-                                      </svg>
-                                    </span>
-                                  </Tooltip>
-                                )}
-                              </div>
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    );
-                  })}
-                </tbody>
-            </table>
-            </div>
-            {visibleRows.length === 0 && (
-              <div className="p-8 text-center">
+              return (
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={String(value || '')}
+                    onChange={(e) => {
+                      const actualDataRowIdx = dataRows.indexOf(row);
+                      if (actualDataRowIdx !== -1) {
+                        handleCellEdit(actualDataRowIdx, colIdx, e.target.value);
+                      }
+                    }}
+                    tabIndex={0}
+                    className={`w-full px-3 py-2 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${error ? 'border-red-500 bg-red-50' : 'border-gray-300 hover:border-gray-400'}`}
+                  />
+                  {error && (
+                    <Tooltip content={error.message}>
+                      <span className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                          <circle cx="8" cy="8" r="7" fill="#DC2626"/>
+                          <path d="M8 4.5V9" stroke="white" strokeWidth="1.5" strokeLinecap="round"/>
+                          <circle cx="8" cy="11.5" r="0.75" fill="white"/>
+                        </svg>
+                      </span>
+                    </Tooltip>
+                  )}
+                </div>
+              );
+            }}
+          />
+        ) : (
+          <div className="p-8 text-center">
                 <span className="text-gray-500">
                   {filterMode === 'error' ? 'No rows with errors found' :
                    filterMode === 'valid' ? 'No valid rows found' :
                    'No data to display'}
                 </span>
-              </div>
-            )}
+          </div>
+        )}
       </div>
 
       <div className="px-6 py-4 border-t bg-gray-50 flex justify-between items-center">
@@ -438,11 +467,11 @@ export default function Validation({
         <Button
           type="submit"
           isLoading={isSubmitting}
-          disabled={disableOnInvalidRows && errors.length > 0}
+          disabled={isValidating || (disableOnInvalidRows && errors.length > 0)}
           size="default"
           variant="default"
         >
-          Submit
+          {isValidating ? 'Validating...' : 'Submit'}
         </Button>
       </div>
 
