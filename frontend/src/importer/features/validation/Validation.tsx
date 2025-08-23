@@ -11,7 +11,7 @@ import TransformModal from './components/TransformModal';
 import { validateColumn, validateUniqueness } from '../../../validation/validator';
 import { applyTransformations } from '../../../validation/transformer';
 import VirtualTable from '../../components/VirtualTable';
-import { designTokens } from '../../constants/design-tokens';
+import { designTokens } from '../../theme';
 import { cn } from '../../../utils/cn';
 
 

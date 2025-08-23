@@ -10,7 +10,7 @@ import { useTranslation } from '../../../i18n/useTranslation';
 import { Column, ColumnMapping, ColumnMappingDictionary } from '../../../types';
 import stringSimilarity from '../../utils/stringSimilarity';
 import { getMappingSuggestions } from '../../services/mapping';
-import { designTokens } from '../../constants/design-tokens';
+import { designTokens } from '../../theme';
 import { cn } from '../../../utils/cn';
 
 interface ConfigureImportProps {

@@ -1,10 +1,17 @@
 import { ProvidersProps } from "./types";
-import ThemeContextProvider from "./Theme";
+import ThemeContextProvider, { ThemeProviderProps } from "./Theme";
 
-export interface ProvidersWithThemeProps extends ProvidersProps {
-  primaryColor?: string;
-}
+export interface ProvidersWithThemeProps extends ProvidersProps, ThemeProviderProps {}
 
-export default function Providers({ children, primaryColor }: ProvidersWithThemeProps) {
-  return <ThemeContextProvider primaryColor={primaryColor}>{children}</ThemeContextProvider>;
+export default function Providers({ children, theme, primaryColor, customStyles, targetElement }: ProvidersWithThemeProps) {
+  return (
+    <ThemeContextProvider 
+      theme={theme}
+      primaryColor={primaryColor}
+      customStyles={customStyles}
+      targetElement={targetElement}
+    >
+      {children}
+    </ThemeContextProvider>
+  );
 }

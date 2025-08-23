@@ -12,6 +12,7 @@ import { CSVImporterProps } from "../../types";
 // Ensure styles are bundled for injection into iframe
 import "../../index.css";
 import "./style/csv-importer.css";
+import "./style/dark-mode.css";
 
 const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: any) => {
   // Destructure all known props from CSVImporterProps
@@ -20,9 +21,11 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
     modalIsOpen = true,
     modalOnCloseTriggered = () => null,
     modalCloseOnOutsideClick,
+    theme,
     darkMode = false,
     primaryColor = "#2563eb",
     className,
+    classNames,
     onComplete,
     customStyles,
     showDownloadTemplateButton,
@@ -50,7 +53,7 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
   const baseClass = "CSVImporter";
   const themeClass = darkMode ? `${baseClass}-dark` : `${baseClass}-light`;
   // Add importcsv class for proper CSS scoping
-  const domElementClass = ["importcsv", "csv-importer", `${baseClass}-${isModal ? "dialog" : "div"}`, themeClass, className].filter((i) => i).join(" ");
+  const domElementClass = ["importcsv", "csv-importer", `${baseClass}-${isModal ? "dialog" : "div"}`, themeClass, className, classNames?.root].filter((i) => i).join(" ");
 
   // Set Light/Dark mode
   const setTheme = useThemeStore((state) => state.setTheme);
@@ -105,7 +108,12 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
 
   // Create a new component that properly passes only the props that Importer needs
   const ImporterComponent = () => (
-    <Providers primaryColor={primaryColor}>
+    <Providers 
+      theme={darkMode ? 'dark' : theme}
+      primaryColor={primaryColor}
+      customStyles={customStyles}
+      targetElement={ref?.current}
+    >
       <Importer
         isModal={isModal}
         modalIsOpen={modalIsOpen}
@@ -113,7 +121,7 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
         modalCloseOnOutsideClick={modalCloseOnOutsideClick}
         darkMode={darkMode}
         primaryColor={primaryColor}
-        className={className}
+        className={classNames?.content || className}
         onComplete={onComplete}
         customStyles={customStyles}
         showDownloadTemplateButton={showDownloadTemplateButton}

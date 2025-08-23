@@ -1,9 +1,10 @@
 /**
- * Design tokens for consistent styling across the CSV importer
- * These tokens ensure all screens have the same visual appearance
+ * Core styles for the CSV Importer
+ * These styles ensure consistent appearance across all screens
+ * Can be overridden via the theme prop
  */
 
-export const designTokens = {
+export const styles = {
   // Typography
   typography: {
     title: 'text-xl font-semibold text-gray-900',
@@ -94,3 +95,6 @@ export const cssVariables = {
   '--csv-radius-lg': '0.75rem',
   '--csv-radius-xl': '1rem',
 };
+
+// Backward compatibility export
+export const designTokens = styles;

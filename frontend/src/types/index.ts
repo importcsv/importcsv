@@ -69,6 +69,8 @@ type CustomTranslationResource = {
   };
 };
 
+import { ThemeConfig } from './theme';
+
 // Main CSV Importer Props
 export type CSVImporterProps = {
   // Mode determination (one or the other)
@@ -84,10 +86,25 @@ export type CSVImporterProps = {
   metadata?: Record<string, any>; // Additional data
   
   // UI customization
-  darkMode?: boolean;
-  primaryColor?: string;
+  theme?: ThemeConfig | 'default' | 'minimal' | 'modern' | 'compact' | 'dark'; // New theme system
+  darkMode?: boolean;          // Backward compatibility
+  primaryColor?: string;       // Backward compatibility
   className?: string;
-  customStyles?: Record<string, string> | string;
+  customStyles?: Record<string, string> | string; // Backward compatibility
+  
+  // Component class names for customization
+  classNames?: {
+    root?: string;
+    modal?: string;
+    header?: string;
+    stepper?: string;
+    content?: string;
+    footer?: string;
+    button?: string;
+    input?: string;
+    table?: string;
+    dropzone?: string;
+  };
   
   // Behavior options
   showDownloadTemplateButton?: boolean;

@@ -1,6 +1,6 @@
 import { h } from 'preact';
 import type { ComponentChildren, JSX } from 'preact';
-import { designTokens } from '../../constants/design-tokens';
+import { designTokens } from '../../theme';
 import { cn } from '../../../utils/cn';
 
 interface StepLayoutProps {

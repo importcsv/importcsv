@@ -6,10 +6,13 @@ import { Flex, Text } from "../../components/ui/flex";
 import { Info } from "lucide-react";
 import Errors from "../../components/Errors";
 import Table from "../../components/Table";
+import StepLayout from "../../components/StepLayout";
 import { UploadColumn } from "../../types";
 import { Column } from "../../../types";
 import useMapColumnsTable from "./hooks/useMapColumnsTable";
 import { MapColumnsProps, TemplateColumnMapping } from "./types";
+import { designTokens } from "../../theme";
+import { cn } from "../../../utils/cn";
 
 export default function MapColumns({
   columns,
@@ -104,37 +107,44 @@ export default function MapColumns({
     return ["20%", "30%", "30%", "20%"];
   };
 
+  const footerContent = (
+    <>
+      <Button 
+        type="button" 
+        variant="outline"
+        onClick={onCancel} 
+        disabled={isSubmitting}
+      >
+        {skipHeaderRowSelection ? t("Cancel") : t("Back")}
+      </Button>
+      {!!error && (
+        <div className="flex-1">
+          <Errors error={error} />
+        </div>
+      )}
+      <Button isLoading={isSubmitting} onClick={onSubmit}>
+        {t("Continue")}
+      </Button>
+    </>
+  );
+
   return (
-    <div className="flex flex-col h-full">
-      {/* LLM matching removed for better UX */}
-      <form onSubmit={onSubmit}>
+    <StepLayout
+      title={t("Map columns from imported CSV")}
+      subtitle={t("Match your CSV columns to the required fields")}
+      footerContent={footerContent}
+    >
+      <form onSubmit={onSubmit} className="h-full">
         {data ? (
-          <div className="flex-1 overflow-auto border rounded-lg">
+          <div className="overflow-auto border rounded-lg">
             <Table data={rows} background="dark" fixHeader columnWidths={getColumnWidths()} columnAlignments={["", "", "", "center"]} />
           </div>
         ) : (
-          <>{t("Loading...")}</>
+          <div className="p-8 text-center">
+            <span className={designTokens.typography.body}>{t("Loading...")}</span>
+          </div>
         )}
-
-        <div className="px-6 py-4 border-t bg-gray-50 flex justify-between items-center">
-          <Button 
-            type="button" 
-            variant="outline"
-            onClick={onCancel} 
-            disabled={isSubmitting}
-          >
-            {skipHeaderRowSelection ? t("Cancel") : t("Back")}
-          </Button>
-          {!!error && (
-            <div className="flex-1">
-              <Errors error={error} />
-            </div>
-          )}
-          <Button isLoading={isSubmitting} type="submit">
-            {t("Continue")}
-          </Button>
-        </div>
       </form>
-    </div>
+    </StepLayout>
   );
 }

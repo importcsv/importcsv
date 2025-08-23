@@ -5,7 +5,7 @@ import StepLayout from "../../components/StepLayout";
 import { Button } from "../../components/ui/button";
 import { UploaderProps } from "./types";
 import { AlertCircle, Download } from "lucide-react";
-import { designTokens } from "../../constants/design-tokens";
+import { designTokens } from "../../theme";
 import { cn } from "../../../utils/cn";
 
 export default function Uploader({

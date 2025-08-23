@@ -8,9 +8,10 @@ import ValidationTester from './examples/ValidationTester'
 import EmployeeImportWithTransformations from './examples/EmployeeImportWithTransformations'
 import ProductCatalogWithTransformations from './examples/ProductCatalogWithTransformations'
 import LargeDatasetTest from './examples/LargeDatasetTest'
+import ThemeShowcase from './examples/ThemeShowcase'
 import './styles.css'
 
-type ExampleType = 'employee' | 'product' | 'customer' | 'event' | 'financial' | 'tester' | 'employee-transform' | 'product-transform' | 'large-dataset' | null
+type ExampleType = 'employee' | 'product' | 'customer' | 'event' | 'financial' | 'tester' | 'employee-transform' | 'product-transform' | 'large-dataset' | 'theme-showcase' | null
 
 const App: React.FC = () => {
   const [activeExample, setActiveExample] = useState<ExampleType>(null)
@@ -24,7 +25,8 @@ const App: React.FC = () => {
     { id: 'event', name: 'Event Registration', description: 'Date validation, capacity limits, text length' },
     { id: 'financial', name: 'Financial Transactions', description: 'Decimal amounts, account patterns, transaction types' },
     { id: 'tester', name: 'Validation Tester', description: 'Test individual validators with custom data' },
-    { id: 'large-dataset', name: '🚀 Large Dataset Test', description: 'Test performance with 10k-100k rows using virtual scrolling' }
+    { id: 'large-dataset', name: '🚀 Large Dataset Test', description: 'Test performance with 10k-100k rows using virtual scrolling' },
+    { id: 'theme-showcase', name: '🎨 Theme Showcase', description: 'Test different pre-built themes and customization options' }
   ]
 
   if (activeExample) {
@@ -49,6 +51,7 @@ const App: React.FC = () => {
         {activeExample === 'financial' && <FinancialTransactions />}
         {activeExample === 'tester' && <ValidationTester />}
         {activeExample === 'large-dataset' && <LargeDatasetTest />}
+        {activeExample === 'theme-showcase' && <ThemeShowcase />}
       </div>
     )
   }
