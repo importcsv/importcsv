@@ -108,3 +108,6 @@ yarn-error.log*
 # nuxt
 .output
 build
+
+# playwright
+.playwright-mcp
