@@ -5,16 +5,13 @@ import Providers from "../../importer/providers";
 import useThemeStore from "../../importer/stores/theme";
 import { darkenColor, isValidColor } from "../../importer/utils/colorUtils";
 import { CSVImporterProps } from "../../types";
-// Import styles so they are available for the importer. We will transfer
-// these styles into the iframe and remove them from the host document to
-// prevent leakage (handled by IframeWrapper). The base reset is disabled
-// in index.css to avoid global overrides before transfer.
-// Ensure styles are bundled for injection into iframe
+// Import styles - with proper scoping under .importcsv, these won't leak
 import "../../index.css";
 import "./style/csv-importer.css";
 import "./style/dark-mode.css";
 
 const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: any) => {
+  
   // Destructure all known props from CSVImporterProps
   const {
     isModal = true,

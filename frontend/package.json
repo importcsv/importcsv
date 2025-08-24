@@ -25,7 +25,8 @@
       "import": "./build/bundled/index.esm.js",
       "require": "./build/bundled/index.js",
       "script": "./build/bundled/index.umd.js"
-    }
+    },
+    "./styles.css": "./build/style.css"
   },
   "files": [
     "build"
@@ -109,6 +110,7 @@
     "jest": "^26.6.3",
     "npm-run-all": "^4.1.5",
     "postcss-import": "^16.1.1",
+    "postcss-prefix-selector": "^2.1.1",
     "prettier": "^2.8.6",
     "prop-types": "^15.8.1",
     "style-loader": "^3.3.3",

@@ -19,7 +19,7 @@ export default defineConfig(({ mode }) => {
     plugins: [
       // Use React plugin for React mode, Preact plugin otherwise
       isReact ? react() : preact(),
-      // Inject CSS directly into the JavaScript bundle
+      // Inject CSS directly into JavaScript for self-contained component
       cssInjectedByJsPlugin(),
       dts({
         insertTypesEntry: true,
@@ -55,7 +55,11 @@ export default defineConfig(({ mode }) => {
             'preact/jsx-runtime': 'preactJsx',
             xlsx: 'XLSX',
           },
-          // CSS is now injected into JS, no separate CSS files needed
+          // CSS will be extracted as a separate file
+          assetFileNames: (assetInfo) => {
+            if (assetInfo.name === 'style.css') return 'index.css';
+            return assetInfo.name;
+          },
         },
         onwarn(warning, warn) {
           // Suppress "use client" directive warnings
@@ -66,19 +70,14 @@ export default defineConfig(({ mode }) => {
         },
       },
       sourcemap: true,
-      // Ensure CSS is extracted
+      // Ensure CSS is extracted as a single file
       cssCodeSplit: false,
       // Different output directories for different modes
       outDir: isReact ? 'build/react' : isBundled ? 'build/bundled' : 'build/preact',
       emptyOutDir: true,
     },
     css: {
-      postcss: {
-        plugins: [
-          tailwindcss,
-          autoprefixer,
-        ],
-      },
+      // PostCSS config is loaded from postcss.config.js
     },
     resolve: {
       alias: isReact ? {
