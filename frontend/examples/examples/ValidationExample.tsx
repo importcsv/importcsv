@@ -7,7 +7,9 @@ export default function ValidationExample() {
   const [isOpen, setIsOpen] = useState(false);
   const [testDataType, setTestDataType] = useState<'messy' | 'clean'>('messy');
 
-  // Column definitions with both validators AND transformations
+  // Column definitions with smart auto-detection of transformation stages
+  // Pre-validation transformations (trim, uppercase, etc.) run BEFORE validation
+  // Post-validation transformations (default, capitalize) run AFTER validation
   const columns: Column[] = [
     {
       id: 'employee_id',
@@ -19,8 +21,8 @@ export default function ValidationExample() {
         { type: 'regex', pattern: '^EMP\\d{3,6}$', message: 'Employee ID must follow pattern EMP### (3-6 digits)' }
       ],
       transformations: [
-        { type: 'trim' },
-        { type: 'uppercase' }
+        { type: 'trim' },        // Auto-detected as pre-validation: removes whitespace before validation
+        { type: 'uppercase' }    // Auto-detected as pre-validation: converts to uppercase before regex check
       ]
     },
     {
@@ -33,8 +35,8 @@ export default function ValidationExample() {
         { type: 'max_length', value: 100, message: 'Name cannot exceed 100 characters' }
       ],
       transformations: [
-        { type: 'trim' },
-        { type: 'capitalize' }
+        { type: 'trim' },        // Auto-detected as pre-validation: removes whitespace
+        { type: 'capitalize' }   // Auto-detected as post-validation: formats for display
       ]
     },
     {
@@ -46,8 +48,8 @@ export default function ValidationExample() {
         { type: 'unique' }
       ],
       transformations: [
-        { type: 'trim' },
-        { type: 'lowercase' }
+        { type: 'trim' },        // Auto-detected as pre-validation: removes whitespace
+        { type: 'lowercase' }    // Auto-detected as pre-validation: normalizes email before validation
       ]
     },
     {
@@ -59,7 +61,7 @@ export default function ValidationExample() {
         { type: 'required' }
       ],
       transformations: [
-        { type: 'capitalize' }
+        { type: 'capitalize' }   // Auto-detected as post-validation: formats for display
       ]
     },
     {
@@ -72,8 +74,8 @@ export default function ValidationExample() {
         { type: 'max', value: 500000, message: 'Salary cannot exceed $500,000' }
       ],
       transformations: [
-        { type: 'trim' },
-        { type: 'remove_special_chars' }
+        { type: 'trim' },                 // Auto-detected as pre-validation
+        { type: 'remove_special_chars' }  // Auto-detected as pre-validation: cleans before number validation
       ]
     },
     {
@@ -84,7 +86,7 @@ export default function ValidationExample() {
         { type: 'required' }
       ],
       transformations: [
-        { type: 'normalize_date', format: 'YYYY-MM-DD' }
+        { type: 'normalize_date', format: 'YYYY-MM-DD' }  // Auto-detected as pre-validation: parses dates
       ]
     },
     {
@@ -93,7 +95,7 @@ export default function ValidationExample() {
       type: 'phone',
       validators: [],
       transformations: [
-        { type: 'normalize_phone' }
+        { type: 'normalize_phone' }  // Auto-detected as pre-validation: formats phone numbers
       ]
     },
     {
@@ -102,8 +104,8 @@ export default function ValidationExample() {
       type: 'string',
       validators: [],
       transformations: [
-        { type: 'default', value: 'active' },
-        { type: 'lowercase' }
+        { type: 'lowercase' },              // Auto-detected as pre-validation
+        { type: 'default', value: 'active' } // Auto-detected as post-validation: adds default for empty
       ]
     }
   ];
@@ -189,15 +191,16 @@ EMP005,Michael Brown,michael.brown@example.com,HR,55000,2023-06-01,(555) 222-111
               </ul>
             </div>
             <div>
-              <h4 className="font-medium text-blue-800 mb-1">Transformations:</h4>
+              <h4 className="font-medium text-blue-800 mb-1">Smart Transformations:</h4>
               <ul className="list-disc list-inside space-y-1 text-blue-700">
-                <li>Trim whitespace</li>
-                <li>Case normalization</li>
-                <li>Date formatting</li>
-                <li>Phone number formatting</li>
-                <li>Default values</li>
-                <li>Special character removal</li>
+                <li><strong>Pre-validation:</strong> trim, uppercase, lowercase</li>
+                <li><strong>Pre-validation:</strong> normalize_date, normalize_phone</li>
+                <li><strong>Pre-validation:</strong> remove_special_chars</li>
+                <li><strong>Post-validation:</strong> capitalize, default values</li>
               </ul>
+              <p className="mt-2 text-xs text-blue-600 italic">
+                ✨ Transformations automatically run at the optimal stage!
+              </p>
             </div>
           </div>
         </div>
@@ -229,12 +232,15 @@ EMP005,Michael Brown,michael.brown@example.com,HR,55000,2023-06-01,(555) 222-111
           <div className="mb-4 p-3 bg-yellow-50 rounded-md border border-yellow-300">
             <p className="text-sm font-medium text-yellow-900 mb-1">Messy data includes:</p>
             <ul className="list-disc list-inside text-xs text-yellow-800 space-y-0.5">
-              <li>Inconsistent case: "emp001", "JANE SMITH"</li>
-              <li>Extra whitespace: "  john doe  "</li>
-              <li>Various phone formats: "555.123.4567", "(555) 987-6543"</li>
-              <li>Different date formats: "2023/01/15", "March 10 2023"</li>
-              <li>Missing values in status field</li>
+              <li>Inconsistent case: "emp001" → auto-fixed to "EMP001" before validation ✅</li>
+              <li>Extra whitespace: "  john doe  " → auto-trimmed before validation ✅</li>
+              <li>Various phone formats: "555.123.4567" → auto-normalized ✅</li>
+              <li>Different date formats: "2023/01/15" → auto-parsed to YYYY-MM-DD ✅</li>
+              <li>Missing status values → auto-filled with "active" after validation ✅</li>
             </ul>
+            <p className="mt-2 text-xs font-medium text-green-700">
+              🎯 All these issues are now automatically handled!
+            </p>
           </div>
         )}
 

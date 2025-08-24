@@ -6,7 +6,8 @@
 🚀 **Native Preact implementation** - Better performance with smaller runtime  
 🎨 **Automatic CSS injection** - No separate CSS import needed  
 📦 **75 fewer dependencies** - Faster installs, removed Radix UI (3.8MB)  
-⚡ **Improved CSS isolation** - Automatic scoping without iframes
+⚡ **Improved CSS isolation** - Automatic scoping without iframes  
+🔄 **Smart transformation stages** - Automatic pre/post validation transformations
 
 ## Overview
 
@@ -105,6 +106,7 @@ interface Column {
   label: string;           // Display name for the column
   type?: ColumnType;       // Data type (default: 'string')
   validators?: Validator[]; // Validation rules
+  transformations?: Transformer[]; // Data transformations (auto-staged)
   options?: string[];      // Options for 'select' type
   description?: string;    // Helper text for users
   placeholder?: string;    // Placeholder text for input
@@ -136,6 +138,52 @@ type Validator =
   | { type: 'max_length'; value: number; message?: string };
 ```
 
+### Transformations
+
+Transformations automatically clean and format data. They run at the optimal stage - either before or after validation - based on their type.
+
+```typescript
+type Transformer = 
+  | { type: 'trim'; stage?: 'pre' | 'post' }           // Remove whitespace (auto: pre)
+  | { type: 'uppercase'; stage?: 'pre' | 'post' }      // Convert to uppercase (auto: pre)
+  | { type: 'lowercase'; stage?: 'pre' | 'post' }      // Convert to lowercase (auto: pre)
+  | { type: 'capitalize'; stage?: 'pre' | 'post' }     // Capitalize words (auto: post)
+  | { type: 'remove_special_chars'; stage?: 'pre' | 'post' } // Remove special chars (auto: pre)
+  | { type: 'normalize_phone'; stage?: 'pre' | 'post' } // Format phone numbers (auto: pre)
+  | { type: 'normalize_date'; format?: string; stage?: 'pre' | 'post' } // Parse dates (auto: pre)
+  | { type: 'default'; value: string; stage?: 'pre' | 'post' } // Default value (auto: post)
+  | { type: 'replace'; find: string; replace: string; stage?: 'pre' | 'post' } // Find/replace (auto: post)
+  | { type: 'custom'; fn: (value: any) => any; stage?: 'pre' | 'post' }; // Custom function (auto: post)
+```
+
+#### Smart Auto-Detection
+
+Transformations automatically run at the optimal stage:
+
+**Pre-validation transformations** (clean data before validation):
+- `trim` - Remove whitespace before checking required fields
+- `uppercase` / `lowercase` - Normalize case before pattern matching
+- `remove_special_chars` - Clean input before validation
+- `normalize_phone` - Format phones before validation
+- `normalize_date` - Parse dates before date validation
+
+**Post-validation transformations** (enrich valid data):
+- `capitalize` - Format text for display
+- `default` - Add defaults for empty fields
+- `replace` - Content modifications
+- `custom` - Business logic transformations
+
+#### Override Auto-Detection
+
+You can explicitly control when a transformation runs:
+
+```typescript
+transformations: [
+  { type: 'uppercase', stage: 'post' }, // Override: run after validation
+  { type: 'custom', fn: cleanData, stage: 'pre' } // Override: run before
+]
+```
+
 ## Usage Examples
 
 ### Standalone Mode (Frontend-only)
@@ -153,6 +201,10 @@ const MyComponent = () => {
       validators: [
         { type: 'required' },
         { type: 'unique', message: 'Email must be unique' }
+      ],
+      transformations: [
+        { type: 'trim' },        // Auto: runs before validation
+        { type: 'lowercase' }    // Auto: runs before validation
       ]
     },
     {
@@ -163,6 +215,10 @@ const MyComponent = () => {
         { type: 'required' },
         { type: 'min_length', value: 2 },
         { type: 'max_length', value: 100 }
+      ],
+      transformations: [
+        { type: 'trim' },        // Auto: runs before validation
+        { type: 'capitalize' }   // Auto: runs after validation
       ]
     },
     {
@@ -172,6 +228,10 @@ const MyComponent = () => {
       validators: [
         { type: 'min', value: 18, message: 'Must be 18 or older' },
         { type: 'max', value: 120 }
+      ],
+      transformations: [
+        { type: 'trim' },                 // Auto: runs before validation
+        { type: 'remove_special_chars' }  // Auto: runs before validation
       ]
     },
     {
@@ -181,6 +241,17 @@ const MyComponent = () => {
       options: ['Engineering', 'Sales', 'Marketing', 'HR'],
       validators: [
         { type: 'required' }
+      ],
+      transformations: [
+        { type: 'capitalize' }   // Auto: runs after validation
+      ]
+    },
+    {
+      id: 'status',
+      label: 'Status',
+      type: 'string',
+      transformations: [
+        { type: 'default', value: 'active' }  // Auto: runs after validation
       ]
     }
   ];
@@ -238,6 +309,61 @@ const MyComponent = ({ useBackend }) => {
     />
   );
 };
+```
+
+## Common Transformation Patterns
+
+### Employee ID Normalization
+```typescript
+{
+  id: 'employee_id',
+  label: 'Employee ID',
+  validators: [
+    { type: 'regex', pattern: '^EMP\\d{3,6}$' }
+  ],
+  transformations: [
+    { type: 'trim' },        // Remove spaces: "  emp001  " → "emp001"
+    { type: 'uppercase' }    // Normalize case: "emp001" → "EMP001"
+  ]
+}
+// Result: "  emp001  " → "EMP001" (passes validation!)
+```
+
+### Phone Number Formatting
+```typescript
+{
+  id: 'phone',
+  label: 'Phone Number',
+  type: 'phone',
+  transformations: [
+    { type: 'normalize_phone' }  // Formats: "555.123.4567" → "(555) 123-4567"
+  ]
+}
+```
+
+### Date Normalization
+```typescript
+{
+  id: 'hire_date',
+  label: 'Hire Date',
+  type: 'date',
+  transformations: [
+    { type: 'normalize_date', format: 'YYYY-MM-DD' }
+  ]
+}
+// Handles: "03/15/2023", "2023-03-15", "March 15, 2023" → "2023-03-15"
+```
+
+### Optional Fields with Defaults
+```typescript
+{
+  id: 'status',
+  label: 'Status',
+  transformations: [
+    { type: 'lowercase' },              // Normalize first
+    { type: 'default', value: 'active' } // Then add default if empty
+  ]
+}
 ```
 
 ## Validation Rules
@@ -354,13 +480,38 @@ const columns: Column[] = [
 5. **Use unique validation for identifiers** - Prevent duplicate records
 6. **Test with sample data** - Use the examples app to verify configuration
 
+### Transformation Best Practices
+
+1. **Order matters** - Transformations run in the order defined
+2. **Pre-validate cleaning** - Use `trim`, `uppercase`, `lowercase` before validation
+3. **Post-validate formatting** - Use `capitalize`, `default` after validation
+4. **Normalize early** - Clean data before validation to reduce false errors
+5. **Test edge cases** - Verify transformations handle empty values and special characters
+6. **Override when needed** - Use explicit `stage` property for special cases
+
+Example of good transformation ordering:
+```typescript
+transformations: [
+  { type: 'trim' },                    // 1. Clean whitespace
+  { type: 'remove_special_chars' },    // 2. Remove unwanted chars
+  { type: 'uppercase' },                // 3. Normalize case
+  // Validation happens here
+  { type: 'default', value: 'N/A' }    // 4. Add default after validation
+]
+```
+
 ## TypeScript Support
 
 The library is fully typed. Import types as needed:
 
 ```typescript
 import { CSVImporter } from '@importcsv/react';
-import type { Column, Validator, CSVImporterProps } from '@importcsv/react';
+import type { 
+  Column, 
+  Validator, 
+  Transformer,
+  CSVImporterProps 
+} from '@importcsv/react';
 ```
 
 ## Browser Support

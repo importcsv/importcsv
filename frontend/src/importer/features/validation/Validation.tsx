@@ -9,7 +9,7 @@ import { Wrench, AlertTriangle } from 'lucide-react';
 import { ValidationProps } from './types';
 import TransformModal from './components/TransformModal';
 import { validateColumn, validateUniqueness } from '../../../validation/validator';
-import { applyTransformations } from '../../../validation/transformer';
+import { applyTransformations, categorizeTransformations } from '../../../validation/transformer';
 import VirtualTable from '../../components/VirtualTable';
 import { designTokens } from '../../theme';
 import { cn } from '../../../utils/cn';
@@ -111,7 +111,11 @@ export default function Validation({
         const column = columns.find(c => c.id === columnId);
         if (!column) return;
 
-        const error = validateColumn(value, column);
+        // Apply pre-transformations before validation
+        const { pre } = categorizeTransformations(column.transformations);
+        const preTransformedValue = applyTransformations(value, pre);
+        
+        const error = validateColumn(preTransformedValue, column);
         if (error) {
           newErrors.push({
             rowIndex: rowIdx + headerRowIndex + 1,
@@ -145,7 +149,11 @@ export default function Validation({
             const column = columns.find(c => c.id === columnId);
             if (!column) return;
 
-            const error = validateColumn(value, column);
+            // Apply pre-transformations before validation
+            const { pre } = categorizeTransformations(column.transformations);
+            const preTransformedValue = applyTransformations(value, pre);
+            
+            const error = validateColumn(preTransformedValue, column);
             if (error) {
               newErrors.push({
                 rowIndex: rowIdx + headerRowIndex + 1,
@@ -211,23 +219,51 @@ export default function Validation({
     shouldValidateRef.current = true;
   }, [dataRows]);
 
-  // Row filtering with counts
+  // Pre-transformed data for display (shows what values will be validated)
+  const preTransformedRows = useMemo(() => {
+    if (!columns) return dataRows;
+    
+    return dataRows.map(row => {
+      const newRow = { ...row };
+      const transformedValues = [...row.values];
+      
+      includedColumns.forEach(colIdx => {
+        const mapping = columnMapping[colIdx];
+        if (!mapping || !mapping.include) return;
+        
+        const columnId = (mapping as any).id || (mapping as any).key;
+        const column = columns.find(c => c.id === columnId);
+        if (!column || !column.transformations) return;
+        
+        // Apply only pre-transformations for display
+        const { pre } = categorizeTransformations(column.transformations);
+        if (pre.length > 0) {
+          transformedValues[colIdx] = applyTransformations(row.values[colIdx], pre);
+        }
+      });
+      
+      newRow.values = transformedValues;
+      return newRow;
+    });
+  }, [dataRows, columns, columnMapping, includedColumns]);
+
+  // Row filtering with counts (using pre-transformed data)
   const { visibleRows, validCount, errorCount } = useMemo(() => {
 
     const errorRowIndices = new Set(
       errors.map(err => err.rowIndex - headerRowIndex - 1)
     );
 
-    const validRows = dataRows.filter((_, idx) => !errorRowIndices.has(idx));
-    const errorRows = dataRows.filter((_, idx) => errorRowIndices.has(idx));
+    const validRows = preTransformedRows.filter((_, idx) => !errorRowIndices.has(idx));
+    const errorRows = preTransformedRows.filter((_, idx) => errorRowIndices.has(idx));
 
-    let filtered: typeof dataRows;
+    let filtered: typeof preTransformedRows;
     if (filterMode === 'valid') {
       filtered = validRows;
     } else if (filterMode === 'error') {
       filtered = errorRows;
     } else {
-      filtered = dataRows;
+      filtered = preTransformedRows;
     }
 
     return {
@@ -235,7 +271,7 @@ export default function Validation({
       validCount: validRows.length,
       errorCount: errorRows.length
     };
-  }, [dataRows, filterMode, errors, headerRowIndex]);
+  }, [preTransformedRows, filterMode, errors, headerRowIndex]);
 
   // Error tracking
   const errorTracking = useMemo(() => {
@@ -245,9 +281,9 @@ export default function Validation({
     errors.forEach(err => {
       // Convert from display row index to actual data row index
       const dataRowIdx = err.rowIndex - headerRowIndex - 1;
-      if (dataRowIdx >= 0 && dataRowIdx < dataRows.length) {
+      if (dataRowIdx >= 0 && dataRowIdx < preTransformedRows.length) {
         indices.add(dataRowIdx);
-        rowObjects.add(dataRows[dataRowIdx]?.index || -1);
+        rowObjects.add(preTransformedRows[dataRowIdx]?.index || -1);
       }
     });
 
@@ -256,7 +292,7 @@ export default function Validation({
       objects: Array.from(rowObjects).filter(idx => idx !== -1),  // For UI display
       count: indices.size  // For quick access to error count
     };
-  }, [errors, headerRowIndex, dataRows]);
+  }, [errors, headerRowIndex, preTransformedRows]);
 
   // Form submission
   const handleSubmit = (e: JSX.TargetedEvent) => {
@@ -286,8 +322,11 @@ export default function Validation({
         const column = columns?.find(c => c.id === ((mapping as any).id || (mapping as any).key));
         if (!column || !column.transformations) return value;
 
-        // Apply transformations
-        return applyTransformations(value, column.transformations);
+        // Apply both pre and post transformations for final output
+        const { pre, post } = categorizeTransformations(column.transformations);
+        const preTransformed = applyTransformations(value, pre);
+        const finalValue = applyTransformations(preTransformed, post);
+        return finalValue;
       });
 
       newRow.values = transformedValues;
@@ -459,9 +498,10 @@ export default function Validation({
                     type="text"
                     value={String(value || '')}
                     onChange={(e) => {
-                      const actualDataRowIdx = dataRows.indexOf(row);
-                      if (actualDataRowIdx !== -1) {
-                        handleCellEdit(actualDataRowIdx, colIdx, e.target.value);
+                      // Find the original row index based on the pre-transformed row
+                      const preTransformedIdx = preTransformedRows.indexOf(row);
+                      if (preTransformedIdx !== -1) {
+                        handleCellEdit(preTransformedIdx, colIdx, e.target.value);
                       }
                     }}
                     tabIndex={0}

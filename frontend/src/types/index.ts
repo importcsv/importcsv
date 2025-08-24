@@ -28,18 +28,21 @@ export type Validator =
   | { type: 'min_length'; value: number; message?: string }
   | { type: 'max_length'; value: number; message?: string };
 
-// Transformer types (applied after validation, before sending to parent)
+// Transformation stage type
+export type TransformationStage = 'pre' | 'post';
+
+// Transformer types (with optional stage for explicit control)
 export type Transformer = 
-  | { type: 'trim' }
-  | { type: 'uppercase' }
-  | { type: 'lowercase' }
-  | { type: 'capitalize' }
-  | { type: 'remove_special_chars' }
-  | { type: 'normalize_phone' }
-  | { type: 'normalize_date'; format?: string }
-  | { type: 'default'; value: string }
-  | { type: 'replace'; find: string; replace: string }
-  | { type: 'custom'; fn: (value: any) => any };
+  | { type: 'trim'; stage?: TransformationStage }
+  | { type: 'uppercase'; stage?: TransformationStage }
+  | { type: 'lowercase'; stage?: TransformationStage }
+  | { type: 'capitalize'; stage?: TransformationStage }
+  | { type: 'remove_special_chars'; stage?: TransformationStage }
+  | { type: 'normalize_phone'; stage?: TransformationStage }
+  | { type: 'normalize_date'; format?: string; stage?: TransformationStage }
+  | { type: 'default'; value: string; stage?: TransformationStage }
+  | { type: 'replace'; find: string; replace: string; stage?: TransformationStage }
+  | { type: 'custom'; fn: (value: any) => any; stage?: TransformationStage };
 
 // Column mapping types
 export interface ColumnMapping {

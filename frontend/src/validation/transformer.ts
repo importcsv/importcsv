@@ -1,17 +1,5 @@
-import { Column } from '../types';
-
-// Transformation types
-export type Transformer = 
-  | { type: 'trim' }
-  | { type: 'uppercase' }
-  | { type: 'lowercase' }
-  | { type: 'capitalize' }
-  | { type: 'remove_special_chars' }
-  | { type: 'normalize_phone' }
-  | { type: 'normalize_date'; format?: string }
-  | { type: 'default'; value: string }
-  | { type: 'replace'; find: string; replace: string }
-  | { type: 'custom'; fn: (value: any) => any };
+import { Column, Transformer } from '../types';
+import { isPreValidationTransform } from './transformationStages';
 
 /**
  * Apply transformations to a value
@@ -132,4 +120,39 @@ function formatDate(date: Date, format: string): string {
     .replace('YYYY', String(year))
     .replace('MM', month)
     .replace('DD', day);
+}
+
+/**
+ * Categorize transformations into pre-validation and post-validation stages
+ * @param transformations Array of transformations to categorize
+ * @returns Object with pre and post transformation arrays
+ */
+export function categorizeTransformations(transformations?: Transformer[]): {
+  pre: Transformer[];
+  post: Transformer[];
+} {
+  if (!transformations || transformations.length === 0) {
+    return { pre: [], post: [] };
+  }
+
+  const pre: Transformer[] = [];
+  const post: Transformer[] = [];
+  
+  transformations.forEach(transform => {
+    // Check for explicit stage override
+    if ('stage' in transform && transform.stage === 'pre') {
+      pre.push(transform);
+    } else if ('stage' in transform && transform.stage === 'post') {
+      post.push(transform);
+    } else {
+      // Auto-detect based on transformation type
+      if (isPreValidationTransform(transform.type)) {
+        pre.push(transform);
+      } else {
+        post.push(transform);
+      }
+    }
+  });
+  
+  return { pre, post };
 }
