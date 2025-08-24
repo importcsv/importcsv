@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { CSVImporter } from '@importcsv/react';
-import type { Column } from '@importcsv/react';
+import { CSVImporter } from '../../src';
+import type { Column } from '../../src';
 
-export default function EmployeeImportWithTransformations() {
+export default function ValidationExample() {
   const [data, setData] = useState<any>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [testDataType, setTestDataType] = useState<'messy' | 'clean'>('messy');
@@ -105,39 +105,29 @@ export default function EmployeeImportWithTransformations() {
         { type: 'default', value: 'active' },
         { type: 'lowercase' }
       ]
-    },
-    {
-      id: 'notes',
-      label: 'Notes',
-      type: 'string',
-      validators: [],
-      transformations: [
-        { type: 'trim' },
-        { type: 'replace', find: '\\btemp\\b', replace: 'temporary' }
-      ]
     }
   ];
 
   // Generate test CSV with messy data
   const generateMessyCSV = () => {
-    const csvContent = `Employee ID,Full Name,Email Address,Department,Annual Salary,Hire Date,Phone Number,Employment Status,Notes
-  emp001  ,  john doe  ,JOHN.DOE@EXAMPLE.COM,marketing,65000,2023/01/15,555.123.4567,,New hire - temp contract
-EMP002,JANE SMITH,Jane.Smith@Example.Com,ENGINEERING,75000,02-20-2023,(555) 987-6543,ACTIVE,Senior developer
-emp003,robert johnson  ,Robert@Example.com,sales,45000,March 10 2023,555-555-5555,Active,temp to perm
-  EMP004,Sarah Wilson,sarah@EXAMPLE.COM,finance,85000,2023-05-12,+1 555 444 3333,,Remote worker
-emp005  ,Michael Brown,MICHAEL.BROWN@EXAMPLE.COM,hr,55000,06/01/2023,555.222.1111,active,Part-time temp`;
+    const csvContent = `Employee ID,Full Name,Email Address,Department,Annual Salary,Hire Date,Phone Number,Employment Status
+  emp001  ,  john doe  ,JOHN.DOE@EXAMPLE.COM,marketing,65000,2023/01/15,555.123.4567,
+EMP002,JANE SMITH,Jane.Smith@Example.Com,ENGINEERING,75000,02-20-2023,(555) 987-6543,ACTIVE
+emp003,robert johnson  ,Robert@Example.com,sales,45000,March 10 2023,555-555-5555,Active
+  EMP004,Sarah Wilson,sarah@EXAMPLE.COM,finance,85000,2023-05-12,+1 555 444 3333,
+emp005  ,Michael Brown,MICHAEL.BROWN@EXAMPLE.COM,hr,55000,06/01/2023,555.222.1111,active`;
 
     return csvContent;
   };
 
   // Generate clean CSV for comparison
   const generateCleanCSV = () => {
-    const csvContent = `Employee ID,Full Name,Email Address,Department,Annual Salary,Hire Date,Phone Number,Employment Status,Notes
-EMP001,John Doe,john.doe@example.com,Marketing,65000,2023-01-15,(555) 123-4567,active,New hire - temporary contract
-EMP002,Jane Smith,jane.smith@example.com,Engineering,75000,2023-02-20,(555) 987-6543,active,Senior developer
-EMP003,Robert Johnson,robert@example.com,Sales,45000,2023-03-10,(555) 555-5555,active,temporary to perm
-EMP004,Sarah Wilson,sarah@example.com,Finance,85000,2023-05-12,(555) 444-3333,active,Remote worker
-EMP005,Michael Brown,michael.brown@example.com,HR,55000,2023-06-01,(555) 222-1111,active,Part-time temporary`;
+    const csvContent = `Employee ID,Full Name,Email Address,Department,Annual Salary,Hire Date,Phone Number,Employment Status
+EMP001,John Doe,john.doe@example.com,Marketing,65000,2023-01-15,(555) 123-4567,active
+EMP002,Jane Smith,jane.smith@example.com,Engineering,75000,2023-02-20,(555) 987-6543,active
+EMP003,Robert Johnson,robert@example.com,Sales,45000,2023-03-10,(555) 555-5555,active
+EMP004,Sarah Wilson,sarah@example.com,Finance,85000,2023-05-12,(555) 444-3333,active
+EMP005,Michael Brown,michael.brown@example.com,HR,55000,2023-06-01,(555) 222-1111,active`;
 
     return csvContent;
   };
@@ -154,36 +144,25 @@ EMP005,Michael Brown,michael.brown@example.com,HR,55000,2023-06-01,(555) 222-111
   };
 
   const handleComplete = (importedData: any) => {
-    console.log('=== DATA RECEIVED IN PARENT ===');
-    console.log('importedData structure:', importedData);
+    console.log('Import completed:', importedData);
 
     // Handle the standalone mode data structure
-    // Standalone mode now returns {data: [...rows with values...], headers: [...], ...}
     let processedData;
 
     if (importedData.data && Array.isArray(importedData.data)) {
-      // Standalone mode: data contains rows with values property
       const headers = importedData.headers || [];
       const dataRows = importedData.data;
 
-      // Create rows structure with headers as first row
       processedData = {
         rows: [
           { values: headers },
           ...dataRows
         ]
       };
-
-      console.log('Processed data with', processedData.rows.length, 'rows');
-      console.log('First row (headers):', processedData.rows[0]?.values);
-      console.log('First data row:', processedData.rows[1]?.values);
     } else if (importedData.rows) {
-      // Direct rows structure
       processedData = importedData;
     } else {
-      // Fallback: create empty structure
       processedData = { rows: [] };
-      console.warn('No data found in imported data');
     }
 
     setData(processedData);
@@ -192,58 +171,83 @@ EMP005,Michael Brown,michael.brown@example.com,HR,55000,2023-06-01,(555) 222-111
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-2xl font-bold mb-4">Employee Import with Transformations</h2>
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h2 className="text-2xl font-bold mb-4 text-gray-800">Validation & Transformation Example</h2>
 
-        <div className="mb-4 p-4 bg-blue-50 rounded">
-          <h3 className="font-semibold mb-2">How Transformations Work:</h3>
-          <ol className="list-decimal list-inside space-y-1 text-sm">
-            <li>Upload messy data with inconsistent formatting</li>
-            <li>Data validates against the original upload (you see what you uploaded)</li>
-            <li>When you click Submit, transformations are applied silently</li>
-            <li>Parent application receives clean, standardized data</li>
-          </ol>
+        <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+          <h3 className="font-semibold mb-2 text-blue-900">Features Demonstrated:</h3>
+          <div className="grid md:grid-cols-2 gap-4 text-sm">
+            <div>
+              <h4 className="font-medium text-blue-800 mb-1">Validations:</h4>
+              <ul className="list-disc list-inside space-y-1 text-blue-700">
+                <li>Required fields</li>
+                <li>Unique constraints</li>
+                <li>Pattern matching (regex)</li>
+                <li>Min/max length</li>
+                <li>Number ranges</li>
+                <li>Email validation</li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-medium text-blue-800 mb-1">Transformations:</h4>
+              <ul className="list-disc list-inside space-y-1 text-blue-700">
+                <li>Trim whitespace</li>
+                <li>Case normalization</li>
+                <li>Date formatting</li>
+                <li>Phone number formatting</li>
+                <li>Default values</li>
+                <li>Special character removal</li>
+              </ul>
+            </div>
+          </div>
         </div>
 
-        <div className="mb-4 flex space-x-4">
+        <div className="mb-4 flex gap-2">
           <button
             onClick={() => setTestDataType('messy')}
-            className={`px-4 py-2 rounded ${testDataType === 'messy' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+            className={`px-4 py-2 rounded-md transition-colors ${
+              testDataType === 'messy' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
           >
             Messy Data
           </button>
           <button
             onClick={() => setTestDataType('clean')}
-            className={`px-4 py-2 rounded ${testDataType === 'clean' ? 'bg-blue-500 text-white' : 'bg-gray-200'}`}
+            className={`px-4 py-2 rounded-md transition-colors ${
+              testDataType === 'clean' 
+                ? 'bg-blue-600 text-white' 
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
           >
             Clean Data
           </button>
         </div>
 
         {testDataType === 'messy' && (
-          <div className="mb-4 p-3 bg-yellow-50 rounded text-sm">
-            <strong>Messy data includes:</strong>
-            <ul className="list-disc list-inside mt-1">
-              <li>Mixed case: "emp001", "JANE SMITH"</li>
-              <li>Extra spaces: "  john doe  "</li>
+          <div className="mb-4 p-3 bg-yellow-50 rounded-md border border-yellow-300">
+            <p className="text-sm font-medium text-yellow-900 mb-1">Messy data includes:</p>
+            <ul className="list-disc list-inside text-xs text-yellow-800 space-y-0.5">
+              <li>Inconsistent case: "emp001", "JANE SMITH"</li>
+              <li>Extra whitespace: "  john doe  "</li>
               <li>Various phone formats: "555.123.4567", "(555) 987-6543"</li>
               <li>Different date formats: "2023/01/15", "March 10 2023"</li>
-              <li>Plain numbers for salary: "65000" (no commas)</li>
-              <li>Abbreviations: "temp" → "temporary"</li>
+              <li>Missing values in status field</li>
             </ul>
           </div>
         )}
 
-        <div className="flex space-x-4">
+        <div className="flex gap-3">
           <button
             onClick={downloadCSV}
-            className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+            className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
           >
             Download {testDataType === 'messy' ? 'Messy' : 'Clean'} Test CSV
           </button>
           <button
             onClick={() => setIsOpen(true)}
-            className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
           >
             Open Importer
           </button>
@@ -262,15 +266,15 @@ EMP005,Michael Brown,michael.brown@example.com,HR,55000,2023-06-01,(555) 222-111
       )}
 
       {data && data.rows && data.rows.length > 0 && (
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-lg font-semibold mb-4">Transformed Data Received (After Submit):</h3>
+        <div className="bg-white p-6 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold mb-4 text-gray-800">Transformed Data (After Import):</h3>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
                   {data.rows[0]?.values && Array.isArray(data.rows[0].values) &&
                     data.rows[0].values.map((header: string, idx: number) => (
-                      <th key={idx} className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                      <th key={idx} className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         {header}
                       </th>
                     ))
@@ -279,10 +283,10 @@ EMP005,Michael Brown,michael.brown@example.com,HR,55000,2023-06-01,(555) 222-111
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {data.rows.slice(1).map((row: any, rowIdx: number) => (
-                  <tr key={rowIdx}>
+                  <tr key={rowIdx} className="hover:bg-gray-50">
                     {row.values && Array.isArray(row.values) &&
                       row.values.map((cell: string, cellIdx: number) => (
-                        <td key={cellIdx} className="px-3 py-2 text-sm text-gray-900">
+                        <td key={cellIdx} className="px-3 py-2 text-sm text-gray-900 whitespace-nowrap">
                           {cell || ''}
                         </td>
                       ))
@@ -293,17 +297,16 @@ EMP005,Michael Brown,michael.brown@example.com,HR,55000,2023-06-01,(555) 222-111
             </table>
           </div>
 
-          <div className="mt-4 p-3 bg-green-50 rounded">
-            <strong>Notice the transformations applied:</strong>
-            <ul className="list-disc list-inside text-sm mt-1">
+          <div className="mt-4 p-3 bg-green-50 rounded-md border border-green-200">
+            <p className="font-medium text-green-900 text-sm mb-1">Transformations Applied:</p>
+            <ul className="list-disc list-inside text-xs text-green-800 space-y-0.5">
               <li>Employee IDs: All uppercase (EMP001, EMP002...)</li>
-              <li>Names: Properly capitalized (John Doe, Jane Smith...)</li>
-              <li>Emails: All lowercase (john.doe@example.com...)</li>
-              <li>Departments: Capitalized (Marketing, Engineering...)</li>
-              <li>Phones: Consistent format ((555) 123-4567...)</li>
-              <li>Dates: ISO format (2023-01-15...)</li>
-              <li>Status: Default "active" applied where empty</li>
-              <li>Notes: "temp" replaced with "temporary"</li>
+              <li>Names: Properly capitalized</li>
+              <li>Emails: All lowercase</li>
+              <li>Departments: Capitalized</li>
+              <li>Phones: Consistent format</li>
+              <li>Dates: ISO format (YYYY-MM-DD)</li>
+              <li>Status: Default "active" where empty</li>
             </ul>
           </div>
         </div>
