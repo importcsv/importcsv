@@ -37,7 +37,7 @@ interface Column {
 ## Validators
 
 ```tsx
-type Validator = 
+type Validator =
   | { type: 'required'; message?: string }
   | { type: 'unique'; message?: string }
   | { type: 'regex'; pattern: string; message?: string }
@@ -63,32 +63,90 @@ validators: [
 
 ## Transformers
 
+Transformations are applied after validation, before data is returned. They process data silently without showing errors to users.
+
 ```tsx
-type Transformer = 
-  | { type: 'trim' }
-  | { type: 'uppercase' }
-  | { type: 'lowercase' }
-  | { type: 'capitalize' }
-  | { type: 'remove_special_chars' }
-  | { type: 'normalize_phone' }
-  | { type: 'normalize_date'; format?: string }
-  | { type: 'default'; value: string }
-  | { type: 'replace'; find: string; replace: string }
-  | { type: 'custom'; fn: (value: any) => any };
+type Transformer =
+  | { type: 'trim' }                    // Remove whitespace from start/end
+  | { type: 'uppercase' }                // Convert to UPPERCASE
+  | { type: 'lowercase' }                // Convert to lowercase
+  | { type: 'capitalize' }               // Capitalize First Letter Of Each Word
+  | { type: 'remove_special_chars' }     // Keep only alphanumeric and spaces
+  | { type: 'normalize_phone' }          // Format as +1234567890
+  | { type: 'normalize_date'; format?: string }  // Parse and format dates
+  | { type: 'default'; value: string }   // Replace empty with default value
+  | { type: 'replace'; find: string; replace: string }  // Find and replace
+  | { type: 'custom'; fn: (value: any) => any }  // Custom transformation
 ```
+
+### Transformation Details
+
+| Type | Description | Example Input | Example Output |
+|------|-------------|---------------|----------------|
+| `trim` | Removes leading/trailing whitespace | `"  hello  "` | `"hello"` |
+| `uppercase` | Converts to uppercase | `"Hello"` | `"HELLO"` |
+| `lowercase` | Converts to lowercase | `"Hello"` | `"hello"` |
+| `capitalize` | Capitalizes first letter of each word | `"john doe"` | `"John Doe"` |
+| `remove_special_chars` | Keeps only letters, numbers, spaces | `"hello@123!"` | `"hello123"` |
+| `normalize_phone` | Formats as international number | `"(555) 123-4567"` | `"+15551234567"` |
+| `normalize_date` | Parses and formats dates | `"01/15/24"` | `"2024-01-15"` |
+| `default` | Replaces empty values | `""` | `"N/A"` |
+| `replace` | String replacement | `"hello world"` | `"hello_world"` |
+| `custom` | Custom function | any | any |
 
 ### Examples
 
 ```tsx
+// Chain multiple transformations
+transformations: [
+  { type: 'trim' },                      // First: remove whitespace
+  { type: 'lowercase' },                 // Then: convert to lowercase
+  { type: 'default', value: 'unknown' }  // Finally: set default if empty
+]
+
+// Phone number normalization
+transformations: [
+  { type: 'normalize_phone' }  // "(555) 123-4567" → "+15551234567"
+]
+
+// Date formatting
+transformations: [
+  { type: 'normalize_date', format: 'YYYY-MM-DD' }  // "1/15/24" → "2024-01-15"
+]
+
+// Custom transformation
+transformations: [
+  {
+    type: 'custom',
+    fn: (value) => {
+      // Remove currency symbol and parse as number
+      return parseFloat(value.replace(/[$,]/g, ''));
+    }
+  }
+]
+
+// Complex example: SKU formatting
 transformations: [
   { type: 'trim' },
-  { type: 'uppercase' },
-  { type: 'normalize_phone' },
-  { type: 'normalize_date', format: 'YYYY-MM-DD' },
-  { type: 'default', value: 'N/A' },
-  { type: 'replace', find: ' ', replace: '_' },
-  { type: 'custom', fn: (val) => val.toLowerCase() }
-]
+  { type: 'remove_special_chars' },
+  { type: 'replace', find: ' ', replace: '-' },
+  { type: 'uppercase' }
+]  // "  prod #123  " → "PROD-123"
+```
+
+### Transformation Order
+
+Transformations are applied in the order they are defined:
+
+```tsx
+// Order matters!
+column: {
+  id: 'email',
+  transformations: [
+    { type: 'trim' },        // 1st: "  JOHN@EXAMPLE.COM  "
+    { type: 'lowercase' }    // 2nd: "john@example.com"
+  ]
+}
 ```
 
 ## Response Format
@@ -137,6 +195,33 @@ interface ImportData {
 }
 ```
 
+## Performance Considerations
+
+### Large Datasets (1,000+ rows)
+
+ImportCSV automatically enables performance optimizations for large files:
+
+- **Virtual Scrolling**: Only renders visible rows (~20) in the DOM
+- **Progressive Validation**: Validates first 50 rows instantly, rest asynchronously
+- **Memory Management**: Efficient data structures and cleanup
+
+```tsx
+// No special configuration needed - optimizations are automatic
+<CSVImporter
+  columns={columns}
+  onComplete={handleComplete}
+/>
+```
+
+### Performance Tips
+
+1. **Use built-in validators** over complex regex patterns
+2. **Minimize transformations** for better performance
+3. **Keep validators simple** for faster validation
+4. **Consider server-side processing** for files > 10,000 rows
+
+See the [Performance Guide](/core-concepts/performance) for detailed information.
+
 ## Custom Styles
 
 Override CSS variables:
@@ -181,6 +266,19 @@ customStyles={{
 --color-importer-link
 --color-progress-bar
 ```
+
+## CSS Injection
+
+Starting from v0.2.0, CSS is automatically injected when the component loads. No separate CSS import is needed:
+
+```tsx
+// Just import the component - CSS is included!
+import { CSVImporter } from '@importcsv/react';
+
+// No need for: import '@importcsv/react/dist/style.css' ❌
+```
+
+The CSS is scoped using the `.importcsv` class to prevent style conflicts.
 
 ## TypeScript
 

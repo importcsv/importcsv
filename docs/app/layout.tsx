@@ -1,16 +1,35 @@
-import '@/app/global.css';
+import './global.css';
 import { RootProvider } from 'fumadocs-ui/provider';
-import { Inter } from 'next/font/google';
+import { cn } from 'fumadocs-ui/utils/cn';
+import { Geist, Geist_Mono } from 'next/font/google';
 
-const inter = Inter({
+const sans = Geist({
   subsets: ['latin'],
+  variable: '--font-geist-sans',
+  display: 'swap',
+  weight: 'variable',
+});
+
+const mono = Geist_Mono({
+  subsets: ['latin'],
+  variable: '--font-geist-mono',
+  display: 'swap',
+  weight: 'variable',
 });
 
 export default function Layout({ children }: LayoutProps<'/'>) {
   return (
-    <html lang="en" className={inter.className} suppressHydrationWarning>
-      <body className="flex flex-col min-h-screen">
-        <RootProvider>{children}</RootProvider>
+    <html 
+      className={cn(
+        'touch-manipulation font-sans antialiased',
+        sans.variable,
+        mono.variable
+      )}
+      lang="en" 
+      suppressHydrationWarning
+    >
+      <body className="flex min-h-screen flex-col">
+        <RootProvider theme={{ forcedTheme: 'dark' }}>{children}</RootProvider>
       </body>
     </html>
   );

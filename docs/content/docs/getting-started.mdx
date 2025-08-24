@@ -1,6 +1,6 @@
 ---
 title: Getting Started
-description: Install and use ImportCSV in your React application
+description: Get Import CSV running in your React app in under 5 minutes
 ---
 
 ## Installation
@@ -9,12 +9,14 @@ description: Install and use ImportCSV in your React application
 npm install @importcsv/react
 ```
 
-Excel support (optional):
+That's it! CSS is automatically included - no separate imports needed.
+
+### Optional: Excel Support
 ```bash
-npm install xlsx
+npm install xlsx  # For .xls and .xlsx files
 ```
 
-## Basic Usage
+## Quick Start
 
 ```tsx
 import { CSVImporter } from '@importcsv/react';
@@ -31,7 +33,7 @@ function App() {
         modalIsOpen={isOpen}
         modalOnCloseTriggered={() => setIsOpen(false)}
         onComplete={(data) => {
-          console.log(data);
+          console.log(`Imported ${data.num_rows} rows`);
           // data.rows = [{ values: { name: "John", email: "john@example.com" } }]
         }}
         columns={[
@@ -43,6 +45,14 @@ function App() {
   );
 }
 ```
+
+### What You Get
+
+✅ **Automatic file parsing** - CSV, TSV, XLS, XLSX
+✅ **Smart column mapping** - AI-powered field matching
+✅ **Built-in validation** - Email, required fields, and more
+✅ **Large file support** - 10,000+ rows with virtual scrolling
+✅ **Zero configuration** - Works out of the box
 
 ## Framework Setup
 
@@ -82,8 +92,53 @@ const CSVImporter = dynamic(
 </script>
 ```
 
+## Performance Notes
+
+### Large Files (1,000+ rows)
+ImportCSV automatically optimizes for large datasets:
+- **Virtual scrolling** renders only visible rows
+- **Progressive validation** keeps UI responsive
+- **Efficient memory usage** with optimized data structures
+
+### Bundle Size
+The entire library is ~100KB gzipped, including:
+- Core importer functionality
+- Virtual scrolling for large datasets
+- All validation and transformation logic
+- Auto-injected CSS styles
+
+## Production Deployment
+
+### Recommended Configuration
+
+```tsx
+<CSVImporter
+  columns={columns}
+  onComplete={handleComplete}
+  primaryColor={brandColor}     // Match your brand
+  darkMode={prefersDarkMode}    // Respect user preference
+  modalCloseOnOutsideClick={true}  // Better UX
+/>
+```
+
+### Error Handling
+
+```tsx
+const handleComplete = (data) => {
+  try {
+    // Process imported data
+    processData(data.rows);
+    showSuccess(`Imported ${data.num_rows} records`);
+  } catch (error) {
+    showError('Failed to process imported data');
+    console.error(error);
+  }
+};
+```
+
 ## What's Next?
 
-- [API Reference](/api) - All props and options
-- [Examples](/examples/basic) - Working examples
-- [Theming](/guides/theming) - Customize appearance
+- [API Reference](/api) - Complete props documentation
+- [Examples](/examples/basic) - Production-ready examples
+- [Performance Guide](/core-concepts/performance) - Handling large datasets
+- [Architecture](/guides/architecture) - Technical deep-dive

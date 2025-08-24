@@ -1,9 +1,20 @@
 ---
 title: ImportCSV
-description: React CSV importer with column mapping and validation
+description: React & JS Embeddable CSV importer with validation and large dataset support
 ---
 
-React component for importing CSV, XLS, XLSX files with column mapping and validation.
+A production-ready React component for importing CSV, XLS, and XLSX files with intelligent column mapping, validation, and support for large datasets.
+
+## Why ImportCSV?
+
+<Cards>
+  <Card title="⚡ High Performance" description="Handle 10,000+ rows with virtual scrolling and progressive validation" />
+  <Card title="📦 Lightweight" description="~100KB gzipped bundle, optimized with Preact" />
+  <Card title="🎨 Zero Config" description="CSS auto-injected, no separate imports needed" />
+  <Card title="🛠️ Production Ready" description="Built-in validation, transformations, and error handling" />
+</Cards>
+
+## Quick Start
 
 ```bash
 npm install @importcsv/react
@@ -21,19 +32,40 @@ import { CSVImporter } from '@importcsv/react';
 />
 ```
 
-## Features
+## Key Features
 
-- CSV, XLS, XLSX, TSV support
-- Smart column mapping
-- Data validation & transformations
-- TypeScript support
-- Dark mode & theming
+### 🚀 Performance at Scale
+- **Virtual Scrolling**: Efficiently render 10,000+ rows without browser freezing
+- **Progressive Validation**: Validates first 50 rows instantly, processes rest asynchronously
+- **Optimized Bundle**: ~100KB gzipped using Preact internals
+
+### 📊 Data Processing
+- **File Support**: CSV, XLS, XLSX, TSV formats
+- **Smart Mapping**: Automatic column detection and mapping
+- **10+ Transformations**: trim, uppercase, normalize phone/date, custom functions
+- **Comprehensive Validation**: Required, unique, regex, min/max, custom validators
+
+### 🎨 Developer Experience
+- **TypeScript Support**: Fully typed API
+- **Auto-injected CSS**: No separate stylesheet imports
+- **Framework Agnostic**: Works with React, Next.js, vanilla JavaScript
+- **Dark Mode**: Built-in theme support
+
+## Performance Metrics
+
+| Metric | Value |
+|--------|-------|
+| Bundle Size | ~100KB gzipped |
+| Max Rows Tested | 10,000+ |
+| Initial Validation | 50 rows (instant) |
+| Progressive Validation | Remaining rows (async) |
+| Dependencies | Minimal (Preact-based) |
 
 ## Quick Links
 
 <Cards>
-  <Card title="🎮 Playground" href="/playground" description="Interactive demo" />
-  <Card title="Getting Started" href="/getting-started" />
-  <Card title="API Reference" href="/api" />
-  <Card title="Examples" href="/examples/basic" />
+  <Card title="🚀 Getting Started" href="/getting-started" description="5-minute setup guide" />
+  <Card title="🎮 Playground" href="/playground" description="Interactive configuration tool" />
+  <Card title="📖 API Reference" href="/api" description="Complete props and methods" />
+  <Card title="💡 Examples" href="/examples/basic" description="Production-ready examples" />
 </Cards>

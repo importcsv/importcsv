@@ -1,0 +1,352 @@
+---
+title: Architecture & Technical Details
+description: Understanding ImportCSV's technical implementation and design decisions
+---
+
+ImportCSV is built with performance and developer experience in mind. This guide explains the technical architecture and key implementation details.
+
+## Bundle Architecture
+
+ImportCSV uses a multi-build strategy to support different use cases:
+
+```
+@importcsv/react/
+├── build/preact/    # Default - Native Preact (smallest)
+├── build/react/     # React compatibility build
+└── build/bundled/   # Self-contained with all dependencies
+```
+
+### Build Variants
+
+| Build | Size | Use Case |
+|-------|------|----------|
+| **Preact** (default) | ~100KB | Most React apps (uses Preact internally) |
+| **React** | ~100KB | When explicit React is needed |
+| **Bundled** | ~110KB | Vanilla JS, CDN usage |
+
+## Preact Implementation
+
+ImportCSV uses Preact internally for several reasons:
+
+### Why Preact?
+
+1. **Smaller Runtime**: 3KB vs React's 45KB
+2. **Faster Virtual DOM**: Optimized diffing algorithm
+3. **Compatible API**: Works seamlessly in React apps
+4. **Better Performance**: Less overhead for large datasets
+
+### How It Works
+
+```tsx
+// Your React app
+import { CSVImporter } from '@importcsv/react';  // Uses Preact internally
+
+// ImportCSV internally
+import { h, render } from 'preact';  // 3KB runtime
+import { useState, useEffect } from 'preact/hooks';
+```
+
+The component works in React apps through careful API compatibility:
+- Props are passed through unchanged
+- Events use standard DOM events
+- No React-specific features are used
+
+## CSS Architecture
+
+### Automatic CSS Injection
+
+CSS is bundled with JavaScript and injected at runtime:
+
+```javascript
+// When component mounts
+const style = document.createElement('style');
+style.textContent = bundledCSS;
+document.head.appendChild(style);
+```
+
+Benefits:
+- **Zero configuration**: No separate CSS import
+- **Single dependency**: Everything in one package
+- **Dynamic loading**: CSS only loaded when needed
+
+### CSS Isolation
+
+All styles are scoped under `.importcsv` class:
+
+```css
+.importcsv {
+  /* All component styles */
+}
+
+.importcsv button {
+  /* Scoped button styles */
+}
+```
+
+This prevents:
+- Parent styles affecting the importer
+- Importer styles leaking to parent app
+- Specificity conflicts
+
+## Virtual Scrolling Implementation
+
+### Core Technology
+
+Uses `@tanstack/react-virtual` for virtualization:
+
+```tsx
+// Simplified implementation
+const VirtualTable = ({ data }) => {
+  const virtualizer = useVirtualizer({
+    count: data.length,
+    estimateSize: () => 35,  // Row height
+    overscan: 5               // Buffer rows
+  });
+
+  // Only render visible items
+  return virtualizer.getVirtualItems().map(virtualRow => (
+    <TableRow data={data[virtualRow.index]} />
+  ));
+};
+```
+
+### Memory Management
+
+```tsx
+// Efficient data structure
+const rowData = {
+  index: number,           // Row position
+  values: object,          // Actual data
+  validation: object       // Validation state
+};
+
+// Cleanup on unmount
+useEffect(() => {
+  return () => {
+    // Garbage collection
+    rowData = null;
+    virtualizer.cleanup();
+  };
+}, []);
+```
+
+## Progressive Validation Architecture
+
+### Two-Phase Validation
+
+```tsx
+// Phase 1: Instant (blocking)
+validateRows(data.slice(0, 50));  // First 50 rows
+
+// Phase 2: Progressive (non-blocking)
+const chunks = chunkArray(data.slice(50), 100);
+for (const chunk of chunks) {
+  await requestIdleCallback(() => validateRows(chunk));
+}
+```
+
+### Validation Pipeline
+
+```
+Raw Data → Type Check → Validators → Transformers → Final Data
+```
+
+1. **Type Check**: Built-in type validation (email, number, etc.)
+2. **Validators**: User-defined rules (required, min/max, regex)
+3. **Transformers**: Data modifications (trim, uppercase, etc.)
+
+## State Management
+
+### Internal State Structure
+
+```tsx
+const importerState = {
+  step: 'upload' | 'map' | 'validate' | 'complete',
+  file: File | null,
+  parsedData: Array<Row>,
+  mappedColumns: Map<string, string>,
+  validationErrors: Map<rowIndex, errors>,
+  transformedData: Array<Row>
+};
+```
+
+### State Flow
+
+```
+Upload → Parse → Map Columns → Validate → Transform → Complete
+   ↓        ↓         ↓            ↓          ↓          ↓
+  File    Rows    Mappings     Errors    Clean Data  Output
+```
+
+## Performance Optimizations
+
+### 1. Lazy Loading
+
+```tsx
+// Components are loaded on demand
+const MapColumns = lazy(() => import('./MapColumns'));
+const Validation = lazy(() => import('./Validation'));
+```
+
+### 2. Memoization
+
+```tsx
+// Expensive computations are cached
+const validatedRows = useMemo(
+  () => validateAllRows(data, validators),
+  [data, validators]
+);
+```
+
+### 3. Debouncing
+
+```tsx
+// User input is debounced
+const debouncedSearch = useMemo(
+  () => debounce(searchColumns, 300),
+  [searchColumns]
+);
+```
+
+### 4. Web Workers (Future)
+
+```tsx
+// Planned: Validation in background thread
+const worker = new Worker('validator.worker.js');
+worker.postMessage({ data, validators });
+worker.onmessage = (e) => setValidatedData(e.data);
+```
+
+## Build Process
+
+### Vite Configuration
+
+```javascript
+// vite.config.ts
+export default {
+  build: {
+    rollupOptions: {
+      external: ['react', 'react-dom'],  // Exclude from bundle
+      output: {
+        format: 'esm',
+        entryFileNames: 'index.js'
+      }
+    }
+  },
+  plugins: [
+    preact(),                    // Preact optimization
+    cssInjectedByJsPlugin()      // CSS injection
+  ]
+};
+```
+
+### Tree Shaking
+
+Unused code is automatically removed:
+
+```javascript
+// Only imported validators are included
+import { required, email } from './validators';
+// 'unique', 'regex', etc. are tree-shaken out
+```
+
+## Browser Compatibility
+
+### Minimum Requirements
+
+- **Chrome 90+**: Full feature support
+- **Firefox 88+**: Full feature support
+- **Safari 14+**: Full feature support
+- **Edge 90+**: Full feature support
+
+### Polyfills
+
+None required! Uses only widely-supported APIs:
+- No `Intl` APIs
+- No experimental features
+- No bleeding-edge JavaScript
+
+## Security Considerations
+
+### XSS Prevention
+
+```tsx
+// All user input is sanitized
+const sanitizedValue = DOMPurify.sanitize(userInput);
+
+// React/Preact automatically escapes
+<div>{userContent}</div>  // Safe by default
+```
+
+### CSV Injection Protection
+
+```tsx
+// Dangerous formulas are escaped
+if (value.startsWith('=') || value.startsWith('+')) {
+  value = `'${value}`;  // Prefix with quote
+}
+```
+
+## Future Improvements
+
+### Planned Optimizations
+
+1. **Web Worker Validation**: Move validation off main thread
+2. **Streaming Parser**: Parse large files progressively
+3. **IndexedDB Cache**: Cache parsed data locally
+4. **WASM Parser**: Faster CSV parsing with WebAssembly
+
+### Experimental Features
+
+```tsx
+// Coming soon: Streaming large files
+<CSVImporter
+  experimental_streaming={true}
+  experimental_workerValidation={true}
+/>
+```
+
+## Debugging
+
+### Enable Debug Mode
+
+```tsx
+// Shows performance metrics and internal state
+<CSVImporter
+  debug={true}
+  onDebugInfo={(info) => console.log(info)}
+/>
+```
+
+### Performance Profiling
+
+```javascript
+// In browser console
+performance.mark('import-start');
+// ... import process
+performance.mark('import-end');
+performance.measure('import', 'import-start', 'import-end');
+```
+
+## Contributing
+
+### Development Setup
+
+```bash
+# Clone and install
+git clone https://github.com/importcsv/react
+npm install
+
+# Development
+npm run dev
+
+# Build all variants
+npm run build
+```
+
+### Architecture Principles
+
+1. **Performance First**: Every feature must maintain 60fps
+2. **Small Bundle**: Keep under 150KB gzipped
+3. **No Breaking Changes**: Maintain backwards compatibility
+4. **Progressive Enhancement**: Core features work everywhere

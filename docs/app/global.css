@@ -1,225 +1,388 @@
-@import 'tailwindcss';
-@import 'fumadocs-ui/css/neutral.css';
-@import 'fumadocs-ui/css/preset.css';
+@import "tailwindcss";
+@import "fumadocs-ui/css/shadcn.css";
+@import "fumadocs-ui/css/preset.css";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --animate-orbit: orbit calc(var(--duration) * 1s) linear infinite;
+  @keyframes orbit {
+    0% {
+      transform: rotate(calc(var(--angle) * 1deg))
+        translateY(calc(var(--radius) * 1px)) rotate(calc(var(--angle) * -1deg));
+    }
+    100% {
+      transform: rotate(calc(var(--angle) * 1deg + 360deg))
+        translateY(calc(var(--radius) * 1px))
+        rotate(calc((var(--angle) * -1deg) - 360deg));
+    }
+  }
+}
 
 :root {
-  /* Custom success colors (RGB format for compatibility) */
-  --color-fd-success: 34 197 94;
-  --color-fd-success-foreground: 22 101 52;
-  
-  /* Custom warning colors (RGB format for compatibility) */
-  --color-fd-warning: 251 146 60;
-  --color-fd-warning-foreground: 154 52 18;
-  
-  /* Custom destructive/error colors (HSL format to match Fumadocs) */
-  --color-fd-destructive: hsl(0, 84%, 60%);
-  --color-fd-destructive-foreground: hsl(0, 0%, 98%);
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0 0 0 / 0%);
+  --input: oklch(0 0 0 / 0%);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.66 0.2298 34.95);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0 0 0 / 0%);
+  --sidebar-ring: oklch(0.708 0 0);
 }
 
 .dark {
-  /* Dark mode success colors */
-  --color-fd-success: 134 239 172;
-  --color-fd-success-foreground: 187 247 208;
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* This layer is by next-forge */
+@layer base {
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    @apply border-border;
+  }
+  * {
+    @apply min-w-0;
+  }
+  html {
+    text-rendering: optimizelegibility;
+  }
+  body {
+    @apply min-h-[100dvh];
+  }
+  input::placeholder,
+  textarea::placeholder {
+    @apply text-muted-foreground;
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    @apply cursor-pointer;
+  }
+}
+
+@layer base {
+  article h1,
+  article h2,
+  article h3 {
+    @apply tracking-tight font-semibold!;
+  }
+
+  /* Fix Fumadocs theme toggle icons */
+  [data-theme-toggle] svg {
+    @apply fill-none;
+  }
+
+  /* Hide the sidebar on the landing page on desktop */
+  #nd-docs-layout.home #nd-sidebar {
+    @apply md:hidden!;
+  }
+
+  #nd-docs-layout.home {
+    @apply px-4! ml-auto! mr-auto! container!;
+  }
+
+  #nd-subnav > div,
+  #nd-sidebar > div {
+    @apply border-none!;
+  }
+
+  #nd-subnav [data-search-full] {
+    @apply rounded-sm!;
+  }
+
+  #nd-subnav [data-search-full] kbd {
+    @apply rounded-xs!;
+  }
+
+  article h1 + p {
+    @apply -mt-2!;
+  }
+
+  /* Remove all borders in dark theme */
+  .dark * {
+    border-color: transparent !important;
+  }
   
-  /* Dark mode warning colors */
-  --color-fd-warning: 252 211 77;
-  --color-fd-warning-foreground: 254 240 138;
+  /* Hide the broken navbar temporarily */
+  #nd-subnav {
+    @apply hidden!;
+  }
   
-  /* Dark mode destructive/error colors */
-  --color-fd-destructive: hsl(0, 63%, 31%);
-  --color-fd-destructive-foreground: hsl(0, 86%, 97%);
+  /* Remove all top spacing from main content area */
+  main {
+    @apply pt-0! mt-0!;
+  }
+  
+  /* Remove top padding from article container */
+  article {
+    @apply pt-0! mt-0!;
+  }
+  
+  /* Remove top spacing from the main content wrapper */
+  #nd-page,
+  [data-page-container],
+  .nd-container {
+    @apply pt-0! mt-0!;
+  }
+  
+  /* Move the "On this page" navigation to the top */
+  #nd-toc {
+    @apply top-0! mt-0! pt-0!;
+  }
+  
+  /* Adjust the TOC container positioning */
+  aside:has(#nd-toc) {
+    @apply top-0! pt-0! mt-0! sticky! h-screen!;
+  }
+  
+  /* Remove top margin/padding from TOC button */
+  #nd-toc > button:first-child {
+    @apply mt-0! pt-0!;
+  }
+  
+  /* Remove padding from the flex container that holds main content */
+  main > div:first-child {
+    @apply pt-0! mt-0!;
+  }
 }
 
-/* Fumadocs Core Utility Classes for Tailwind v4 */
-/* Background utilities */
-.bg-fd-primary {
-  background-color: var(--color-fd-primary);
+/* Apply Geist font without breaking Fumadocs styles */
+body {
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
-.bg-fd-secondary {
-  background-color: var(--color-fd-secondary);
+/* Use Geist Mono for code blocks */
+code,
+pre,
+.font-mono {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-.bg-fd-muted {
-  background-color: var(--color-fd-muted);
+/* Force proper typography for Fumadocs content */
+@layer base {
+  .prose h1,
+  article h1 {
+    @apply text-4xl! font-bold! mt-2! mb-4! tracking-tight!;
+  }
+
+  .prose h2,
+  article h2 {
+    @apply text-2xl! font-semibold! mb-4! mt-4! tracking-tight!;
+  }
+
+  .prose h3,
+  article h3 {
+    @apply text-xl! font-semibold! mb-2! mt-2! tracking-tight!;
+  }
+
+  .prose h4,
+  article h4 {
+    @apply text-lg! font-semibold! tracking-tight!;
+  }
+
+  .prose h5,
+  article h5 {
+    @apply text-base! font-semibold! mt-3! mb-2! tracking-tight!;
+  }
+
+  .prose h6,
+  article h6 {
+    @apply text-sm! font-semibold! mt-3! mb-2! tracking-tight! uppercase!;
+  }
+
+  .prose p,
+  article p {
+    @apply my-4! leading-7!;
+  }
+
+  .prose ul,
+  article ul,
+  .prose ol,
+  article ol {
+    @apply my-4! ml-6! space-y-2!;
+  }
+
+  .prose li,
+  article li {
+    @apply leading-7!;
+  }
+
+  .prose blockquote,
+  article blockquote {
+    @apply border-l-4! border-muted! pl-4! my-4! italic! text-muted-foreground!;
+  }
+
+  .prose pre,
+  article pre {
+    @apply my-4! p-4! rounded-lg! bg-muted! overflow-x-auto!;
+  }
+
+  .prose code,
+  article code {
+    @apply px-1.5! py-0.5! rounded! bg-muted! text-sm! font-mono!;
+  }
+
+  .prose pre code,
+  article pre code {
+    @apply p-0! bg-transparent!;
+  }
+
+  .prose table,
+  article table {
+    @apply w-full! my-6! text-sm!;
+  }
+
+  .prose th,
+  article th {
+    @apply text-left! font-semibold! p-2! border-b! border-border!;
+  }
+
+  .prose td,
+  article td {
+    @apply p-2! border-b! border-border!;
+  }
+
+  .prose strong,
+  article strong {
+    @apply font-semibold!;
+  }
+
+  .prose em,
+  article em {
+    @apply italic!;
+  }
+
+  .prose hr,
+  article hr {
+    @apply my-8! border-border!;
+  }
+
+  .prose a,
+  article a {
+    @apply text-primary! hover:opacity-80!;
+  }
+
+  /* Fix list styles */
+  .prose ul,
+  article ul {
+    @apply list-disc!;
+  }
+
+  .prose ol,
+  article ol {
+    @apply list-decimal!;
+  }
+
+  /* Nested lists */
+  .prose ul ul,
+  article ul ul,
+  .prose ol ol,
+  article ol ol,
+  .prose ul ol,
+  article ul ol,
+  .prose ol ul,
+  article ol ul {
+    @apply my-2! ml-4!;
+  }
 }
 
-.bg-fd-accent {
-  background-color: var(--color-fd-accent);
-}
-
-.bg-fd-card {
-  background-color: var(--color-fd-card);
-}
-
-.bg-fd-background {
-  background-color: var(--color-fd-background);
-}
-
-.bg-fd-popover {
-  background-color: var(--color-fd-popover);
-}
-
-/* Text color utilities */
-.text-fd-primary {
-  color: var(--color-fd-primary);
-}
-
-.text-fd-primary-foreground {
-  color: var(--color-fd-primary-foreground);
-}
-
-.text-fd-secondary-foreground {
-  color: var(--color-fd-secondary-foreground);
-}
-
-.text-fd-muted-foreground {
-  color: var(--color-fd-muted-foreground);
-}
-
-.text-fd-accent-foreground {
-  color: var(--color-fd-accent-foreground);
-}
-
-.text-fd-foreground {
-  color: var(--color-fd-foreground);
-}
-
-.text-fd-card-foreground {
-  color: var(--color-fd-card-foreground);
-}
-
-.text-fd-popover-foreground {
-  color: var(--color-fd-popover-foreground);
-}
-
-/* Border utilities */
-.border-fd-border {
-  border-color: var(--color-fd-border);
-}
-
-.border-fd-primary {
-  border-color: var(--color-fd-primary);
-}
-
-/* Ring utilities */
-.ring-fd-primary {
-  --tw-ring-color: var(--color-fd-primary);
-}
-
-/* Hover states */
-.hover\:bg-fd-primary:hover {
-  background-color: var(--color-fd-primary);
-}
-
-.hover\:bg-fd-primary\/90:hover {
-  background-color: hsl(from var(--color-fd-primary) h s l / 0.9);
-}
-
-.hover\:bg-fd-primary\/80:hover {
-  background-color: hsl(from var(--color-fd-primary) h s l / 0.8);
-}
-
-.hover\:bg-fd-secondary\/80:hover {
-  background-color: hsl(from var(--color-fd-secondary) h s l / 0.8);
-}
-
-.hover\:bg-fd-muted:hover {
-  background-color: var(--color-fd-muted);
-}
-
-.hover\:bg-fd-muted\/80:hover {
-  background-color: hsl(from var(--color-fd-muted) h s l / 0.8);
-}
-
-.hover\:bg-fd-accent:hover {
-  background-color: var(--color-fd-accent);
-}
-
-/* Opacity modifiers */
-.bg-fd-muted\/50 {
-  background-color: hsl(from var(--color-fd-muted) h s l / 0.5);
-}
-
-.bg-fd-muted\/30 {
-  background-color: hsl(from var(--color-fd-muted) h s l / 0.3);
-}
-
-.bg-fd-background\/50 {
-  background-color: hsl(from var(--color-fd-background) h s l / 0.5);
-}
-
-/* Focus states */
-.focus\:ring-fd-primary:focus {
-  --tw-ring-color: var(--color-fd-primary);
-}
-
-.focus\:border-fd-primary:focus {
-  border-color: var(--color-fd-primary);
-}
-
-.focus\:ring-2:focus {
-  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
-  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
-  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
-}
-
-.focus\:ring-offset-2:focus {
-  --tw-ring-offset-width: 2px;
-}
-
-/* Custom color utilities */
-/* Success utilities (using RGB) */
-.bg-fd-success {
-  background-color: rgb(var(--color-fd-success));
-}
-
-.text-fd-success-foreground {
-  color: rgb(var(--color-fd-success-foreground));
-}
-
-.border-fd-success {
-  border-color: rgb(var(--color-fd-success));
-}
-
-.bg-fd-success\/10 {
-  background-color: rgb(var(--color-fd-success) / 0.1);
-}
-
-.border-fd-success\/20 {
-  border-color: rgb(var(--color-fd-success) / 0.2);
-}
-
-/* Destructive utilities (using direct variable since it's already HSL) */
-.bg-fd-destructive {
-  background-color: var(--color-fd-destructive);
-}
-
-.text-fd-destructive-foreground {
-  color: var(--color-fd-destructive-foreground);
-}
-
-.border-fd-destructive {
-  border-color: var(--color-fd-destructive);
-}
-
-.bg-fd-destructive\/10 {
-  background-color: hsl(from var(--color-fd-destructive) h s l / 0.1);
-}
-
-.border-fd-destructive\/20 {
-  border-color: hsl(from var(--color-fd-destructive) h s l / 0.2);
-}
-
-.hover\:bg-fd-destructive\/10:hover {
-  background-color: hsl(from var(--color-fd-destructive) h s l / 0.1);
-}
-
-/* Basic color utilities for common cases */
-.text-white {
-  color: hsl(0, 0%, 100%);
-}
-
-.text-black {
-  color: hsl(0, 0%, 0%);
-}
