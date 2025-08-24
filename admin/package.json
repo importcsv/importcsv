@@ -7,7 +7,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "yalc:add": "yalc add @importcsv/react",
+    "yalc:update": "yalc update @importcsv/react",
+    "yalc:remove": "yalc remove @importcsv/react"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.18.1",
