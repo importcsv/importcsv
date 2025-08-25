@@ -5,8 +5,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { UserButton, useClerk } from '@clerk/nextjs';
 import {
-  LayoutGrid,
-  BarChart3,
   LogOut,
   Menu,
   X,
@@ -105,14 +103,14 @@ export default function DashboardLayout({
 
         {/* Overlay for mobile when sidebar is open */}
         {sidebarOpen && (
-          <div 
+          <div
             className="fixed inset-0 bg-black bg-opacity-50 z-0 md:hidden"
             onClick={toggleSidebar}
           />
         )}
 
         {/* Main Content - uses remaining space after sidebar */}
-        <main className="flex-1 min-w-0 md:ml-0 overflow-x-hidden">
+        <main className="flex-1 min-w-0 md:ml-0 overflow-x-hidden bg-gray-50 min-h-[calc(100vh-4rem)]">
           {children}
         </main>
       </div>
