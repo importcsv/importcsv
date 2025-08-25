@@ -225,24 +225,49 @@
     @apply pt-0! mt-0!;
   }
   
-  /* Move the "On this page" navigation to the top */
+  /* Remove padding from the flex container that holds main content */
+  main > div:first-child {
+    @apply pt-0! mt-0!;
+  }
+}
+
+/* Hide TOC on mobile/tablet screens */
+@media (max-width: 1280px) {
+  /* Hide the TOC navigation header */
+  #nd-tocnav,
+  /* Hide desktop TOC elements */
+  #nd-toc,
+  aside:has(#nd-toc),
+  [data-toc],
+  [data-toc-container],
+  /* Hide mobile TOC elements */
+  .nd-toc-mobile,
+  /* Hide floating TOC button */
+  button.fixed.bottom-6.right-6,
+  button:has(svg[data-lucide="list"]),
+  /* Hide TOC-related buttons and dialogs */
+  button[aria-label*="table of contents" i],
+  button[title*="table of contents" i],
+  div:has(> button:first-child):has([role="navigation"]),
+  button:has(+ nav),
+  div:has(> button:has(+ nav)),
+  [role="dialog"][data-state="open"]:has(nav) {
+    display: none !important;
+  }
+}
+
+/* Position TOC properly on desktop */
+@media (min-width: 1281px) {
   #nd-toc {
     @apply top-0! mt-0! pt-0!;
   }
   
-  /* Adjust the TOC container positioning */
   aside:has(#nd-toc) {
     @apply top-0! pt-0! mt-0! sticky! h-screen!;
   }
   
-  /* Remove top margin/padding from TOC button */
   #nd-toc > button:first-child {
     @apply mt-0! pt-0!;
-  }
-  
-  /* Remove padding from the flex container that holds main content */
-  main > div:first-child {
-    @apply pt-0! mt-0!;
   }
 }
 
