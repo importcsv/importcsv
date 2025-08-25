@@ -1,0 +1,160 @@
+---
+title: Backend vs Local Mode
+description: Choose the right approach for your use case
+---
+
+## Overview
+
+ImportCSV can be used in two modes:
+- **Local Mode**: Configuration in frontend code
+- **Backend Mode**: Configuration stored in database, managed via admin dashboard
+
+## Feature Comparison
+
+| Feature | Local Mode | Backend Mode |
+|---------|------------|--------------|
+| **Setup Complexity** | Simple (npm install) | Requires backend + database |
+| **Configuration** | In code | Admin dashboard |
+| **Authentication** | Optional | Required (Clerk) |
+| **Column Management** | Hard-coded | Dynamic via UI |
+| **Validation Rules** | In code | Configurable UI |
+| **Webhook Support** | Manual implementation | Built-in |
+| **Background Processing** | No | Yes (Redis Queue) |
+| **Configuration Storage** | Frontend code | PostgreSQL database |
+| **API Access** | No | Full REST API |
+| **Multi-environment** | Code duplication | Shared configs |
+
+## When to Use Local Mode
+
+Choose local mode when you:
+
+- Need a quick prototype or POC
+- Have simple, static import requirements
+- Want minimal infrastructure
+- Don't need persistent configuration
+- Have a single application
+- Prefer configuration as code
+
+### Local Mode Example
+
+```tsx
+<CSVImporter
+  columns={[
+    { 
+      id: 'email', 
+      label: 'Email',
+      type: 'email',
+      validators: [{ type: 'required' }]
+    },
+    { 
+      id: 'name', 
+      label: 'Name',
+      validators: [{ type: 'required' }]
+    }
+  ]}
+  onComplete={(data) => console.log(data)}
+/>
+```
+
+## When to Use Backend Mode
+
+Choose backend mode when you:
+
+- Need centralized configuration management
+- Want non-developers to manage importers
+- Require webhook notifications
+- Process large files with background jobs
+- Need authentication and user management
+- Want to reuse configurations across apps
+- Need API access for programmatic control
+
+### Backend Mode Example
+
+```tsx
+// Configuration stored in database, managed via admin
+<CSVImporter
+  importerKey="cust_import_001"
+  apiUrl="https://api.yourapp.com"
+  onComplete={(data) => console.log(data)}
+/>
+```
+
+## Migration Path
+
+### From Local to Backend
+
+1. **Set up backend infrastructure**:
+   - Install PostgreSQL and Redis
+   - Deploy FastAPI backend
+   - Configure Clerk authentication
+
+2. **Create importers in admin**:
+   - Recreate column configurations
+   - Set up validation rules
+   - Configure webhooks if needed
+
+3. **Update frontend code**:
+   ```tsx
+   // Before (Local)
+   <CSVImporter
+     columns={[...]}
+     onComplete={handleComplete}
+   />
+   
+   // After (Backend)
+   <CSVImporter
+     importerKey="your-key"
+     apiUrl="https://api.yourapp.com"
+     onComplete={handleComplete}
+   />
+   ```
+
+## Performance Considerations
+
+### Local Mode
+- **Bundle Size**: All configuration in frontend bundle
+- **Processing**: Client-side only
+- **Scalability**: Limited by browser resources
+
+### Backend Mode
+- **Bundle Size**: Minimal (just importer key)
+- **Processing**: Server-side with Redis Queue
+- **Scalability**: Horizontal scaling possible
+
+## Cost Analysis
+
+### Local Mode
+- **Infrastructure**: None
+- **Maintenance**: Developer time for code changes
+- **Scaling**: N/A
+
+### Backend Mode
+- **Infrastructure**: Server + Database + Redis
+- **Maintenance**: Admin UI reduces developer time
+- **Scaling**: Standard backend scaling costs
+
+## Decision Matrix
+
+| Requirement | Recommended Mode |
+|-------------|-----------------|
+| Quick prototype | Local |
+| Production SaaS app | Backend |
+| Single developer | Local |
+| Team collaboration | Backend |
+| Simple imports | Local |
+| Complex validation | Backend |
+| Webhook notifications | Backend |
+| Multiple environments | Backend |
+| Minimal infrastructure | Local |
+| Enterprise features | Backend |
+
+## Hybrid Approach
+
+You can start with local mode and migrate to backend mode as your needs grow:
+
+1. **Phase 1**: Use local mode for MVP
+2. **Phase 2**: Set up backend for production
+3. **Phase 3**: Gradually migrate importers
+4. **Phase 4**: Deprecate local configurations
+
+This approach minimizes initial complexity while providing a clear upgrade path.

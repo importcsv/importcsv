@@ -1,0 +1,346 @@
+---
+title: API Reference
+description: Backend API endpoints and integration guide
+---
+
+## Base URL
+
+```
+http://localhost:8000/api/v1
+```
+
+## Authentication
+
+The API uses Clerk JWT tokens for authentication. Include the token in the Authorization header:
+
+```http
+Authorization: Bearer <jwt-token>
+```
+
+## Endpoints
+
+### Importers
+
+#### List Importers
+
+Get all importers for the authenticated user.
+
+```http
+GET /importers
+```
+
+Query parameters:
+- `skip`: Number of records to skip (default: 0)
+- `limit`: Maximum records to return (default: 100)
+
+Response:
+```json
+[
+  {
+    "id": "uuid",
+    "name": "Customer Import",
+    "key": "cust_import_001",
+    "fields": [...],
+    "webhook_url": "https://example.com/webhook",
+    "webhook_enabled": true,
+    "created_at": "2024-01-01T00:00:00Z"
+  }
+]
+```
+
+#### Get Importer
+
+Get a specific importer by ID.
+
+```http
+GET /importers/{importer_id}
+```
+
+Response:
+```json
+{
+  "id": "uuid",
+  "name": "Customer Import",
+  "key": "cust_import_001",
+  "fields": [
+    {
+      "name": "email",
+      "label": "Email Address",
+      "type": "email",
+      "required": true,
+      "validators": [
+        {
+          "type": "required",
+          "message": "Email is required"
+        }
+      ],
+      "transformations": ["trim", "lowercase"]
+    }
+  ],
+  "webhook_url": "https://example.com/webhook",
+  "webhook_enabled": true,
+  "created_at": "2024-01-01T00:00:00Z",
+  "updated_at": "2024-01-01T00:00:00Z"
+}
+```
+
+#### Create Importer
+
+Create a new importer configuration.
+
+```http
+POST /importers
+```
+
+Request body:
+```json
+{
+  "name": "Customer Import",
+  "fields": [
+    {
+      "name": "email",
+      "label": "Email Address",
+      "type": "email",
+      "required": true,
+      "validators": [
+        {
+          "type": "required",
+          "message": "Email is required"
+        }
+      ],
+      "transformations": ["trim", "lowercase"]
+    }
+  ],
+  "webhook_url": "https://example.com/webhook",
+  "webhook_enabled": true
+}
+```
+
+Response: Returns the created importer object with generated ID and key.
+
+#### Update Importer
+
+Update an existing importer configuration.
+
+```http
+PUT /importers/{importer_id}
+```
+
+Request body: Same as create, all fields optional.
+
+#### Delete Importer
+
+Delete an importer configuration.
+
+```http
+DELETE /importers/{importer_id}
+```
+
+Response: 204 No Content
+
+### Imports
+
+#### Create Import
+
+Start a new import job.
+
+```http
+POST /imports
+```
+
+Request body (multipart/form-data):
+- `file`: CSV/Excel file
+- `importer_id`: UUID of the importer
+- `mapping`: JSON object mapping CSV columns to importer fields
+
+Example mapping:
+```json
+{
+  "CSV Column Name": "email",
+  "Customer Name": "name"
+}
+```
+
+Response:
+```json
+{
+  "id": "uuid",
+  "importer_id": "uuid",
+  "status": "processing",
+  "created_at": "2024-01-01T00:00:00Z"
+}
+```
+
+#### Get Import Status
+
+Check the status of an import job.
+
+```http
+GET /imports/{import_id}
+```
+
+Response:
+```json
+{
+  "id": "uuid",
+  "importer_id": "uuid",
+  "status": "completed",
+  "num_rows": 100,
+  "num_errors": 2,
+  "errors": [
+    {
+      "row": 5,
+      "field": "email",
+      "message": "Invalid email format"
+    }
+  ],
+  "created_at": "2024-01-01T00:00:00Z",
+  "completed_at": "2024-01-01T00:01:00Z"
+}
+```
+
+Status values:
+- `pending`: Job queued
+- `processing`: Currently processing
+- `completed`: Successfully completed
+- `failed`: Processing failed
+
+### Clerk Webhook
+
+#### User Sync
+
+Endpoint for Clerk webhook events (user creation, updates, deletion).
+
+```http
+POST /clerk/webhook
+```
+
+Headers:
+- `svix-id`: Webhook event ID
+- `svix-timestamp`: Event timestamp
+- `svix-signature`: Webhook signature for verification
+
+This endpoint is automatically called by Clerk and should not be manually invoked.
+
+## Field Types
+
+Supported field types for importer configuration:
+
+- `text`: General text input
+- `email`: Email validation
+- `number`: Numeric values
+- `date`: Date fields
+- `select`: Dropdown with options
+
+## Validators
+
+Available validation rules:
+
+### Required
+```json
+{
+  "type": "required",
+  "message": "Field is required"
+}
+```
+
+### Min/Max Length
+```json
+{
+  "type": "minLength",
+  "value": 3,
+  "message": "Minimum 3 characters"
+}
+```
+
+### Min/Max Value
+```json
+{
+  "type": "minValue",
+  "value": 0,
+  "message": "Must be positive"
+}
+```
+
+### Regex Pattern
+```json
+{
+  "type": "regex",
+  "pattern": "^[A-Z]{2}\\d{4}$",
+  "message": "Invalid format"
+}
+```
+
+### Unique
+```json
+{
+  "type": "unique",
+  "message": "Duplicate value found"
+}
+```
+
+## Transformations
+
+Available data transformations:
+
+- `trim`: Remove whitespace
+- `uppercase`: Convert to uppercase
+- `lowercase`: Convert to lowercase
+- `normalizePhone`: Format phone numbers
+- `normalizeDate`: Standardize dates
+- `removeSpecialChars`: Strip special characters
+
+## Webhook Events
+
+When webhook is enabled, the following events are sent:
+
+### Import Started
+```json
+{
+  "event": "import.started",
+  "importer_id": "uuid",
+  "import_id": "uuid",
+  "timestamp": "2024-01-01T00:00:00Z"
+}
+```
+
+### Import Completed
+```json
+{
+  "event": "import.completed",
+  "importer_id": "uuid",
+  "import_id": "uuid",
+  "num_rows": 100,
+  "timestamp": "2024-01-01T00:00:00Z"
+}
+```
+
+### Import Failed
+```json
+{
+  "event": "import.failed",
+  "importer_id": "uuid",
+  "import_id": "uuid",
+  "error": "Processing error",
+  "timestamp": "2024-01-01T00:00:00Z"
+}
+```
+
+## Error Responses
+
+Standard error format:
+
+```json
+{
+  "detail": "Error message",
+  "status_code": 400
+}
+```
+
+Common status codes:
+- `400`: Bad Request
+- `401`: Unauthorized
+- `403`: Forbidden
+- `404`: Not Found
+- `422`: Validation Error
+- `500`: Internal Server Error

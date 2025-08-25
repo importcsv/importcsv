@@ -61,6 +61,31 @@ import { CSVImporter } from '@importcsv/react';
 | Progressive Validation | Remaining rows (async) |
 | Dependencies | Minimal (Preact-based) |
 
+## Choose Your Setup
+
+### 🚀 Local Mode (Quick Start)
+Self-contained React component with configuration in code. Perfect for prototypes and simple use cases.
+
+```tsx
+<CSVImporter
+  columns={[...]}
+  onComplete={data => console.log(data)}
+/>
+```
+
+### ⚡ Backend Mode (Production)
+Database-driven configuration with admin dashboard. Ideal for production apps with dynamic requirements.
+
+```tsx
+<CSVImporter
+  importerKey="your-key"
+  apiUrl="https://api.yourapp.com"
+  onComplete={data => console.log(data)}
+/>
+```
+
+[Compare Local vs Backend →](/backend/comparison)
+
 ## Quick Links
 
 <Cards>
@@ -68,4 +93,13 @@ import { CSVImporter } from '@importcsv/react';
   <Card title="🎮 Playground" href="/playground" description="Interactive configuration tool" />
   <Card title="📖 API Reference" href="/api" description="Complete props and methods" />
   <Card title="💡 Examples" href="/examples/basic" description="Production-ready examples" />
+</Cards>
+
+## Backend Features
+
+<Cards>
+  <Card title="🔧 Backend Setup" href="/backend/getting-started" description="Set up FastAPI backend and database" />
+  <Card title="📊 Admin Dashboard" href="/backend/admin-dashboard" description="Manage importers through web UI" />
+  <Card title="🔌 API Reference" href="/backend/api-reference" description="REST API documentation" />
+  <Card title="⚖️ Choose Your Mode" href="/backend/comparison" description="Local vs Backend comparison" />
 </Cards>

@@ -3,13 +3,21 @@ title: Getting Started
 description: Get Import CSV running in your React app in under 5 minutes
 ---
 
-## Installation
+## Choose Your Approach
+
+ImportCSV offers two ways to integrate:
+
+### Option 1: Local Mode (Recommended for Quick Start)
+Configuration in your frontend code. No backend required.
 
 ```bash
 npm install @importcsv/react
 ```
 
-That's it! CSS is automatically included - no separate imports needed.
+### Option 2: Backend Mode (Recommended for Production)
+Configuration stored in database, managed via admin dashboard.
+
+See [Backend Setup Guide](/backend/getting-started) for full instructions.
 
 ### Optional: Excel Support
 ```bash
@@ -161,9 +169,25 @@ const handleComplete = (data) => {
 };
 ```
 
+## Backend Mode (Alternative)
+
+If you need centralized configuration management, webhook notifications, or background processing, consider using backend mode:
+
+```tsx
+// Configuration stored in database
+<CSVImporter
+  importerKey="your-importer-key"
+  apiUrl="https://api.yourapp.com"
+  onComplete={(data) => console.log(data)}
+/>
+```
+
+See [Backend Setup](/backend/getting-started) and [Backend vs Local Comparison](/backend/comparison) for more details.
+
 ## What's Next?
 
 - [API Reference](/api) - Complete props documentation
 - [Examples](/examples/basic) - Production-ready examples
 - [Performance Guide](/core-concepts/performance) - Handling large datasets
 - [Architecture](/guides/architecture) - Technical deep-dive
+- [Backend Setup](/backend/getting-started) - Set up backend-driven mode

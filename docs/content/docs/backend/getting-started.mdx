@@ -1,0 +1,139 @@
+---
+title: Backend Setup
+description: Set up ImportCSV with backend-driven configuration
+---
+
+## Overview
+
+The backend-driven approach allows you to configure and manage CSV importers through an admin dashboard, with configurations stored in a database and processed by a FastAPI backend.
+
+## Prerequisites
+
+- Python 3.11+
+- PostgreSQL
+- Redis
+- Node.js (for admin dashboard)
+- Clerk account (for authentication)
+
+## Backend Setup
+
+### 1. Install Dependencies
+
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+### 2. Configure Environment
+
+Create a `.env` file in the backend directory:
+
+```bash
+# Database
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/importcsv
+
+# Redis Queue
+REDIS_URL=redis://localhost:6379/0
+RQ_DEFAULT_TIMEOUT=360
+RQ_IMPORT_QUEUE=imports
+
+# Security
+SECRET_KEY=your-secret-key-at-least-32-characters
+
+# Clerk Authentication
+CLERK_WEBHOOK_SECRET=whsec_xxxxx
+CLERK_JWT_PUBLIC_KEY=-----BEGIN PUBLIC KEY-----
+YOUR_PUBLIC_KEY_HERE
+-----END PUBLIC KEY-----
+
+# Webhook (optional)
+WEBHOOK_SECRET=your-webhook-secret
+```
+
+### 3. Set Up Clerk Authentication
+
+1. Create a [Clerk](https://clerk.com) account
+2. In Clerk Dashboard > Webhooks:
+   - Add endpoint: `https://your-domain/api/v1/clerk/webhook`
+   - Select events: `user.created`, `user.updated`, `user.deleted`
+   - Copy the webhook secret to `CLERK_WEBHOOK_SECRET`
+3. In Clerk Dashboard > API Keys:
+   - Copy the JWT public key to `CLERK_JWT_PUBLIC_KEY`
+
+### 4. Initialize Database
+
+```bash
+# Run migrations
+alembic upgrade head
+```
+
+### 5. Start Services
+
+```bash
+# Terminal 1: Start API server
+uvicorn app.main:app --reload
+
+# Terminal 2: Start worker for background processing
+python -m app.worker
+```
+
+The API will be available at `http://localhost:8000`
+
+## Admin Dashboard Setup
+
+### 1. Install Dependencies
+
+```bash
+cd admin
+npm install
+```
+
+### 2. Configure Environment
+
+Create a `.env.local` file:
+
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_xxxxx
+CLERK_SECRET_KEY=sk_test_xxxxx
+```
+
+### 3. Start Dashboard
+
+```bash
+npm run dev
+```
+
+The admin dashboard will be available at `http://localhost:3000`
+
+## Creating Your First Importer
+
+1. Sign in to the admin dashboard
+2. Click "New Importer"
+3. Configure your columns:
+   - Add column names and types
+   - Set validation rules
+   - Configure transformations
+4. Optional: Set up webhook notifications
+5. Save the importer
+6. Use the generated importer key in your frontend
+
+## Using the Importer in Your App
+
+```tsx
+import { CSVImporter } from '@importcsv/react';
+
+<CSVImporter
+  importerKey="your-importer-key"
+  apiUrl="http://localhost:8000"
+  onComplete={(data) => console.log(data)}
+/>
+```
+
+## What's Next?
+
+- [Admin Dashboard Guide](/backend/admin-dashboard) - Learn about all dashboard features
+- [API Reference](/backend/api-reference) - Integrate with the API directly
+- [Backend vs Local](/backend/comparison) - Choose the right approach

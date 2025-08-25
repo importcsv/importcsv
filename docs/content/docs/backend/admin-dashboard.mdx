@@ -1,0 +1,141 @@
+---
+title: Admin Dashboard
+description: Manage CSV importers through the web interface
+---
+
+## Overview
+
+The admin dashboard provides a web interface for creating and managing CSV importers. Each importer configuration is stored in the database and can be used by your frontend applications.
+
+## Creating an Importer
+
+### Basic Configuration
+
+1. **Navigate to Importers**: Sign in and go to the Importers section
+2. **Create New**: Click "New Importer" 
+3. **Name Your Importer**: Provide a descriptive name (e.g., "Customer Data Import")
+
+### Adding Columns
+
+Click "Add Column" to define each field in your CSV:
+
+#### Column Properties
+
+- **Name**: The column identifier (e.g., `customer_id`)
+- **Label**: Display name shown to users (e.g., "Customer ID")
+- **Type**: Data type for the column
+  - `text`: Default text field
+  - `email`: Email validation
+  - `number`: Numeric values
+  - `date`: Date fields
+  - `select`: Dropdown with predefined options
+
+#### Validation Rules
+
+Add validators to ensure data quality:
+
+- **Required**: Field must have a value
+- **Unique**: No duplicate values allowed
+- **Min/Max Length**: Text length constraints
+- **Min/Max Value**: Numeric range constraints
+- **Regex**: Custom pattern matching
+
+Example validation configuration:
+```json
+{
+  "type": "required",
+  "message": "Customer ID is required"
+}
+```
+
+#### Transformations
+
+Apply automatic data transformations:
+
+- **trim**: Remove leading/trailing whitespace
+- **uppercase**: Convert to uppercase
+- **lowercase**: Convert to lowercase
+- **normalizePhone**: Format phone numbers
+- **normalizeDate**: Standardize date formats
+
+### Webhook Configuration
+
+Enable webhooks to receive notifications when imports complete:
+
+1. **Toggle Webhook**: Enable the webhook option
+2. **Enter URL**: Provide your webhook endpoint
+3. **Events**: Webhooks are triggered on:
+   - Import started
+   - Import completed
+   - Import failed
+
+Webhook payload example:
+```json
+{
+  "event": "import.completed",
+  "importer_id": "uuid",
+  "import_id": "uuid",
+  "num_rows": 100,
+  "timestamp": "2024-01-01T00:00:00Z"
+}
+```
+
+## Managing Importers
+
+### Viewing Importers
+
+The main dashboard shows all your importers with:
+- Name and creation date
+- Number of columns configured
+- Webhook status
+- Unique importer key
+
+### Editing Configuration
+
+1. Click on an importer to view details
+2. Modify columns, validation, or webhook settings
+3. Save changes to update the configuration
+
+### Testing with Preview
+
+Use the preview feature to test your importer:
+
+1. Click "Preview" on any importer
+2. Upload a sample CSV file
+3. See how columns are mapped
+4. Test validation rules
+5. Verify transformations work correctly
+
+### Getting the Importer Key
+
+Each importer has a unique key for use in your frontend:
+
+1. View the importer details
+2. Copy the importer key
+3. Use in your React application:
+
+```tsx
+<CSVImporter
+  importerKey="your-importer-key"
+  apiUrl="http://your-backend-url"
+  onComplete={(data) => console.log(data)}
+/>
+```
+
+## Column Types Reference
+
+| Type | Description | Validation Support |
+|------|-------------|-------------------|
+| text | General text input | Required, min/max length, regex |
+| email | Email addresses | Required, email format |
+| number | Numeric values | Required, min/max value |
+| date | Date fields | Required, date format |
+| select | Dropdown selection | Required, predefined options |
+
+## Best Practices
+
+1. **Use Clear Names**: Column names should match your database schema
+2. **Add Descriptions**: Help users understand what data goes where
+3. **Test Thoroughly**: Use preview with real sample data
+4. **Set Validation**: Prevent bad data from entering your system
+5. **Monitor Webhooks**: Check webhook logs for failed deliveries
