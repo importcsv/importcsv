@@ -1,5 +1,9 @@
 # ImportCSV Admin Dashboard
 
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-green.svg)](./LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-14.0+-black.svg)](https://nextjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-blue.svg)](https://www.typescriptlang.org/)
+
 A Next.js-based admin interface for the ImportCSV application.
 
 ## Overview

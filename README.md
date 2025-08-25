@@ -10,7 +10,9 @@
   <em>Import rows in seconds with intelligent column mapping and validation</em>
 </p>
 
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
+[![Importer License: MIT](https://img.shields.io/badge/Frontend_License-MIT-blue.svg)](frontend/LICENSE)
+[![Backend License: AGPL-3.0](https://img.shields.io/badge/Backend_License-AGPL--3.0-green.svg)](backend/LICENSE)
+[![Admin License: AGPL-3.0](https://img.shields.io/badge/Admin_License-AGPL--3.0-green.svg)](admin/LICENSE)
 [![Slack](https://img.shields.io/badge/Slack-Join%20Community-4A154B?logo=slack)](https://importcsv.slack.com)
 
 <p align="center">
@@ -165,4 +167,16 @@ We welcome contributions! Here's how to get started:
 
 ## 📝 License
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+This project uses a dual-licensing approach:
+
+- **Frontend** (`/frontend`) - MIT License for the embeddable CSV import component
+- **Backend** (`/backend`) - AGPL-3.0 License for the API server and business logic
+- **Admin** (`/admin`) - AGPL-3.0 License for the administration dashboard
+
+See the [LICENSE](LICENSE) file for the complete licensing details.
+
+### Why Dual Licensing?
+
+We use MIT for the frontend to encourage widespread adoption and easy integration into your applications, while AGPL for the backend ensures that improvements to the server-side software remain open source when deployed as a service.
+
+For organizations requiring different licensing terms for the backend and admin components, commercial licenses are available. Contact us for more information.

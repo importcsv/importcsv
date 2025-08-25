@@ -4,9 +4,12 @@
 
 <em>React-based embeddable CSV and spreadsheet importer with streamlined column mapping</em>
 
-[![React](https://img.shields.io/badge/React-18.0+-61DAFB?logo=react&logoColor=white)](https://reactjs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-4.9+-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+[![npm version](https://img.shields.io/npm/v/@importcsv/react.svg)](https://www.npmjs.com/package/@importcsv/react)
+[![npm downloads](https://img.shields.io/npm/dm/@importcsv/react.svg)](https://www.npmjs.com/package/@importcsv/react)
+[![bundle size](https://img.shields.io/bundlephobia/minzip/@importcsv/react)](https://bundlephobia.com/package/@importcsv/react)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
+
+[Live Demo](https://demo.importcsv.com) • [Documentation](https://docs.importcsv.com)
 
 </div>
 
