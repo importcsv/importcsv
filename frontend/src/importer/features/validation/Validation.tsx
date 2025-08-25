@@ -7,7 +7,7 @@ import { Tooltip } from '../../components/ui/tooltip';
 import StepLayout from '../../components/StepLayout';
 import { Wrench, AlertTriangle } from 'lucide-react';
 import { ValidationProps } from './types';
-import TransformModal from './components/TransformModal';
+import TransformPanel from './components/TransformPanel';
 import { validateColumn, validateUniqueness } from '../../../validation/validator';
 import { applyTransformations, categorizeTransformations } from '../../../validation/transformer';
 import VirtualTable from '../../components/VirtualTable';
@@ -32,7 +32,7 @@ export default function Validation({
   // State management
   const [errors, setErrors] = useState<Array<{rowIndex: number, columnIndex: number, message: string}>>([]);
   const [filterMode, setFilterMode] = useState<'all' | 'valid' | 'error'>('all');
-  const [isTransformModalOpen, setIsTransformModalOpen] = useState(false);
+  const [isTransformPanelOpen, setIsTransformPanelOpen] = useState(false);
   const [validationProgress, setValidationProgress] = useState(100);
   const [isValidating, setIsValidating] = useState(false);
 
@@ -443,7 +443,7 @@ export default function Validation({
                   <Button
                     type="button"
                     size="sm"
-                    onClick={() => setIsTransformModalOpen(true)}
+                    onClick={() => setIsTransformPanelOpen(true)}
                     variant="default"
                     className="shadow-sm"
                   >
@@ -465,7 +465,7 @@ export default function Validation({
       subtitle="Review and correct any errors in your data before importing."
       headerContent={headerContent}
       footerContent={footerContent}
-      contentClassName="px-6 py-4 overflow-hidden"
+      contentClassName="px-6 py-4 overflow-hidden relative"
     >
       <form onSubmit={handleSubmit} className="h-full">
 
@@ -533,11 +533,11 @@ export default function Validation({
           )}
         </div>
 
-        {/* Transform Modal */}
+        {/* Transform Panel */}
         {backendUrl && importerKey && (
-          <TransformModal
-          isOpen={isTransformModalOpen}
-          onClose={() => setIsTransformModalOpen(false)}
+          <TransformPanel
+          isOpen={isTransformPanelOpen}
+          onClose={() => setIsTransformPanelOpen(false)}
           data={dataRows}
           columnMapping={columnMapping}
           backendUrl={backendUrl}
@@ -593,7 +593,7 @@ export default function Validation({
             // Update the state with all changes at once
             setDataRows(updatedRows);
             shouldValidateRef.current = true;
-            setIsTransformModalOpen(false);
+            setIsTransformPanelOpen(false);
           }}
           />
         )}
