@@ -49,8 +49,6 @@ Data importing is a critical but challenging part of any business application. I
 - 🔌 **Easy Integration** - Drop-in React components for any web application
 - 🔒 **Secure** - Built-in authentication and data validation
 
-> **Note**: ImportCSV was built on [TableFlow's CSV Import](https://github.com/tableflowhq/csv-import) foundation.
-
 ## ✨ Key Features
 
 - **Smart Column Mapping** - Fuzzy matching of source columns to destination fields

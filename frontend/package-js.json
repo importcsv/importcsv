@@ -6,15 +6,15 @@
   "files": ["."],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/tableflowhq/csv-import.git"
+    "url": "git+https://github.com/importcsv/importcsv-os.git"
   },
-  "keywords": ["csv", "import", "excel", "data", "importer", "react", "tableflow", "csv-import"],
-  "author": "TableFlow",
+  "keywords": ["csv", "import", "excel", "data", "importer", "react", "csv-import"],
+  "author": "ImportCSV",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/tableflowhq/csv-import/issues"
+    "url": "https://github.com/importcsv/importcsv-os/issues"
   },
-  "homepage": "https://github.com/tableflowhq/csv-import#readme",
+  "homepage": "https://github.com/importcsv/importcsv-os#readme",
   "types": "index.d.ts",
   "peerDependencies": {
     "react": ">=18.0.0",
