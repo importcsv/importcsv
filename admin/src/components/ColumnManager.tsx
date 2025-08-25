@@ -84,10 +84,8 @@ export default function ColumnManager({
             <tr className="bg-gray-50 border-b">
               <th className="py-3 px-4 text-left text-sm font-medium text-gray-600 w-12">ORDER</th>
               <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">COLUMN NAME</th>
+              <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">DISPLAY NAME</th>
               <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">FORMAT</th>
-              <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">EXAMPLE</th>
-              <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">REQUIRED</th>
-              <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">DESCRIPTION</th>
               <th className="py-3 px-4 text-right text-sm font-medium text-gray-600">ACTIONS</th>
             </tr>
           </thead>
@@ -96,10 +94,8 @@ export default function ColumnManager({
               <tr key={index} className="border-b hover:bg-gray-50">
                 <td className="py-3 px-4 text-sm">{index + 1}</td>
                 <td className="py-3 px-4 text-sm font-medium">{column.name}</td>
+                <td className="py-3 px-4 text-sm">{column.display_name || column.name}</td>
                 <td className="py-3 px-4 text-sm">{getFormatDisplayName(column.type)}</td>
-                <td className="py-3 px-4 text-sm">{column.example || '-'}</td>
-                <td className="py-3 px-4 text-sm">{column.required ? 'Yes' : 'No'}</td>
-                <td className="py-3 px-4 text-sm">{column.description || '-'}</td>
                 <td className="py-3 px-4 text-right">
                   <div className="flex justify-end space-x-2">
                     <Dialog open={isEditDialogOpen && editingIndex === index} onOpenChange={(open) => {
@@ -180,7 +176,7 @@ export default function ColumnManager({
             ))}
             {columns.length === 0 && (
               <tr>
-                <td colSpan={7} className="py-6 text-center text-sm text-gray-500">
+                <td colSpan={5} className="py-6 text-center text-sm text-gray-500">
                   No columns defined. Click "Add Column" to create one.
                 </td>
               </tr>

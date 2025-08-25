@@ -76,6 +76,7 @@ interface Importer {
   include_unmatched_columns: boolean;
   filter_invalid_rows: boolean;
   disable_on_invalid_rows: boolean;
+  dark_mode?: boolean;
   created_at: string;
   updated_at?: string;
 }
@@ -95,6 +96,7 @@ export default function ImporterDetailPage() {
   const [includeUnmatchedColumns, setIncludeUnmatchedColumns] = useState(false);
   const [filterInvalidRows, setFilterInvalidRows] = useState(false);
   const [disableOnInvalidRows, setDisableOnInvalidRows] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
 
   // Dialog States
   const [showAddColumnDialog, setShowAddColumnDialog] = useState(false);
@@ -165,6 +167,7 @@ export default function ImporterDetailPage() {
     setIncludeUnmatchedColumns(data.include_unmatched_columns);
     setFilterInvalidRows(data.filter_invalid_rows);
     setDisableOnInvalidRows(data.disable_on_invalid_rows);
+    setDarkMode(data.dark_mode || false);
   };
 
   // Save importer settings
@@ -186,6 +189,7 @@ export default function ImporterDetailPage() {
         include_unmatched_columns: includeUnmatchedColumns,
         filter_invalid_rows: filterInvalidRows,
         disable_on_invalid_rows: disableOnInvalidRows,
+        dark_mode: darkMode,
         fields: importer.fields, // Include the current fields
       });
 
@@ -579,6 +583,24 @@ export default function ImporterDetailPage() {
                 <Switch
                   checked={disableOnInvalidRows}
                   onCheckedChange={setDisableOnInvalidRows}
+                />
+              </div>
+              
+              {/* Dark Mode */}
+              <div className="flex items-start justify-between">
+                <div className="space-y-1">
+                  <Label htmlFor="dark-mode" className="text-base">
+                    Dark Mode
+                  </Label>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Enable dark mode for the CSV importer UI. This will apply
+                    a dark theme to the importer interface when users interact with it.
+                  </p>
+                </div>
+                <Switch
+                  id="dark-mode"
+                  checked={darkMode}
+                  onCheckedChange={setDarkMode}
                 />
               </div>
             </CardContent>

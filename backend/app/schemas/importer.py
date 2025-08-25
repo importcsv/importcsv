@@ -25,7 +25,6 @@ class ImporterField(BaseModel):
     type: str = Field(
         ..., description="Field data type"
     )  # Using str for backward compatibility
-    required: bool = Field(False, description="Whether this field is required")
     
     # Support Column format (these are computed properties)
     @property
@@ -36,25 +35,47 @@ class ImporterField(BaseModel):
     @property
     def label(self) -> str:
         """Alias for display_name to support Column format"""
-        return self.display_name or self.name
-    description: Optional[str] = Field(None, description="Field description")
-    must_match: bool = Field(
-        False, description="Require that users must match this column"
+        if self.display_name:
+            return self.display_name
+        # Auto-generate from name: employee_id -> Employee ID
+        return self.name.replace('_', ' ').replace('-', ' ').title()
+    
+    # New fields for validators and transformations
+    validators: Optional[List[Dict[str, Any]]] = Field(
+        None, 
+        description="Array of validation rules",
+        example=[
+            {"type": "required"},
+            {"type": "regex", "pattern": "^[A-Z].*", "message": "Must start with uppercase"},
+            {"type": "min", "value": 0},
+            {"type": "max", "value": 100},
+            {"type": "min_length", "value": 3},
+            {"type": "max_length", "value": 50},
+            {"type": "unique"}
+        ]
     )
-    not_blank: bool = Field(False, description="Value cannot be blank")
-    example: Optional[str] = Field(None, description="Example value for the field")
-    validation_error_message: Optional[str] = Field(
-        None, description="Custom validation error message"
-    )
-    validation_format: Optional[str] = Field(
-        None, description="For date format, regex pattern, or select options"
-    )
-    validation: Optional[Dict[str, Any]] = Field(
-        None, description="JSON Schema validation rules"
-    )
-    template: Optional[str] = Field(
+    
+    transformations: Optional[List[Dict[str, Any]]] = Field(
         None,
-        description="Template for boolean or select fields (e.g., 'true/false', 'yes/no', '1/0')",
+        description="Array of transformation rules",
+        example=[
+            {"type": "trim"},
+            {"type": "uppercase"},
+            {"type": "lowercase"},
+            {"type": "capitalize"},
+            {"type": "remove_special_chars"},
+            {"type": "normalize_phone"},
+            {"type": "normalize_date", "format": "YYYY-MM-DD"},
+            {"type": "default", "value": "N/A"},
+            {"type": "replace", "find": " ", "replace": "_"}
+        ]
+    )
+    
+    # Options for select fields
+    options: Optional[List[str]] = Field(
+        None,
+        description="Options for select type fields",
+        example=["Option 1", "Option 2", "Option 3"]
     )
 
     @field_validator("type")
@@ -64,6 +85,14 @@ class ImporterField(BaseModel):
         if v not in allowed_types:
             raise ValueError(f"Field type must be one of: {', '.join(allowed_types)}")
         return v
+    
+    def __init__(self, **data):
+        # Auto-generate display_name if not provided
+        if 'display_name' not in data or not data.get('display_name'):
+            if 'name' in data:
+                # Convert snake_case, kebab-case to Title Case
+                data['display_name'] = data['name'].replace('_', ' ').replace('-', ' ').title()
+        super().__init__(**data)
 
     def dict(self, *args, **kwargs):
         # Ensure all fields are serializable
@@ -73,19 +102,7 @@ class ImporterField(BaseModel):
         
         # Add Column format fields
         result['id'] = self.name
-        result['label'] = self.display_name or self.name
-        
-        # Build validators array for Column format
-        validators = []
-        if self.required:
-            validators.append({'type': 'required'})
-        if self.validation_format and self.type != 'select':
-            validators.append({
-                'type': 'regex',
-                'pattern': self.validation_format
-            })
-        if validators:
-            result['validators'] = validators
+        result['label'] = self.label  # Use the property which auto-generates if needed
             
         return result
 
@@ -116,6 +133,9 @@ class ImporterBase(BaseModel):
     )
     disable_on_invalid_rows: bool = Field(
         False, description="Disable importing all data if there are invalid rows"
+    )
+    dark_mode: bool = Field(
+        False, description="Enable dark mode for the importer UI"
     )
 
     @field_validator("webhook_url")
@@ -160,6 +180,9 @@ class ImporterUpdate(BaseModel):
     disable_on_invalid_rows: Optional[bool] = Field(
         None, description="Disable importing all data if there are invalid rows"
     )
+    dark_mode: Optional[bool] = Field(
+        None, description="Enable dark mode for the importer UI"
+    )
 
     class Config:
         from_attributes = True
@@ -174,7 +197,6 @@ class ImporterInDBBase(ImporterBase):
     updated_at: Optional[datetime] = None
 
     class Config:
-        orm_mode = True
         from_attributes = True
         json_encoders = {uuid.UUID: str}
 

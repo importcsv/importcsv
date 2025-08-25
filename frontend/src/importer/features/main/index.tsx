@@ -177,42 +177,67 @@ export default function Main(props: CSVImporterProps) {
         if (schemaData.disable_on_invalid_rows !== undefined) {
           setDisableOnInvalidRows(schemaData.disable_on_invalid_rows);
         }
+        
+        // Store dark_mode setting if provided
+        if (schemaData.dark_mode !== undefined && props.darkMode === undefined) {
+          // Only use backend dark_mode if not explicitly set via props
+          // This would need to be passed to the CSVImporter component
+          // For now, we'll just note it for future use
+        }
 
         // Convert backend fields to Column format
         const backendColumns: Column[] = schemaData.fields.map((field: any) => {
           const column: Column = {
-            id: field.key || field.name.toLowerCase().replace(/\s+/g, "_"),
-            label: field.name,
-            type: mapBackendType(field.type),
-            description: field.description
+            id: field.id || field.name,
+            label: field.label || field.display_name || field.name.replace(/_/g, ' ').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+            type: mapBackendType(field.type)
           };
           
-          // Build validators array
-          const validators = [];
-          
-          if (field.required) {
-            validators.push({ 
-              type: 'required' as const,
-              message: field.validation_error_message
-            });
+          // Use validators array if provided
+          if (field.validators && Array.isArray(field.validators)) {
+            column.validators = field.validators;
+          } else {
+            // Fallback to building validators from legacy fields
+            const validators = [];
+            
+            if (field.required) {
+              validators.push({ 
+                type: 'required' as const,
+                message: field.validation_error_message
+              });
+            }
+            
+            if (validators.length > 0) {
+              column.validators = validators;
+            }
           }
           
-          if (field.validation_format) {
-            // If it's a select field, set options
-            if (field.type === 'select') {
-              column.options = field.validation_format.split(',').map((o: string) => o.trim());
-            } else {
-              // Otherwise treat as regex pattern
-              validators.push({
+          // Add transformations if provided
+          if (field.transformations && Array.isArray(field.transformations)) {
+            column.transformations = field.transformations;
+          }
+          
+          // Add options for select fields
+          if (field.options && Array.isArray(field.options)) {
+            column.options = field.options;
+          } else if (field.type === 'select' && field.validation_format) {
+            // Fallback to parsing validation_format for backward compatibility
+            column.options = field.validation_format.split(',').map((o: string) => o.trim());
+          } else if (field.validation_format && field.type !== 'select') {
+            // If validation_format exists and it's not a select field, treat as regex
+            if (!column.validators) {
+              column.validators = [];
+            }
+            
+            // Only add regex validator if not already present
+            const hasRegex = column.validators.some(v => v.type === 'regex');
+            if (!hasRegex) {
+              column.validators.push({
                 type: 'regex' as const,
                 pattern: field.validation_format,
                 message: field.validation_error_message
               });
             }
-          }
-          
-          if (validators.length > 0) {
-            column.validators = validators;
           }
           
           return column;

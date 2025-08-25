@@ -47,6 +47,9 @@ class Importer(Base):
     disable_on_invalid_rows = Column(
         Boolean, default=False
     )  # Disable importing all data if there are invalid rows
+    
+    # UI settings
+    dark_mode = Column(Boolean, default=False)  # Enable dark mode for the importer UI
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
