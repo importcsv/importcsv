@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { ImporterField } from '@/components/AddColumnForm';
 import ImporterColumnsManager from '@/components/ImporterColumnsManager';
+import WebhookSettings from '@/components/WebhookSettings';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
@@ -31,6 +32,11 @@ export default function NewImporterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
+  
+  // Webhook settings
+  const [webhookUrl, setWebhookUrl] = useState('');
+  const [webhookEnabled, setWebhookEnabled] = useState(false);
+  const [webhookValidationError, setWebhookValidationError] = useState<string | null>(null);
 
   // Handle importer name change
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -55,15 +61,24 @@ export default function NewImporterPage() {
       return;
     }
     
+    // Validate webhook URL if webhook is enabled
+    if (webhookEnabled && !webhookUrl.trim()) {
+      setWebhookValidationError('Webhook URL is required when webhook is enabled');
+      return;
+    }
+    
     setIsLoading(true);
     setError(null);
     setFormError(null);
+    setWebhookValidationError(null);
     
     try {
       // Use the API client to create a new importer
       const data = await importersApi.createImporter({
         name: importerName,
-        fields: fields
+        fields: fields,
+        webhook_url: webhookUrl,
+        webhook_enabled: webhookEnabled
       });
       
       // Navigate to the new importer's detail page
@@ -125,6 +140,27 @@ export default function NewImporterPage() {
           </CardContent>
         </Card>
         
+        {/* Webhook Settings */}
+        <WebhookSettings
+          webhookEnabled={webhookEnabled}
+          webhookUrl={webhookUrl}
+          onWebhookEnabledChange={(enabled) => {
+            setWebhookEnabled(enabled);
+            // Clear validation error when user toggles webhook
+            if (!enabled) {
+              setWebhookValidationError(null);
+            }
+          }}
+          onWebhookUrlChange={(url) => {
+            setWebhookUrl(url);
+            // Clear validation error when user starts typing
+            if (webhookValidationError) {
+              setWebhookValidationError(null);
+            }
+          }}
+          validationError={webhookValidationError}
+        />
+        
         {/* Columns */}
         <ImporterColumnsManager
           initialColumns={fields}
@@ -135,9 +171,9 @@ export default function NewImporterPage() {
         />
         
         {/* Error message */}
-        {error && (
+        {(error || formError) && (
           <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-md">
-            {error}
+            {error || formError}
           </div>
         )}
         

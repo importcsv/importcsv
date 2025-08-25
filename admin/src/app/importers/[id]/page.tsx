@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { ImporterField as AddColumnImporterField } from "@/components/AddColumnForm";
 import ImporterColumnsManager from "@/components/ImporterColumnsManager";
+import WebhookSettings from "@/components/WebhookSettings";
+import ImportSettings from "@/components/ImportSettings";
 import apiClient, { importersApi } from "@/utils/apiClient";
 import { useToast } from "@/components/ui/use-toast";
 import { useParams, useRouter } from "next/navigation";
@@ -97,6 +99,7 @@ export default function ImporterDetailPage() {
   const [filterInvalidRows, setFilterInvalidRows] = useState(false);
   const [disableOnInvalidRows, setDisableOnInvalidRows] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
+  const [webhookValidationError, setWebhookValidationError] = useState<string | null>(null);
 
   // Dialog States
   const [showAddColumnDialog, setShowAddColumnDialog] = useState(false);
@@ -172,8 +175,15 @@ export default function ImporterDetailPage() {
 
   // Save importer settings
   const saveImporterSettings = async () => {
+    // Validate webhook URL if webhook is enabled
+    if (webhookEnabled && !webhookUrl.trim()) {
+      setWebhookValidationError('Webhook URL is required when webhook is enabled');
+      return;
+    }
+    
     setIsSaving(true);
     setError(null);
+    setWebhookValidationError(null);
 
     try {
       if (!importer) {
@@ -474,137 +484,37 @@ export default function ImporterDetailPage() {
           </Card>
 
           {/* Webhook Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Where to Send Uploaded Data</CardTitle>
-              <CardDescription>
-                Choose how we send uploaded data to your app. Choose Webhook to
-                have us send uploads to the Webhook URL you enter below.
-                Alternatively, choose onData callback to have data received
-                directly in your app frontend.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <Label htmlFor="webhook-enabled">Webhook</Label>
-                <Switch
-                  id="webhook-enabled"
-                  checked={webhookEnabled}
-                  onCheckedChange={setWebhookEnabled}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="webhook-url">Webhook URL</Label>
-                <Input
-                  id="webhook-url"
-                  placeholder="E.g. https://api.myapp.com/myendpoint"
-                  value={webhookUrl}
-                  onChange={(e) => setWebhookUrl(e.target.value)}
-                />
-                <p className="text-sm text-gray-500">
-                  Uploaded data will be sent to our servers, and we will send
-                  you a webhook with the data.
-                  <Link
-                    href="#"
-                    className="text-blue-600 hover:text-blue-800 ml-1"
-                  >
-                    Webhook docs <ExternalLink className="inline h-3 w-3" />
-                  </Link>
-                </p>
-              </div>
-            </CardContent>
-          </Card>
+          <WebhookSettings
+            webhookEnabled={webhookEnabled}
+            webhookUrl={webhookUrl}
+            onWebhookEnabledChange={(enabled) => {
+              setWebhookEnabled(enabled);
+              // Clear validation error when user toggles webhook
+              if (!enabled) {
+                setWebhookValidationError(null);
+              }
+            }}
+            onWebhookUrlChange={(url) => {
+              setWebhookUrl(url);
+              // Clear validation error when user starts typing
+              if (webhookValidationError) {
+                setWebhookValidationError(null);
+              }
+            }}
+            validationError={webhookValidationError}
+          />
 
           {/* Import Settings */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Import Settings</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Include Unmatched Columns */}
-              <div className="flex items-start justify-between">
-                <div>
-                  <Label className="text-base">
-                    Include All Unmatched Columns in Import
-                  </Label>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Enable this to import all columns uploaded by users, even if
-                    they are unmatched. This is useful if users have a variable
-                    number of additional columns they want to import.
-                  </p>
-                  <Link
-                    href="#"
-                    className="text-blue-600 hover:text-blue-800 text-sm flex items-center mt-1"
-                  >
-                    Importer docs <ExternalLink className="ml-1 h-3 w-3" />
-                  </Link>
-                </div>
-                <Switch
-                  checked={includeUnmatchedColumns}
-                  onCheckedChange={setIncludeUnmatchedColumns}
-                />
-              </div>
-
-              {/* Filter Invalid Rows */}
-              <div className="flex items-start justify-between pt-4 border-t">
-                <div>
-                  <Label className="text-base">Filter Invalid Rows</Label>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Enable to prevent rows that fail any column validation
-                    criteria being imported. If disabled, users will be warned
-                    about invalid rows, but they will still be imported.
-                  </p>
-                  <Link
-                    href="#"
-                    className="text-blue-600 hover:text-blue-800 text-sm flex items-center mt-1"
-                  >
-                    Importer docs <ExternalLink className="ml-1 h-3 w-3" />
-                  </Link>
-                </div>
-                <Switch
-                  checked={filterInvalidRows}
-                  onCheckedChange={setFilterInvalidRows}
-                />
-              </div>
-
-              {/* Disable Importing All Data */}
-              <div className="flex items-start justify-between pt-4 border-t">
-                <div>
-                  <Label className="text-base">
-                    Disable importing all data if there are invalid rows
-                  </Label>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Enable to prevent importing all data if there are any
-                    invalid rows. If disabled, users will be warned about errors
-                    and invalid rows, but data will still be imported.
-                  </p>
-                </div>
-                <Switch
-                  checked={disableOnInvalidRows}
-                  onCheckedChange={setDisableOnInvalidRows}
-                />
-              </div>
-              
-              {/* Dark Mode */}
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <Label htmlFor="dark-mode" className="text-base">
-                    Dark Mode
-                  </Label>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Enable dark mode for the CSV importer UI. This will apply
-                    a dark theme to the importer interface when users interact with it.
-                  </p>
-                </div>
-                <Switch
-                  id="dark-mode"
-                  checked={darkMode}
-                  onCheckedChange={setDarkMode}
-                />
-              </div>
-            </CardContent>
-          </Card>
+          <ImportSettings
+            includeUnmatchedColumns={includeUnmatchedColumns}
+            filterInvalidRows={filterInvalidRows}
+            disableOnInvalidRows={disableOnInvalidRows}
+            darkMode={darkMode}
+            onIncludeUnmatchedColumnsChange={setIncludeUnmatchedColumns}
+            onFilterInvalidRowsChange={setFilterInvalidRows}
+            onDisableOnInvalidRowsChange={setDisableOnInvalidRows}
+            onDarkModeChange={setDarkMode}
+          />
 
           {/* Notification moved to top level */}
         </TabsContent>
