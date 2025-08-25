@@ -295,7 +295,8 @@ async def _identify_relevant_columns(
     available_columns = []
     for col_val in list(column_mapping.values()):
         if isinstance(col_val, dict):
-            col_name = col_val.get("key") or col_val.get("name")
+            # Check for 'id', 'key', or 'name' fields (frontend uses 'id')
+            col_name = col_val.get("id") or col_val.get("key") or col_val.get("name")
         else:
             col_name = col_val
         if col_name:
@@ -324,7 +325,8 @@ def _get_column_indices(
     for idx, col_info in column_mapping.items():
         col_name = None
         if isinstance(col_info, dict):
-            col_name = col_info.get("key") or col_info.get("name")
+            # Check for 'id', 'key', or 'name' fields (frontend uses 'id')
+            col_name = col_info.get("id") or col_info.get("key") or col_info.get("name")
         elif isinstance(col_info, str):
             col_name = col_info
 

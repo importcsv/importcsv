@@ -239,111 +239,96 @@ export default function TransformPanel({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-5 border-b dark:border-gray-700">
+        <div className="flex items-center justify-between px-5 py-4 border-b dark:border-gray-700">
           <div className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-orange-500" />
-            <h2 className="text-lg font-semibold dark:text-gray-100">
-              {hasValidationErrors && !hasChanges ? t('Fix Validation Errors') : t('Transform Data')}
+            <span className="text-orange-500">!</span>
+            <h2 className="text-base font-medium text-gray-900 dark:text-gray-100">
+              {hasValidationErrors && !hasChanges ? t('Transform Data') : t('Transform Data')}
             </h2>
           </div>
           <button
             onClick={handleClose}
-            className="p-1.5 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
             aria-label="Close panel"
           >
-            <X className="h-4 w-4 dark:text-gray-400" />
+            <X className="h-5 w-5 text-gray-500 dark:text-gray-400" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-6 space-y-4">
           {/* Error groups display when validation errors exist */}
           {hasValidationErrors && !hasChanges && errorGroups.length > 0 && (
             <>
-              <div className="mb-4">
-                <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">Select which errors to fix:
-                </p>
+              <div>
+                {/* Header */}
+                <div className="mb-4">
+                  <h3 className="text-base font-medium text-gray-900 dark:text-gray-100">
+                    {countSelectedErrors(errorGroups)} validation errors
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Select errors to fix automatically
+                  </p>
+                </div>
 
-                {/* Error group cards */}
-                <div className="space-y-3">
+                {/* Error list */}
+                <div className="space-y-1 mb-4">
                   {errorGroups.map(group => (
                     <div
                       key={group.type}
-                      className={`border rounded-lg p-3 cursor-pointer transition-all ${
-                        group.selected
-                          ? 'border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-gray-700'
-                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:bg-gray-700/50'
-                      }`}
+                      className="flex items-center gap-3 py-2 px-1 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer rounded transition-colors"
                       onClick={() => handleToggleErrorGroup(group.type)}
                     >
-                      <div className="flex items-start gap-2">
-                        <Checkbox
-                          checked={group.selected}
-                          onCheckedChange={() => handleToggleErrorGroup(group.type)}
-                          onClick={(e) => e.stopPropagation()}
-                          className="mt-0.5"
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between">
-                            <h4 className="font-medium text-sm dark:text-gray-100">
-                              {group.title} ({group.count} {group.count === 1 ? 'error' : 'errors'})
-                            </h4>
-                          </div>
-                          <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                            {group.description}
-                          </p>
-                          <div className="mt-2">
-                            <p className="text-xs text-gray-600 dark:text-gray-400">
-                              Columns: {group.columns.join(', ')}
-                            </p>
-                            {group.example && (
-                              <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                                Example: "{group.example.before}" → "{group.example.after}"
-                              </p>
-                            )}
-                          </div>
+                      <Checkbox
+                        checked={group.selected}
+                        onCheckedChange={() => handleToggleErrorGroup(group.type)}
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex-shrink-0"
+                      />
+                      <div className="flex-1">
+                        <div className="text-sm text-gray-900 dark:text-gray-100">
+                          {group.title}
                         </div>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {group.count} {group.count === 1 ? 'error' : 'errors'} in {group.columns.join(', ')}
+                        </p>
                       </div>
                     </div>
                   ))}
                 </div>
 
-                {/* Select all / none */}
-                <div className="flex gap-2 mt-3">
-                  <Button
+                {/* Action buttons */}
+                <div className="flex gap-2 mb-4">
+                  <button
                     type="button"
-                    size="sm"
-                    variant="outline"
+                    className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                     onClick={() => handleSelectAllErrors(true)}
                   >
-                    Select All
-                  </Button>
-                  <Button
+                    Select all
+                  </button>
+                  <button
                     type="button"
-                    size="sm"
-                    variant="outline"
+                    className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                     onClick={() => handleSelectAllErrors(false)}
                   >
-                    Clear All
-                  </Button>
+                    Clear all
+                  </button>
                 </div>
-              </div>
 
-              {/* Fix button */}
-              <div className="flex justify-center">
-                <Button
-                  type="button"
-                  size="default"
-                  onClick={handleFixSelectedErrors}
-                  isLoading={isGenerating}
-                  disabled={isGenerating || countSelectedErrors(errorGroups) === 0}
-                  className="px-6"
-                >
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  {isGenerating
-                    ? t('Analyzing errors...')
-                    : t(`Fix ${countSelectedErrors(errorGroups)} Selected Errors`)}
-                </Button>
+                {/* Fix button */}
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={handleFixSelectedErrors}
+                    disabled={isGenerating || countSelectedErrors(errorGroups) === 0}
+                  >
+                    {isGenerating
+                      ? t('Analyzing...')
+                      : t(`Fix ${countSelectedErrors(errorGroups)} selected`)}
+                  </button>
+                </div>
               </div>
             </>
           )}
@@ -422,105 +407,84 @@ export default function TransformPanel({
           {hasChanges && !isGenerating && (
             <>
               <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="font-bold">
-                    {summary || `${changes.length} transformation${changes.length !== 1 ? 's' : ''} generated`}
-                  </span>
-                  <div className="flex gap-2">
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleSelectAll(true)}
-                    >
-                      {t('Select all')}
-                    </Button>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleSelectAll(false)}
-                    >
-                      {t('Deselect all')}
-                    </Button>
-                  </div>
+                {/* Header with count */}
+                <div className="mb-4">
+                  <h3 className="text-base font-medium text-gray-900 dark:text-gray-100">
+                    {changes.length} {changes[0]?.columnKey || ''} values will be transformed
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                    Review and select the changes you want to apply
+                  </p>
                 </div>
 
-                <div className="max-h-[400px] overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-md p-2">
-                  <div className="space-y-1">
+                {/* Selection control */}
+                <div className="mb-3">
+                  <button
+                    type="button"
+                    className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                    onClick={() => handleSelectAll(selectedCount === changes.length ? false : true)}
+                  >
+                    {selectedCount === changes.length ? t('Deselect all') : t('Select all')}
+                  </button>
+                </div>
+
+                {/* Changes list */}
+                <div>
+                  <div className="space-y-0.5">
                     {changes.slice(0, 100).map((change, index) => (
                       <div
                         key={index}
-                        className={`flex items-start gap-2 p-2 rounded-md border cursor-pointer ${
-                          change.selected
-                            ? 'bg-blue-50 dark:bg-gray-700 border-blue-200 dark:border-blue-600 hover:bg-blue-100 dark:hover:bg-gray-600'
-                            : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
-                        }`}
+                        className="flex items-center gap-3 py-2 px-1 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors rounded"
                         onClick={() => handleToggleChange(index)}
                       >
                         <Checkbox
                           checked={change.selected}
                           onCheckedChange={() => handleToggleChange(index)}
                           onClick={(e) => e.stopPropagation()}
+                          className="flex-shrink-0"
                         />
-                        <div className="flex-1 space-y-0">
-                          <div className="text-sm text-gray-900 dark:text-gray-100 flex items-center gap-2">
-                            <span className="line-through">
-                              {String(change.oldValue || 'empty')}
-                            </span>
-                            <span>→</span>
-                            <span className="text-green-600 font-bold">
-                              {String(change.newValue)}
-                            </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm text-gray-900 dark:text-gray-100 font-medium truncate">
+                            {String(change.newValue)}
                           </div>
-                          <p className="text-xs text-gray-600 dark:text-gray-400">
-                            Row {change.rowIndex + 1}, {change.columnKey}
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                            {String(change.oldValue || '')} • Row {change.rowIndex + 1}, {change.columnKey}
                           </p>
                         </div>
                       </div>
                     ))}
 
                     {changes.length > 100 && (
-                      <p className="text-sm text-gray-500 dark:text-gray-500 text-center">
+                      <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
                         {t(`Showing first 100 of ${changes.length} changes`)}
                       </p>
                     )}
                   </div>
                 </div>
-
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  {selectedCount} {t('selected')}
-                </p>
               </div>
             </>
           )}
+          </div>
         </div>
 
         {/* Footer */}
-        <div className="border-t dark:border-gray-700 p-5">
-          <div className="flex gap-3 justify-end">
-
-            {hasChanges && (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => handleApply(false)}
-                  disabled={selectedCount === 0}
-                >
-                  {t(`Apply ${selectedCount} selected`)}
-                </Button>
-                <Button
-                  type="button"
-                  onClick={() => handleApply(true)}
-                >
-                  <Check className="mr-2 h-4 w-4" />
-                  {t('Apply all')}
-                </Button>
-              </>
-            )}
+        {hasChanges && (
+          <div className="border-t dark:border-gray-700 p-4">
+            <div className="flex justify-between items-center">
+              <span className="text-sm text-gray-500 dark:text-gray-400">
+                {selectedCount} selected
+              </span>
+              <button
+                type="button"
+                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => handleApply(selectedCount === changes.length)}
+                disabled={selectedCount === 0}
+              >
+                {t(`Apply ${selectedCount}`)}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </>
   );
