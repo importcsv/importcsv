@@ -1,8 +1,8 @@
 <div align="center">
 
-# ImportCSV Frontend
+# @importcsv/react
 
-<em>React-based embeddable CSV and spreadsheet importer with streamlined column mapping</em>
+**The modern CSV importer for React applications**
 
 [![npm version](https://img.shields.io/npm/v/@importcsv/react.svg)](https://www.npmjs.com/package/@importcsv/react)
 [![npm downloads](https://img.shields.io/npm/dm/@importcsv/react.svg)](https://www.npmjs.com/package/@importcsv/react)
@@ -13,471 +13,141 @@
 
 </div>
 
-## 🚀 Overview
+## Stop wrestling with CSV imports
 
-The ImportCSV Frontend provides a polished, user-friendly interface for importing CSV, XLS, XLSX, and TSV files. It can be embedded in any React application and offers intuitive column mapping functionality.
+Every developer has been there. Users upload CSVs with columns in the wrong order, dates in different formats, and data that needs validation. You end up building the same import flow again and again.
 
-> **Note**: This component was forked from [TableFlow's CSV Import](https://github.com/tableflowhq/csv-import) and enhanced with additional features.
+**ImportCSV handles it all for you:**
+- 🎯 **Smart column mapping** - AI-powered field matching
+- ✨ **One-click error fixing** - Transform and validate data automatically
+- ⚡ **10,000+ rows?** No problem - virtual scrolling keeps it fast
+- 📦 **Tiny footprint** - ~100KB gzipped, including styles
 
-## ✨ Key Features
-
-- **📊 Multi-Format Support** - Import from CSV, XLS, XLSX, and TSV files
-- **🔄 Smart Column Mapping** - Intuitive interface for mapping columns
-- **🔍 Data Validation** - Immediate feedback on data quality issues
-- **🎨 Customizable UI** - Theming and component customization options
-- **🔌 Flexible Integration** - Available as React component or vanilla JavaScript
-- **📦 Optimized Bundle Size** - Excel support is optional to keep bundle small
-
-## 🏗️ Architecture
-
-The frontend is built as a React library with TypeScript and can be used in two ways:
-
-1. **React Component** - Direct integration into React applications
-2. **JavaScript SDK** - For use in non-React applications
-
-## 🛠️ Technical Details
-
-### Key Components
-
-- **CSVImporter** - Main React component for the import flow
-- **ColumnMapper** - Handles column mapping with smart suggestions
-- **DataValidator** - Validates data against schema requirements
-- **ImportSummary** - Displays import results and validation issues
-
-## 🚀 Getting Started
-
-### Installation
-
-Use NPM or Yarn to install the SDK:
-
-**NPM**
+## Quick Start
 
 ```bash
 npm install @importcsv/react
 ```
 
-**For Excel Support (Optional)**
+```tsx
+import { CSVImporter } from '@importcsv/react';
+import { useState } from 'react';
 
-Excel file support (.xls, .xlsx) requires an additional package:
-
-```bash
-npm install xlsx
-```
-
-> **Note**: The xlsx package is ~850KB. It's only required if you need Excel support. CSV files work without it.
-
-**Yarn**
-
-```bash
-yarn add @importcsv/react
-
-# For Excel support (optional)
-yarn add xlsx
-```
-
-### Basic Usage
-
-#### Using React
-
-```javascript
-import { CSVImporter } from "csv-import-react";
-import { useState } from "react";
-
-function MyComponent() {
+function App() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      <button onClick={() => setIsOpen(true)}>Open CSV Importer</button>
+      <button onClick={() => setIsOpen(true)}>Import CSV</button>
 
       <CSVImporter
         modalIsOpen={isOpen}
         modalOnCloseTriggered={() => setIsOpen(false)}
-        darkMode={true}
-        onComplete={(data) => console.log(data)}
-        template={{
-          columns: [
-            {
-              name: "First Name",
-              key: "first_name",
-              required: true,
-              description: "The first name of the user",
-              suggested_mappings: ["First", "Name"],
-            },
-            {
-              name: "Age",
-              data_type: "number",
-            },
-          ],
-        }}
+        onComplete={(data) => console.log(data.rows)}
+        columns={[
+          { id: 'name', label: 'Name', validators: [{ type: 'required' }] },
+          { id: 'email', label: 'Email', type: 'email' }
+        ]}
       />
     </>
   );
 }
 ```
 
-#### Using JavaScript
+**That's it!** Your users get a polished import experience with column mapping, validation, and error handling.
 
+## Features
+
+### 🚀 Core
+- CSV, TSV, XLS, XLSX support (Excel support optional)
+- Automatic encoding detection
+- Header row detection
+- Virtual scrolling for large files
+
+### 🎯 Smart Mapping
+- AI-powered column matching
+- Fuzzy string matching
+
+### ✨ Data Transformation
+- **"Fix All Errors" button** - AI analyzes and fixes validation errors
+- Natural language transformations ("convert dates to MM/DD/YYYY")
+- Built-in transformers (capitalize, normalize phone, parse dates)
+- Custom transformation functions
+
+### ✅ Validation
+- Required, unique, regex, min/max
+- Email, phone, date formats
+- Custom validators
+- Real-time error display
+
+### 🎨 Customization
+- Dark mode support
+- Custom CSS variables
+
+### 📦 Framework Support
+- React 16, 17, 18, 19
+- Preact compatible
+- Next.js (App & Pages Router)
+- Vanilla JavaScript
+
+## Examples
+
+### Next.js App Router
+```tsx
+'use client';
+import { CSVImporter } from '@importcsv/react';
+```
+
+### Vanilla JavaScript
 ```html
-<head>
-  <script src="https://unpkg.com/csv-import-js@latest/index.js"></script>
-</head>
-<body>
-  <button id="uploadButton">Open CSV Importer</button>
-  <div id="app"></div>
-  <script>
-    const importer = CSVImporter.createCSVImporter({
-      domElement: document.getElementById("app"),
-      modalOnCloseTriggered: () => importer?.closeModal(),
-      onComplete: (data) => console.log(data),
-      darkMode: true,
-      template: {
-        columns: [
-          {
-            name: "First Name",
-            key: "first_name",
-            required: true,
-            description: "The first name of the user",
-            suggested_mappings: ["First", "Name"],
-          },
-          {
-            name: "Age",
-            data_type: "number",
-          },
-        ],
-      },
-    });
+<script src="https://unpkg.com/@importcsv/react@latest/build/bundled/index.umd.js"></script>
+<script>
+  const importer = CSVImporter.createCSVImporter({
+    domElement: document.getElementById('app'),
+    columns: [/* ... */],
+    onComplete: (data) => console.log(data)
+  });
 
-    const uploadButton = document.getElementById("uploadButton");
-    uploadButton.addEventListener("click", () => {
-      importer?.showModal();
-    });
-  </script>
-</body>
+  importer.showModal();
+</script>
 ```
 
-## SDK Reference
-
-### isModal (_boolean_, default: `true`)
-
-When set to `true` (default value), the importer will behave as a modal with its open state controlled by `modalIsOpen`. When set to `false`, the importer will be embedded directly in your page.
-
-### modalIsOpen (_boolean_, default: `false`)
-
-Only used when `isModal` is `true`: Controls the importer modal being open or closed.
-\
-**React SDK Only**: For the JavaScript SDK, use `.showModal()` and `.closeModal()` to operate the modal.
-
-### modalOnCloseTriggered (_function_)
-
-Only used when `isModal` is `true`: A function called when the user clicks the close button or clicks outside of (when used with `modalCloseOnOutsideClick`) the importer. `useState` can be used to control the importer modal opening and closing.
-
-```javascript
-const [isOpen, setIsOpen] = useState(false);
+### With Validation & Transformation
+```tsx
+columns={[
+  {
+    id: 'email',
+    label: 'Email',
+    type: 'email',
+    validators: [{ type: 'required' }, { type: 'unique' }],
+    transformations: [{ type: 'lowercase' }, { type: 'trim' }]
+  }
+]}
 ```
 
-```jsx
-<button onClick={() => setIsOpen(true)}>Open CSV Importer</button>
-<CSVImporter
-  modalIsOpen={isOpen}
-  modalOnCloseTriggered={() => setIsOpen(false)}
-  ...
-/>
-```
+## Why ImportCSV?
 
-### modalCloseOnOutsideClick (_boolean_, default: `false`)
+| Feature | ImportCSV | Build Your Own | Other Libraries |
+|---------|-----------|----------------|-----------------|
+| Setup time | 5 minutes | Days/weeks | Hours |
+| AI-powered fixes | ✅ | ❌ | ❌ |
+| Virtual scrolling | ✅ | Maybe | Sometimes |
+| Framework agnostic | ✅ | Your choice | Usually not |
+| Bundle size | ~100KB | Varies | 200KB+ |
+| Theming | 5 presets + custom | DIY | Limited |
 
-Only used when `isModal` is `true`: Clicking outside the modal will call the `modalOnCloseTriggered` function.
+## Resources
 
-### template (_object_)
+- 📚 [Documentation](https://docs.importcsv.com) - Complete guides and API reference
+- 🐛 [Issues](https://github.com/importcsv/importcsv/issues) - Report bugs or request features
+- ⭐ [GitHub](https://github.com/importcsv/importcsv) - Star us if you like it!
 
-Configure the columns used for the import.
+## License
 
-```jsx
-template={{
-  columns: [
-    {
-      name: "First Name",
-      key: "first_name",
-      required: true,
-      description: "The first name of the user",
-      suggested_mappings: ["First", "Name"],
-    },
-    {
-      name: "Age",
-      data_type: "number",
-    },
-  ],
-}}
-```
+MIT © [ImportCSV](https://github.com/importcsv/importcsv)
 
-### onComplete (_function_)
+---
 
-Callback function that fires when a user completes an import. It returns `data`, an object that contains the row data, column definitions, and other information about the import.
-
-```jsx
-onComplete={(data) => console.log(data)}
-```
-
-Example `data`:
-
-```json
-{
-  "num_rows": 2,
-  "num_columns": 3,
-  "columns": [
-    {
-      "key": "age",
-      "name": "Age"
-    },
-    {
-      "key": "email",
-      "name": "Email"
-    },
-    {
-      "key": "first_name",
-      "name": "First Name"
-    }
-  ],
-  "rows": [
-    {
-      "index": 0,
-      "values": {
-        "age": 23,
-        "email": "maria@example.com",
-        "first_name": "Maria"
-      }
-    },
-    {
-      "index": 1,
-      "values": {
-        "age": 32,
-        "email": "robert@example.com",
-        "first_name": "Robert"
-      }
-    }
-  ]
-}
-```
-
-### darkMode (_boolean_, default: `false`)
-
-Toggle between dark mode (`true`) and light mode (`false`).
-
-### primaryColor (_string_)
-
-Specifies the primary color for the importer in hex format. Use `customStyles` to customize the UI in more detail.
-
-```jsx
-primaryColor = "#7A5EF8";
-```
-
-### customStyles (_object_)
-
-Apply custom styles to the importer with an object containing CSS properties and values. Note that custom style properties will override `primaryColor` and any default styles from `darkMode`.
-Available options:
-
-```jsx
-customStyles={{
-  "font-family": "cursive",
-  "font-size": "15px",
-  "base-spacing": "2rem",
-  "border-radius": "8px",
-  "color-primary": "salmon",
-  "color-primary-hover": "crimson",
-  "color-secondary": "indianRed",
-  "color-secondary-hover": "crimson",
-  "color-tertiary": "indianRed",
-  "color-tertiary-hover": "crimson",
-  "color-border": "lightCoral",
-  "color-text": "brown",
-  "color-text-soft": "rgba(165, 42, 42, .5)",
-  "color-text-on-primary": "#fff",
-  "color-text-on-secondary": "#ffffff",
-  "color-background": "bisque",
-  "color-background-modal": "blanchedAlmond",
-  "color-input-background": "blanchedAlmond",
-  "color-input-background-soft": "white",
-  "color-background-menu-hover": "bisque",
-  "color-importer-link": "indigo",
-  "color-progress-bar": "darkGreen"
-}}
-```
-
-## Internationalization
-
-### Predefined languages
-
-- Out-of-the-box support for various languages.
-- Common languages are available through the language prop (i.e., `language="fr"` for French).
-- Available predefined languages:
-  - en
-  - es
-  - fr
-
-### Customizable language
-
-- Language keys can be exported and overridden.
-- Labels and messages can be customized to any text.
-- Translations key examples can be found in `src/i18n/es.ts`
-
-```javascript
-// Set up custom translations
-const customTranslations = {
-  jp: {
-    Upload: "アップロード",
-    "Browse files": "ファイルを参照",
-  },
-  pt: {
-    Upload: "Carregar",
-    "Browse files": "Procurar arquivos",
-  },
-};
-
-return (
-  <CSVImporter language="jp" customTranslations={customTranslations} ...props />
-)
-
-```
-
-### showDownloadTemplateButton (_boolean_, default: `true`)
-
-When set to `false`, hide the Download Template button on the first screen of the importer.
-
-### skipHeaderRowSelection (_boolean_, default: `false`)
-
-When set to `true`, the importer will not display and skip the Header Row Selection step and always choose the first row in the file as the header.
-
-## Contributing
-
-### Setting Up the Project
-
-To set up the project locally, follow these steps:
-
-1. **Clone the repository**
-
-```bash
-git clone https://github.com/tableflowhq/csv-import.git
-cd csv-import
-```
-
-2. **Install dependencies**
-
-```bash
-yarn install
-```
-
-3. **Build the project**
-
-```bash
-yarn build
-```
-
-### Running Storybook
-
-To run Storybook locally, follow these steps:
-
-1. **Start Storybook**
-
-```bash
-yarn storybook
-```
-
-2. **Open Storybook in your browser:**
-   Storybook should automatically open in your default browser. If it doesn't, navigate to [http://localhost:6006](http://localhost:6006).
-
-### Modifying the project and testing with the demo app
-
-The project includes a demo app that you can use to test your changes. The demo app has its own `README.md` file with detailed instructions on how to set it up and run it.
-
-1. Make your changes in the codebase.
-2. Follow the instructions in the demo app's `README.md` to set up and run the demo app. This will help you verify that your changes work as expected in a real application.
-3. Commit your changes and push them to your forked repository.
-4. Create a pull request to the main repository.
-
-## Publishing the Library
-
-### Using Yarn Publish
-
-To publish the library to npm:
-
-1. Update the version in `package.json`:
-
-   ```bash
-   # Increment version - choose one of:
-   npm version patch  # for bug fixes
-   npm version minor  # for new features
-   npm version major  # for breaking changes
-   ```
-
-2. Build the library:
-
-   ```bash
-   yarn build
-   ```
-
-3. Publish to npm:
-
-   ```bash
-   # If you're publishing for the first time
-   npm login
-
-   # Publish the package
-   yarn publish
-   ```
-
-4. To use the published package in another project:
-   ```bash
-   # In your project
-   yarn add csv-import-react
-   ```
-
-### Using Yalc (for Local Development)
-
-[Yalc](https://github.com/wclr/yalc) is a tool for local package development and sharing. It's useful when you want to test your library in another project without publishing to npm.
-
-1. Install yalc globally:
-
-   ```bash
-   npm install -g yalc
-   ```
-
-2. Build the library:
-
-   ```bash
-   yarn build
-   ```
-
-3. Publish to local yalc store:
-
-   ```bash
-   yalc publish
-   ```
-
-4. Add to your project:
-
-   ```bash
-   # In your project directory
-   yalc add csv-import-react
-   yarn install  # or npm install
-   ```
-
-5. When you make changes to the library:
-
-   ```bash
-   # In the library directory
-   yarn build
-   yalc push  # Updates all linked projects
-   ```
-
-6. To remove the yalc link:
-   ```bash
-   # In your project directory
-   yalc remove csv-import-react
-   yarn install  # Restore to regular dependencies
-   ```
-
-## Get In Touch
-
-Let us know your feedback or feature requests! Submit a GitHub
-issue [here](https://github.com/tableflowhq/csv-import/issues/new).
+<div align="center">
+  <sub>Built with ❤️ for developers who have better things to do than parse CSVs</sub>
+</div>
