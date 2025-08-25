@@ -114,6 +114,10 @@ export type CSVImporterProps = {
   skipHeaderRowSelection?: boolean;
   waitOnComplete?: boolean;
   
+  // Import behavior options
+  invalidRowHandling?: 'include' | 'exclude' | 'block';
+  includeUnmatchedColumns?: boolean;
+  
   // Localization
   language?: string;
   customTranslations?: CustomTranslationResource;

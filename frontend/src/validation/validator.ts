@@ -49,9 +49,13 @@ export function validateColumn(value: any, column: Column): string | null {
         break;
         
       case 'select':
-        // Check if value is in options
-        if (column.options && !column.options.includes(strValue)) {
-          return `Must be one of: ${column.options.join(', ')}`;
+        // Check if value is in options (case-insensitive comparison)
+        if (column.options) {
+          const normalizedValue = strValue.toLowerCase();
+          const normalizedOptions = column.options.map(opt => opt.toLowerCase());
+          if (!normalizedOptions.includes(normalizedValue)) {
+            return `Must be one of: ${column.options.join(', ')}`;
+          }
         }
         break;
     }

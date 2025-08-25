@@ -6,6 +6,8 @@ export default function ValidationExample() {
   const [data, setData] = useState<any>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [testDataType, setTestDataType] = useState<'messy' | 'clean'>('messy');
+  const [validationMode, setValidationMode] = useState<'include' | 'exclude' | 'block'>('block');
+  const [includeUnmatched, setIncludeUnmatched] = useState(false);
 
   // Column definitions with smart auto-detection of transformation stages
   // Pre-validation transformations (trim, uppercase, etc.) run BEFORE validation
@@ -110,14 +112,15 @@ export default function ValidationExample() {
     }
   ];
 
-  // Generate test CSV with messy data
+  // Generate test CSV with messy data (includes extra columns to test includeUnmatchedColumns)
   const generateMessyCSV = () => {
-    const csvContent = `Employee ID,Full Name,Email Address,Department,Annual Salary,Hire Date,Phone Number,Employment Status
-  emp001  ,  john doe  ,JOHN.DOE@EXAMPLE.COM,marketing,65000,2023/01/15,555.123.4567,
-EMP002,JANE SMITH,Jane.Smith@Example.Com,ENGINEERING,75000,02-20-2023,(555) 987-6543,ACTIVE
-emp003,robert johnson  ,Robert@Example.com,sales,45000,March 10 2023,555-555-5555,Active
-  EMP004,Sarah Wilson,sarah@EXAMPLE.COM,finance,85000,2023-05-12,+1 555 444 3333,
-emp005  ,Michael Brown,MICHAEL.BROWN@EXAMPLE.COM,hr,55000,06/01/2023,555.222.1111,active`;
+    const csvContent = `Employee ID,Full Name,Email Address,Department,Annual Salary,Hire Date,Phone Number,Employment Status,Manager,Office Location
+  emp001  ,  john doe  ,JOHN.DOE@EXAMPLE.COM,marketing,65000,2023/01/15,555.123.4567,,Jane Smith,Building A
+EMP002,JANE SMITH,Jane.Smith@Example.Com,ENGINEERING,75000,02-20-2023,(555) 987-6543,ACTIVE,Bob Jones,Building B
+emp003,robert johnson  ,Robert@Example.com,sales,45000,March 10 2023,555-555-5555,Active,Jane Smith,Building A
+  EMP004,Sarah Wilson,sarah@EXAMPLE.COM,finance,85000,2023-05-12,+1 555 444 3333,,Bob Jones,Building C
+emp005  ,Michael Brown,MICHAEL.BROWN@EXAMPLE.COM,hr,55000,06/01/2023,555.222.1111,active,Sarah Wilson,Building A
+INVALID,  ,not-an-email,unknown-dept,not-a-number,invalid-date,bad-phone,,Unknown,`;
 
     return csvContent;
   };
@@ -205,6 +208,67 @@ EMP005,Michael Brown,michael.brown@example.com,HR,55000,2023-06-01,(555) 222-111
           </div>
         </div>
 
+        <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+          <h3 className="font-semibold mb-3 text-gray-800">Import Options:</h3>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Invalid Row Handling:</label>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setValidationMode('include')}
+                  className={`px-3 py-1.5 rounded text-sm transition-colors ${
+                    validationMode === 'include' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                  title="Import all rows, show warnings for invalid ones"
+                >
+                  Include (Warn)
+                </button>
+                <button
+                  onClick={() => setValidationMode('exclude')}
+                  className={`px-3 py-1.5 rounded text-sm transition-colors ${
+                    validationMode === 'exclude' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                  title="Filter out invalid rows, import only valid ones"
+                >
+                  Exclude (Filter)
+                </button>
+                <button
+                  onClick={() => setValidationMode('block')}
+                  className={`px-3 py-1.5 rounded text-sm transition-colors ${
+                    validationMode === 'block' 
+                      ? 'bg-blue-600 text-white' 
+                      : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  }`}
+                  title="Block import if any invalid rows exist"
+                >
+                  Block (Strict)
+                </button>
+              </div>
+              <p className="text-xs text-gray-600 mt-1">
+                {validationMode === 'include' && "All rows will be imported with warnings shown for invalid data"}
+                {validationMode === 'exclude' && "Invalid rows will be filtered out, only valid rows imported"}
+                {validationMode === 'block' && "Import will be blocked if any validation errors exist (default)"}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="includeUnmatched"
+                checked={includeUnmatched}
+                onChange={(e) => setIncludeUnmatched(e.target.checked)}
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label htmlFor="includeUnmatched" className="text-sm text-gray-700">
+                Include unmatched columns (e.g., Manager, Office Location)
+              </label>
+            </div>
+          </div>
+        </div>
+
         <div className="mb-4 flex gap-2">
           <button
             onClick={() => setTestDataType('messy')}
@@ -237,6 +301,8 @@ EMP005,Michael Brown,michael.brown@example.com,HR,55000,2023-06-01,(555) 222-111
               <li>Various phone formats: "555.123.4567" → auto-normalized ✅</li>
               <li>Different date formats: "2023/01/15" → auto-parsed to YYYY-MM-DD ✅</li>
               <li>Missing status values → auto-filled with "active" after validation ✅</li>
+              <li>Invalid row with bad data → handled based on validation mode ⚠️</li>
+              <li>Extra columns (Manager, Office) → {includeUnmatched ? 'will be included' : 'will be ignored'} 📊</li>
             </ul>
             <p className="mt-2 text-xs font-medium text-green-700">
               🎯 All these issues are now automatically handled!
@@ -264,6 +330,8 @@ EMP005,Michael Brown,michael.brown@example.com,HR,55000,2023-06-01,(555) 222-111
         <CSVImporter
           columns={columns}
           onComplete={handleComplete}
+          invalidRowHandling={validationMode}
+          includeUnmatchedColumns={includeUnmatched}
           isModal={true}
           modalIsOpen={isOpen}
           modalOnCloseTriggered={() => setIsOpen(false)}

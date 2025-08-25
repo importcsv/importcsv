@@ -18,6 +18,82 @@ description: Complete API documentation for ImportCSV
 | `customStyles` | `object` | - | CSS variable overrides |
 | `showDownloadTemplateButton` | `boolean` | `true` | Show template download |
 | `skipHeaderRowSelection` | `boolean` | `false` | Auto-select first row as header |
+| `invalidRowHandling` | `'include' \| 'exclude' \| 'block'` | `'block'` | How to handle rows with validation errors |
+| `includeUnmatchedColumns` | `boolean` | `false` | Include CSV columns not defined in schema |
+
+## Import Behavior Options
+
+### Invalid Row Handling
+
+The `invalidRowHandling` prop controls how the importer handles rows that fail validation:
+
+| Mode | Description | Use Case |
+|------|-------------|----------|
+| `'block'` (default) | Prevents import if ANY row has validation errors | Critical data imports where integrity is paramount |
+| `'exclude'` | Filters out invalid rows, imports only valid ones | Clean data imports, removing problematic entries |
+| `'include'` | Imports all rows with warnings for invalid ones | Flexible imports where you'll handle errors later |
+
+#### Examples
+
+```tsx
+// Strict mode - blocks import on any error (default)
+<CSVImporter
+  columns={columns}
+  invalidRowHandling="block"
+  onComplete={(data) => console.log(data)}
+/>
+
+// Filter mode - imports only valid rows
+<CSVImporter
+  columns={columns}
+  invalidRowHandling="exclude"
+  onComplete={(data) => {
+    // data contains only rows that passed validation
+    console.log(`Imported ${data.num_rows} valid rows`);
+  }}
+/>
+
+// Permissive mode - imports everything with warnings
+<CSVImporter
+  columns={columns}
+  invalidRowHandling="include"
+  onComplete={(data) => {
+    // data contains all rows, check for errors separately
+    console.log(`Imported ${data.num_rows} rows (may include invalid data)`);
+  }}
+/>
+```
+
+### Include Unmatched Columns
+
+The `includeUnmatchedColumns` prop allows importing columns from the CSV that aren't defined in your schema:
+
+```tsx
+// Example CSV with extra columns:
+// Name,Email,Department,Manager,Office
+// John,john@example.com,Sales,Jane Smith,Building A
+
+const columns = [
+  { id: 'name', label: 'Name' },
+  { id: 'email', label: 'Email' },
+  { id: 'department', label: 'Department' }
+];
+
+// With includeUnmatchedColumns=true
+<CSVImporter
+  columns={columns}
+  includeUnmatchedColumns={true}
+  onComplete={(data) => {
+    // data.mappedData includes defined columns
+    // data.unmappedData includes Manager and Office columns
+  }}
+/>
+```
+
+This is useful for:
+- Dynamic CSV structures where users might add custom columns
+- Importing data where you want to preserve all information
+- Flexible schemas that adapt to user needs
 
 ## Column Interface
 

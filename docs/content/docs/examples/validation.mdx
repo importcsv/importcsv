@@ -56,6 +56,7 @@ export default function ValidationExample() {
   return (
     <CSVImporter
       columns={columns}
+      invalidRowHandling="block" // Default: prevent import if errors exist
       onComplete={(data) => {
         console.log('Valid data imported:', data);
       }}
@@ -82,3 +83,66 @@ EMP001,duplicate@example.com,70,Sales,555
 - Row 2: "abc" → Invalid phone
 - Row 3: "EMP001" → Must be unique
 - Row 3: "70" → Must be under 65
+
+## Handling Invalid Rows
+
+You can control how the importer handles validation errors using the `invalidRowHandling` prop:
+
+### Block Import (Default)
+```tsx
+// Prevents import if ANY row has errors
+<CSVImporter
+  columns={columns}
+  invalidRowHandling="block"
+  onComplete={(data) => {
+    // Only called if ALL rows are valid
+    console.log('All rows validated successfully');
+  }}
+/>
+```
+
+### Filter Invalid Rows
+```tsx
+// Imports only valid rows, skips invalid ones
+<CSVImporter
+  columns={columns}
+  invalidRowHandling="exclude"
+  onComplete={(data) => {
+    // data contains only valid rows
+    console.log(`Imported ${data.num_rows} valid rows`);
+  }}
+/>
+```
+
+### Include All Rows
+```tsx
+// Imports everything, shows warnings for invalid rows
+<CSVImporter
+  columns={columns}
+  invalidRowHandling="include"
+  onComplete={(data) => {
+    // data contains all rows including invalid ones
+    console.log('Imported all rows (check for validation warnings)');
+  }}
+/>
+```
+
+## Dynamic Columns Example
+
+Handle CSVs with unknown or extra columns:
+
+```tsx
+// CSV might have: Name,Email,CustomField1,CustomField2
+<CSVImporter
+  columns={[
+    { id: 'name', label: 'Name', validators: [{ type: 'required' }] },
+    { id: 'email', label: 'Email', type: 'email' }
+  ]}
+  includeUnmatchedColumns={true}
+  onComplete={(data) => {
+    // data.mappedData has name and email
+    // data.unmappedData has CustomField1 and CustomField2
+    console.log('Known columns:', data.mappedData);
+    console.log('Extra columns:', data.unmappedData);
+  }}
+/>

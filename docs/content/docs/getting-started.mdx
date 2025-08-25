@@ -54,6 +54,31 @@ function App() {
 ✅ **Large file support** - 10,000+ rows with virtual scrolling
 ✅ **Zero configuration** - Works out of the box
 
+### Default Behavior
+
+By default, ImportCSV enforces strict data validation:
+- **Blocks import** if any row has validation errors
+- **Shows clear error messages** for each invalid field
+- **Ensures data integrity** before import completes
+
+You can customize this behavior:
+
+```tsx
+// Allow import with warnings (include invalid rows)
+<CSVImporter
+  columns={columns}
+  invalidRowHandling="include"
+  onComplete={(data) => console.log(data)}
+/>
+
+// Filter out invalid rows automatically
+<CSVImporter
+  columns={columns}
+  invalidRowHandling="exclude"
+  onComplete={(data) => console.log('Only valid rows:', data)}
+/>
+```
+
 ## Framework Setup
 
 ### Next.js App Router

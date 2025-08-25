@@ -46,6 +46,8 @@ export default function Main(props: CSVImporterProps) {
     customStyles,
     showDownloadTemplateButton,
     skipHeaderRowSelection,
+    invalidRowHandling = 'block', // Default to 'block' for strict validation
+    includeUnmatchedColumns: propIncludeUnmatchedColumns = false,
     importerKey,
     columns: propColumns, // HelloCSV-style columns for standalone mode
     backendUrl = config.apiBaseUrl,
@@ -94,9 +96,17 @@ export default function Main(props: CSVImporterProps) {
 
   // Store columns directly - either from props or fetched from backend
   const [importColumns, setImportColumns] = useState<Column[]>([]);
-  const [includeUnmatchedColumns, setIncludeUnmatchedColumns] = useState<boolean>(false);
-  const [filterInvalidRows, setFilterInvalidRows] = useState<boolean>(false);
-  const [disableOnInvalidRows, setDisableOnInvalidRows] = useState<boolean>(false);
+  
+  // Initialize states based on props
+  const [includeUnmatchedColumns, setIncludeUnmatchedColumns] = useState<boolean>(
+    propIncludeUnmatchedColumns
+  );
+  const [filterInvalidRows, setFilterInvalidRows] = useState<boolean>(
+    invalidRowHandling === 'exclude'
+  );
+  const [disableOnInvalidRows, setDisableOnInvalidRows] = useState<boolean>(
+    invalidRowHandling === 'block'
+  );
 
   // Initialize demo data if provided
   useEffect(() => {

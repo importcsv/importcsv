@@ -27,6 +27,8 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
     customStyles,
     showDownloadTemplateButton,
     skipHeaderRowSelection,
+    invalidRowHandling,
+    includeUnmatchedColumns,
     language,
     customTranslations,
     importerKey,
@@ -123,6 +125,8 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
         customStyles={customStyles}
         showDownloadTemplateButton={showDownloadTemplateButton}
         skipHeaderRowSelection={skipHeaderRowSelection}
+        invalidRowHandling={invalidRowHandling}
+        includeUnmatchedColumns={includeUnmatchedColumns}
         language={language}
         customTranslations={customTranslations}
         importerKey={importerKey}
