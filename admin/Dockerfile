@@ -1,18 +1,38 @@
-# Simplified Dockerfile for admin app
+# Multi-stage Dockerfile for admin app with local frontend build
 
-# Build stage
+# Stage 1: Build the frontend package
+FROM node:20 AS frontend-builder
+WORKDIR /frontend
+
+# Copy frontend package files
+COPY frontend/package*.json ./
+RUN npm install --legacy-peer-deps
+
+# Copy frontend source and build
+COPY frontend/ ./
+RUN npm run build:react
+
+# Stage 2: Build the admin app
 FROM node:20 AS builder
 WORKDIR /app
 
 # Set environment variables for build time
 # Client-side URL must be accessible from browser
 ENV NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
-ENV NEXT_PUBLIC_POSTHOG_KEY=phc_LkCjHOTsu2RZoYxnyPWEbycR8nFJlGZgtnl4bDQIws6
-ENV NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
 
-# Copy and use package.prod.json which has npm published version
+# Copy and use package.prod.json
 COPY admin/package.prod.json ./package.json
+
+# Install all dependencies including @importcsv/react from npm
+# This ensures all peer dependencies are resolved
 RUN npm install --legacy-peer-deps
+
+# Now replace the npm version with our locally built version
+# We need to preserve the build/react structure that package.json expects
+RUN rm -rf ./node_modules/@importcsv/react
+RUN mkdir -p ./node_modules/@importcsv/react/build
+COPY --from=frontend-builder /frontend/build/react ./node_modules/@importcsv/react/build/react
+COPY --from=frontend-builder /frontend/package.json ./node_modules/@importcsv/react/package.json
 
 # Copy admin source files
 COPY admin/ ./
