@@ -46,6 +46,9 @@ const CSVImporter = dynamic(
 
 // Separate component for the CSVImporter to prevent re-renders
 function ImporterComponent({ importerKey, onComplete }: { importerKey: string, onComplete: (data: ImportData) => void }) {
+  // Get backend URL from environment variable (defaults to localhost for local dev)
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+  
   // Using useMemo to ensure the component doesn't re-render unnecessarily
   return useMemo(() => (
     <CSVImporter
@@ -55,9 +58,10 @@ function ImporterComponent({ importerKey, onComplete }: { importerKey: string, o
       showDownloadTemplateButton={true}
       skipHeaderRowSelection={false}
       importerKey={importerKey}
+      backendUrl={backendUrl}
       onComplete={onComplete}
     />
-  ), [importerKey, onComplete]);
+  ), [importerKey, backendUrl, onComplete]);
 }
 
 export default function ImporterPreviewPage() {
