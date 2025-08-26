@@ -1,213 +1,328 @@
 <div align="center">
 
-# ⚡ ImportCSV: Open Source CSV Importer
+# ImportCSV
 
-<p align="center">
-  <strong>The open-source CSV import solution for modern web applications</strong>
-</p>
+### The AI-powered CSV importer for React applications
 
-<p align="center">
-  <em>Import rows in seconds with intelligent column mapping and validation</em>
-</p>
+[![Frontend License: MIT](https://img.shields.io/badge/Frontend-MIT-blue.svg)](frontend/LICENSE)
+[![Backend License: AGPL-3.0](https://img.shields.io/badge/Backend-AGPL--3.0-green.svg)](backend/LICENSE)
+[![npm version](https://img.shields.io/npm/v/@importcsv/react)](https://www.npmjs.com/package/@importcsv/react)
 
-[![Importer License: MIT](https://img.shields.io/badge/Frontend_License-MIT-blue.svg)](frontend/LICENSE)
-[![Backend License: AGPL-3.0](https://img.shields.io/badge/Backend_License-AGPL--3.0-green.svg)](backend/LICENSE)
-[![Admin License: AGPL-3.0](https://img.shields.io/badge/Admin_License-AGPL--3.0-green.svg)](admin/LICENSE)
-[![Slack](https://img.shields.io/badge/Slack-Join%20Community-4A154B?logo=slack)](https://importcsv.slack.com)
+[Documentation](https://docs.importcsv.com) | [Live Demo](https://demo.importcsv.com) | [API Reference](http://localhost:8000/docs) | [Join Slack](https://importcsv.slack.com)
 
-<p align="center">
-  <a href="#quick-start">Quick Start</a> •
-  <a href="#documentation">Docs</a> •
-  <a href="#demo">Demo</a> •
-  <a href="#contributing">Contributing</a>
-</p>
+</div>
+
+## What is ImportCSV?
+
+A React component that handles CSV imports with automatic column mapping and data validation.
+
+**Two ways to use it:**
+- **Local Mode**: Everything runs in the browser. No backend needed.
+- **Backend Mode**: Adds AI column mapping and natural language transformations with OpenAI.
+
+## How It Works
+
+### Local Mode
+1. Users upload CSV/Excel files
+2. Virtual scrolling handles large files without crashing
+3. Built-in validation catches errors (email, phone, date formats)
+4. Transformations clean the data (trim, capitalize, normalize)
+5. You get clean, validated JSON
+
+### Backend Mode (with AI)
+1. Same upload experience
+2. OpenAI automatically maps columns based on names and sample data
+3. Users can fix errors with natural language ("fix all phone numbers")
+4. Background processing with Redis Queue for large files
+5. Webhook notifications when imports complete
 
 ## Demo
 
 https://github.com/user-attachments/assets/bca218fa-9fd1-4beb-abed-f3b1d745946a
 
+## Getting Started
 
-## Features
+ImportCSV works in two modes:
 
-<div align="center">
-  <img src="docs/assets/importer.png" alt="ImportCSV Demo" width="800">
-  <img src="docs/assets/schema.png" alt="ImportCSV Demo" width="800">
-  <img src="docs/assets/mapping.png" alt="ImportCSV Demo" width="800">
-  <img src="docs/assets/validation.png" alt="ImportCSV Demo" width="800">
-  <img src="docs/assets/webhooks.png" alt="ImportCSV Demo" width="800">
-</div>
-
-</div>
-
-## 🚀 Why ImportCSV?
-
-Data importing is a critical but challenging part of any business application. ImportCSV solves this with a **production-ready**, **fully customizable** solution that handles the entire CSV import workflow:
-
-- 📊 **Simple UI** - Polished, responsive interface for uploading and mapping data
-- 🔄 **Intelligent Mapping** - Automatically matches columns to your schema
-- ⚡ **High Performance** - Process millions of rows with background queue processing
-- 🔌 **Easy Integration** - Drop-in React components for any web application
-- 🔒 **Secure** - Built-in authentication and data validation
-
-## ✨ Key Features
-
-- **Smart Column Mapping** - Fuzzy matching of source columns to destination fields
-- **Multi-Format Support** - Import from CSV, XLS, XLSX, and TSV files
-- **Scalable Processing** - Redis Queue for handling large imports in the background
-- **Secure Authentication** - JWT-based auth with automatic token refresh
-- **Embeddable Components** - React SDK for seamless integration into any app
-- **Comprehensive Validation** - Client and server-side validation with detailed feedback
-- **Webhook Integration** - Connect with your existing systems and workflows
-- **Customizable UI** - Tailor the interface to match your application's design
-
-## 🏗️ Architecture
-
-ImportCSV consists of three main components working together seamlessly:
-
-- **Backend API** - FastAPI server with Redis Queue for background processing
-- **Frontend SDK** - React components for file uploads and column mapping
-- **Admin Dashboard** - Next.js application for managing and monitoring imports
-
-## 🛠️ Tech Stack
-
-- **Backend**: Python, FastAPI, SQLAlchemy, Redis Queue, PostgreSQL
-- **Frontend**: TypeScript, React, Tailwind CSS
-- **Admin**: Next.js, TypeScript, Shadcn UI
-- **Deployment**: Docker & Docker Compose
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Docker & Docker Compose installed
-- Git for cloning the repository
-
-### One-Command Setup with Docker
-
-```bash
-# Clone the repository
-git clone https://github.com/abhishekray07/importcsv.git
-cd importcsv
-
-# Start all services
-docker-compose up -d
-```
-
-This starts the complete stack:
-
-- **PostgreSQL database** (port 5432)
-- **Redis** for queue management (port 6379)
-- **Backend API server** (http://localhost:8000)
-- **Background worker** for processing imports
-- **Admin dashboard** (http://localhost:3000)
-
-### Accessing the Services
-
-- **Admin Dashboard**: http://localhost:3000
-  - Default login: Use the sign-up page to create your first admin account
-  - Manage importers, view imports, configure webhooks
-  
-- **API Documentation**: http://localhost:8000/docs
-  - Interactive API documentation (Swagger/OpenAPI)
-  - Test endpoints directly from the browser
-
-### First-Time Setup
-
-After starting the services:
-
-1. **Run database migrations** (if not auto-applied):
-   ```bash
-   docker-compose exec backend alembic upgrade head
-   ```
-
-2. **Create your admin account**:
-   - Visit http://localhost:3000/auth/signup
-   - Register with your email and password
-
-3. **Create your first importer**:
-   - Log in to the admin dashboard
-   - Click "New Importer" to configure your first CSV import schema
-
-### Stopping the Services
-
-```bash
-docker-compose down
-
-# To also remove volumes (database data):
-docker-compose down -v
-```
-
-## 📚 Documentation
-
-Detailed documentation for each component:
-
-- [Backend API Documentation](./backend/README.md)
-- [Frontend SDK Documentation](./frontend/README.md)
-- [Admin Dashboard Documentation](./admin/README.md)
-- [API Reference](./backend/docs/api.md)
-
-## 🔌 Integration
-
-### Using the React SDK
+### Option 1: Local Mode (No Backend Required)
+Perfect for getting started quickly. Configure everything in your React code.
 
 ```jsx
-import { CSVImporter } from "csv-import-react";
+import { CSVImporter } from "@importcsv/react";
 
-function MyImportPage() {
+function App() {
   return (
     <CSVImporter
-      importerKey="your-importer-key"
-      onComplete={(result) => console.log("Import complete!", result)}
+      columns={[
+        { id: 'name', label: 'Name', validators: [{ type: 'required' }] },
+        { id: 'email', label: 'Email', validators: [{ type: 'email' }] },
+        { id: 'phone', label: 'Phone' }
+      ]}
+      onComplete={(data) => console.log("Import complete!", data)}
     />
   );
 }
 ```
 
-### Publishing for Local Development
+### Option 2: Backend Mode (Full Features)
+For production apps with centralized configuration, AI features, and background processing.
 
-```bash
-cd frontend
-yarn publish:local:react
+```jsx
+import { CSVImporter } from "@importcsv/react";
 
-cd {YOUR_PROJECT_PATH}
-yalc add csv-import-react
+function App() {
+  return (
+    <CSVImporter
+      importerKey="contacts"
+      backendUrl="https://your-api.com"  // Your backend API
+      onComplete={(data) => console.log("Import complete!", data)}
+    />
+  );
+}
 ```
 
-See the [Frontend README](./frontend/README.md) for detailed integration instructions.
+**Which mode should I use?** Local mode for quick prototypes and simple needs. Backend mode for production apps with AI features, webhooks, and team collaboration. [See detailed comparison](#local-vs-backend-mode)
 
-## 🔮 Roadmap
+## Features
 
-Upcoming features:
+<details>
+<summary><b>Automatic Column Mapping</b></summary>
 
-- **Multiple Destinations** - Export to different target systems
-- **Dynamic Schema Detection** - Runtime schema configuration
-- **Advanced Validation Rules** - Custom validation logic
-- **Data Transformations** - Apply transformations during import
-- **Analytics Dashboard** - Import statistics and performance tracking
-- **AI-Powered Data Cleaning** - Automatic data normalization
+Uses OpenAI to match CSV columns to your schema (Backend Mode only).
 
-## 👥 Contributing
+**Example:**
+Your schema expects `email`, but the CSV has `Customer Email Address`.
+ImportCSV automatically maps them together.
 
-We welcome contributions! Here's how to get started:
+**How it works:**
+- Sends column names + sample data to OpenAI
+- Returns mapping suggestions with confidence scores
+- Caches results in Redis for repeated imports
 
-1. Fork the repository
-2. Create your feature branch: `git checkout -b feature/amazing-feature`
-3. Commit your changes: `git commit -m 'Add some amazing feature'`
-4. Push to the branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
+**Code:**
+```javascript
+// Your schema
+const columns = [
+  { id: "email", label: "Email" },
+  { id: "name", label: "Name" },
+  { id: "phone", label: "Phone" }
+];
 
-## 📝 License
+// CSV has: "Customer Email", "Full Name", "Telephone"
+// AI maps them automatically to your schema
+```
 
-This project uses a dual-licensing approach:
+</details>
 
-- **Frontend** (`/frontend`) - MIT License for the embeddable CSV import component
-- **Backend** (`/backend`) - AGPL-3.0 License for the API server and business logic
-- **Admin** (`/admin`) - AGPL-3.0 License for the administration dashboard
+<details>
+<summary><b>Natural Language Transformations</b></summary>
 
-See the [LICENSE](LICENSE) file for the complete licensing details.
+Fix data issues by describing what you want in plain English (Backend Mode only).
 
-### Why Dual Licensing?
+**Example commands:**
+- "Fix all email addresses"
+- "Format phone numbers as (XXX) XXX-XXXX"
+- "Convert dates to YYYY-MM-DD"
+- "Capitalize all names"
+- "Remove special characters"
 
-We use MIT for the frontend to encourage widespread adoption and easy integration into your applications, while AGPL for the backend ensures that improvements to the server-side software remain open source when deployed as a service.
+**How it works:**
+- Uses BAML templates for structured AI prompts
+- OpenAI processes the transformation request
+- Returns specific cell changes for review
+- User accepts or rejects each change
 
-For organizations requiring different licensing terms for the backend and admin components, commercial licenses are available. Contact us for more information.
+</details>
+
+<details>
+<summary><b>Data Validation</b></summary>
+
+Built-in validators for common data types (works in both modes).
+
+**Available validators:**
+- Required fields
+- Email format
+- Phone number format
+- Date validation
+- Number ranges (min/max)
+- Regex patterns
+- Custom validation functions
+
+**Example:**
+```jsx
+const columns = [
+  {
+    id: "email",
+    label: "Email",
+    validators: [
+      { type: "required" },
+      { type: "email" }
+    ]
+  }
+];
+```
+
+Users see validation errors inline and can fix them before import.
+
+</details>
+
+<details>
+<summary><b>Performance & Large Files</b></summary>
+
+**Local Mode:**
+- Virtual scrolling with @tanstack/react-virtual
+- Handles up to 100,000 rows in browser
+- Memory usage: ~2x file size
+
+**Backend Mode:**
+- Redis Queue for background processing
+- Chunked processing for files >50MB
+- Can handle 1GB+ files
+- Webhook notifications when complete
+
+</details>
+
+## Local vs Backend Mode
+
+<details>
+<summary><b>Choosing Between Local and Backend Mode</b></summary>
+
+### Quick Comparison
+
+| Feature | Local Mode | Backend Mode |
+|---------|------------|--------------|
+| **Setup Time** | 2 minutes | 30 minutes |
+| **Configuration** | In React code | Admin dashboard |
+| **AI Column Mapping** | ❌ No | ✅ Yes (OpenAI) |
+| **Natural Language Transforms** | ❌ No | ✅ Yes |
+| **Large Files (>10MB)** | Limited | ✅ Background processing |
+| **Webhooks** | ❌ Manual | ✅ Built-in |
+| **Team Collaboration** | ❌ Code changes | ✅ Admin UI |
+| **Multiple Environments** | Code duplication | ✅ Shared configs |
+| **Data Privacy** | Client-side only | ✅ Self-hosted option |
+
+### When to Use Local Mode
+
+- **Quick prototypes** or proof of concepts
+- **Simple imports** with static schemas
+- **Single developer** projects
+- **No backend** infrastructure available
+- **Client-side only** applications
+
+### When to Use Backend Mode
+
+- **Production applications** with complex needs
+- **AI features** for smart column mapping
+- **Team collaboration** on import configurations
+- **Webhook notifications** to other systems
+- **Large file processing** with background jobs
+- **Multiple applications** sharing configs
+- **Audit trails** and import history
+
+### Migration Path
+Start with Local Mode for quick development, then migrate to Backend Mode when you need advanced features:
+1. Set up backend infrastructure (Docker makes this easy)
+2. Create importers in admin dashboard
+3. Replace `columns` prop with `importerKey` and `backendUrl`
+
+</details>
+
+## Installation
+
+### For Local Mode (Quick Start)
+
+```bash
+npm install @importcsv/react
+# or
+yarn add @importcsv/react
+```
+
+### For Backend Mode (Full Features)
+
+```bash
+# Clone and start all services with Docker
+git clone https://github.com/abhishekray07/importcsv.git
+cd importcsv
+docker-compose up -d
+
+# Access services
+# Admin Dashboard: http://localhost:3000
+# API: http://localhost:8000/docs
+```
+
+
+## Configuration
+
+### Enable AI Features (Backend Mode Only)
+
+To enable AI column mapping and natural language transformations in Backend Mode:
+
+1. Add to your backend `.env` file:
+```bash
+# Required for AI features
+OPENAI_API_KEY=sk-xxxxx
+```
+
+2. Restart the backend service:
+```bash
+docker-compose restart backend
+```
+
+**Note:** AI features are only available in Backend Mode. In Local Mode, column mapping uses fuzzy string matching.
+
+## Why ImportCSV?
+
+| | Build Your Own | ImportCSV Local | ImportCSV + Backend |
+|--|---------------|-----------------|---------------------|
+| Setup time | Weeks | 5 minutes | 30 minutes |
+| Column mapping | Manual UI | Fuzzy matching | AI-powered (OpenAI) |
+| Large files | Custom solution | Virtual scrolling | Background processing |
+| Data validation | Write validators | Built-in validators | Built-in + AI fixes |
+| Transformations | Custom code | Built-in transforms | Natural language |
+
+## Technical Stack
+
+**Frontend:**
+- Virtual scrolling with @tanstack/react-virtual
+- Built-in validators (email, phone, date, regex)
+- Transformations (trim, capitalize, normalize)
+- TypeScript + React/Preact
+
+**Backend (Optional):**
+- FastAPI + PostgreSQL + Redis
+- OpenAI integration via LiteLLM and BAML
+- Background jobs with Redis Queue (RQ)
+- Webhook notifications
+
+## Limitations
+
+- AI features require OpenAI API key (Backend Mode only)
+- Natural language commands are English-only
+- No built-in deduplication
+- React/Preact only (no Vue/Angular versions)
+- No streaming upload (files loaded to memory first)
+
+## Community & Support
+
+- [Slack Community](https://importcsv.slack.com) - Get help and share feedback
+- [Documentation](https://docs.importcsv.com) - Guides and API reference
+- [GitHub Issues](https://github.com/importcsv/importcsv/issues) - Bug reports and feature requests
+
+## Contributing
+
+We welcome contributions! See our [Contributing Guide](CONTRIBUTING.md) for details.
+
+```bash
+# Quick start for contributors
+git clone https://github.com/importcsv/importcsv.git
+cd importcsv
+docker-compose up -d
+```
+
+## License
+
+- **Frontend** (`/frontend`): MIT License - Use freely in your applications
+- **Backend** (`/backend`): AGPL-3.0 - Modifications must be open sourced
+- **Admin** (`/admin`): AGPL-3.0 - Modifications must be open sourced
+
+For commercial licensing options, [contact us](mailto:support@importcsv.com).

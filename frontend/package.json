@@ -1,7 +1,7 @@
 {
   "name": "@importcsv/react",
   "version": "0.2.3",
-  "description": "Open-source CSV and XLS/XLSX file importer for React and JavaScript",
+  "description": "AI-powered CSV importer for React. Smart column mapping with OpenAI, natural language transformations. Self-hosted.",
   "main": "build/react/index.js",
   "module": "build/react/index.esm.js",
   "exports": {

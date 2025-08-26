@@ -1,6 +1,7 @@
 {
   "name": "docs",
   "version": "0.0.0",
+  "description": "Documentation for ImportCSV - AI-powered CSV importer",
   "private": true,
   "scripts": {
     "build": "next build",

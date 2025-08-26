@@ -1,6 +1,7 @@
 {
   "name": "importcsv-admin",
   "version": "0.1.0",
+  "description": "Admin dashboard for ImportCSV - AI-powered CSV importer",
   "private": true,
   "license": "AGPL-3.0",
   "scripts": {
