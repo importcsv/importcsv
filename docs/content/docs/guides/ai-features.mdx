@@ -1,0 +1,80 @@
+---
+title: AI-Powered Features
+description: Smart column mapping and natural language data transformations
+---
+
+ImportCSV includes AI features to make data imports smarter and faster.
+
+## Smart Column Mapping
+
+Automatically suggests which CSV columns map to your schema fields using AI. The system analyzes column names and sample data to provide intelligent mapping suggestions with confidence scores.
+
+When you upload a CSV, the AI:
+- Analyzes column names and sample data
+- Suggests the best matches for your schema
+- Shows confidence scores for each suggestion
+- Falls back to string similarity if AI is unavailable
+
+## Natural Language Transformations
+
+Fix validation errors and transform data using simple prompts. Just describe what you want in plain English.
+
+### Common transformations:
+- "Fix all email addresses"
+- "Convert dates to YYYY-MM-DD format"
+- "Format phone numbers as (XXX) XXX-XXXX"
+- "Capitalize all names"
+- "Remove special characters"
+- "Fill empty values with N/A"
+
+### How it works:
+1. Click the transformation button in the validation step
+2. Type your transformation request
+3. Preview the changes with confidence scores
+4. Select/deselect specific changes
+5. Apply the transformations
+
+## Setup
+
+Enable AI features by providing these props to your CSVImporter:
+
+```tsx
+<CSVImporter
+  columns={columns}
+  backendUrl="https://your-api.com"  // Your backend API URL
+  importerKey="your-importer-key"     // Your importer key
+  onComplete={handleComplete}
+/>
+```
+
+## Backend Configuration
+
+Add this to your backend `.env` file:
+
+```bash
+# AI Features (optional but recommended)
+OPENAI_API_KEY=sk-xxxxx
+```
+
+The AI features will gracefully degrade if not configured - column mapping will use string similarity and transformations will be unavailable.
+
+## Technology
+
+Built with [BAML](https://github.com/BoundaryML/baml) for reliable AI prompt engineering and OpenAI GPT models. Results are cached in Redis for better performance and cost efficiency.
+
+## Examples
+
+### Fixing validation errors:
+When validation errors occur, the AI can automatically fix them:
+- Invalid emails are corrected
+- Dates are reformatted to match requirements  
+- Phone numbers are normalized
+
+### Bulk transformations:
+Transform entire columns at once:
+- Standardize date formats across all rows
+- Clean and format phone numbers
+- Normalize text casing
+- Remove unwanted characters
+
+The AI understands context and applies appropriate transformations based on the data type and validation rules.
