@@ -1,6 +1,6 @@
 {
   "name": "@importcsv/react",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "description": "Open-source CSV and XLS/XLSX file importer for React and JavaScript",
   "main": "build/react/index.js",
   "module": "build/react/index.esm.js",
@@ -62,6 +62,9 @@
     "watch:react": "vite build --watch --mode react",
     "watch:preact": "vite build --watch --mode preact",
     "watch:bundled": "vite build --watch --mode bundled",
+    "publish:react": "npm version patch && npm run build:react && npm publish",
+    "publish:react:minor": "npm version minor && npm run build:react && npm publish",
+    "publish:react:major": "npm version major && npm run build:react && npm publish",
     "yalc:publish": "npm run build:react && yalc publish --push",
     "yalc:watch": "npm run watch:react & yalc publish --push --changed"
   },
