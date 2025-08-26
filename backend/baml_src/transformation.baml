@@ -73,7 +73,7 @@ function FixValidationErrors(
   row_data: RowData[],
   validation_rules: ValidationRule[]  // Changed from map to array
 ) -> TransformationResult {
-  client "openai/gpt-4o-mini"
+  client "openai/gpt-4.1"
   prompt #"
     Fix ONLY these rows with validation errors:
 
