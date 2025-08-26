@@ -53,11 +53,6 @@ export default function SignIn() {
     }
   };
 
-  const handleOAuthSignIn = (provider: string) => {
-    setIsLoading(true);
-    signIn(provider, { callbackUrl });
-  };
-
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
       <Card className="w-full max-w-md">
@@ -100,42 +95,6 @@ export default function SignIn() {
               {isLoading ? 'Signing in...' : 'Sign In'}
             </Button>
           </form>
-
-          {(process.env.NEXT_PUBLIC_GITHUB_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID) && (
-            <>
-              <div className="relative my-4">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white dark:bg-gray-950 px-2 text-muted-foreground">
-                    Or continue with
-                  </span>
-                </div>
-              </div>
-              
-              <div className="grid gap-2">
-                {process.env.NEXT_PUBLIC_GITHUB_ID && (
-                  <Button
-                    variant="outline"
-                    onClick={() => handleOAuthSignIn('github')}
-                    disabled={isLoading}
-                  >
-                    Continue with GitHub
-                  </Button>
-                )}
-                {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID && (
-                  <Button
-                    variant="outline"
-                    onClick={() => handleOAuthSignIn('google')}
-                    disabled={isLoading}
-                  >
-                    Continue with Google
-                  </Button>
-                )}
-              </div>
-            </>
-          )}
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
           <div className="text-sm text-muted-foreground text-center">
