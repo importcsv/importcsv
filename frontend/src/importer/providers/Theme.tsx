@@ -1,6 +1,5 @@
 import { useEffect, useMemo } from "preact/hooks";
 import type { JSX } from 'preact';
-import { Toaster } from "../components/ui/toaster";
 import { ThemeProps } from "./types";
 import { applyColorPalette } from "../utils/colorUtils";
 import { ThemeConfig, defaultTheme, presetThemes } from "../../types/theme";
@@ -80,7 +79,6 @@ export default function ThemeProvider({
   return (
     <>
       {children}
-      <Toaster />
     </>
   );
 }

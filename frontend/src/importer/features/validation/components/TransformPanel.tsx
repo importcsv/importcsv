@@ -4,7 +4,6 @@ import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Checkbox } from '../../../components/ui/checkbox';
 import { Alert, AlertDescription } from '../../../components/ui/alert';
-import { useToast } from '../../../components/ui/use-toast';
 import { Sparkles, X, Check, Info, AlertCircle, ChevronRight } from 'lucide-react';
 import { useTranslation } from '../../../../i18n/useTranslation';
 import {
@@ -52,7 +51,6 @@ export default function TransformPanel({
   onApplyTransformations
 }: TransformPanelProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
   const promptInputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -173,13 +171,8 @@ export default function TransformPanel({
     // Pass the selected changes directly to the parent
     onApplyTransformations(selectedChanges);
 
-    toast({
-      title: 'Transformations applied',
-      description: `${selectedChanges.length} changes applied successfully`,
-    });
-
     onClose();
-  }, [changes, onApplyTransformations, onClose, toast]);
+  }, [changes, onApplyTransformations, onClose]);
 
   // Toggle change selection
   const handleToggleChange = useCallback((index: number) => {

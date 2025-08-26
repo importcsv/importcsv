@@ -11,7 +11,6 @@ import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Checkbox } from '../../../components/ui/checkbox';
 import { Alert, AlertDescription } from '../../../components/ui/alert';
-import { useToast } from '../../../components/ui/use-toast';
 import { Sparkles, X, Check, Info } from 'lucide-react';
 import { useTranslation } from '../../../../i18n/useTranslation';
 import {
@@ -50,7 +49,6 @@ export default function TransformModal({
   onApplyTransformations
 }: TransformModalProps) {
   const { t } = useTranslation();
-  const { toast } = useToast();
   const promptInputRef = useRef<HTMLInputElement>(null);
 
   // State
@@ -118,13 +116,8 @@ export default function TransformModal({
     // Pass the selected changes directly to the parent
     onApplyTransformations(selectedChanges);
     
-    toast({
-      title: 'Transformations applied',
-      description: `${selectedChanges.length} changes applied successfully`,
-    });
-    
     onClose();
-  }, [changes, onApplyTransformations, onClose, toast]);
+  }, [changes, onApplyTransformations, onClose]);
 
   // Toggle change selection
   const handleToggleChange = useCallback((index: number) => {
