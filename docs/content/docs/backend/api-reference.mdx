@@ -39,10 +39,17 @@ Response:
   {
     "id": "uuid",
     "name": "Customer Import",
-    "key": "cust_import_001",
+    "key": "uuid-key-string",
+    "description": "Import customer data",
     "fields": [...],
     "webhook_url": "https://example.com/webhook",
     "webhook_enabled": true,
+    "include_data_in_webhook": false,
+    "webhook_data_sample_size": 10,
+    "include_unmatched_columns": false,
+    "filter_invalid_rows": false,
+    "disable_on_invalid_rows": false,
+    "dark_mode": false,
     "created_at": "2024-01-01T00:00:00Z"
   }
 ]
@@ -61,24 +68,36 @@ Response:
 {
   "id": "uuid",
   "name": "Customer Import",
-  "key": "cust_import_001",
+  "key": "uuid-key-string",
+  "description": "Import customer data",
   "fields": [
     {
       "name": "email",
-      "label": "Email Address",
+      "display_name": "Email Address",
+      "id": "email",              // Computed from name
+      "label": "Email Address",    // Computed from display_name
       "type": "email",
-      "required": true,
       "validators": [
         {
           "type": "required",
           "message": "Email is required"
         }
       ],
-      "transformations": ["trim", "lowercase"]
+      "transformations": [
+        { "type": "trim" },
+        { "type": "lowercase" }
+      ],
+      "options": null
     }
   ],
   "webhook_url": "https://example.com/webhook",
   "webhook_enabled": true,
+  "include_data_in_webhook": false,
+  "webhook_data_sample_size": 10,
+  "include_unmatched_columns": false,
+  "filter_invalid_rows": false,
+  "disable_on_invalid_rows": false,
+  "dark_mode": false,
   "created_at": "2024-01-01T00:00:00Z",
   "updated_at": "2024-01-01T00:00:00Z"
 }
@@ -96,23 +115,33 @@ Request body:
 ```json
 {
   "name": "Customer Import",
+  "description": "Import customer data",
   "fields": [
     {
       "name": "email",
-      "label": "Email Address",
+      "display_name": "Email Address",
       "type": "email",
-      "required": true,
       "validators": [
         {
           "type": "required",
           "message": "Email is required"
         }
       ],
-      "transformations": ["trim", "lowercase"]
+      "transformations": [
+        { "type": "trim" },
+        { "type": "lowercase" }
+      ],
+      "options": null
     }
   ],
   "webhook_url": "https://example.com/webhook",
-  "webhook_enabled": true
+  "webhook_enabled": true,
+  "include_data_in_webhook": false,
+  "webhook_data_sample_size": 10,
+  "include_unmatched_columns": false,
+  "filter_invalid_rows": false,
+  "disable_on_invalid_rows": false,
+  "dark_mode": false
 }
 ```
 
@@ -230,7 +259,29 @@ Supported field types for importer configuration:
 - `email`: Email validation
 - `number`: Numeric values
 - `date`: Date fields
+- `phone`: Phone number fields
+- `boolean`: Boolean values
 - `select`: Dropdown with options
+- `custom_regex`: Custom regex validation
+
+## Field Schema
+
+Each field in the importer configuration has this structure:
+
+```json
+{
+  "name": "field_id",              // Required: unique identifier
+  "display_name": "Field Label",   // Optional: human-readable name
+  "type": "text",                  // Required: field type
+  "validators": [...],              // Optional: validation rules
+  "transformations": [...],         // Optional: data transformations
+  "options": [...]                  // Optional: for select type
+}
+```
+
+**Note:** The backend automatically computes:
+- `id` property from `name` (for Column format compatibility)
+- `label` property from `display_name` or auto-generates from `name`
 
 ## Validators
 
@@ -244,21 +295,37 @@ Available validation rules:
 }
 ```
 
-### Min/Max Length
+### Min/Max Length (for strings)
 ```json
 {
-  "type": "minLength",
+  "type": "min_length",
   "value": 3,
   "message": "Minimum 3 characters"
 }
 ```
 
-### Min/Max Value
 ```json
 {
-  "type": "minValue",
+  "type": "max_length",
+  "value": 50,
+  "message": "Maximum 50 characters"
+}
+```
+
+### Min/Max Value (for numbers)
+```json
+{
+  "type": "min",
   "value": 0,
   "message": "Must be positive"
+}
+```
+
+```json
+{
+  "type": "max",
+  "value": 100,
+  "message": "Must be 100 or less"
 }
 ```
 
@@ -283,12 +350,32 @@ Available validation rules:
 
 Available data transformations:
 
-- `trim`: Remove whitespace
-- `uppercase`: Convert to uppercase
-- `lowercase`: Convert to lowercase
-- `normalizePhone`: Format phone numbers
-- `normalizeDate`: Standardize dates
-- `removeSpecialChars`: Strip special characters
+```json
+{
+  "transformations": [
+    { "type": "trim" },
+    { "type": "uppercase" },
+    { "type": "lowercase" },
+    { "type": "capitalize" },
+    { "type": "remove_special_chars" },
+    { "type": "normalize_phone" },
+    { "type": "normalize_date", "format": "YYYY-MM-DD" },
+    { "type": "default", "value": "N/A" },
+    { "type": "replace", "find": " ", "replace": "_" }
+  ]
+}
+```
+
+Transformation types:
+- `trim`: Remove leading/trailing whitespace
+- `uppercase`: Convert to UPPERCASE
+- `lowercase`: Convert to lowercase  
+- `capitalize`: Capitalize First Letter Of Each Word
+- `remove_special_chars`: Keep only alphanumeric and spaces
+- `normalize_phone`: Format phone numbers (US format)
+- `normalize_date`: Parse and format dates
+- `default`: Replace empty values with default
+- `replace`: Find and replace strings
 
 ## Webhook Events
 
@@ -325,6 +412,27 @@ When webhook is enabled, the following events are sent:
   "timestamp": "2024-01-01T00:00:00Z"
 }
 ```
+
+## Importer Configuration Options
+
+Additional configuration options for importers:
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `include_unmatched_columns` | `boolean` | `false` | Include CSV columns not defined in schema |
+| `filter_invalid_rows` | `boolean` | `false` | Filter out rows that fail validation |
+| `disable_on_invalid_rows` | `boolean` | `false` | Prevent import if any row has errors |
+| `include_data_in_webhook` | `boolean` | `false` | Include processed data in webhook payload |
+| `webhook_data_sample_size` | `number` | `null` | Number of rows to include in webhook sample |
+| `dark_mode` | `boolean` | `false` | Enable dark mode for the importer UI |
+
+### Invalid Row Handling
+
+Control how the importer handles validation errors:
+
+- **`disable_on_invalid_rows: true`**: Blocks import if ANY row has errors (strictest)
+- **`filter_invalid_rows: true`**: Filters out invalid rows, imports only valid ones
+- **Neither set**: Imports all rows with warnings for invalid ones (most permissive)
 
 ## Error Responses
 

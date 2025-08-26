@@ -7,21 +7,29 @@ description: Complete API documentation for ImportCSV
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `columns` | `Column[]` | required | Column definitions |
+| `columns` | `Column[]` | - | Column definitions (required for local mode) |
 | `onComplete` | `(data: ImportData) => void` | - | Callback when import completes |
 | `isModal` | `boolean` | `true` | Show as modal vs embedded |
-| `modalIsOpen` | `boolean` | `false` | Control modal state |
+| `modalIsOpen` | `boolean` | `true` | Control modal state |
 | `modalOnCloseTriggered` | `() => void` | - | Modal close callback |
 | `modalCloseOnOutsideClick` | `boolean` | `false` | Close on outside click |
-| `darkMode` | `boolean` | `false` | Enable dark theme |
-| `primaryColor` | `string` | - | Primary color (hex) |
-| `customStyles` | `object` | - | CSS variable overrides |
+| `theme` | `ThemeConfig \| string` | - | Theme configuration or preset name |
+| `darkMode` | `boolean` | `false` | Enable dark theme (backward compatibility) |
+| `primaryColor` | `string` | `#2563eb` | Primary color (hex) |
+| `customStyles` | `object \| string` | - | CSS variable overrides |
+| `classNames` | `object` | - | Custom class names for components |
 | `showDownloadTemplateButton` | `boolean` | `true` | Show template download |
 | `skipHeaderRowSelection` | `boolean` | `false` | Auto-select first row as header |
+| `waitOnComplete` | `boolean` | `false` | Wait for async operations on complete |
 | `invalidRowHandling` | `'include' \| 'exclude' \| 'block'` | `'block'` | How to handle rows with validation errors |
 | `includeUnmatchedColumns` | `boolean` | `false` | Include CSV columns not defined in schema |
-| `backendUrl` | `string` | - | Backend API URL (enables AI features) |
-| `importerKey` | `string` | - | Importer key for AI features |
+| `language` | `string` | - | Language for internationalization |
+| `customTranslations` | `object` | - | Custom translation resources |
+| `importerKey` | `string` | - | Importer key for backend mode |
+| `backendUrl` | `string` | - | Backend API URL (for backend mode) |
+| `user` | `object` | - | User context for backend mode |
+| `metadata` | `object` | - | Additional metadata for import |
+| `demoData` | `object` | - | Demo data for testing |
 
 ## Import Behavior Options
 
@@ -119,10 +127,10 @@ type Validator =
   | { type: 'required'; message?: string }
   | { type: 'unique'; message?: string }
   | { type: 'regex'; pattern: string; message?: string }
-  | { type: 'min'; value: number; message?: string }
-  | { type: 'max'; value: number; message?: string }
-  | { type: 'min_length'; value: number; message?: string }
-  | { type: 'max_length'; value: number; message?: string };
+  | { type: 'min'; value: number; message?: string }         // For number fields
+  | { type: 'max'; value: number; message?: string }         // For number fields
+  | { type: 'min_length'; value: number; message?: string }  // For string fields
+  | { type: 'max_length'; value: number; message?: string }; // For string fields
 ```
 
 ### Examples
@@ -166,7 +174,7 @@ type Transformer =
 | `lowercase` | Converts to lowercase | `"Hello"` | `"hello"` |
 | `capitalize` | Capitalizes first letter of each word | `"john doe"` | `"John Doe"` |
 | `remove_special_chars` | Keeps only letters, numbers, spaces | `"hello@123!"` | `"hello123"` |
-| `normalize_phone` | Formats as international number | `"(555) 123-4567"` | `"+15551234567"` |
+| `normalize_phone` | Formats as US phone number | `"555-123-4567"` | `"(555) 123-4567"` |
 | `normalize_date` | Parses and formats dates | `"01/15/24"` | `"2024-01-15"` |
 | `default` | Replaces empty values | `""` | `"N/A"` |
 | `replace` | String replacement | `"hello world"` | `"hello_world"` |
@@ -184,7 +192,7 @@ transformations: [
 
 // Phone number normalization
 transformations: [
-  { type: 'normalize_phone' }  // "(555) 123-4567" → "+15551234567"
+  { type: 'normalize_phone' }  // "555-123-4567" → "(555) 123-4567"
 ]
 
 // Date formatting
@@ -241,6 +249,9 @@ interface ImportData {
   }>;
   num_rows: number;
   num_columns: number;
+  // When includeUnmatchedColumns is true:
+  mappedData?: any[];      // Data for defined columns
+  unmappedData?: any[];    // Data for extra columns
 }
 ```
 
@@ -299,6 +310,25 @@ ImportCSV automatically enables performance optimizations for large files:
 4. **Consider server-side processing** for files > 10,000 rows
 
 See the [Performance Guide](/core-concepts/performance) for detailed information.
+
+## Component Class Names
+
+Customize component classes with the `classNames` prop:
+
+```tsx
+classNames={{
+  root: 'my-importer',
+  modal: 'my-modal',
+  header: 'my-header',
+  stepper: 'my-stepper',
+  content: 'my-content',
+  footer: 'my-footer',
+  button: 'my-button',
+  input: 'my-input',
+  table: 'my-table',
+  dropzone: 'my-dropzone'
+}}
+```
 
 ## Custom Styles
 
