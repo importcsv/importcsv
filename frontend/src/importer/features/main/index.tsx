@@ -18,7 +18,7 @@ import ConfigureImport from "../configure-import";
 import Uploader from "../uploader";
 import { X } from "lucide-react";
 import { useTranslation } from "../../../i18n/useTranslation";
-import config from "../../../config";
+import { getApiBaseUrl } from "../../../config";
 import Root from "../../components/Root";
 
 // Helper function to map backend field type to Column type
@@ -50,7 +50,7 @@ export default function Main(props: CSVImporterProps) {
     includeUnmatchedColumns: propIncludeUnmatchedColumns = false,
     importerKey,
     columns: propColumns, // HelloCSV-style columns for standalone mode
-    backendUrl = config.apiBaseUrl,
+    backendUrl,
     user,
     metadata,
     demoData
@@ -58,6 +58,9 @@ export default function Main(props: CSVImporterProps) {
   const skipHeader = skipHeaderRowSelection ?? false;
   const isDemoMode = !!demoData;
   const isStandaloneMode = !importerKey; // Standalone if no importerKey
+  
+  // Get the API URL (defaults to production API if not provided)
+  const apiUrl = getApiBaseUrl(backendUrl);
 
   const { t } = useTranslation();
 
@@ -155,7 +158,7 @@ export default function Main(props: CSVImporterProps) {
 
       try {
         // Fetch schema from the backend
-        const response = await fetch(`${backendUrl}/api/v1/imports/key/schema?importer_key=${importerKey}`);
+        const response = await fetch(`${apiUrl}/api/v1/imports/key/schema?importer_key=${importerKey}`);
 
         if (!response.ok) {
           throw new Error(`Failed to fetch schema: ${response.statusText}`);
@@ -250,7 +253,7 @@ export default function Main(props: CSVImporterProps) {
     };
 
     fetchSchema();
-  }, [importerKey, backendUrl, isStandaloneMode, propColumns]);
+  }, [importerKey, apiUrl, isStandaloneMode, propColumns]);
 
   useEffect(() => {
     // TODO (client-sdk): Have the importer continue where left off if closed
@@ -367,7 +370,7 @@ export default function Main(props: CSVImporterProps) {
     });
 
     // Use the public endpoint for processing imports
-    const apiEndpoint = `${backendUrl}/api/v1/imports/key/process`;
+    const apiEndpoint = `${apiUrl}/api/v1/imports/key/process`;
 
     // Prepare the request payload
     const payload = {
@@ -549,7 +552,7 @@ export default function Main(props: CSVImporterProps) {
             onCancel={isDemoMode ? undefined : () => goBack(StepEnum.Upload)}
             isSubmitting={isSubmitting}
             importerKey={importerKey}
-            backendUrl={backendUrl}
+            backendUrl={apiUrl}
             isDemoMode={isDemoMode}
           />
         );
@@ -563,7 +566,7 @@ export default function Main(props: CSVImporterProps) {
             onSuccess={handleValidationComplete}
             onCancel={handleBackToMapColumns}
             isSubmitting={isSubmitting}
-            backendUrl={backendUrl}
+            backendUrl={apiUrl}
             importerKey={importerKey}
             filterInvalidRows={filterInvalidRows}
             disableOnInvalidRows={disableOnInvalidRows}

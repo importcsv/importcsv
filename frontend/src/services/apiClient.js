@@ -5,16 +5,16 @@
 import axios from 'axios';
 import { getApiBaseUrl } from '../config';
 
-// Base URL for API requests
-const API_BASE_URL = getApiBaseUrl();
-
-// Create axios instance
-const apiClient = axios.create({
-  baseURL: `${API_BASE_URL}/api/v1`,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
+// Function to create axios instance with dynamic base URL
+const createApiClient = (backendUrl, importerKey) => {
+  const baseUrl = getApiBaseUrl(backendUrl, importerKey);
+  return axios.create({
+    baseURL: `${baseUrl}/api/v1`,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+};
 
 // Storage keys
 const AUTH_TOKEN_KEY = 'authToken';
@@ -39,7 +39,7 @@ const processQueue = (error, token = null) => {
 };
 
 // Function to refresh the access token
-const refreshAccessToken = async () => {
+const refreshAccessToken = async (baseUrl) => {
   try {
     const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
 
@@ -47,7 +47,7 @@ const refreshAccessToken = async () => {
       return Promise.reject('No refresh token available');
     }
 
-    const response = await axios.post(`${API_BASE_URL}/api/v1/auth/refresh`, {
+    const response = await axios.post(`${baseUrl}/api/v1/auth/refresh`, {
       refresh_token: refreshToken
     });
 
@@ -71,8 +71,10 @@ const refreshAccessToken = async () => {
   }
 };
 
-// Request interceptor to add auth token to requests
-apiClient.interceptors.request.use(
+// Function to setup interceptors for an axios instance
+const setupInterceptors = (apiClient, baseUrl) => {
+  // Request interceptor to add auth token to requests
+  apiClient.interceptors.request.use(
   config => {
     const token = localStorage.getItem(AUTH_TOKEN_KEY);
     if (token) {
@@ -113,7 +115,8 @@ apiClient.interceptors.response.use(
 
     try {
       // Attempt to refresh the token
-      const newToken = await refreshAccessToken();
+      const baseUrl = apiClient.defaults.baseURL.replace('/api/v1', '');
+      const newToken = await refreshAccessToken(baseUrl);
 
       // Update the authorization header
       originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
@@ -130,24 +133,33 @@ apiClient.interceptors.response.use(
       isRefreshing = false;
     }
   }
-);
+  );
+  
+  return apiClient;
+};
 
 /**
  * Authentication API
  */
-export const authApi = {
-  /**
-   * Login to get access token
-   * @param {string} email - User email
-   * @param {string} password - User password
-   * @returns {Promise<Object>} - Response with access token
-   */
-  login: async (email, password) => {
-    const formData = new URLSearchParams();
-    formData.append('username', email);
-    formData.append('password', password);
+// Factory function to create API methods with a specific base URL
+const createApiMethods = (backendUrl, importerKey) => {
+  const baseUrl = getApiBaseUrl(backendUrl, importerKey);
+  const apiClient = createApiClient(backendUrl, importerKey);
+  setupInterceptors(apiClient, baseUrl);
+  
+  const authApi = {
+    /**
+     * Login to get access token
+     * @param {string} email - User email
+     * @param {string} password - User password
+     * @returns {Promise<Object>} - Response with access token
+     */
+    login: async (email, password) => {
+      const formData = new URLSearchParams();
+      formData.append('username', email);
+      formData.append('password', password);
 
-    const response = await axios.post(`${API_BASE_URL}/api/v1/auth/jwt/login`, formData, {
+      const response = await axios.post(`${baseUrl}/api/v1/auth/jwt/login`, formData, {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
@@ -188,12 +200,12 @@ export const authApi = {
     const response = await apiClient.get('/auth/me');
     return response.data;
   },
-};
+  };
 
-/**
- * Schema API
- */
-export const schemaApi = {
+  /**
+   * Schema API
+   */
+  const schemaApi = {
   /**
    * Get all schemas
    * @returns {Promise<Array>} - List of schemas
@@ -214,10 +226,10 @@ export const schemaApi = {
   },
 };
 
-/**
- * Import API
- */
-export const importApi = {
+  /**
+   * Import API
+   */
+  const importApi = {
   /**
    * Process CSV data from the frontend importer
    * @param {number} schemaId - Schema ID
@@ -245,10 +257,15 @@ export const importApi = {
   },
 };
 
-// Export all APIs and the axios instance
-export default {
-  client: apiClient,
-  auth: authApi,
-  schema: schemaApi,
-  import: importApi,
+  // Return all APIs and the axios instance
+  return {
+    client: apiClient,
+    auth: authApi,
+    schema: schemaApi,
+    import: importApi,
+  };
 };
+
+// Export the factory function
+export default createApiMethods;
+export { createApiClient, setupInterceptors, createApiMethods };

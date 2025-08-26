@@ -2,36 +2,18 @@
  * Configuration file for environment-specific settings
  */
 
-// Determine the current environment
-const getEnvironment = () => {
-  // For browser environments
-  if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV) {
-    return process.env.NODE_ENV;
-  }
-  
-  // Check if we're in a build for npm package (set in package.json scripts)
-  if (typeof process !== 'undefined' && process.env && process.env.NPM_PACKAGE_BUILD === 'true') {
-    return 'production';
-  }
-
-  // Default to development if environment can't be determined
-  return 'development';
-};
-
-// API URL configuration for different environments
-const API_URLS = {
-  development: 'https://abhishekray07.ngrok.io',
-  production: 'https://api.importcsv.com',
-};
-
-// Get the current API URL based on environment
-export const getApiBaseUrl = () => {
-  const env = getEnvironment();
-  return API_URLS[env] || API_URLS.development;
+/**
+ * Get the API base URL
+ * @param {string} backendUrl - Explicit backend URL from props
+ * @returns {string} The API base URL to use
+ */
+export const getApiBaseUrl = (backendUrl) => {
+  // Use provided URL or default to production API
+  return backendUrl || 'https://api.importcsv.com';
 };
 
 // Export configuration
 export default {
-  apiBaseUrl: getApiBaseUrl(),
+  getApiBaseUrl,
   // Add other configuration settings here
 };

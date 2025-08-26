@@ -1,14 +1,16 @@
 /**
  * API service for communicating with the ImportCSV backend
  */
+import { getApiBaseUrl } from '../config';
 
-// Base URL for API requests
-const API_BASE_URL = 'http://localhost:8090/api';
-
-/**
- * Authentication API
- */
-export const authApi = {
+// Factory function to create API methods with dynamic base URL
+export const createApi = (backendUrl, importerKey) => {
+  const API_BASE_URL = getApiBaseUrl(backendUrl, importerKey);
+  
+  /**
+   * Authentication API
+   */
+  const authApi = {
   /**
    * Login to get access token
    * @param {string} email - User email
@@ -52,12 +54,12 @@ export const authApi = {
     
     return response.json();
   },
-};
+  };
 
-/**
- * Schema API
- */
-export const schemaApi = {
+  /**
+   * Schema API
+   */
+  const schemaApi = {
   /**
    * Get all schemas
    * @param {string} token - Access token
@@ -96,12 +98,12 @@ export const schemaApi = {
     
     return response.json();
   },
-};
+  };
 
-/**
- * Import API
- */
-export const importApi = {
+  /**
+   * Import API
+   */
+  const importApi = {
   /**
    * Process CSV data from the frontend importer
    * @param {string} token - Access token
@@ -149,11 +151,15 @@ export const importApi = {
     
     return response.json();
   },
+  };
+
+  // Return all APIs
+  return {
+    auth: authApi,
+    schema: schemaApi,
+    import: importApi,
+  };
 };
 
-// Export all APIs
-export default {
-  auth: authApi,
-  schema: schemaApi,
-  import: importApi,
-};
+// Export default for backward compatibility
+export default createApi;
