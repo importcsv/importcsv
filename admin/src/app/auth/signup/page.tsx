@@ -11,8 +11,6 @@ import Link from 'next/link';
 import { useToast } from '@/components/ui/use-toast';
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
-
 export default function SignUp() {
   const router = useRouter();
   const { toast } = useToast();
@@ -47,8 +45,8 @@ export default function SignUp() {
     setIsLoading(true);
 
     try {
-      // Register the user with the backend
-      const response = await axios.post(`${API_BASE_URL}/api/v1/auth/register`, {
+      // Register the user via our API route (which handles server-side communication)
+      const response = await axios.post('/api/auth/register', {
         email,
         password,
         full_name: fullName,

@@ -4,7 +4,11 @@ import GithubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import axios from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+// Use different URLs for server-side vs client-side
+// Server-side can use Docker internal hostname, client-side must use localhost
+const API_BASE_URL = typeof window === 'undefined' 
+  ? (process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000")
+  : (process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000");
 
 export const authOptions: NextAuthOptions = {
   providers: [

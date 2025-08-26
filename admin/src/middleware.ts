@@ -25,6 +25,7 @@ export const config = {
     // - api auth routes
     // - public landing page
     // - static files
-    '/((?!auth|api/auth|api/public|_next/static|_next/image|favicon.ico|$).*)',
+    // - posthog analytics endpoint
+    '/((?!auth|api/auth|api/public|ingest|_next/static|_next/image|favicon.ico|$).*)',
   ],
 };

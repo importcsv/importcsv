@@ -79,9 +79,8 @@ ImportCSV consists of three main components working together seamlessly:
 
 ### Prerequisites
 
-- Python 3.11+
-- Node.js 18+
-- Docker & Docker Compose (for deployment)
+- Docker & Docker Compose installed
+- Git for cloning the repository
 
 ### One-Command Setup with Docker
 
@@ -96,13 +95,47 @@ docker-compose up -d
 
 This starts the complete stack:
 
-- PostgreSQL database
-- Redis for queue management
-- Backend API server
-- Frontend development server
-- Admin dashboard
+- **PostgreSQL database** (port 5432)
+- **Redis** for queue management (port 6379)
+- **Backend API server** (http://localhost:8000)
+- **Background worker** for processing imports
+- **Admin dashboard** (http://localhost:3000)
 
-**🌐 Access the admin dashboard at http://localhost:3000**
+### Accessing the Services
+
+- **Admin Dashboard**: http://localhost:3000
+  - Default login: Use the sign-up page to create your first admin account
+  - Manage importers, view imports, configure webhooks
+  
+- **API Documentation**: http://localhost:8000/docs
+  - Interactive API documentation (Swagger/OpenAPI)
+  - Test endpoints directly from the browser
+
+### First-Time Setup
+
+After starting the services:
+
+1. **Run database migrations** (if not auto-applied):
+   ```bash
+   docker-compose exec backend alembic upgrade head
+   ```
+
+2. **Create your admin account**:
+   - Visit http://localhost:3000/auth/signup
+   - Register with your email and password
+
+3. **Create your first importer**:
+   - Log in to the admin dashboard
+   - Click "New Importer" to configure your first CSV import schema
+
+### Stopping the Services
+
+```bash
+docker-compose down
+
+# To also remove volumes (database data):
+docker-compose down -v
+```
 
 ## 📚 Documentation
 

@@ -103,28 +103,24 @@ backend/
    python -m app.worker
    ```
 
-### Clerk Authentication Setup
+### NextAuth Authentication Setup
 
-ImportCSV uses Clerk for authentication. You need to:
+ImportCSV uses NextAuth for authentication, which is configured in the admin dashboard and validated in the backend.
 
-1. **Create a Clerk account** at [clerk.com](https://clerk.com)
+1. **Configure NextAuth Secret**:
+   - Generate a secure secret: `openssl rand -base64 32`
+   - Add to your `.env` file as both `SECRET_KEY` and `NEXTAUTH_SECRET`
 
-2. **Configure Clerk webhook**:
-   - Go to Clerk Dashboard > Webhooks
-   - Add endpoint: `https://your-domain/api/v1/clerk/webhook`
-   - Select events: `user.created`, `user.updated`, `user.deleted`
-   - Copy the webhook secret
-
-3. **Get Clerk keys**:
-   - Go to Clerk Dashboard > API Keys
-   - Copy the JWT public key
-
-4. **Update your `.env` file**:
+2. **Optional OAuth Providers**:
+   For social login, you can configure:
+   - **GitHub**: Create an OAuth app at github.com/settings/developers
+   - **Google**: Create OAuth credentials in Google Cloud Console
+   - Add the credentials to your `.env`:
    ```env
-   CLERK_WEBHOOK_SECRET=whsec_xxxxx  # From webhook configuration
-   CLERK_JWT_PUBLIC_KEY=-----BEGIN PUBLIC KEY-----
-   YOUR_PUBLIC_KEY_HERE
-   -----END PUBLIC KEY-----
+   GITHUB_ID=your-github-oauth-app-id
+   GITHUB_SECRET=your-github-oauth-app-secret
+   GOOGLE_CLIENT_ID=your-google-oauth-client-id
+   GOOGLE_CLIENT_SECRET=your-google-oauth-client-secret
    ```
 
 ### Environment Variables
@@ -142,10 +138,7 @@ RQ_IMPORT_QUEUE=imports
 
 # Security
 SECRET_KEY=your-secret-key-at-least-32-characters
-
-# Clerk Authentication (Required)
-CLERK_WEBHOOK_SECRET=whsec_xxxxx
-CLERK_JWT_PUBLIC_KEY=-----BEGIN PUBLIC KEY-----...
+NEXTAUTH_SECRET=your-secret-key-at-least-32-characters  # Same as SECRET_KEY
 
 # Webhook (for import callbacks)
 WEBHOOK_SECRET=your-webhook-secret
