@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useUser } from '@clerk/nextjs';
+import { useSession } from 'next-auth/react';
 
 // Dynamically import LogRocket to handle loading errors
 let LogRocket: any = null;
@@ -9,7 +9,7 @@ let LogRocket: any = null;
 export function LogRocketProvider({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const { user, isLoaded } = useUser();
+  const { data: session, status } = useSession();
 
   useEffect(() => {
     // Only initialize LogRocket in production
@@ -28,10 +28,10 @@ export function LogRocketProvider({
           LogRocket.init('dwyxun/importcsv');
           
           // Identify user when they're loaded
-          if (isLoaded && user) {
-            LogRocket.identify(user.id, {
-              name: user.fullName || '',
-              email: user.primaryEmailAddress?.emailAddress || '',
+          if (status === 'authenticated' && session?.user) {
+            LogRocket.identify(session.user.id || '', {
+              name: session.user.name || '',
+              email: session.user.email || '',
             });
           }
         }
@@ -44,7 +44,7 @@ export function LogRocketProvider({
     };
 
     initLogRocket();
-  }, [isLoaded, user]);
+  }, [status, session]);
 
   return <>{children}</>;
 }

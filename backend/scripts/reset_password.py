@@ -4,7 +4,7 @@ import os
 import asyncio
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from fastapi_users.password import PasswordHelper
+from passlib.context import CryptContext
 
 # Adjust the path to import from the app directory
 backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
@@ -16,8 +16,8 @@ from app.models.schema import Schema # Add import for Schema model
 from app.models.import_job import ImportJob # Add import for ImportJob model
 from app.models.webhook import WebhookEvent # Add import for WebhookEvent model
 
-# Create a password helper from FastAPI-Users
-password_helper = PasswordHelper()
+# Create password hashing context
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 DATABASE_URL = settings.DATABASE_URL
 engine = create_engine(DATABASE_URL)
@@ -31,8 +31,8 @@ def reset_user_password(email: str, new_password: str):
             print(f"Error: User with email {email} not found.")
             return
 
-        # Use FastAPI-Users' password helper for hashing
-        hashed_password = password_helper.hash(new_password)
+        # Hash the password
+        hashed_password = pwd_context.hash(new_password)
         user.hashed_password = hashed_password
         user.is_active = True # Ensure the user is active
         db.add(user)

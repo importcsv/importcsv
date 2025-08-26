@@ -87,12 +87,9 @@ class BaseAppSettings(BaseSettings):
     SECRET_KEY: str
     WEBHOOK_SECRET: str
 
-    # Clerk authentication settings
-    CLERK_WEBHOOK_SECRET: Optional[str] = Field(
-        default_factory=lambda: os.getenv("CLERK_WEBHOOK_SECRET", "")
-    )
-    CLERK_JWT_PUBLIC_KEY: str = Field(
-        default_factory=lambda: os.getenv("CLERK_JWT_PUBLIC_KEY", "")
+    # NextAuth settings
+    NEXTAUTH_SECRET: Optional[str] = Field(
+        default_factory=lambda: os.getenv("NEXTAUTH_SECRET")
     )
 
     # Host settings for TrustedHostMiddleware

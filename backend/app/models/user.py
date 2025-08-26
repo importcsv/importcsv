@@ -12,16 +12,15 @@ class User(Base):
 
     id = Column(UUID, primary_key=True, default=uuid.uuid4)
     email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=True)  # Made nullable for Clerk users
+    hashed_password = Column(String, nullable=True)  # Nullable for OAuth users
     full_name = Column(String, nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
     is_superuser = Column(Boolean, default=False, nullable=False)
     is_verified = Column(Boolean, default=False, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-
-    # Clerk integration - required for all users now
-    clerk_user_id = Column(String, unique=True, index=True, nullable=False)
+    
+    # Profile
     profile_image = Column(String, nullable=True)
 
     # Relationships - using simple string references

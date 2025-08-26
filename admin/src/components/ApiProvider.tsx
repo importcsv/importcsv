@@ -1,15 +1,18 @@
 'use client';
 
 import { useEffect, ReactNode } from 'react';
-import { useAuth } from "@clerk/nextjs";
+import { useSession } from "next-auth/react";
 import { setTokenGetter } from "@/utils/apiClient";
 
 export function ApiProvider({ children }: { children: ReactNode }) {
-  const { getToken } = useAuth();
+  const { data: session } = useSession();
   
   useEffect(() => {
-    setTokenGetter(() => getToken());
-  }, [getToken]);
+    // Set the token getter to return the NextAuth access token
+    setTokenGetter(async () => {
+      return (session as any)?.accessToken || null;
+    });
+  }, [session]);
 
   return <>{children}</>;
 }

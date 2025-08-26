@@ -1,5 +1,5 @@
 """
-Clerk authentication utilities for FastAPI.
+JWT authentication utilities for NextAuth integration.
 """
 import logging
 from typing import Dict, Optional, Any
@@ -24,43 +24,32 @@ async def verify_token(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> Dict[str, Any]:
     """
-    Verify the JWT token from Clerk.
-
+    Verify the JWT token from NextAuth.
+    
     Args:
-        credentials (HTTPAuthorizationCredentials): The HTTP Authorization credentials containing the JWT token.
-
+        credentials: The HTTP Authorization credentials containing the JWT token.
+    
     Returns:
         Dict[str, Any]: The decoded JWT payload.
-
+    
     Raises:
         HTTPException: If the token is invalid.
     """
-    logger.info(
-        f"Verifying token: scheme={credentials.scheme}, token length="
-        f"{len(credentials.credentials) if credentials.credentials else 0}"
-    )
+    logger.info(f"Verifying token: scheme={credentials.scheme}")
+    
     try:
-        logger.info(
-            f"Using public key: {settings.CLERK_JWT_PUBLIC_KEY[:30]}..."
-        )
+        # NextAuth uses HS256 by default with NEXTAUTH_SECRET
         payload = jwt.decode(
             credentials.credentials,
-            settings.CLERK_JWT_PUBLIC_KEY,
-            algorithms=["RS256"],
+            settings.NEXTAUTH_SECRET or settings.SECRET_KEY,
+            algorithms=["HS256"],
         )
-        logger.info(
-            f"Token verified successfully. Payload contains: {list(payload.keys())}"
-        )
+        logger.info(f"Token verified successfully. Payload contains: {list(payload.keys())}")
         return payload
     except PyJWTError as e:
         logger.error(f"JWT verification error: {str(e)}")
-        # Log the token for debugging (be careful with this in production)
-        if credentials.credentials:
-            logger.error(
-                f"Token first 20 chars: {credentials.credentials[:20]}..."
-            )
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED, 
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid authentication token: {str(e)}"
         )
 
@@ -70,57 +59,68 @@ async def get_current_user_id(
 ) -> str:
     """
     Extract the user ID from the verified JWT payload.
-
+    
     Args:
-        payload (Dict[str, Any]): The decoded JWT payload.
-
+        payload: The decoded JWT payload.
+    
     Returns:
-        str: The user ID (sub claim).
+        str: The user ID (from email or sub claim).
     """
-    logger.info(
-        f"Extracting user ID from payload with keys: {list(payload.keys())}"
-    )
+    logger.info(f"Extracting user ID from payload with keys: {list(payload.keys())}")
+    
+    # NextAuth puts user info in different claims
+    # Try to get email first (NextAuth credentials provider)
+    user_email = payload.get("email")
+    if user_email:
+        logger.info(f"Extracted user email: {user_email}")
+        return user_email
+    
+    # Fallback to sub claim (OAuth providers)
     user_id = payload.get("sub")
     if not user_id:
-        logger.error("No 'sub' claim found in token payload")
+        logger.error("No 'email' or 'sub' claim found in token payload")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid user ID in token",
         )
-    logger.info(f"Extracted user ID: {user_id}")
+    
+    logger.info(f"Extracted user ID from sub: {user_id}")
     return user_id
 
 
 async def get_current_user(
-    clerk_user_id: str = Depends(get_current_user_id),
+    user_identifier: str = Depends(get_current_user_id),
     db: Session = Depends(get_db),
 ) -> User:
     """
-    Get the current user from the database based on their Clerk user ID.
-
+    Get the current user from the database based on their identifier.
+    
     Args:
-        clerk_user_id (str): The Clerk user ID.
-        db (Session): The database session.
-
+        user_identifier: The user identifier (email or ID).
+        db: The database session.
+    
     Returns:
         User: The user object.
-
+    
     Raises:
         HTTPException: If the user is not found.
     """
-    logger.info(f"Looking up user with clerk_user_id: {clerk_user_id}")
-    user = db.query(User).filter(User.clerk_user_id == clerk_user_id).first()
+    logger.info(f"Looking up user with identifier: {user_identifier}")
+    
+    # Try to find by email first
+    if "@" in user_identifier:
+        user = db.query(User).filter(User.email == user_identifier).first()
+    else:
+        # Try by ID if not an email
+        user = db.query(User).filter(User.id == user_identifier).first()
+    
     if not user:
-        logger.error(f"No user found with clerk_user_id: {clerk_user_id}")
-        # Check if there are any users with clerk_user_id set
-        users_with_clerk_id = db.query(User).filter(
-            User.clerk_user_id != None
-        ).count()
-        logger.info(f"Total users with clerk_user_id set: {users_with_clerk_id}")
+        logger.error(f"No user found with identifier: {user_identifier}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
         )
+    
     logger.info(f"Found user: id={user.id}, email={user.email}")
     return user
 
@@ -130,13 +130,13 @@ async def get_current_active_user(
 ) -> User:
     """
     Get the current active user.
-
+    
     Args:
-        current_user (User): The current user.
-
+        current_user: The current user.
+    
     Returns:
         User: The current active user.
-
+    
     Raises:
         HTTPException: If the user is inactive.
     """
@@ -153,13 +153,13 @@ async def get_current_superuser(
 ) -> User:
     """
     Get the current superuser.
-
+    
     Args:
-        current_user (User): The current active user.
-
+        current_user: The current active user.
+    
     Returns:
         User: The current superuser.
-
+    
     Raises:
         HTTPException: If the user is not a superuser.
     """
@@ -177,30 +177,35 @@ async def get_optional_user(
 ) -> Optional[User]:
     """
     Get the current user if authenticated, otherwise return None.
-
+    
     Args:
-        token (Optional[HTTPAuthorizationCredentials]): The HTTP Authorization credentials.
-        db (Session): The database session.
-
+        token: The HTTP Authorization credentials.
+        db: The database session.
+    
     Returns:
         Optional[User]: The user object or None.
     """
     if not token:
         return None
-
+    
     try:
         payload = jwt.decode(
             token.credentials,
-            settings.CLERK_JWT_PUBLIC_KEY,
-            algorithms=["RS256"],
+            settings.NEXTAUTH_SECRET or settings.SECRET_KEY,
+            algorithms=["HS256"],
         )
-        clerk_user_id = payload.get("sub")
-        if not clerk_user_id:
+        
+        # Get user identifier
+        user_identifier = payload.get("email") or payload.get("sub")
+        if not user_identifier:
             return None
         
-        user = db.query(User).filter(
-            User.clerk_user_id == clerk_user_id
-        ).first()
+        # Find user
+        if "@" in user_identifier:
+            user = db.query(User).filter(User.email == user_identifier).first()
+        else:
+            user = db.query(User).filter(User.id == user_identifier).first()
+        
         return user
     except Exception:
         return None

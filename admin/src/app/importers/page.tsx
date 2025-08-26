@@ -37,7 +37,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { useUser, useAuth } from '@clerk/nextjs';
+import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import apiClient, { importersApi } from '@/utils/apiClient';
 
@@ -119,18 +119,17 @@ Charlotte,Martin,charlotte@.com,32,2021-13-01
 Oliver,Lee,oliver@example.com,38,2021-05-20`
   };
 
-  const { isSignedIn, isLoaded: authLoaded } = useAuth();
-  const { user } = useUser();
+  const { data: session, status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
-    if (isSignedIn && authLoaded) {
+    if (status === 'authenticated') {
       fetchImporters();
-    } else if (authLoaded && !isSignedIn) {
+    } else if (status === 'unauthenticated') {
       // Redirect to sign-in if not signed in
-      router.push('/sign-in');
+      router.push('/auth/signin');
     }
-  }, [isSignedIn, authLoaded, user?.id]);
+  }, [status, session?.user?.id]);
 
   // Fetch importers logic
   const fetchImporters = async () => {

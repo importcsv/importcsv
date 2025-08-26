@@ -1,31 +1,30 @@
-import { clerkMiddleware } from '@clerk/nextjs/server'
+import { withAuth } from "next-auth/middleware";
+import { NextResponse } from "next/server";
 
-// Define public routes that don't require authentication
-const publicRoutes = [
-  '/',
-  '/sign-in',
-  '/sign-up',
-  '/api/public',
-  '/api/clerk-webhook',
-];
+export default withAuth(
+  function middleware(req) {
+    // All protected routes will automatically require authentication
+    return NextResponse.next();
+  },
+  {
+    callbacks: {
+      authorized: ({ token }) => !!token,
+    },
+    pages: {
+      signIn: "/auth/signin",
+      error: "/auth/error",
+    },
+  }
+);
 
-// Check if the route is public
-function isPublicRoute(path: string): boolean {
-  return publicRoutes.some(route =>
-    path === route || path.startsWith(`${route}/`)
-  );
-}
-
-
-export default clerkMiddleware({
-  publicRoutes: publicRoutes,
-})
-
+// Protected routes - everything except auth pages and public routes
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Always run for API routes
-    '/(api|trpc)(.*)',
+    // Protect all routes except:
+    // - auth pages
+    // - api auth routes
+    // - public landing page
+    // - static files
+    '/((?!auth|api/auth|api/public|_next/static|_next/image|favicon.ico|$).*)',
   ],
-}
+};

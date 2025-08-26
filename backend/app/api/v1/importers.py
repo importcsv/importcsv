@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app.db.base import get_db
-from app.auth.clerk import get_current_active_user
+from app.auth.jwt_auth import get_current_active_user
 from app.models.user import User
 from app.schemas.importer import (
     ImporterCreate, ImporterUpdate, Importer as ImporterSchema

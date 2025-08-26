@@ -6,7 +6,7 @@ import ImporterColumnsManager from '@/components/ImporterColumnsManager';
 import WebhookSettings from '@/components/WebhookSettings';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
+import { useSession } from 'next-auth/react';
 import apiClient, { importersApi } from '@/utils/apiClient';
 import { 
   Card, 
@@ -26,7 +26,7 @@ import { ChevronLeft, Plus, Trash2 } from 'lucide-react';
 
 export default function NewImporterPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { data: session, status } = useSession();
   const [importerName, setImporterName] = useState('');
   const [fields, setFields] = useState<ImporterField[]>([]);
   const [isLoading, setIsLoading] = useState(false);

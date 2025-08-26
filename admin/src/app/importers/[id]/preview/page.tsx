@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams } from "next/navigation";
-import { useAuth } from "@clerk/nextjs";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -62,25 +62,19 @@ function ImporterComponent({ importerKey, onComplete }: { importerKey: string, o
 
 export default function ImporterPreviewPage() {
   const params = useParams();
-  const { isSignedIn } = useAuth();
+  const { data: session, status } = useSession();
   const [error, setError] = useState<string | null>(null);
   const [importer, setImporter] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   // Use useCallback to create a stable reference to the callback function
   const handleImportComplete = useCallback(async (data: ImportData) => {
-    if (data.success) {
-      console.log(
-        `Successfully imported ${data.num_rows} rows with ${data.num_columns} columns`,
-      );
-    } else {
-      console.error(`Import failed: ${data.message || "Unknown error"}`);
-    }
+    // Handle import completion - success/failure is handled by the CSVImporter component
   }, []);
 
   // Fetch importer details to get the key
   useEffect(() => {
-    if (!isSignedIn) return;
+    if (status !== 'authenticated') return;
 
     let isMounted = true;
     setLoading(true);
@@ -97,7 +91,7 @@ export default function ImporterPreviewPage() {
       });
 
     return () => { isMounted = false; };
-  }, [params.id, isSignedIn]);
+  }, [params.id, status]);
 
   if (error)
     return (

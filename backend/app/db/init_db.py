@@ -7,13 +7,16 @@ import subprocess
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 
-from fastapi_users.password import PasswordHelper
 from sqlalchemy import select, text
 from sqlalchemy.exc import SQLAlchemyError
+from passlib.context import CryptContext
 
 from app.db.base import Base, async_session_maker, get_db_context
 from app.models.user import User
 from app.core.config import settings
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # Configure logging
 logging.basicConfig(
@@ -93,8 +96,7 @@ class DatabaseInitializer:
 
                 if not user:
                     logger.info(f"Creating new superuser: {email}")
-                    password_helper = PasswordHelper()
-                    hashed_password = password_helper.hash(password)
+                    hashed_password = pwd_context.hash(password)
 
                     # Create new user
                     user = User(
