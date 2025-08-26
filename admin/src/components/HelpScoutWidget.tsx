@@ -19,6 +19,15 @@ declare global {
 
 export function HelpScoutWidget() {
   useEffect(() => {
+    // Check if HelpScout beacon ID is configured
+    const beaconId = process.env.NEXT_PUBLIC_HELPSCOUT_BEACON_ID;
+    if (!beaconId) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('HelpScout: No beacon ID configured, skipping initialization');
+      }
+      return;
+    }
+
     // Only load HelpScout in production
     if (process.env.NODE_ENV !== 'production') {
       if (process.env.NODE_ENV === 'development') {
@@ -50,7 +59,7 @@ export function HelpScoutWidget() {
         // Initialize Beacon once the script is loaded
         script.onload = () => {
           try {
-            window.Beacon("init", "e928f89b-498b-4867-beb8-55676952b577");
+            window.Beacon("init", beaconId);
           } catch (error) {
             console.error("Failed to initialize HelpScout Beacon:", error);
           }
