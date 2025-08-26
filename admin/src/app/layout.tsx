@@ -4,7 +4,6 @@ import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ApiProvider } from "@/components/ApiProvider";
 import { PostHogProvider } from "@/components/PostHogProvider";
-import { LogRocketProvider } from "@/components/LogRocketProvider";
 import { HelpScoutWidget } from "@/components/HelpScoutWidget";
 import { NextAuthProvider } from "@/components/NextAuthProvider";
 
@@ -31,13 +30,11 @@ export default function RootLayout({
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <NextAuthProvider>
           <PostHogProvider>
-            <LogRocketProvider>
-              <ApiProvider>
-                {children}
-                <Toaster />
-                <HelpScoutWidget />
-              </ApiProvider>
-            </LogRocketProvider>
+            <ApiProvider>
+              {children}
+              <Toaster />
+              <HelpScoutWidget />
+            </ApiProvider>
           </PostHogProvider>
         </NextAuthProvider>
       </body>
