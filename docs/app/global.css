@@ -125,7 +125,7 @@
 }
 
 @layer base {
-  * {
+  *:not(.importcsv, .importcsv *) {
     @apply border-border outline-ring/50;
   }
   body {
@@ -141,7 +141,7 @@
   ::file-selector-button {
     @apply border-border;
   }
-  * {
+  *:not(.importcsv, .importcsv *) {
     @apply min-w-0;
   }
   html {
@@ -198,8 +198,8 @@
     @apply -mt-2!;
   }
 
-  /* Remove all borders in dark theme */
-  .dark * {
+  /* Remove all borders in dark theme - but exclude ImportCSV */
+  .dark *:not(.importcsv, .importcsv *) {
     border-color: transparent !important;
   }
   
@@ -285,18 +285,18 @@ pre,
 
 /* Force proper typography for Fumadocs content */
 @layer base {
-  .prose h1,
-  article h1 {
+  .prose h1:not(.importcsv h1, .importcsv *),
+  article h1:not(.importcsv h1, .importcsv *) {
     @apply text-4xl! font-bold! mt-2! mb-4! tracking-tight!;
   }
 
-  .prose h2,
-  article h2 {
+  .prose h2:not(.importcsv h2, .importcsv *),
+  article h2:not(.importcsv h2, .importcsv *) {
     @apply text-2xl! font-semibold! mb-4! mt-4! tracking-tight!;
   }
 
-  .prose h3,
-  article h3 {
+  .prose h3:not(.importcsv h3, .importcsv *),
+  article h3:not(.importcsv h3, .importcsv *) {
     @apply text-xl! font-semibold! mb-2! mt-2! tracking-tight!;
   }
 
@@ -315,20 +315,20 @@ pre,
     @apply text-sm! font-semibold! mt-3! mb-2! tracking-tight! uppercase!;
   }
 
-  .prose p,
-  article p {
+  .prose p:not(.importcsv p, .importcsv *),
+  article p:not(.importcsv p, .importcsv *) {
     @apply my-4! leading-7!;
   }
 
-  .prose ul,
-  article ul,
-  .prose ol,
-  article ol {
+  .prose ul:not(.importcsv ul, .importcsv *),
+  article ul:not(.importcsv ul, .importcsv *),
+  .prose ol:not(.importcsv ol, .importcsv *),
+  article ol:not(.importcsv ol, .importcsv *) {
     @apply my-4! ml-6! space-y-2!;
   }
 
-  .prose li,
-  article li {
+  .prose li:not(.importcsv li, .importcsv *),
+  article li:not(.importcsv li, .importcsv *) {
     @apply leading-7!;
   }
 
@@ -352,18 +352,18 @@ pre,
     @apply p-0! bg-transparent!;
   }
 
-  .prose table,
-  article table {
+  .prose table:not(.importcsv table, .importcsv *),
+  article table:not(.importcsv table, .importcsv *) {
     @apply w-full! my-6! text-sm!;
   }
 
-  .prose th,
-  article th {
+  .prose th:not(.importcsv th, .importcsv *),
+  article th:not(.importcsv th, .importcsv *) {
     @apply text-left! font-semibold! p-2! border-b! border-border!;
   }
 
-  .prose td,
-  article td {
+  .prose td:not(.importcsv td, .importcsv *),
+  article td:not(.importcsv td, .importcsv *) {
     @apply p-2! border-b! border-border!;
   }
 
@@ -408,6 +408,72 @@ pre,
   .prose ol ul,
   article ol ul {
     @apply my-2! ml-4!;
+  }
+}
+
+/* ImportCSV dialog centering fix */
+.importcsv dialog,
+dialog.importcsv,
+.CSVImporter-dialog {
+  /* Ensure proper centering */
+  position: fixed !important;
+  inset: 0 !important;
+  margin: auto !important;
+  max-width: 80vw !important;
+  max-height: 80vh !important;
+  width: 80vw !important;
+  min-width: 800px !important;
+}
+
+@media (max-width: 768px) {
+  .importcsv dialog,
+  dialog.importcsv,
+  .CSVImporter-dialog {
+    width: 95vw !important;
+    max-width: 95vw !important;
+    min-width: unset !important;
+  }
+}
+
+/* Playground Dark Mode Fixes */
+@layer components {
+  /* Improve dark mode contrast for playground - but exclude ImportCSV */
+  .dark {
+    /* Better input field visibility - exclude ImportCSV */
+  }
+  
+  /* Apply styles only to non-ImportCSV elements */
+  .dark input[type="text"]:not(.importcsv input):not(.importcsv *),
+  .dark input[type="number"]:not(.importcsv input):not(.importcsv *),
+  .dark input[type="email"]:not(.importcsv input):not(.importcsv *),
+  .dark select:not(.importcsv select):not(.importcsv *),
+  .dark textarea:not(.importcsv textarea):not(.importcsv *) {
+    @apply bg-fd-card/80 border-fd-border/50 text-fd-card-foreground;
+  }
+  
+  /* Better button contrast - exclude ImportCSV */
+  .dark button:not([class*="bg-fd-primary"]):not(.importcsv button):not(.importcsv *) {
+    @apply hover:bg-fd-muted/30;
+  }
+  
+  /* Card backgrounds - exclude ImportCSV */
+  .dark [class*="bg-fd-card"]:not(.importcsv *) {
+    @apply bg-fd-card/60 backdrop-blur-sm;
+  }
+  
+  /* Better checkbox visibility - exclude ImportCSV */
+  .dark input[type="checkbox"]:not(.importcsv input):not(.importcsv *) {
+    @apply bg-fd-card border-fd-border/50;
+  }
+  
+  .dark input[type="checkbox"]:checked:not(.importcsv input):not(.importcsv *) {
+    @apply bg-fd-primary border-fd-primary;
+  }
+  
+  /* Ensure placeholder text is visible */
+  input::placeholder,
+  textarea::placeholder {
+    @apply text-fd-muted-foreground/60;
   }
 }
 
