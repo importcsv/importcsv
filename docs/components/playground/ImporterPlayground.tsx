@@ -40,7 +40,7 @@ const defaultConfig: PlaygroundConfig = {
       label: 'Email',
       description: 'Valid email address',
       type: 'email',
-      validators: [{ type: 'required' }, { type: 'regex', value: '^[^@]+@[^@]+\\.[^@]+$', message: 'Invalid email format' }],
+      validators: [{ type: 'required' }, { type: 'regex', pattern: '^[^@]+@[^@]+\\.[^@]+$', message: 'Invalid email format' }],
       transformers: [{ type: 'trim' }, { type: 'lowercase' }]
     },
     {
@@ -48,8 +48,8 @@ const defaultConfig: PlaygroundConfig = {
       label: 'Phone Number',
       description: 'Phone number with country code',
       type: 'phone',
-      validators: [{ type: 'regex', value: '^\\+?[1-9]\\d{1,14}$', message: 'Invalid phone number' }],
-      transformers: [{ type: 'trim' }, { type: 'normalizePhone' }]
+      validators: [{ type: 'regex', pattern: '^\\+?[1-9]\\d{1,14}$', message: 'Invalid phone number' }],
+      transformers: [{ type: 'trim' }, { type: 'normalize_phone' }]
     },
     {
       id: 'age',
@@ -73,7 +73,7 @@ export default function ImporterPlayground() {
 
   useEffect(() => {
     loadCSVImporter().then(module => {
-      setCSVImporter(() => module.CSVImporter);
+      setCSVImporter(() => (module as any).CSVImporter);
       setIsLoading(false);
     }).catch(error => {
       console.error('Failed to load CSVImporter:', error);

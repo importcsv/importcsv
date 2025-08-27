@@ -25,7 +25,7 @@ const AVAILABLE_TRANSFORMERS = [
 ];
 
 // Common column templates
-const COLUMN_TEMPLATES = {
+const COLUMN_TEMPLATES: Record<string, ExtendedColumn> = {
   name: {
     id: 'name',
     label: 'Name',
@@ -41,7 +41,7 @@ const COLUMN_TEMPLATES = {
     type: 'email',
     validators: [
       { type: 'required' },
-      { type: 'regex', value: '^[^@]+@[^@]+\\.[^@]+$', message: 'Invalid email format' }
+      { type: 'regex', pattern: '^[^@]+@[^@]+\\.[^@]+$', message: 'Invalid email format' }
     ],
     transformers: [{ type: 'trim' }, { type: 'lowercase' }]
   },
@@ -51,9 +51,9 @@ const COLUMN_TEMPLATES = {
     description: 'Phone number',
     type: 'phone',
     validators: [
-      { type: 'regex', value: '^\\+?[1-9]\\d{1,14}$', message: 'Invalid phone number' }
+      { type: 'regex', pattern: '^\\+?[1-9]\\d{1,14}$', message: 'Invalid phone number' }
     ],
-    transformers: [{ type: 'trim' }, { type: 'normalizePhone' }]
+    transformers: [{ type: 'trim' }, { type: 'normalize_phone' }]
   },
   date: {
     id: 'date',
@@ -61,7 +61,7 @@ const COLUMN_TEMPLATES = {
     description: 'Date field',
     type: 'date',
     validators: [{ type: 'required' }],
-    transformers: [{ type: 'trim' }, { type: 'parseDate' }]
+    transformers: [{ type: 'trim' }, { type: 'normalize_date' }]
   },
   age: {
     id: 'age',
@@ -80,7 +80,7 @@ const COLUMN_TEMPLATES = {
     description: 'Postal code',
     type: 'string',
     validators: [
-      { type: 'regex', value: '^\\d{5}(-\\d{4})?$', message: 'Invalid US zip code' }
+      { type: 'regex', pattern: '^\\d{5}(-\\d{4})?$', message: 'Invalid US zip code' }
     ],
     transformers: [{ type: 'trim' }]
   }
@@ -372,7 +372,7 @@ export default function PropConfigurator({
                       </div>
                     );
                   }
-                  if (validator.type === 'minLength' || validator.type === 'maxLength') {
+                  if (validator.type === 'min_length' || validator.type === 'max_length') {
                     return (
                       <div key={`${validator.type}-${vIndex}`} className="flex gap-2 items-center mt-1">
                         <span className="text-xs text-fd-foreground/70">{validator.type}:</span>

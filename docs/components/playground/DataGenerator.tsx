@@ -40,7 +40,7 @@ const generateValue = (
       if (maxValidator) return String((maxValidator as any).value);
     }
     if (column.type === 'string') {
-      const minLengthValidator = column.validators?.find(v => v.type === 'minLength');
+      const minLengthValidator = column.validators?.find(v => v.type === 'min_length');
       if (minLengthValidator) {
         return 'x'.repeat((minLengthValidator as any).value);
       }
@@ -123,16 +123,6 @@ const generateValue = (
       return isoDate;
     }
 
-    case 'boolean': {
-      const value = index % 2 === 0;
-      if (shouldError) {
-        return 'maybe';
-      } else if (shouldMessy) {
-        return value ? 'YES' : 'NO';
-      }
-      return value ? 'true' : 'false';
-    }
-
     default: {
       // Generic string handling
       let value = '';
@@ -189,8 +179,8 @@ const generateValue = (
 
       // Handle length validators
       if (shouldError) {
-        const minLength = column.validators?.find(v => v.type === 'minLength');
-        const maxLength = column.validators?.find(v => v.type === 'maxLength');
+        const minLength = column.validators?.find(v => v.type === 'min_length');
+        const maxLength = column.validators?.find(v => v.type === 'max_length');
 
         if (minLength && Math.random() < 0.5) {
           value = 'x'; // Too short
