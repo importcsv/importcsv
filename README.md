@@ -8,7 +8,7 @@
 [![Backend License: AGPL-3.0](https://img.shields.io/badge/Backend-AGPL--3.0-green.svg)](backend/LICENSE)
 [![npm version](https://img.shields.io/npm/v/@importcsv/react)](https://www.npmjs.com/package/@importcsv/react)
 
-[Documentation](https://docs.importcsv.com) | [Live Demo](https://demo.importcsv.com) | [API Reference](http://localhost:8000/docs) | [Join Slack](https://importcsv.slack.com)
+[Documentation](https://docs.importcsv.com) | [Interactive Playground](https://docs.importcsv.com/playground) | [Live Demo](#demo) | [Join Slack](https://importcsv.slack.com)
 
 </div>
 
@@ -38,7 +38,7 @@ A React component that handles CSV imports with automatic column mapping and dat
 
 ## Demo
 
-https://github.com/user-attachments/assets/bca218fa-9fd1-4beb-abed-f3b1d745946a
+https://screen.studio/share/NUnNRQTg
 
 ## Getting Started
 
