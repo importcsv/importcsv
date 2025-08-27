@@ -10,7 +10,7 @@
     "postinstall": "fumadocs-mdx"
   },
   "dependencies": {
-    "@importcsv/react": "^0.2.1",
+    "@importcsv/react": "^0.2.3",
     "@tailwindcss/typography": "^0.5.16",
     "fumadocs-core": "15.7.1",
     "fumadocs-mdx": "11.8.0",

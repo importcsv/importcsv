@@ -5,22 +5,24 @@ import { Tabs, Tab } from 'fumadocs-ui/components/tabs';
 import PropConfigurator from './PropConfigurator';
 import CodeGenerator from './CodeGenerator';
 import { loadCSVImporter } from '@/lib/load-importer';
-import type { Column } from '@importcsv/react';
-import '@importcsv/react/build/bundle.css';
+import type { Column, Transformer, Validator } from '@importcsv/react';
+
+export interface ExtendedColumn extends Column {
+  transformers?: Transformer[];
+  description?: string;
+}
 
 export interface PlaygroundConfig {
   darkMode: boolean;
-  primaryColor: string;
   isModal: boolean;
   modalIsOpen?: boolean;
   showDownloadTemplateButton: boolean;
   skipHeaderRowSelection: boolean;
-  columns: Column[];
+  columns: ExtendedColumn[];
 }
 
 const defaultConfig: PlaygroundConfig = {
   darkMode: false,
-  primaryColor: '#3B82F6',
   isModal: true,
   modalIsOpen: false,
   showDownloadTemplateButton: true,
@@ -29,19 +31,35 @@ const defaultConfig: PlaygroundConfig = {
     { 
       id: 'name', 
       label: 'Full Name',
-      validators: [{ type: 'required' }]
+      description: 'Enter the person\'s full name',
+      validators: [{ type: 'required' }],
+      transformers: [{ type: 'trim' }, { type: 'capitalize' }]
     },
     { 
       id: 'email', 
       label: 'Email',
-      type: 'email'
+      description: 'Valid email address',
+      type: 'email',
+      validators: [{ type: 'required' }, { type: 'regex', value: '^[^@]+@[^@]+\\.[^@]+$', message: 'Invalid email format' }],
+      transformers: [{ type: 'trim' }, { type: 'lowercase' }]
+    },
+    {
+      id: 'phone',
+      label: 'Phone Number',
+      description: 'Phone number with country code',
+      type: 'phone',
+      validators: [{ type: 'regex', value: '^\\+?[1-9]\\d{1,14}$', message: 'Invalid phone number' }],
+      transformers: [{ type: 'trim' }, { type: 'normalizePhone' }]
     },
     {
       id: 'age',
       label: 'Age',
+      description: 'Must be 18 or older',
       type: 'number',
       validators: [
-        { type: 'min', value: 18 }
+        { type: 'required' },
+        { type: 'min', value: 18, message: 'Must be at least 18 years old' },
+        { type: 'max', value: 120, message: 'Invalid age' }
       ]
     }
   ]
