@@ -84,7 +84,7 @@ export default defineConfig(({ mode }) => {
         // For React mode, we need to handle imports differently
         // Since our code uses preact/hooks but React doesn't have that path
         'preact/hooks': resolve(__dirname, 'src/shims/react-hooks-shim.js'),
-        'preact/compat': 'react',
+        'preact/compat': resolve(__dirname, 'src/shims/react-compat-shim.js'),
         'preact/jsx-runtime': 'react/jsx-runtime',
         'preact/jsx-dev-runtime': 'react/jsx-dev-runtime',
         'preact': 'react',
