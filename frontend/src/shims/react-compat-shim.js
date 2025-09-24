@@ -1,8 +1,43 @@
-// Re-export everything from React
-export * from 'react';
+// Named exports from React to avoid Vite interop issues
+export {
+  // Core React exports
+  Component,
+  PureComponent,
+  memo,
+  createElement,
+  cloneElement,
+  isValidElement,
+  createContext,
+  forwardRef,
+  lazy,
+  Suspense,
+  Fragment,
+  StrictMode,
+  Profiler,
 
-// Explicitly export forwardRef since Preact code imports it from preact/compat
-export { forwardRef } from 'react';
+  // Hooks
+  useState,
+  useEffect,
+  useContext,
+  useReducer,
+  useCallback,
+  useMemo,
+  useRef,
+  useImperativeHandle,
+  useLayoutEffect,
+  useDebugValue,
+  useTransition,
+  useDeferredValue,
+  useId,
+  useSyncExternalStore,
 
-// If we need createPortal later, we can add:
-// export { createPortal } from 'react-dom';
+  // Types and utilities
+  Children,
+  version,
+
+  // Re-export default
+  default
+} from 'react';
+
+// Export createPortal from react-dom for Modal component
+export { createPortal } from 'react-dom';
