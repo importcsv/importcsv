@@ -42,3 +42,8 @@ build/
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Generated JS files from TypeScript compilation
+src/**/*.js
+src/**/*.js.map
+!src/shims/*.js
