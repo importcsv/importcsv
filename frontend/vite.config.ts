@@ -1,7 +1,6 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import preact from '@preact/preset-vite';
-import dts from 'vite-plugin-dts';
 import cssInjectedByJsPlugin from 'vite-plugin-css-injected-by-js';
 import { resolve } from 'path';
 import tailwindcss from 'tailwindcss';
@@ -21,11 +20,6 @@ export default defineConfig(({ mode }) => {
       isReact ? react() : preact(),
       // Inject CSS directly into JavaScript for self-contained component
       cssInjectedByJsPlugin(),
-      dts({
-        insertTypesEntry: true,
-        include: ['src/**/*.ts', 'src/**/*.tsx'],
-        exclude: ['src/**/*.stories.ts', 'src/**/*.test.ts', 'src/**/*.test.tsx'],
-      }),
     ],
     build: {
       lib: {

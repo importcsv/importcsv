@@ -1,17 +1,17 @@
 {
   "name": "@importcsv/react",
-  "version": "0.2.9",
+  "version": "0.2.14",
   "description": "AI-powered CSV importer for React. Smart column mapping with OpenAI, natural language transformations. Self-hosted.",
   "main": "build/react/index.js",
   "module": "build/react/index.esm.js",
   "exports": {
     ".": {
-      "types": "./build/react/types/index.d.ts",
+      "types": "./build/react/index.d.ts",
       "import": "./build/react/index.esm.js",
       "require": "./build/react/index.js"
     },
     "./react": {
-      "types": "./build/react/types/index.d.ts",
+      "types": "./build/react/index.d.ts",
       "import": "./build/react/index.esm.js",
       "require": "./build/react/index.js"
     },
@@ -47,12 +47,12 @@
   "author": "ImportCSV",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/abhishekray07/importcsv/issues"
+    "url": "https://github.com/importcsv/importcsv/issues"
   },
-  "homepage": "https://github.com/abhishekray07/importcsv#readme",
-  "types": "build/index.d.ts",
+  "homepage": "https://github.com/importcsv/importcsv#readme",
+  "types": "build/react/index.d.ts",
   "scripts": {
-    "build:react": "vite build --mode react",
+    "build:react": "vite build --mode react && cp types/index.d.ts build/react/index.d.ts",
     "build:preact": "vite build --mode preact",
     "build:bundled": "vite build --mode bundled",
     "build": "npm-run-all --parallel build:react build:preact build:bundled",
