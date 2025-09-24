@@ -1,6 +1,6 @@
 {
   "name": "@importcsv/react",
-  "version": "0.2.3",
+  "version": "0.2.8",
   "description": "AI-powered CSV importer for React. Smart column mapping with OpenAI, natural language transformations. Self-hosted.",
   "main": "build/react/index.js",
   "module": "build/react/index.esm.js",
@@ -66,7 +66,9 @@
     "publish:react:minor": "npm version minor && npm run build:react && npm publish",
     "publish:react:major": "npm version major && npm run build:react && npm publish",
     "yalc:publish": "npm run build:react && yalc publish --push",
-    "yalc:watch": "npm run watch:react & yalc publish --push --changed"
+    "yalc:watch": "npm run watch:react & yalc publish --push --changed",
+    "test:local": "npm run build:react && npm link && echo 'Package linked! Run \"npm link @importcsv/react\" in your test app'",
+    "test:app": "cd /Users/abhishekray/Projects/importcsv/test/csv-importer-test && npm link @importcsv/react && npm run dev"
   },
   "peerDependencies": {
     "preact": "^10.0.0",

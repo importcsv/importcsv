@@ -7,8 +7,14 @@ export default {
     tailwindcss,
     prefixSelector({
       prefix: '.importcsv',
-      // Don't add prefix to already prefixed selectors
-      exclude: ['.importcsv', /^\.importcsv/],
+      // Don't add prefix to already prefixed selectors and Modal selectors (rendered via Portal)
+      exclude: [
+        '.importcsv',
+        /^\.importcsv/,
+        // Exclude Modal-related CSS since it's rendered outside the component via Portal
+        /^\.csv-importer-modal/,
+        /^@keyframes csv-importer/
+      ],
       // Transform all selectors including global ones
       transform: function (prefix, selector, prefixedSelector, filepath, rule) {
         // Special handling for global selectors

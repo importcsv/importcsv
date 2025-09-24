@@ -1,43 +1,16 @@
-// Named exports from React to avoid Vite interop issues
-export {
-  // Core React exports
-  Component,
-  PureComponent,
-  memo,
-  createElement,
-  cloneElement,
-  isValidElement,
-  createContext,
-  forwardRef,
-  lazy,
-  Suspense,
-  Fragment,
-  StrictMode,
-  Profiler,
+// Shim to make preact/compat imports work with React
+// This file exports both React and ReactDOM functions as needed by Preact components
 
-  // Hooks
-  useState,
-  useEffect,
-  useContext,
-  useReducer,
-  useCallback,
-  useMemo,
-  useRef,
-  useImperativeHandle,
-  useLayoutEffect,
-  useDebugValue,
-  useTransition,
-  useDeferredValue,
-  useId,
-  useSyncExternalStore,
+import * as React from 'react';
+import * as ReactDOM from 'react-dom';
 
-  // Types and utilities
-  Children,
-  version,
+// Export everything from React
+export * from 'react';
+export { default } from 'react';
 
-  // Re-export default
-  default
-} from 'react';
-
-// Export createPortal from react-dom for Modal component
-export { createPortal } from 'react-dom';
+// Export ReactDOM functions that preact/compat would normally provide
+export const createPortal = ReactDOM.createPortal;
+export const render = ReactDOM.render;
+export const hydrate = ReactDOM.hydrate;
+export const unmountComponentAtNode = ReactDOM.unmountComponentAtNode;
+export const findDOMNode = ReactDOM.findDOMNode;
