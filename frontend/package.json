@@ -1,6 +1,6 @@
 {
   "name": "@importcsv/react",
-  "version": "0.2.8",
+  "version": "0.2.9",
   "description": "AI-powered CSV importer for React. Smart column mapping with OpenAI, natural language transformations. Self-hosted.",
   "main": "build/react/index.js",
   "module": "build/react/index.esm.js",
