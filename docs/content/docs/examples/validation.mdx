@@ -110,6 +110,7 @@ You can control how the importer handles validation errors using the `invalidRow
   onComplete={(data) => {
     // data contains only valid rows
     console.log(`Imported ${data.num_rows} valid rows`);
+    console.log('Mapped data:', data.mappedData);
   }}
 />
 ```
@@ -122,7 +123,8 @@ You can control how the importer handles validation errors using the `invalidRow
   invalidRowHandling="include"
   onComplete={(data) => {
     // data contains all rows including invalid ones
-    console.log('Imported all rows (check for validation warnings)');
+    console.log(`Imported ${data.num_rows} rows (check for validation warnings)`);
+    console.log('All data:', data.mappedData);
   }}
 />
 ```
@@ -140,9 +142,46 @@ Handle CSVs with unknown or extra columns:
   ]}
   includeUnmatchedColumns={true}
   onComplete={(data) => {
-    // data.mappedData has name and email
-    // data.unmappedData has CustomField1 and CustomField2
-    console.log('Known columns:', data.mappedData);
-    console.log('Extra columns:', data.unmappedData);
+    // data.mappedData contains the mapped columns (name and email)
+    // data includes additional properties for unmapped columns when includeUnmatchedColumns is true
+    console.log('Mapped data:', data.mappedData);
+    console.log(`Imported ${data.num_rows} rows`);
+    console.log('Headers:', data.headers);
   }}
 />
+
+## Example Result Structure
+
+When import completes successfully, the `onComplete` callback receives:
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "index": 1,
+      "values": ["EMP001", "john@example.com", "25", "Engineering", "+1234567890"]
+    }
+  ],
+  "mappedData": [
+    {
+      "data": {
+        "employee_id": "EMP001",
+        "email": "john@example.com",
+        "age": 25,
+        "department": "Engineering",
+        "phone": "+1234567890"
+      }
+    }
+  ],
+  "num_rows": 1,
+  "num_columns": 5,
+  "headers": ["Employee ID", "Email", "Age", "Department", "Phone"],
+  "columnMapping": {
+    "0": { "id": "employee_id", "label": "Employee ID", "include": true },
+    "1": { "id": "email", "label": "Email", "include": true },
+    "2": { "id": "age", "label": "Age", "include": true },
+    "3": { "id": "department", "label": "Department", "include": true },
+    "4": { "id": "phone", "label": "Phone", "include": true }
+  }
+}

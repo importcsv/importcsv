@@ -51,23 +51,40 @@ Jane Smith,jane@example.com,555-0101
 
 ```json
 {
-  "rows": [
+  "success": true,
+  "data": [
     {
-      "index": 0,
-      "values": {
+      "index": 1,
+      "values": ["John Doe", "john@example.com", "555-0100"]
+    },
+    {
+      "index": 2,
+      "values": ["Jane Smith", "jane@example.com", "555-0101"]
+    }
+  ],
+  "mappedData": [
+    {
+      "data": {
         "name": "John Doe",
         "email": "john@example.com",
         "phone": "555-0100"
       }
     },
     {
-      "index": 1,
-      "values": {
+      "data": {
         "name": "Jane Smith",
         "email": "jane@example.com",
         "phone": "555-0101"
       }
     }
-  ]
+  ],
+  "num_rows": 2,
+  "num_columns": 3,
+  "headers": ["Name", "Email", "Phone"],
+  "columnMapping": {
+    "0": { "id": "name", "label": "Name", "include": true },
+    "1": { "id": "email", "label": "Email", "include": true },
+    "2": { "id": "phone", "label": "Phone", "include": true }
+  }
 }
 ```

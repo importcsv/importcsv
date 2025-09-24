@@ -97,9 +97,20 @@ JANE SMITH,Jane@Example.Com,555.987.6543,,2024-02-20,item 456,$149.50
 
 ```json
 {
-  "rows": [
+  "success": true,
+  "data": [
     {
-      "values": {
+      "index": 1,
+      "values": ["John Doe", "john@example.com", "+15551234567", "US", "2024-01-15", "PRD-123", "99.99"]
+    },
+    {
+      "index": 2,
+      "values": ["Jane Smith", "jane@example.com", "+15559876543", "US", "2024-02-20", "ITEM-456", "149.50"]
+    }
+  ],
+  "mappedData": [
+    {
+      "data": {
         "name": "John Doe",
         "email": "john@example.com",
         "phone": "+15551234567",
@@ -110,7 +121,7 @@ JANE SMITH,Jane@Example.Com,555.987.6543,,2024-02-20,item 456,$149.50
       }
     },
     {
-      "values": {
+      "data": {
         "name": "Jane Smith",
         "email": "jane@example.com",
         "phone": "+15559876543",
@@ -120,6 +131,18 @@ JANE SMITH,Jane@Example.Com,555.987.6543,,2024-02-20,item 456,$149.50
         "price": 149.50
       }
     }
-  ]
+  ],
+  "num_rows": 2,
+  "num_columns": 7,
+  "headers": ["Name", "Email", "Phone", "Country", "Start Date", "SKU", "Price"],
+  "columnMapping": {
+    "0": { "id": "name", "label": "Name", "include": true },
+    "1": { "id": "email", "label": "Email", "include": true },
+    "2": { "id": "phone", "label": "Phone", "include": true },
+    "3": { "id": "country_code", "label": "Country", "include": true },
+    "4": { "id": "start_date", "label": "Start Date", "include": true },
+    "5": { "id": "product_sku", "label": "SKU", "include": true },
+    "6": { "id": "price", "label": "Price", "include": true }
+  }
 }
 ```

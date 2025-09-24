@@ -8,7 +8,7 @@ description: Complete API documentation for ImportCSV
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `columns` | `Column[]` | - | Column definitions (required for local mode) |
-| `onComplete` | `(data: ImportData) => void` | - | Callback when import completes |
+| `onComplete` | `(data: any) => void` | - | Callback when import completes |
 | `isModal` | `boolean` | `true` | Show as modal vs embedded |
 | `modalIsOpen` | `boolean` | `true` | Control modal state |
 | `modalOnCloseTriggered` | `() => void` | - | Modal close callback |
@@ -30,6 +30,79 @@ description: Complete API documentation for ImportCSV
 | `user` | `object` | - | User context for backend mode |
 | `metadata` | `object` | - | Additional metadata for import |
 | `demoData` | `object` | - | Demo data for testing |
+
+## Column Definition
+
+Each column in the `columns` array should have the following structure:
+
+```typescript
+interface Column {
+  id: string;              // Unique identifier for the column
+  label: string;           // Display name for the column
+  type?: 'string' | 'number' | 'email' | 'date' | 'phone' | 'select';  // Default: 'string'
+  validators?: Validator[];      // Validation rules
+  transformations?: Transformer[]; // Transformation rules
+  options?: string[];            // For select type
+  description?: string;          // Optional helper text
+  placeholder?: string;          // Input placeholder
+}
+```
+
+### Validator Types
+
+```typescript
+type Validator =
+  | { type: 'required'; message?: string }
+  | { type: 'unique'; message?: string }
+  | { type: 'regex'; pattern: string; message?: string }
+  | { type: 'min'; value: number; message?: string }
+  | { type: 'max'; value: number; message?: string }
+  | { type: 'min_length'; value: number; message?: string }
+  | { type: 'max_length'; value: number; message?: string };
+```
+
+### Transformer Types
+
+```typescript
+type Transformer =
+  | { type: 'trim' }
+  | { type: 'uppercase' }
+  | { type: 'lowercase' }
+  | { type: 'capitalize' }
+  | { type: 'remove_special_chars' }
+  | { type: 'normalize_phone' }
+  | { type: 'normalize_date'; format?: string }
+  | { type: 'default'; value: string }
+  | { type: 'replace'; find: string; replace: string }
+  | { type: 'custom'; fn: (value: any) => any };
+```
+
+## onComplete Callback Data Structure
+
+The `onComplete` callback receives an object with the following structure:
+
+```typescript
+{
+  success: boolean;           // Whether the import was successful
+  data: Array<{              // Raw row data with values array
+    index: number;
+    values: string[];
+  }>;
+  mappedData: Array<{        // Mapped data with column names
+    data: Record<string, any>;
+  }>;
+  num_rows: number;          // Number of rows imported
+  num_columns: number;       // Number of columns
+  headers: string[];         // Column headers from CSV
+  columnMapping: {           // Mapping configuration
+    [index: string]: {
+      id: string;
+      label: string;
+      include: boolean;
+    }
+  };
+}
+```
 
 ## Import Behavior Options
 
