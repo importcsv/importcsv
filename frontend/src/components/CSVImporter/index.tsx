@@ -1,14 +1,16 @@
 import { forwardRef } from 'preact/compat';
-import { useRef, useEffect } from 'preact/hooks';
+import { useRef, useEffect, useState } from 'preact/hooks';
 import Importer from "../../importer/features/main";
 import Providers from "../../importer/providers";
 import useThemeStore from "../../importer/stores/theme";
 import { darkenColor, isValidColor } from "../../importer/utils/colorUtils";
 import { CSVImporterProps } from "../../types";
+import Modal from "../Modal";
 // Import styles - with proper scoping under .importcsv, these won't leak
 import "../../index.css";
 import "./style/csv-importer.css";
 import "./style/dark-mode.css";
+import "../Modal/style.css";
 
 const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: any) => {
   
@@ -41,18 +43,18 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
     ...domProps
   } = importerProps;
   const ref = forwardRef ?? useRef(null);
+  // Control modal state internally if needed
+  const [internalModalOpen, setInternalModalOpen] = useState(modalIsOpen);
 
+  // Sync internal state with prop
   useEffect(() => {
-    const current = ref?.current as any;
-    if (isModal && current) {
-      if (modalIsOpen) current?.showModal?.();
-      else current?.close?.();
-    }
-  }, [isModal, modalIsOpen, ref]);
+    setInternalModalOpen(modalIsOpen);
+  }, [modalIsOpen]);
+
   const baseClass = "CSVImporter";
   const themeClass = darkMode ? `${baseClass}-dark` : `${baseClass}-light`;
   // Add importcsv class for proper CSS scoping
-  const domElementClass = ["importcsv", "csv-importer", `${baseClass}-${isModal ? "dialog" : "div"}`, themeClass, className, classNames?.root].filter((i) => i).join(" ");
+  const domElementClass = ["importcsv", "csv-importer", `${baseClass}-${isModal ? "modal" : "div"}`, themeClass, className, classNames?.root].filter((i) => i).join(" ");
 
   // Set Light/Dark mode
   const setTheme = useThemeStore((state) => state.setTheme);
@@ -75,30 +77,16 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
     }
   }, [primaryColor, ref]);
 
-  const backdropClick = (event: { target: any }) => {
-    if (modalCloseOnOutsideClick && event.target === ref?.current) {
-      modalOnCloseTriggered();
-    }
+  // Handle modal close
+  const handleModalClose = () => {
+    setInternalModalOpen(false);
+    modalOnCloseTriggered();
   };
-
-  useEffect(() => {
-    const current = ref?.current as any;
-    if (current && isModal) {
-      const handleCancel = () => {
-        modalOnCloseTriggered();
-      };
-      current.addEventListener("cancel", handleCancel);
-      return () => {
-        current.removeEventListener("cancel", handleCancel);
-      };
-    }
-  }, [isModal, modalOnCloseTriggered, ref]);
 
   // Since we've already destructured all known props above,
   // domProps should only contain valid DOM attributes
   const elementProps = {
     ref,
-    ...(isModal ? { onClick: backdropClick } : {}),
     className: domElementClass,
     "data-theme": darkMode ? "dark" : "light",
     style: { colorScheme: darkMode ? "dark" : "light" },
@@ -140,9 +128,17 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
   );
 
   return isModal ? (
-    <dialog {...elementProps}>
-      <ImporterComponent />
-    </dialog>
+    <Modal
+      isOpen={internalModalOpen}
+      onClose={handleModalClose}
+      closeOnOutsideClick={modalCloseOnOutsideClick}
+      className={domElementClass}
+      contentClassName="csv-importer-modal-container"
+    >
+      <div {...elementProps}>
+        <ImporterComponent />
+      </div>
+    </Modal>
   ) : (
     <div {...elementProps}>
       <ImporterComponent />

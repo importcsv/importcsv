@@ -27,20 +27,10 @@
   filter: brightness(1.2);
 }
 
-.CSVImporter-dialog::backdrop {
-  background-color: rgba(0, 0, 0, 0.85);
-}
-
-.CSVImporter-dialog {
-  border-radius: 1rem;
-  width: 80vw;
-  max-height: 80vh;
-  min-width: 800px;
-  border: none;
-  position: fixed;
-  inset: 0;
-  padding: 0;
-  margin: auto;
+/* Modal container styles */
+.csv-importer-modal-container {
+  /* Modal content is already styled in Modal/style.css */
+  /* Additional styles specific to CSV importer can go here */
 }
 
 .CSVImporter-div {
