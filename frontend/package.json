@@ -33,7 +33,7 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/abhishekray07/importcsv.git"
+    "url": "git+https://github.com/importcsv/importcsv.git"
   },
   "keywords": [
     "csv",
