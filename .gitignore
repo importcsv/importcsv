@@ -111,3 +111,6 @@ build
 
 # playwright
 .playwright-mcp
+
+# husky
+.husky/_

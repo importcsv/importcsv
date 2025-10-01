@@ -1,0 +1,12 @@
+{
+  "name": "importcsv-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ImportCSV monorepo - Git hooks and tooling",
+  "scripts": {
+    "prepare": "husky install"
+  },
+  "devDependencies": {
+    "husky": "^9.0.11"
+  }
+}
