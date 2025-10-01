@@ -40,3 +40,25 @@ global.ResizeObserver = class ResizeObserver {
   observe() {}
   unobserve() {}
 } as any;
+
+// Mock lucide-react icons (they don't render properly in test environment)
+vi.mock('lucide-react', () => ({
+  Check: () => 'svg',
+  ChevronDown: () => 'svg',
+  Info: () => 'svg',
+  X: () => 'svg',
+  Upload: () => 'svg',
+  AlertCircle: () => 'svg',
+  CheckCircle: () => 'svg',
+}));
+
+// Mock @tanstack/react-virtual for virtualization tests
+vi.mock('@tanstack/react-virtual', () => ({
+  useVirtualizer: () => ({
+    getVirtualItems: () => [],
+    getTotalSize: () => 0,
+    scrollToIndex: vi.fn(),
+    scrollToOffset: vi.fn(),
+    measure: vi.fn(),
+  }),
+}));
