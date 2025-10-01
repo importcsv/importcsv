@@ -12,6 +12,8 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     include: ['src/**/*.{test,spec}.{ts,tsx}'],
     exclude: ['node_modules', 'build', 'examples'],
+    testTimeout: process.env.CI ? 30000 : 10000, // Longer timeout in CI
+    hookTimeout: process.env.CI ? 30000 : 10000,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

@@ -4,6 +4,8 @@
 
 **The modern CSV importer for React applications**
 
+[![Tests](https://github.com/importcsv/importcsv/actions/workflows/frontend-tests.yml/badge.svg)](https://github.com/importcsv/importcsv/actions/workflows/frontend-tests.yml)
+[![Coverage](https://codecov.io/gh/importcsv/importcsv/branch/main/graph/badge.svg?flag=frontend)](https://codecov.io/gh/importcsv/importcsv)
 [![npm version](https://img.shields.io/npm/v/@importcsv/react.svg)](https://www.npmjs.com/package/@importcsv/react)
 [![npm downloads](https://img.shields.io/npm/dm/@importcsv/react.svg)](https://www.npmjs.com/package/@importcsv/react)
 [![bundle size](https://img.shields.io/bundlephobia/minzip/@importcsv/react)](https://bundlephobia.com/package/@importcsv/react)
