@@ -112,9 +112,9 @@ class ImporterField(BaseModel):
 
 # Base Importer model
 class ImporterBase(BaseModel):
-    name: str = Field(..., description="Name of the importer")
+    name: str = Field(..., min_length=1, description="Name of the importer")
     description: Optional[str] = Field(None, description="Description of the importer")
-    fields: List[ImporterField] = Field(..., description="Fields to import")
+    fields: List[ImporterField] = Field(..., min_length=1, description="Fields to import")
     webhook_url: Optional[str] = Field(
         None, description="URL where imported data is sent"
     )
