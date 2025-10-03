@@ -1,4 +1,4 @@
-import { h } from 'preact';
+import { h, JSX } from 'preact';
 import { forwardRef } from 'preact/compat';
 import { useEffect, useRef } from 'preact/hooks';
 import type { ComponentChildren } from 'preact';
@@ -11,7 +11,7 @@ interface RootProps {
 
 const ROOT_CLASS = 'importcsv';
 
-export default forwardRef<HTMLDivElement, RootProps>(function Root(
+const Root = forwardRef<HTMLDivElement, RootProps>(function Root(
   { children, className = '', primaryColor },
   forwardedRef
 ) {
@@ -59,4 +59,6 @@ export default forwardRef<HTMLDivElement, RootProps>(function Root(
       {children}
     </div>
   );
-});
+}) as any;
+
+export default Root;

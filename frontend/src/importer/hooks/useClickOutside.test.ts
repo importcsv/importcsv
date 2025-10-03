@@ -19,7 +19,7 @@ describe('useClickOutside', () => {
       return h('div', { ref }, 'Inside element');
     };
 
-    const { container } = render(h(TestComponent));
+    const { container } = render(h(TestComponent, {}));
     const insideElement = container.querySelector('div');
 
     // Click outside
@@ -38,7 +38,7 @@ describe('useClickOutside', () => {
       return h('div', { ref }, 'Inside element');
     };
 
-    const { container } = render(h(TestComponent));
+    const { container } = render(h(TestComponent, {}));
     const insideElement = container.querySelector('div')!;
 
     // Click inside
@@ -50,7 +50,7 @@ describe('useClickOutside', () => {
   });
 
   it('does not call handler when ref is null', () => {
-    renderHook(() => useClickOutside(null, callback));
+    renderHook(() => useClickOutside(null, callback), { wrapper: ({ children }) => children });
 
     const event = new MouseEvent('mousedown', { bubbles: true });
     document.dispatchEvent(event);
@@ -65,7 +65,7 @@ describe('useClickOutside', () => {
       const ref = useRef<HTMLDivElement>(null);
       useClickOutside(ref, callback);
       return ref;
-    });
+    }, { wrapper: ({ children }) => children });
 
     unmount();
 

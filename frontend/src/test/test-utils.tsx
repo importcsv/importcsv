@@ -1,10 +1,10 @@
 import { render as preactRender, RenderOptions } from '@testing-library/preact';
-import { ReactElement } from 'preact/compat';
+import { VNode } from 'preact';
 
 /**
  * Custom render function that wraps components with common providers
  */
-export function render(ui: ReactElement, options?: RenderOptions) {
+export function render(ui: VNode<any>, options?: RenderOptions) {
   return preactRender(ui, { ...options });
 }
 

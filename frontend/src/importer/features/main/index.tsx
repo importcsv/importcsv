@@ -60,7 +60,7 @@ export default function Main(props: CSVImporterProps) {
   const isStandaloneMode = !importerKey; // Standalone if no importerKey
   
   // Get the API URL (defaults to production API if not provided)
-  const apiUrl = getApiBaseUrl(backendUrl);
+  const apiUrl = getApiBaseUrl(backendUrl || '');
 
   const { t } = useTranslation();
 
@@ -192,7 +192,7 @@ export default function Main(props: CSVImporterProps) {
         const backendColumns: Column[] = schemaData.fields.map((field: any) => {
           const column: Column = {
             id: field.id || field.name,
-            label: field.label || field.display_name || field.name.replace(/_/g, ' ').replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+            label: field.label || field.display_name || field.name.replace(/_/g, ' ').replace(/-/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase()),
             type: mapBackendType(field.type)
           };
           
@@ -456,7 +456,7 @@ export default function Main(props: CSVImporterProps) {
             columns={importColumns || propColumns}
             skipHeaderRowSelection={skipHeader || false}
             showDownloadTemplateButton={showDownloadTemplateButton}
-            setDataError={setDataError}
+            setDataError={setDataError as any}
             onSuccess={async (file: File) => {
               setDataError(null);
               const fileType = file.name.slice(file.name.lastIndexOf(".") + 1);

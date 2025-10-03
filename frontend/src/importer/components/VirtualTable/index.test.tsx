@@ -8,9 +8,9 @@ import * as ReactVirtual from '@tanstack/react-virtual';
 describe('VirtualTable component', () => {
   const mockHeaders = ['Name', 'Email', 'Age'];
   const mockRows: FileRow[] = [
-    { values: ['John Doe', 'john@example.com', '30'], rowIndex: 0 },
-    { values: ['Jane Smith', 'jane@example.com', '25'], rowIndex: 1 },
-    { values: ['Bob Johnson', 'bob@example.com', '35'], rowIndex: 2 },
+    { values: ['John Doe', 'john@example.com', '30'], index: 0 },
+    { values: ['Jane Smith', 'jane@example.com', '25'], index: 1 },
+    { values: ['Bob Johnson', 'bob@example.com', '35'], index: 2 },
   ];
   const includedColumns = [0, 1, 2];
 
@@ -98,7 +98,7 @@ describe('VirtualTable component', () => {
 
   it('applies custom row className', () => {
     const getRowClassName = vi.fn((row: FileRow) => {
-      return row.rowIndex === 1 ? 'bg-red-50' : '';
+      return row.index === 1 ? 'bg-red-50' : '';
     });
 
     const { container } = render(h(VirtualTable, {
@@ -131,7 +131,7 @@ describe('VirtualTable component', () => {
   it('virtualizes large datasets', () => {
     const largeRows: FileRow[] = Array.from({ length: 10000 }, (_, i) => ({
       values: [`User ${i}`, `user${i}@example.com`, `${20 + i}`],
-      rowIndex: i
+      index: i
     }));
 
     // Mock virtualizer to return only a subset

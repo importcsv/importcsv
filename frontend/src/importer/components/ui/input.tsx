@@ -1,13 +1,15 @@
-import { h } from 'preact';
+import { h, JSX } from 'preact';
 import { forwardRef } from 'preact/compat'
 
 import { cn } from "../../../utils/cn"
 
 export interface InputProps
-  extends JSX.HTMLAttributes<HTMLInputElement> {}
+  extends JSX.HTMLAttributes<HTMLInputElement> {
+  type?: string
+}
 
-const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, ...props }, ref) => {
+const InputComponent = forwardRef<HTMLInputElement, InputProps>(
+  ({ className, type, ...props }, ref): JSX.Element => {
     return (
       <input
         type={type}
@@ -21,6 +23,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
     )
   }
 )
-Input.displayName = "Input"
+InputComponent.displayName = "Input"
+
+const Input = InputComponent as unknown as (props: InputProps & { ref?: any }) => JSX.Element
 
 export { Input }

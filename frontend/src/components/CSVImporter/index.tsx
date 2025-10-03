@@ -1,4 +1,4 @@
-import { forwardRef } from 'preact/compat';
+import { forwardRef, JSX } from 'preact/compat';
 import { useRef, useEffect, useState } from 'preact/hooks';
 import Importer from "../../importer/features/main";
 import Providers from "../../importer/providers";
@@ -144,6 +144,6 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
       <ImporterComponent />
     </div>
   );
-});
+}) as any;
 
 export default CSVImporter;

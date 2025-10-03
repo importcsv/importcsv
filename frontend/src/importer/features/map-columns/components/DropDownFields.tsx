@@ -1,4 +1,5 @@
 import { useEffect, useState } from "preact/hooks";
+import type { JSX } from "preact";
 import { Select } from "../../../components/ui/select";
 import { InputOption } from "../../../components/Input/types";
 
@@ -87,7 +88,7 @@ export default function DropdownFields({
   return (
     <Select
       value={selectedOption}
-      onChange={(e) => handleValueChange(e.target.value)}
+      onChange={(e: JSX.TargetedEvent<HTMLSelectElement>) => handleValueChange((e.target as HTMLSelectElement).value)}
       disabled={isEmpty}
       options={selectOptions}
     />

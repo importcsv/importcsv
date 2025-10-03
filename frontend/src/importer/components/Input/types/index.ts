@@ -1,4 +1,4 @@
-import { ButtonHTMLAttributes, InputHTMLAttributes, ReactElement } from "preact/hooks";
+import { JSX, VNode } from "preact";
 
 export type inputTypes =
   | "date"
@@ -16,17 +16,25 @@ export type inputTypes =
   | "week";
 
 export type InputVariants = "fluid" | "small";
-export type InputOption = ButtonHTMLAttributes<HTMLButtonElement> & { required?: boolean };
+export type InputOption = JSX.HTMLAttributes<HTMLButtonElement> & {
+  required?: boolean;
+  value?: string;
+};
 
-export type InputProps = InputHTMLAttributes<HTMLInputElement> &
-  InputHTMLAttributes<HTMLSelectElement> &
-  InputHTMLAttributes<HTMLTextAreaElement> & {
+export type InputProps = Omit<JSX.HTMLAttributes<HTMLInputElement>, 'label'> &
+  Omit<JSX.HTMLAttributes<HTMLSelectElement>, 'label'> &
+  Omit<JSX.HTMLAttributes<HTMLTextAreaElement>, 'label'> & {
     as?: "input" | "textarea";
-    label?: string | ReactElement;
-    icon?: ReactElement;
-    iconAfter?: ReactElement;
+    label?: string | VNode;
+    icon?: VNode;
+    iconAfter?: VNode;
     error?: string;
     options?: { [key: string]: InputOption };
     variants?: InputVariants[];
     type?: inputTypes;
+    name?: string;
+    disabled?: boolean;
+    value?: string;
+    onChange?: (value: string) => void;
+    placeholder?: string;
   };

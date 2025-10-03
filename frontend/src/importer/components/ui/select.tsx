@@ -1,19 +1,24 @@
-import { h } from 'preact';
+import { h, JSX } from 'preact';
 import { forwardRef } from 'preact/compat'
 import { cn } from "../../../utils/cn"
 
-interface SelectProps extends JSX.SelectHTMLAttributes<HTMLSelectElement> {
+interface SelectProps extends JSX.HTMLAttributes<HTMLSelectElement> {
   placeholder?: string
   options?: Array<{ value: string; label: string; disabled?: boolean }>
   onValueChange?: (value: string) => void
+  value?: string
+  defaultValue?: string
+  disabled?: boolean
 }
 
-const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, placeholder, options = [], onValueChange, onChange, ...props }, ref) => {
+const SelectComponent = forwardRef<HTMLSelectElement, SelectProps>(
+  ({ className, placeholder, options = [], onValueChange, onChange, ...props }, ref): JSX.Element => {
     const handleChange = (e: JSX.TargetedEvent<HTMLSelectElement>) => {
       // Call both handlers if they exist
       onChange?.(e);
-      onValueChange?.(e.target.value);
+      if (e.target) {
+        onValueChange?.((e.target as HTMLSelectElement).value);
+      }
     };
 
     const handleFocus = (e: JSX.TargetedFocusEvent<HTMLSelectElement>) => {
@@ -65,6 +70,8 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(
   }
 )
 
-Select.displayName = "Select"
+SelectComponent.displayName = "Select"
+
+const Select = SelectComponent as unknown as (props: SelectProps & { ref?: any }) => JSX.Element
 
 export { Select }

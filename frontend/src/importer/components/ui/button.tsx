@@ -1,4 +1,4 @@
-import { h } from 'preact';
+import { h, JSX } from 'preact';
 import { forwardRef } from 'preact/compat'
 import { cva, type VariantProps } from "class-variance-authority"
 
@@ -43,15 +43,17 @@ const darkModeStyles = {
 export interface ButtonProps
   extends JSX.HTMLAttributes<HTMLButtonElement>,
     VariantProps<typeof buttonVariants> {
+  type?: 'button' | 'submit' | 'reset'
   isLoading?: boolean
+  disabled?: boolean
 }
 
-const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, isLoading, children, ...props }, ref) => {
+const ButtonComponent = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, isLoading, type, children, ...props }, ref): JSX.Element => {
     // Check if we're in dark mode by looking for data-theme on any parent
-    const isDarkMode = typeof window !== 'undefined' && 
+    const isDarkMode = typeof window !== 'undefined' &&
       document.querySelector('[data-theme="dark"]');
-    
+
     // Apply dark mode styles conditionally
     const darkClasses = isDarkMode && variant ? {
       default: 'dark:bg-blue-500 dark:hover:bg-blue-600',
@@ -60,9 +62,10 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       ghost: 'dark:hover:bg-gray-800 dark:hover:text-gray-100',
       link: 'dark:text-blue-400 dark:hover:text-blue-300',
     }[variant as string] : '';
-    
+
     return (
       <button
+        type={type}
         className={cn(
           buttonVariants({ variant, size, className }),
           darkClasses
@@ -99,6 +102,9 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   }
 )
 
-Button.displayName = "Button"
+ButtonComponent.displayName = "Button"
+
+// Type assertion to fix forwardRef return type issue
+const Button = ButtonComponent as unknown as (props: ButtonProps & { ref?: any }) => JSX.Element
 
 export { Button, buttonVariants }

@@ -1,4 +1,4 @@
-import { h } from 'preact';
+import { h, JSX } from 'preact';
 import { forwardRef } from 'preact/compat'
 import { cva, type VariantProps } from "class-variance-authority"
 
@@ -20,10 +20,10 @@ const alertVariants = cva(
   }
 )
 
-const Alert = forwardRef<
+const AlertComponent = forwardRef<
   HTMLDivElement,
   JSX.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants>
->(({ className, variant, ...props }, ref) => (
+>(({ className, variant, ...props }, ref): JSX.Element => (
   <div
     ref={ref}
     role="alert"
@@ -31,30 +31,36 @@ const Alert = forwardRef<
     {...props}
   />
 ))
-Alert.displayName = "Alert"
+AlertComponent.displayName = "Alert"
 
-const AlertTitle = forwardRef<
+const Alert = AlertComponent as unknown as (props: JSX.HTMLAttributes<HTMLDivElement> & VariantProps<typeof alertVariants> & { ref?: any }) => JSX.Element
+
+const AlertTitleComponent = forwardRef<
   HTMLParagraphElement,
   JSX.HTMLAttributes<HTMLHeadingElement>
->(({ className, ...props }, ref) => (
+>(({ className, ...props }, ref): JSX.Element => (
   <h5
     ref={ref}
     className={cn("mb-1 font-medium leading-none tracking-tight", className)}
     {...props}
   />
 ))
-AlertTitle.displayName = "AlertTitle"
+AlertTitleComponent.displayName = "AlertTitle"
 
-const AlertDescription = forwardRef<
+const AlertTitle = AlertTitleComponent as unknown as (props: JSX.HTMLAttributes<HTMLHeadingElement> & { ref?: any }) => JSX.Element
+
+const AlertDescriptionComponent = forwardRef<
   HTMLParagraphElement,
   JSX.HTMLAttributes<HTMLParagraphElement>
->(({ className, ...props }, ref) => (
+>(({ className, ...props }, ref): JSX.Element => (
   <div
     ref={ref}
     className={cn("text-sm [&_p]:leading-relaxed", className)}
     {...props}
   />
 ))
-AlertDescription.displayName = "AlertDescription"
+AlertDescriptionComponent.displayName = "AlertDescription"
+
+const AlertDescription = AlertDescriptionComponent as unknown as (props: JSX.HTMLAttributes<HTMLParagraphElement> & { ref?: any }) => JSX.Element
 
 export { Alert, AlertTitle, AlertDescription }

@@ -7,9 +7,9 @@ export type Step = {
 export type StepperProps = {
   steps: Step[];
   current: number;
-  setCurrent: (step: number) => void;
-  step: Step;
+  setCurrent?: (step: number) => void;
+  step?: Step;
   clickable?: boolean;
-  skipHeader: boolean;
+  skipHeader?: boolean;
   hide?: boolean;
 };

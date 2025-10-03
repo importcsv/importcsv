@@ -9,7 +9,7 @@ export function createCSVImporter(props: CreateImporterProps) {
   const ref = createRef<typeof CSVImporter & HTMLDialogElement>();
   const domElement = props.domElement || document.body;
 
-  render(<CSVImporter ref={ref} {...props} />, domElement);
+  render(<CSVImporter ref={ref as any} {...props} />, domElement);
 
   return {
     instance: ref.current,

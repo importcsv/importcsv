@@ -122,7 +122,7 @@ export default function MapColumns({
           <Errors error={error} />
         </div>
       )}
-      <Button isLoading={isSubmitting} onClick={onSubmit}>
+      <Button type="button" isLoading={isSubmitting} onClick={onSubmit as any}>
         {t("Continue")}
       </Button>
     </>

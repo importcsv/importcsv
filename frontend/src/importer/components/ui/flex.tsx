@@ -1,4 +1,4 @@
-import { h } from 'preact';
+import { h, JSX } from 'preact';
 import { forwardRef } from 'preact/compat'
 import { cn } from "../../../utils/cn"
 
@@ -10,8 +10,8 @@ interface FlexProps extends JSX.HTMLAttributes<HTMLDivElement> {
   gap?: number | string
 }
 
-const Flex = forwardRef<HTMLDivElement, FlexProps>(
-  ({ className, direction = "row", align, justify, wrap, gap, style, ...props }, ref) => {
+const FlexComponent = forwardRef<HTMLDivElement, FlexProps>(
+  ({ className, direction = "row", align, justify, wrap, gap, style, ...props }, ref): JSX.Element => {
     const flexClasses = cn(
       "flex",
       {
@@ -36,41 +36,60 @@ const Flex = forwardRef<HTMLDivElement, FlexProps>(
     )
 
     const gapStyle = gap ? { gap: typeof gap === 'number' ? `${gap * 0.25}rem` : gap } : {}
+    const combinedStyle = { ...gapStyle, ...((style as object) || {}) } as JSX.CSSProperties
 
     return (
       <div
         ref={ref}
         className={flexClasses}
-        style={{ ...gapStyle, ...style }}
+        style={combinedStyle}
         {...props}
       />
     )
   }
 )
-Flex.displayName = "Flex"
+FlexComponent.displayName = "Flex"
 
-const Box = forwardRef<HTMLDivElement, JSX.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => {
+const Flex = FlexComponent as unknown as (props: FlexProps & { ref?: any }) => JSX.Element
+
+const BoxComponent = forwardRef<HTMLDivElement, JSX.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref): JSX.Element => {
     return <div ref={ref} className={cn(className)} {...props} />
   }
 )
-Box.displayName = "Box"
+BoxComponent.displayName = "Box"
 
-const HStack = forwardRef<HTMLDivElement, Omit<FlexProps, "direction">>(
-  (props, ref) => <Flex ref={ref} direction="row" align="center" {...props} />
+const Box = BoxComponent as unknown as (props: JSX.HTMLAttributes<HTMLDivElement> & { ref?: any }) => JSX.Element
+
+const HStackComponent = forwardRef<HTMLDivElement, Omit<FlexProps, "direction">>(
+  ({ align = "center", ...props }, ref): JSX.Element => (
+    <div ref={ref}>
+      <Flex direction="row" align={align} {...props} />
+    </div>
+  )
 )
-HStack.displayName = "HStack"
+HStackComponent.displayName = "HStack"
 
-const VStack = forwardRef<HTMLDivElement, Omit<FlexProps, "direction">>(
-  (props, ref) => <Flex ref={ref} direction="column" {...props} />
+const HStack = HStackComponent as unknown as (props: Omit<FlexProps, "direction"> & { ref?: any }) => JSX.Element
+
+const VStackComponent = forwardRef<HTMLDivElement, Omit<FlexProps, "direction">>(
+  (props, ref): JSX.Element => (
+    <div ref={ref}>
+      <Flex direction="column" {...props} />
+    </div>
+  )
 )
-VStack.displayName = "VStack"
+VStackComponent.displayName = "VStack"
 
-const Text = forwardRef<HTMLDivElement, JSX.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => {
+const VStack = VStackComponent as unknown as (props: Omit<FlexProps, "direction"> & { ref?: any }) => JSX.Element
+
+const TextComponent = forwardRef<HTMLDivElement, JSX.HTMLAttributes<HTMLDivElement>>(
+  ({ className, ...props }, ref): JSX.Element => {
     return <div ref={ref} className={cn(className)} {...props} />
   }
 )
-Text.displayName = "Text"
+TextComponent.displayName = "Text"
+
+const Text = TextComponent as unknown as (props: JSX.HTMLAttributes<HTMLDivElement> & { ref?: any }) => JSX.Element
 
 export { Flex, Box, HStack, VStack, Text }

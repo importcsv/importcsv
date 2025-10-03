@@ -1,4 +1,5 @@
 import { createContext } from 'preact';
+import { useContext } from 'preact/hooks';
 import type { JSX } from 'preact';
 import { cn } from "../../../utils/cn";
 import { CellProps, RowProps, TableProps } from "./types";
@@ -63,24 +64,27 @@ export default function Table({
     </div>
   );
 
+  const ProviderComponent = TableContext.Provider as any;
   return (
-    <TableContext.Provider value={context}>
-      <div className={tableStyle} role="table">
-        {headingContent}
-        <div className="divide-y divide-gray-200" role="rowgroup">
-          {data.map((d, i) => {
-            const key = keyAsId && d?.[keyAsId] ? d[keyAsId] : i;
-            const props = { datum: d, onClick: onRowClick };
-            return <Row {...props} key={key?.toString()} />;
-          })}
+    <ProviderComponent value={context}>
+      <>
+        <div className={tableStyle} role="table">
+          {headingContent}
+          <div className="divide-y divide-gray-200" role="rowgroup">
+            {data.map((d, i) => {
+              const key = keyAsId && d?.[keyAsId] ? d[keyAsId] : i;
+              const props = { datum: d, onClick: onRowClick };
+              return <Row {...props} key={key?.toString()} />;
+            })}
+          </div>
         </div>
-      </div>
-      {!data.length && (
-        <div className="text-center text-gray-500 py-8" role="empty-query">
-          <p>Empty</p>
-        </div>
-      )}
-    </TableContext.Provider>
+        {!data.length && (
+          <div className="text-center text-gray-500 py-8">
+            <p>Empty</p>
+          </div>
+        )}
+      </>
+    </ProviderComponent>
   );
 }
 
@@ -128,11 +132,13 @@ const Row = ({ datum, onClick, isHeading }: RowProps) => {
 };
 
 const Cell = ({ children, cellClass, cellStyle, tooltip }: CellProps) => {
-  const cellProps = {
-    className: cn("flex-1", cellClass, !children && "text-gray-400"),
-    role: "cell",
-    style: cellStyle,
-    ...(tooltip ? { title: tooltip } : {}),
-  };
-  return <div {...cellProps}>{children}</div>;
+  return (
+    <div
+      className={cn("flex-1", cellClass, !children && "text-gray-400")}
+      style={cellStyle}
+      title={tooltip}
+    >
+      {children}
+    </div>
+  );
 };

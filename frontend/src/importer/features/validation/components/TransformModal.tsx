@@ -193,13 +193,15 @@ export default function TransformModal({
               <div>
                 <div className="flex gap-2 mb-2">
                   <Input
-                    ref={promptInputRef}
-                    placeholder={t("Describe the transformation (e.g., 'Convert dates to MM/DD/YYYY')")}
-                    value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleGenerate()}
-                    disabled={isGenerating}
-                    className="h-10"
+                    {...{
+                      ref: promptInputRef as any,
+                      placeholder: t("Describe the transformation (e.g., 'Convert dates to MM/DD/YYYY')"),
+                      value: prompt,
+                      onChange: (e: any) => setPrompt((e.target as HTMLInputElement).value),
+                      onKeyPress: (e: any) => e.key === 'Enter' && handleGenerate(),
+                      disabled: isGenerating,
+                      className: "h-10"
+                    }}
                   />
                   <Button
                     type="button"

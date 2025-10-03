@@ -1,4 +1,4 @@
-import { ReactNode } from "preact/hooks";
+import { JSX, ComponentChildren } from "preact";
 
 export type AsMap = {
   div: JSX.HTMLAttributes<HTMLDivElement>;
@@ -8,6 +8,6 @@ export type AsMap = {
 
 export type TooltipProps<T extends keyof AsMap = "span"> = {
   as?: T;
-  title?: string | ReactNode;
-  icon?: ReactNode;
+  title?: string | ComponentChildren;
+  icon?: ComponentChildren;
 } & AsMap[T];

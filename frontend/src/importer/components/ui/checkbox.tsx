@@ -1,16 +1,18 @@
-import { h } from 'preact';
+import { h, JSX } from 'preact';
 import { forwardRef } from 'preact/compat'
 import { useEffect,useState } from 'preact/hooks';
 import { Check } from "lucide-react"
 
 import { cn } from "../../../utils/cn"
 
-export interface CheckboxProps extends JSX.HTMLAttributes<HTMLInputElement> {
+export interface CheckboxProps extends Omit<JSX.HTMLAttributes<HTMLInputElement>, 'onChange'> {
+  checked?: boolean
   onCheckedChange?: (checked: boolean) => void
+  onChange?: (e: JSX.TargetedEvent<HTMLInputElement>) => void
 }
 
-const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
-  ({ className, checked, onCheckedChange, onChange, ...props }, ref) => {
+const CheckboxComponent = forwardRef<HTMLInputElement, CheckboxProps>(
+  ({ className, checked, onCheckedChange, onChange, ...props }, ref): JSX.Element => {
     const [isChecked, setIsChecked] = useState(checked || false)
 
     useEffect(() => {
@@ -18,9 +20,10 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
     }, [checked])
 
     const handleChange = (e: JSX.TargetedEvent<HTMLInputElement>) => {
-      const newChecked = e.target.checked
+      if (!e.target) return;
+      const newChecked = (e.target as HTMLInputElement).checked
       setIsChecked(newChecked)
-      
+
       // Call both handlers if they exist
       onCheckedChange?.(newChecked)
       onChange?.(e)
@@ -54,6 +57,8 @@ const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
     )
   }
 )
-Checkbox.displayName = "Checkbox"
+CheckboxComponent.displayName = "Checkbox"
+
+const Checkbox = CheckboxComponent as unknown as (props: CheckboxProps & { ref?: any }) => JSX.Element
 
 export { Checkbox }

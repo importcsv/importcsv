@@ -1,4 +1,4 @@
-import { useState, useMemo, FormEvent, useRef, useEffect, useCallback } from 'preact/hooks';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'preact/hooks';
 import type { ComponentChildren, FunctionComponent, JSX } from 'preact';
 import { Button } from '../../components/ui/button';
 import { Switch } from '../../components/ui/switch';
@@ -343,7 +343,6 @@ export default function Validation({
   const footerContent = (
     <>
       <Button
-        type="button"
         variant="outline"
         onClick={onCancel}
         disabled={isSubmitting}
@@ -352,7 +351,6 @@ export default function Validation({
         Back
       </Button>
       <Button
-        type="submit"
         isLoading={isSubmitting}
         disabled={isValidating || (disableOnInvalidRows && errors.length > 0)}
         size="default"
@@ -441,7 +439,6 @@ export default function Validation({
               {backendUrl && importerKey && errorCount > 0 && (
                 <Tooltip content="Use AI to automatically fix validation errors">
                   <Button
-                    type="button"
                     size="sm"
                     onClick={() => setIsTransformPanelOpen(true)}
                     variant="default"
@@ -497,11 +494,11 @@ export default function Validation({
                   <input
                     type="text"
                     value={String(value || '')}
-                    onChange={(e) => {
+                    onChange={(e: JSX.TargetedEvent<HTMLInputElement, Event>) => {
                       // Find the original row index based on the pre-transformed row
                       const preTransformedIdx = preTransformedRows.indexOf(row);
-                      if (preTransformedIdx !== -1) {
-                        handleCellEdit(preTransformedIdx, colIdx, e.target.value);
+                      if (preTransformedIdx !== -1 && e.target) {
+                        handleCellEdit(preTransformedIdx, colIdx, (e.target as HTMLInputElement).value);
                       }
                     }}
                     tabIndex={0}

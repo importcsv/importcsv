@@ -63,7 +63,7 @@ describe('Checkbox component', () => {
       label: 'Test',
       name: 'test',
       'data-testid': 'my-checkbox'
-    }));
+    } as any));
     const checkbox = screen.getByRole('checkbox');
     expect(checkbox).toHaveAttribute('data-testid', 'my-checkbox');
   });

@@ -10,13 +10,13 @@ export interface ToastProps extends JSX.HTMLAttributes<HTMLDivElement> {
   onClose?: () => void
 }
 
-const Toast = forwardRef<HTMLDivElement, ToastProps>(
-  ({ className, variant = 'default', onClose, children, ...props }, ref) => {
+const ToastComponent = forwardRef<HTMLDivElement, ToastProps>(
+  ({ className, variant = 'default', onClose, children, ...props }, ref): JSX.Element => {
     const variantClasses = {
       default: 'bg-white border-gray-200 text-gray-900',
       destructive: 'bg-red-600 border-red-600 text-white',
     }
-    
+
     return (
       <div
         ref={ref}
@@ -35,8 +35,8 @@ const Toast = forwardRef<HTMLDivElement, ToastProps>(
             onClick={onClose}
             className={cn(
               "absolute right-2 top-2 rounded-md p-1 opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-offset-2",
-              variant === 'destructive' 
-                ? "focus:ring-red-300 hover:bg-red-500" 
+              variant === 'destructive'
+                ? "focus:ring-red-300 hover:bg-red-500"
                 : "focus:ring-gray-500 hover:bg-gray-100"
             )}
           >
@@ -47,12 +47,14 @@ const Toast = forwardRef<HTMLDivElement, ToastProps>(
     )
   }
 )
-Toast.displayName = "Toast"
+ToastComponent.displayName = "Toast"
 
-const ToastAction = forwardRef<
+const Toast = ToastComponent as unknown as (props: ToastProps & { ref?: any }) => JSX.Element
+
+const ToastActionComponent = forwardRef<
   HTMLButtonElement,
   JSX.HTMLAttributes<HTMLButtonElement>
->(({ className, ...props }, ref) => (
+>(({ className, ...props }, ref): JSX.Element => (
   <button
     ref={ref}
     className={cn(
@@ -62,12 +64,14 @@ const ToastAction = forwardRef<
     {...props}
   />
 ))
-ToastAction.displayName = "ToastAction"
+ToastActionComponent.displayName = "ToastAction"
 
-const ToastClose = forwardRef<
+const ToastAction = ToastActionComponent as unknown as (props: JSX.HTMLAttributes<HTMLButtonElement> & { ref?: any }) => JSX.Element
+
+const ToastCloseComponent = forwardRef<
   HTMLButtonElement,
   JSX.HTMLAttributes<HTMLButtonElement>
->(({ className, ...props }, ref) => (
+>(({ className, ...props }, ref): JSX.Element => (
   <button
     ref={ref}
     className={cn(
@@ -79,33 +83,39 @@ const ToastClose = forwardRef<
     <X className="h-4 w-4" />
   </button>
 ))
-ToastClose.displayName = "ToastClose"
+ToastCloseComponent.displayName = "ToastClose"
 
-const ToastTitle = forwardRef<
+const ToastClose = ToastCloseComponent as unknown as (props: JSX.HTMLAttributes<HTMLButtonElement> & { ref?: any }) => JSX.Element
+
+const ToastTitleComponent = forwardRef<
   HTMLDivElement,
   JSX.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
+>(({ className, ...props }, ref): JSX.Element => (
   <div
     ref={ref}
     className={cn("text-sm font-semibold", className)}
     {...props}
   />
 ))
-ToastTitle.displayName = "ToastTitle"
+ToastTitleComponent.displayName = "ToastTitle"
 
-const ToastDescription = forwardRef<
+const ToastTitle = ToastTitleComponent as unknown as (props: JSX.HTMLAttributes<HTMLDivElement> & { ref?: any }) => JSX.Element
+
+const ToastDescriptionComponent = forwardRef<
   HTMLDivElement,
   JSX.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
+>(({ className, ...props }, ref): JSX.Element => (
   <div
     ref={ref}
     className={cn("text-sm opacity-90", className)}
     {...props}
   />
 ))
-ToastDescription.displayName = "ToastDescription"
+ToastDescriptionComponent.displayName = "ToastDescription"
 
-type ToastActionElement = JSX.Element<typeof ToastAction>
+const ToastDescription = ToastDescriptionComponent as unknown as (props: JSX.HTMLAttributes<HTMLDivElement> & { ref?: any }) => JSX.Element
+
+type ToastActionElement = JSX.Element
 
 export {
   Toast,

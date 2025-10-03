@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from "preact/hooks";
+import type { JSX } from "preact";
 import { useTranslation } from "../../../../i18n/useTranslation";
 import Checkbox from "../../../components/Checkbox";
 import { InputOption } from "../../../components/Input/types";
@@ -237,7 +238,7 @@ export default function useMapColumnsTable(
               <Checkbox
                 checked={suggestion.include}
                 disabled={!((suggestion as any).id || (suggestion as any).key) || isLoading}
-                onChange={(e: JSX.TargetedEvent<HTMLInputElement>) => handleUseChange(index, e.target.checked)}
+                onChange={(e: JSX.TargetedEvent<HTMLInputElement>) => handleUseChange(index, (e.target as HTMLInputElement).checked)}
               />
             </div>
           ),

@@ -1,4 +1,5 @@
-import { RefObject, useEffect, useRef } from "preact/hooks";
+import { useEffect, useRef } from "preact/hooks";
+import type { RefObject } from "preact";
 import useIsomorphicLayoutEffect from "./useIsomorphicLayoutEffect";
 
 function useEventListener<K extends keyof WindowEventMap>(eventName: K, handler: (event: WindowEventMap[K]) => void): void;
@@ -22,7 +23,7 @@ function useEventListener<KW extends keyof WindowEventMap, KH extends keyof HTML
 
   useEffect(() => {
     // Define the listening target
-    const targetElement: T | Window = element?.current || window;
+    const targetElement: T | Window = (element && 'current' in element ? element.current : null) || window;
     if (!(targetElement && targetElement.addEventListener)) {
       return;
     }

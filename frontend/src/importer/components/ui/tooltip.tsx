@@ -1,4 +1,4 @@
-import { h } from 'preact';
+import { h, JSX } from 'preact';
 import { forwardRef } from 'preact/compat'
 import type { ComponentChildren } from 'preact';
 import { useEffect,useRef,useState } from 'preact/hooks';

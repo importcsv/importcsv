@@ -19,12 +19,13 @@ interface DialogProps {
   children: ComponentChildren
 }
 
-const Dialog = ({ open = false, onOpenChange, children }: DialogProps) => {
+const Dialog = ({ open = false, onOpenChange, children }: DialogProps): JSX.Element => {
+  const ProviderComponent = DialogContext.Provider as any;
   return (
-    <DialogContext.Provider value={{ open, onOpenChange: onOpenChange || (() => {}) }}>
+    <ProviderComponent value={{ open, onOpenChange: onOpenChange || (() => {}) }}>
       {children}
-    </DialogContext.Provider>
-  )
+    </ProviderComponent>
+  );
 }
 
 const DialogTrigger = forwardRef<
@@ -50,42 +51,42 @@ interface DialogContentProps extends JSX.HTMLAttributes<HTMLDialogElement> {
   onClose?: () => void
 }
 
-const DialogContent = forwardRef<HTMLDialogElement, DialogContentProps>(
-  ({ className, children, onClose, ...props }, ref) => {
+const DialogContentComponent = forwardRef<HTMLDialogElement, DialogContentProps>(
+  ({ className, children, onClose, ...props }, ref): JSX.Element => {
     const dialogRef = useRef<HTMLDialogElement>(null)
     const context = useContext(DialogContext)
-    
+
     // Combine refs
     useImperativeHandle(ref, () => dialogRef.current!)
-    
+
     useEffect(() => {
       const dialog = dialogRef.current
       if (!dialog) return
-      
+
       if (context?.open) {
         dialog.showModal()
       } else {
         dialog.close()
       }
     }, [context?.open])
-    
+
     const handleClose = () => {
       context?.onOpenChange(false)
       onClose?.()
     }
-    
+
     // Handle escape key and backdrop click
     const handleCancel = (e: JSX.TargetedEvent) => {
       e.preventDefault()
       handleClose()
     }
-    
+
     const handleBackdropClick = (e: JSX.TargetedMouseEvent<HTMLDialogElement>) => {
       if (e.target === dialogRef.current) {
         handleClose()
       }
     }
-    
+
     return (
       <dialog
         ref={dialogRef}
@@ -115,12 +116,14 @@ const DialogContent = forwardRef<HTMLDialogElement, DialogContentProps>(
     )
   }
 )
-DialogContent.displayName = "DialogContent"
+DialogContentComponent.displayName = "DialogContent"
+
+const DialogContent = DialogContentComponent as unknown as (props: DialogContentProps & { ref?: any }) => JSX.Element
 
 const DialogHeader = ({
   className,
   ...props
-}: JSX.HTMLAttributes<HTMLDivElement>) => (
+}: JSX.HTMLAttributes<HTMLDivElement>): JSX.Element => (
   <div
     className={cn(
       "flex flex-col space-y-1.5 text-center sm:text-left",
@@ -134,7 +137,7 @@ DialogHeader.displayName = "DialogHeader"
 const DialogFooter = ({
   className,
   ...props
-}: JSX.HTMLAttributes<HTMLDivElement>) => (
+}: JSX.HTMLAttributes<HTMLDivElement>): JSX.Element => (
   <div
     className={cn(
       "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
@@ -145,10 +148,10 @@ const DialogFooter = ({
 )
 DialogFooter.displayName = "DialogFooter"
 
-const DialogTitle = forwardRef<
+const DialogTitleComponent = forwardRef<
   HTMLHeadingElement,
   JSX.HTMLAttributes<HTMLHeadingElement>
->(({ className, ...props }, ref) => (
+>(({ className, ...props }, ref): JSX.Element => (
   <h2
     ref={ref}
     className={cn(
@@ -158,19 +161,23 @@ const DialogTitle = forwardRef<
     {...props}
   />
 ))
-DialogTitle.displayName = "DialogTitle"
+DialogTitleComponent.displayName = "DialogTitle"
 
-const DialogDescription = forwardRef<
+const DialogTitle = DialogTitleComponent as unknown as (props: JSX.HTMLAttributes<HTMLHeadingElement> & { ref?: any }) => JSX.Element
+
+const DialogDescriptionComponent = forwardRef<
   HTMLParagraphElement,
   JSX.HTMLAttributes<HTMLParagraphElement>
->(({ className, ...props }, ref) => (
+>(({ className, ...props }, ref): JSX.Element => (
   <p
     ref={ref}
     className={cn("text-sm text-gray-500", className)}
     {...props}
   />
 ))
-DialogDescription.displayName = "DialogDescription"
+DialogDescriptionComponent.displayName = "DialogDescription"
+
+const DialogDescription = DialogDescriptionComponent as unknown as (props: JSX.HTMLAttributes<HTMLParagraphElement> & { ref?: any }) => JSX.Element
 
 // For backward compatibility
 const DialogPortal = ({ children }: { children: ComponentChildren }) => children

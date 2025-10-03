@@ -27,7 +27,7 @@ describe('Box component', () => {
   });
 
   it('spreads additional props', () => {
-    const { container } = render(h(Box, { 'data-testid': 'test-box' }));
+    const { container } = render(h(Box, { 'data-testid': 'test-box' } as any));
     expect(container.firstChild).toHaveAttribute('data-testid', 'test-box');
   });
 

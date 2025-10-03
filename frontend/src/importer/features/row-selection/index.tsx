@@ -1,4 +1,5 @@
 import { useState } from "preact/hooks";
+import type { JSX } from "preact";
 import { useTranslation } from "../../../i18n/useTranslation";
 import { Alert } from "../../components/ui/alert";
 import { Button } from "../../components/ui/button";
@@ -11,7 +12,7 @@ export default function RowSelection({ data, onSuccess, onCancel, selectedHeader
   const { t } = useTranslation();
   const [isLoading, setIsLoading] = useState(false);
   const handleRadioChange = (e: JSX.TargetedEvent<HTMLInputElement>) => {
-    setSelectedHeaderRow(Number(e.target.value));
+    setSelectedHeaderRow(Number((e.target as HTMLInputElement).value));
   };
   const rowLimit = 50;
 

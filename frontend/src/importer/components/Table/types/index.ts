@@ -1,5 +1,5 @@
 import { h } from 'preact';
-import type { JSX } from 'preact';
+import type { JSX, VNode, ComponentChildren } from 'preact';
 
 type Style = { readonly [key: string]: string };
 
@@ -27,8 +27,8 @@ export type TableProps = {
     mergeThemes?: boolean;
     highlightColumns?: string[];
     hideColumns?: string[];
-    emptyState?: ReactElement;
-    heading?: ReactElement;
+    emptyState?: VNode;
+    heading?: VNode;
     background?: "zebra" | "dark" | "light" | "transparent";
     columnWidths?: string[];
     columnAlignments?: ("left" | "center" | "right" | "")[];
@@ -42,8 +42,9 @@ export type RowProps = {
     onClick?: (row: TableDatum) => void;
 };
 
-export type CellProps = PropsWithChildren<{
+export type CellProps = {
+    children?: ComponentChildren;
     cellClass?: string;
     cellStyle: Style;
     tooltip?: string;
-}>;
+};

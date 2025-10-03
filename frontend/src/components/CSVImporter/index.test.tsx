@@ -27,9 +27,9 @@ vi.mock('../../importer/stores/theme', () => ({
 
 describe('CSVImporter component', () => {
   const mockColumns = [
-    { key: 'firstName', label: 'First Name', required: true },
-    { key: 'lastName', label: 'Last Name', required: true },
-    { key: 'email', label: 'Email', required: true },
+    { id: 'firstName', label: 'First Name' },
+    { id: 'lastName', label: 'Last Name' },
+    { id: 'email', label: 'Email' },
   ];
 
   it('renders in modal mode by default', () => {
@@ -152,7 +152,7 @@ describe('CSVImporter component', () => {
 
   it('renders with customStyles', () => {
     const customStyles = {
-      container: { backgroundColor: 'red' }
+      backgroundColor: 'red'
     };
 
     render(h(CSVImporter, {
@@ -192,7 +192,7 @@ describe('CSVImporter component', () => {
       columns: mockColumns,
       onComplete: vi.fn(),
       language: 'es',
-      customTranslations: { upload: 'Subir' },
+      customTranslations: { es: { upload: 'Subir' } },
       isModal: false
     }));
 
