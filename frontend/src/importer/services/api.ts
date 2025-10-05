@@ -1,3 +1,2 @@
-// API service file - currently not in use
-// LLM column mapping functionality has been removed
+// Placeholder for future API services
 export {};

@@ -43,9 +43,8 @@ export default function useMapColumnsTable(
     return stringsSimilarity(templateNameLower, uploadNameLower) > 0.8;
   };
 
-  // Simple string matching function - always returns false since suggested_mappings were removed
   const isSuggestedMapping = (templateColumn: Column, uploadColumnName: string) => {
-    return false; // No longer using suggested mappings
+    return false;
   };
 
   const [values, setValues] = useState<{ [key: number]: TemplateColumnMapping }>(() => {

@@ -1,18 +1,11 @@
-// frontend/src/headless/index.ts
 /**
  * Headless CSV Importer Components
  *
- * Domain logic only - no UI dependencies
- * Works with ANY design system (shadcn/ui, MUI, Chakra, etc.)
- *
- * ## Architecture
- * Following the Radix UI and shadcn/ui pattern:
- * - Headless primitives separate logic from UI
- * - `asChild` pattern enables composition with any design system
- * - Zod schema support for modern type-safe validation
+ * Domain logic primitives with no UI dependencies.
+ * Works with any design system (shadcn/ui, MUI, Chakra, etc.)
  *
  * @example
- * // Basic usage with Zod schema
+ * // With Zod schema
  * import * as CSV from '@importcsv/react/headless';
  * import { z } from 'zod';
  *
@@ -30,26 +23,12 @@
  * </CSV.Root>
  *
  * @example
- * // Using asChild with shadcn/ui components
- * import * as CSV from '@importcsv/react/headless';
+ * // With design system components (asChild pattern)
  * import { Button } from '@/components/ui/button';
  *
- * <CSV.Root schema={schema} onComplete={handleComplete}>
- *   <CSV.UploadTrigger asChild>
- *     <Button variant="primary">Upload CSV</Button>
- *   </CSV.UploadTrigger>
- *   <CSV.NextButton asChild>
- *     <Button>Next Step</Button>
- *   </CSV.NextButton>
- * </CSV.Root>
- *
- * @example
- * // Using asChild with Material-UI
- * import { Button } from '@mui/material';
- *
- * <CSV.BackButton asChild>
- *   <Button variant="outlined">Back</Button>
- * </CSV.BackButton>
+ * <CSV.UploadTrigger asChild>
+ *   <Button variant="primary">Upload CSV</Button>
+ * </CSV.UploadTrigger>
  */
 
 export { Root, useCSV } from './root';

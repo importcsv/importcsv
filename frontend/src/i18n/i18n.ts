@@ -1,6 +1,4 @@
-// Removed i18next and react-i18next dependencies
-// Keeping a dummy i18n implementation to maintain compatibility
-
+// Lightweight i18n implementation
 const dummyI18n = {
   // Placeholder implementation
   t: (key: string, options?: any) => {
