@@ -114,3 +114,8 @@ build
 
 # husky
 .husky/_
+
+# claude
+.claude/
+thoughts/
+hack/
