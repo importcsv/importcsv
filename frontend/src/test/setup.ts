@@ -41,6 +41,10 @@ global.ResizeObserver = class ResizeObserver {
   unobserve() {}
 } as any;
 
+// Mock URL.createObjectURL (used for file downloads/CSV error export)
+global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
+global.URL.revokeObjectURL = vi.fn();
+
 // Mock lucide-react icons (they don't render properly in test environment)
 vi.mock('lucide-react', () => ({
   Check: () => 'svg',
@@ -50,6 +54,8 @@ vi.mock('lucide-react', () => ({
   Upload: () => 'svg',
   AlertCircle: () => 'svg',
   CheckCircle: () => 'svg',
+  CloudUpload: () => 'svg',
+  Download: () => 'svg',
 }));
 
 // Mock @tanstack/react-virtual for virtualization tests

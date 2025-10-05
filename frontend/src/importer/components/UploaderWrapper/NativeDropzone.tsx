@@ -103,11 +103,13 @@ export default function NativeDropzone({
     >
       <input
         ref={fileInputRef}
+        id="file-upload"
         type="file"
         accept={acceptStr}
         onChange={handleInputChange}
         disabled={disabled || loading}
         style={{ display: 'none' }}
+        aria-label="Choose file to upload"
       />
       {children || (
         <div className="flex flex-col items-center justify-center py-12">
