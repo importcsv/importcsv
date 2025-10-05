@@ -1,0 +1,6 @@
+name,email,age,company
+John Doe,invalid-email,25,Acme Corp
+Jane Smith,jane@example.com,not-a-number,Tech Inc
+Bob Johnson,bob@example.com,-5,Startup LLC
+,missing@example.com,30,
+Charlie Brown,charlie@example.com,150,Enterprise Ltd

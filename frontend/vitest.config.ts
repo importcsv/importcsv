@@ -24,6 +24,13 @@ export default defineConfig({
         '**/*.config.*',
         '**/types/',
       ],
+      // Phase 0 TDD Requirements: >90% coverage
+      thresholds: {
+        statements: 90,
+        branches: 90,
+        functions: 90,
+        lines: 90,
+      },
     },
   },
   resolve: {
