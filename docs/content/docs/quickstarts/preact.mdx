@@ -1,0 +1,319 @@
+---
+title: Preact Quickstart
+description: Complete setup guide for ImportCSV in Preact apps
+---
+
+## Installation
+
+```bash
+npm install @importcsv/preact
+# Optional: for Excel support
+npm install xlsx
+```
+
+## Basic Setup
+
+```tsx title="src/app.tsx"
+import { CSVImporter } from '@importcsv/preact';
+import { useState } from 'preact/hooks';
+
+export function App() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div>
+      <button onClick={() => setIsOpen(true)}>
+        Import CSV
+      </button>
+
+      <CSVImporter
+        modalIsOpen={isOpen}
+        modalOnCloseTriggered={() => setIsOpen(false)}
+        columns={[
+          { id: 'name', label: 'Name', validators: [{ type: 'required' }] },
+          { id: 'email', label: 'Email', type: 'email' },
+          { id: 'phone', label: 'Phone', type: 'phone' }
+        ]}
+        onComplete={(data) => {
+          console.log(`Imported ${data.num_rows} rows`, data.rows);
+          setIsOpen(false);
+        }}
+      />
+    </div>
+  );
+}
+```
+
+## Using Zod Schemas (Recommended)
+
+For better type safety and validation:
+
+```bash
+npm install zod
+```
+
+```tsx title="src/app.tsx"
+import { CSVImporter } from '@importcsv/preact';
+import { z } from 'zod';
+import { useState } from 'preact/hooks';
+
+const contactSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Invalid email'),
+  phone: z.string().optional(),
+  company: z.string()
+});
+
+type Contact = z.infer<typeof contactSchema>;
+
+export function App() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+
+  return (
+    <div>
+      <button onClick={() => setIsOpen(true)}>
+        Import Contacts
+      </button>
+
+      <CSVImporter
+        modalIsOpen={isOpen}
+        modalOnCloseTriggered={() => setIsOpen(false)}
+        schema={contactSchema}
+        onComplete={(data: Contact[]) => {
+          setContacts(data);
+          setIsOpen(false);
+        }}
+      />
+
+      {contacts.length > 0 && (
+        <div>
+          <h2>Imported Contacts ({contacts.length})</h2>
+          <ul>
+            {contacts.map((contact, i) => (
+              <li key={i}>
+                {contact.name} - {contact.email}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+## Inline Mode
+
+Display the importer directly in the page:
+
+```tsx title="src/import-page.tsx"
+import { CSVImporter } from '@importcsv/preact';
+import { z } from 'zod';
+
+const productSchema = z.object({
+  name: z.string().min(1),
+  price: z.number().positive(),
+  sku: z.string(),
+  stock: z.number().int().nonnegative()
+});
+
+export function ImportPage() {
+  return (
+    <div class="container">
+      <h1>Import Products</h1>
+
+      <CSVImporter
+        isModal={false}
+        schema={productSchema}
+        onComplete={(data) => {
+          console.log('Imported products:', data);
+        }}
+      />
+    </div>
+  );
+}
+```
+
+## API Integration
+
+Process imported data with a backend API:
+
+```tsx title="src/app.tsx"
+import { CSVImporter } from '@importcsv/preact';
+import { z } from 'zod';
+import { useState } from 'preact/hooks';
+
+const leadSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+  company: z.string(),
+  source: z.string()
+});
+
+export function App() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleComplete = async (data: z.infer<typeof leadSchema>[]) => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/leads/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leads: data })
+      });
+
+      if (response.ok) {
+        alert(`Successfully imported ${data.length} leads`);
+      } else {
+        alert('Import failed');
+      }
+    } catch (error) {
+      console.error('Import error:', error);
+      alert('Import failed');
+    } finally {
+      setLoading(false);
+      setIsOpen(false);
+    }
+  };
+
+  return (
+    <div>
+      <button onClick={() => setIsOpen(true)} disabled={loading}>
+        {loading ? 'Importing...' : 'Import Leads'}
+      </button>
+
+      <CSVImporter
+        modalIsOpen={isOpen}
+        modalOnCloseTriggered={() => setIsOpen(false)}
+        schema={leadSchema}
+        onComplete={handleComplete}
+      />
+    </div>
+  );
+}
+```
+
+## Why Preact?
+
+ImportCSV uses Preact internally for optimal bundle size (~100KB gzipped). Using `@importcsv/preact` provides:
+
+- **Smaller Bundle**: No React compatibility layer needed
+- **Better Performance**: Preact is lighter and faster
+- **Same API**: Works identically to the React version
+
+## Theming
+
+Customize the importer to match your brand:
+
+```tsx
+<CSVImporter
+  schema={schema}
+  onComplete={handleComplete}
+  theme="dark"
+  primaryColor="#8b5cf6"
+/>
+```
+
+Available themes:
+- `"default"` - Clean, modern light theme
+- `"dark"` - Dark mode
+- `"professional"` - Enterprise styling
+- Custom CSS variables (see [Theming Guide](/guides/theming))
+
+## TypeScript
+
+ImportCSV is fully typed with Preact:
+
+```tsx title="src/app.tsx"
+import { CSVImporter, type CSVImporterProps } from '@importcsv/preact';
+import { z } from 'zod';
+import type { FunctionalComponent } from 'preact';
+
+const schema = z.object({
+  name: z.string(),
+  email: z.string().email()
+});
+
+type Contact = z.infer<typeof schema>;
+
+export const ContactImporter: FunctionalComponent = () => {
+  const props: CSVImporterProps = {
+    schema,
+    onComplete: (data: Contact[]) => {
+      console.log(data);
+    }
+  };
+
+  return <CSVImporter {...props} />;
+};
+```
+
+## Preact with Vite
+
+If you're using Vite with Preact:
+
+```tsx title="vite.config.ts"
+import { defineConfig } from 'vite';
+import preact from '@preact/preset-vite';
+
+export default defineConfig({
+  plugins: [preact()]
+});
+```
+
+```tsx title="src/main.tsx"
+import { render } from 'preact';
+import { App } from './app';
+
+render(<App />, document.getElementById('app')!);
+```
+
+## Next Steps
+
+<Cards>
+  <Card title="🎨 Headless Components" href="/headless" description="Build custom UI with primitives" />
+  <Card title="🛡️ Zod Schemas" href="/guides/zod-schemas" description="Advanced validation patterns" />
+  <Card title="📖 API Reference" href="/api" description="Complete props documentation" />
+  <Card title="💡 Examples" href="/examples/basic" description="More advanced examples" />
+</Cards>
+
+## Common Issues
+
+### Excel files not working
+
+Install the xlsx library:
+
+```bash
+npm install xlsx
+```
+
+### Using with React
+
+If you're in a React project, use `@importcsv/react` instead:
+
+```bash
+npm install @importcsv/react
+```
+
+### Bundle size optimization
+
+Preact already provides optimal bundle size. For further optimization, use code splitting:
+
+```tsx
+import { lazy } from 'preact/compat';
+import { Suspense } from 'preact/compat';
+
+const CSVImporter = lazy(() =>
+  import('@importcsv/preact').then(mod => ({ default: mod.CSVImporter }))
+);
+
+export function App() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CSVImporter {...props} />
+    </Suspense>
+  );
+}
+```

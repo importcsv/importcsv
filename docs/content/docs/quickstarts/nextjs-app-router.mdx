@@ -1,0 +1,246 @@
+---
+title: Next.js App Router Quickstart
+description: Complete setup guide for ImportCSV in Next.js 15+ with App Router
+---
+
+## Installation
+
+```bash
+npm install @importcsv/react
+# Optional: for Excel support
+npm install xlsx
+```
+
+## Basic Setup
+
+Since ImportCSV uses client-side file processing, you need to mark components as client components:
+
+```tsx title="app/import/page.tsx"
+'use client';
+
+import { CSVImporter } from '@importcsv/react';
+import { useState } from 'react';
+
+export default function ImportPage() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="p-8">
+      <button
+        onClick={() => setIsOpen(true)}
+        className="px-4 py-2 bg-blue-500 text-white rounded"
+      >
+        Import CSV
+      </button>
+
+      <CSVImporter
+        modalIsOpen={isOpen}
+        modalOnCloseTriggered={() => setIsOpen(false)}
+        columns={[
+          { id: 'name', label: 'Name', validators: [{ type: 'required' }] },
+          { id: 'email', label: 'Email', type: 'email' }
+        ]}
+        onComplete={(data) => {
+          console.log(`Imported ${data.num_rows} rows`, data.rows);
+          setIsOpen(false);
+        }}
+      />
+    </div>
+  );
+}
+```
+
+## Using Zod Schemas (Recommended)
+
+For better type safety and validation, use Zod schemas:
+
+```bash
+npm install zod
+```
+
+```tsx title="app/import/page.tsx"
+'use client';
+
+import { CSVImporter } from '@importcsv/react';
+import { z } from 'zod';
+import { useState } from 'react';
+
+const contactSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Must be a valid email'),
+  phone: z.string().optional(),
+  company: z.string()
+});
+
+type Contact = z.infer<typeof contactSchema>;
+
+export default function ImportPage() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="p-8">
+      <button
+        onClick={() => setIsOpen(true)}
+        className="px-4 py-2 bg-blue-500 text-white rounded"
+      >
+        Import Contacts
+      </button>
+
+      <CSVImporter
+        modalIsOpen={isOpen}
+        modalOnCloseTriggered={() => setIsOpen(false)}
+        schema={contactSchema}
+        onComplete={(data: Contact[]) => {
+          // data is fully typed!
+          console.log('Imported contacts:', data);
+          setIsOpen(false);
+        }}
+      />
+    </div>
+  );
+}
+```
+
+## Server Actions Integration
+
+Process imported data with Next.js Server Actions:
+
+```tsx title="app/import/page.tsx"
+'use client';
+
+import { CSVImporter } from '@importcsv/react';
+import { z } from 'zod';
+import { useState } from 'react';
+import { importContacts } from './actions';
+
+const contactSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+  phone: z.string().optional(),
+  company: z.string()
+});
+
+export default function ImportPage() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <CSVImporter
+      modalIsOpen={isOpen}
+      modalOnCloseTriggered={() => setIsOpen(false)}
+      schema={contactSchema}
+      onComplete={async (data) => {
+        await importContacts(data);
+        setIsOpen(false);
+      }}
+    />
+  );
+}
+```
+
+```tsx title="app/import/actions.ts"
+'use server';
+
+import { db } from '@/lib/db';
+
+export async function importContacts(contacts: any[]) {
+  // Validate and insert into database
+  await db.contacts.insertMany(contacts);
+  return { success: true };
+}
+```
+
+## Inline Mode
+
+Display the importer directly in the page without a modal:
+
+```tsx title="app/import/page.tsx"
+'use client';
+
+import { CSVImporter } from '@importcsv/react';
+import { z } from 'zod';
+
+const schema = z.object({
+  name: z.string().min(1),
+  email: z.string().email()
+});
+
+export default function ImportPage() {
+  return (
+    <div className="max-w-4xl mx-auto p-8">
+      <h1 className="text-2xl font-bold mb-4">Import Contacts</h1>
+
+      <CSVImporter
+        isModal={false}
+        schema={schema}
+        onComplete={(data) => {
+          console.log('Imported:', data);
+        }}
+      />
+    </div>
+  );
+}
+```
+
+## Theming
+
+Match your app's design with custom theming:
+
+```tsx
+<CSVImporter
+  schema={schema}
+  onComplete={handleComplete}
+  theme="dark"
+  primaryColor="#3b82f6"
+/>
+```
+
+Available themes:
+- `"default"` - Clean, modern light theme
+- `"dark"` - Dark mode
+- `"professional"` - Enterprise-grade styling
+- Custom CSS variables (see [Theming Guide](/guides/theming))
+
+## Next Steps
+
+<Cards>
+  <Card title="🎨 Headless Components" href="/headless" description="Build custom UI with headless primitives" />
+  <Card title="🛡️ Zod Schemas" href="/guides/zod-schemas" description="Advanced validation patterns" />
+  <Card title="📖 API Reference" href="/api" description="Complete props documentation" />
+  <Card title="💡 Examples" href="/examples/basic" description="More advanced examples" />
+</Cards>
+
+## Common Issues
+
+### Error: "window is not defined"
+
+Make sure you're using `'use client'` directive at the top of your file:
+
+```tsx
+'use client';  // ← Required!
+
+import { CSVImporter } from '@importcsv/react';
+```
+
+### Excel files not working
+
+Install the xlsx library:
+
+```bash
+npm install xlsx
+```
+
+### Type errors with Zod schema
+
+Ensure you're passing the schema correctly and the onComplete callback has proper types:
+
+```tsx
+const schema = z.object({ name: z.string() });
+type Data = z.infer<typeof schema>;
+
+<CSVImporter
+  schema={schema}
+  onComplete={(data: Data[]) => {
+    // data is typed correctly
+  }}
+/>
+```

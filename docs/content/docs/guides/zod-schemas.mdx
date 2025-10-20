@@ -1,0 +1,570 @@
+---
+title: Zod Schemas
+description: Type-safe CSV validation with automatic TypeScript inference
+---
+
+<Callout type="warn" title="Feature Status: Coming in Phase 1">
+Direct `schema` prop support is planned for Phase 1 implementation. This guide shows the future API to help you prepare your schemas.
+
+**For now**, use the `columns` array with validators (see [Migration Guide](#migration-guide) below).
+</Callout>
+
+## Why Zod?
+
+Zod provides runtime validation with automatic TypeScript type inference, making your CSV imports type-safe from upload to database.
+
+**Benefits:**
+- ✅ **Automatic TypeScript inference** - No manual type definitions needed
+- ✅ **Runtime + compile-time validation** - Catch errors before and during execution
+- ✅ **Better error messages** - Clear, actionable validation errors
+- ✅ **Ecosystem integration** - Works with tRPC, React Hook Form, Prisma, etc.
+- ✅ **Schema composition** - Reuse and compose schemas easily
+
+## Installation
+
+```bash
+npm install zod
+```
+
+## Basic Usage
+
+Replace the legacy `columns` array with a Zod schema:
+
+### Before (Legacy Columns)
+
+```tsx
+<CSVImporter
+  columns={[
+    { id: 'name', label: 'Name', type: 'string', required: true },
+    { id: 'email', label: 'Email', type: 'email', required: true },
+    { id: 'age', label: 'Age', type: 'number' }
+  ]}
+  onComplete={(data) => {
+    // data is type `any` ❌
+    console.log(data);
+  }}
+/>
+```
+
+### After (Zod Schema)
+
+```tsx
+import { z } from 'zod';
+
+const userSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Invalid email address'),
+  age: z.number().optional()
+});
+
+type User = z.infer<typeof userSchema>; // Automatic type inference! ✅
+
+<CSVImporter
+  schema={userSchema}
+  onComplete={(data: User[]) => {
+    // data is fully typed! ✅
+    data.forEach(user => {
+      console.log(user.name); // TypeScript knows this exists
+      console.log(user.email); // TypeScript knows this exists
+      console.log(user.age); // TypeScript knows this is optional
+    });
+  }}
+/>
+```
+
+## Common Validation Patterns
+
+### Required Fields
+
+```tsx
+const schema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Invalid email'),
+  company: z.string().min(1, 'Company is required')
+});
+```
+
+### Optional Fields
+
+```tsx
+const schema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+  phone: z.string().optional(), // Can be undefined
+  website: z.string().url().optional()
+});
+```
+
+### Default Values
+
+```tsx
+const schema = z.object({
+  name: z.string().min(1),
+  role: z.string().default('user'), // Defaults to 'user' if not provided
+  active: z.boolean().default(true)
+});
+```
+
+### Enums
+
+```tsx
+const schema = z.object({
+  name: z.string().min(1),
+  role: z.enum(['admin', 'user', 'guest'], {
+    errorMap: () => ({ message: 'Role must be admin, user, or guest' })
+  }),
+  status: z.enum(['active', 'inactive', 'pending'])
+});
+```
+
+### Number Validation
+
+```tsx
+const schema = z.object({
+  age: z.number().int().min(18, 'Must be 18 or older'),
+  price: z.number().positive('Price must be positive'),
+  quantity: z.number().int().nonnegative('Quantity cannot be negative'),
+  discount: z.number().min(0).max(100, 'Discount must be 0-100%')
+});
+```
+
+### String Validation
+
+```tsx
+const schema = z.object({
+  email: z.string().email('Invalid email address'),
+  phone: z.string().regex(/^\d{3}-\d{3}-\d{4}$/, 'Phone must be XXX-XXX-XXXX'),
+  website: z.string().url('Invalid URL'),
+  zipCode: z.string().length(5, 'ZIP code must be 5 digits'),
+  sku: z.string().min(3).max(20)
+});
+```
+
+### Date Validation
+
+```tsx
+const schema = z.object({
+  birthDate: z.string().date('Invalid date format'), // ISO date string
+  createdAt: z.string().datetime('Invalid datetime'), // ISO datetime
+  year: z.number().int().min(1900).max(2100)
+});
+
+// Or use transforms for parsing
+const schemaWithTransform = z.object({
+  birthDate: z.string().transform(str => new Date(str))
+});
+```
+
+## Advanced Patterns
+
+### Transforms
+
+Transform data during validation:
+
+```tsx
+const schema = z.object({
+  name: z.string().transform(str => str.trim().toLowerCase()),
+  email: z.string().email().transform(str => str.toLowerCase()),
+  phone: z.string().transform(str => str.replace(/\D/g, '')), // Remove non-digits
+  price: z.string().transform(str => parseFloat(str.replace(/[$,]/g, '')))
+});
+```
+
+### Refinements
+
+Custom validation logic:
+
+```tsx
+const schema = z.object({
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .refine(
+      (val) => /[A-Z]/.test(val),
+      'Password must contain at least one uppercase letter'
+    )
+    .refine(
+      (val) => /[0-9]/.test(val),
+      'Password must contain at least one number'
+    ),
+
+  email: z.string().email().refine(
+    (email) => !email.endsWith('@example.com'),
+    'Example.com emails are not allowed'
+  ),
+
+  age: z.number().refine(
+    (age) => age >= 18,
+    { message: 'Must be 18 or older', path: ['age'] }
+  )
+});
+```
+
+### Conditional Validation
+
+Validate based on other fields:
+
+```tsx
+const schema = z.object({
+  hasCompany: z.boolean(),
+  companyName: z.string().optional()
+}).refine(
+  (data) => {
+    if (data.hasCompany) {
+      return data.companyName && data.companyName.length > 0;
+    }
+    return true;
+  },
+  {
+    message: 'Company name is required when "Has Company" is checked',
+    path: ['companyName']
+  }
+);
+```
+
+### Union Types
+
+Allow multiple types:
+
+```tsx
+const schema = z.object({
+  id: z.union([z.string(), z.number()]), // Can be string OR number
+  status: z.union([
+    z.literal('active'),
+    z.literal('inactive'),
+    z.literal('pending')
+  ])
+});
+```
+
+### Nested Objects
+
+Validate nested structures:
+
+```tsx
+const addressSchema = z.object({
+  street: z.string().min(1),
+  city: z.string().min(1),
+  state: z.string().length(2),
+  zipCode: z.string().length(5)
+});
+
+const contactSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+  address: addressSchema // Nested schema
+});
+```
+
+### Arrays
+
+Validate array fields:
+
+```tsx
+const schema = z.object({
+  name: z.string().min(1),
+  tags: z.array(z.string()).min(1, 'At least one tag required'),
+  categories: z.array(z.enum(['tech', 'business', 'design'])),
+  emails: z.array(z.string().email()).max(5, 'Maximum 5 emails')
+});
+```
+
+## Real-World Examples
+
+### Contact Importer
+
+```tsx
+import { z } from 'zod';
+import { CSVImporter } from '@importcsv/react';
+
+const contactSchema = z.object({
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  email: z.string().email('Invalid email address'),
+  phone: z.string()
+    .regex(/^\d{10}$/, 'Phone must be 10 digits')
+    .transform(p => `${p.slice(0, 3)}-${p.slice(3, 6)}-${p.slice(6)}`),
+  company: z.string().optional(),
+  jobTitle: z.string().optional(),
+  linkedIn: z.string().url().optional()
+});
+
+type Contact = z.infer<typeof contactSchema>;
+
+export function ContactImporter() {
+  const handleComplete = (data: Contact[]) => {
+    // Send to API
+    fetch('/api/contacts/import', {
+      method: 'POST',
+      body: JSON.stringify({ contacts: data })
+    });
+  };
+
+  return (
+    <CSVImporter
+      schema={contactSchema}
+      onComplete={handleComplete}
+    />
+  );
+}
+```
+
+### Product Catalog Importer
+
+```tsx
+const productSchema = z.object({
+  sku: z.string().min(3).max(20),
+  name: z.string().min(1),
+  description: z.string().max(500),
+  price: z.number().positive('Price must be positive'),
+  cost: z.number().positive('Cost must be positive'),
+  quantity: z.number().int().nonnegative('Quantity cannot be negative'),
+  category: z.enum(['electronics', 'clothing', 'home', 'books']),
+  isActive: z.boolean().default(true),
+  weight: z.number().positive().optional(),
+  dimensions: z.string().optional()
+}).refine(
+  (data) => data.price > data.cost,
+  { message: 'Price must be greater than cost', path: ['price'] }
+);
+
+type Product = z.infer<typeof productSchema>;
+```
+
+### Transaction Importer
+
+```tsx
+const transactionSchema = z.object({
+  transactionId: z.string().uuid('Invalid transaction ID'),
+  date: z.string().datetime('Invalid date format'),
+  amount: z.number().refine(
+    (val) => Math.abs(val) > 0,
+    'Amount cannot be zero'
+  ),
+  type: z.enum(['debit', 'credit']),
+  category: z.string().min(1),
+  description: z.string().max(200),
+  merchant: z.string().optional(),
+  accountNumber: z.string()
+    .regex(/^\d{4}$/, 'Last 4 digits required')
+    .transform(n => `****${n}`)
+});
+
+type Transaction = z.infer<typeof transactionSchema>;
+```
+
+### Employee Importer
+
+```tsx
+const employeeSchema = z.object({
+  employeeId: z.string().min(1),
+  firstName: z.string().min(1),
+  lastName: z.string().min(1),
+  email: z.string().email().transform(e => e.toLowerCase()),
+  department: z.enum(['engineering', 'sales', 'marketing', 'hr']),
+  position: z.string().min(1),
+  startDate: z.string().date(),
+  salary: z.number().int().positive().min(30000),
+  manager: z.string().optional(),
+  skills: z.array(z.string()).optional()
+});
+
+type Employee = z.infer<typeof employeeSchema>;
+```
+
+## Migration Guide
+
+### From Columns Array to Zod
+
+**Old columns array:**
+
+```tsx
+const columns = [
+  { id: 'name', label: 'Name', type: 'string', required: true },
+  { id: 'email', label: 'Email', type: 'email', required: true },
+  { id: 'age', label: 'Age', type: 'number' },
+  { id: 'phone', label: 'Phone', validators: [{ type: 'regex', pattern: /^\d{10}$/ }] }
+];
+```
+
+**Equivalent Zod schema:**
+
+```tsx
+const schema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Invalid email'),
+  age: z.number().optional(),
+  phone: z.string().regex(/^\d{10}$/, 'Invalid phone number').optional()
+});
+```
+
+### Type Mapping
+
+| Legacy Type | Zod Equivalent |
+|------------|----------------|
+| `type: 'string'` | `z.string()` |
+| `type: 'number'` | `z.number()` |
+| `type: 'boolean'` | `z.boolean()` |
+| `type: 'email'` | `z.string().email()` |
+| `type: 'phone'` | `z.string().regex(/phone-pattern/)` |
+| `type: 'url'` | `z.string().url()` |
+| `required: true` | `z.string().min(1)` or no `.optional()` |
+| `required: false` | `.optional()` |
+
+## Best Practices
+
+### 1. Provide Clear Error Messages
+
+```tsx
+// ❌ Generic error
+z.string().min(1)
+
+// ✅ Clear error message
+z.string().min(1, 'Name is required')
+```
+
+### 2. Use Transforms for Data Cleanup
+
+```tsx
+const schema = z.object({
+  email: z.string().email().transform(e => e.toLowerCase()),
+  name: z.string().transform(n => n.trim()),
+  phone: z.string().transform(p => p.replace(/\D/g, ''))
+});
+```
+
+### 3. Compose Schemas
+
+```tsx
+// Reusable schemas
+const emailSchema = z.string().email().transform(e => e.toLowerCase());
+const phoneSchema = z.string().regex(/^\d{10}$/).transform(formatPhone);
+
+// Compose into larger schemas
+const contactSchema = z.object({
+  email: emailSchema,
+  phone: phoneSchema,
+  name: z.string().min(1)
+});
+
+const employeeSchema = z.object({
+  email: emailSchema,
+  phone: phoneSchema,
+  employeeId: z.string()
+});
+```
+
+### 4. Extract Types
+
+```tsx
+const schema = z.object({
+  name: z.string(),
+  email: z.string().email()
+});
+
+// Extract type
+type Contact = z.infer<typeof schema>;
+
+// Use in functions
+function saveContact(contact: Contact) {
+  // contact is fully typed
+}
+```
+
+## Integration with Other Tools
+
+### With tRPC
+
+```tsx
+import { z } from 'zod';
+import { publicProcedure } from './trpc';
+
+const contactSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email()
+});
+
+// Use same schema in tRPC
+export const contactRouter = {
+  import: publicProcedure
+    .input(z.object({ contacts: z.array(contactSchema) }))
+    .mutation(({ input }) => {
+      // Process contacts
+    })
+};
+
+// And in CSV importer
+<CSVImporter
+  schema={contactSchema}
+  onComplete={async (data) => {
+    await trpc.contact.import.mutate({ contacts: data });
+  }}
+/>
+```
+
+### With Prisma
+
+```tsx
+import { z } from 'zod';
+
+// Match your Prisma schema
+const userSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1),
+  role: z.enum(['USER', 'ADMIN']) // Matches Prisma enum
+});
+
+<CSVImporter
+  schema={userSchema}
+  onComplete={async (data) => {
+    await prisma.user.createMany({ data });
+  }}
+/>
+```
+
+### With React Hook Form
+
+```tsx
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+
+const schema = z.object({
+  name: z.string().min(1),
+  email: z.string().email()
+});
+
+function MyForm() {
+  const form = useForm({
+    resolver: zodResolver(schema) // Same schema!
+  });
+
+  return (
+    <>
+      <form onSubmit={form.handleSubmit(onSubmit)}>
+        {/* form fields */}
+      </form>
+
+      <CSVImporter
+        schema={schema}
+        onComplete={handleBulkImport}
+      />
+    </>
+  );
+}
+```
+
+## Next Steps
+
+<Cards>
+  <Card title="🎨 Headless Components" href="/headless" description="Use schemas with headless primitives" />
+  <Card title="📖 API Reference" href="/api" description="Complete props documentation" />
+  <Card title="💡 Examples" href="/examples/basic" description="More real-world examples" />
+  <Card title="🚀 Quickstarts" href="/getting-started" description="Framework-specific guides" />
+</Cards>
+
+## Resources
+
+- [Zod Documentation](https://zod.dev)
+- [Zod GitHub](https://github.com/colinhacks/zod)
+- [tRPC](https://trpc.io)
+- [React Hook Form](https://react-hook-form.com)

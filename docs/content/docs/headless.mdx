@@ -1,0 +1,571 @@
+---
+title: Headless Components
+description: Build custom CSV importers with unstyled primitives and complete control
+---
+
+<Callout type="warn" title="Feature Status: In Development (Phase 0)">
+Headless primitives are currently in development. Component structure exists but CSV parsing integration is incomplete.
+
+This guide shows the planned API. Track progress in [GitHub Issues](https://github.com/importcsv/importcsv/issues).
+
+**For now**, use `isModal={false}` for inline embedding with custom themes and styling.
+</Callout>
+
+## Overview
+
+Headless components will provide domain logic without UI, allowing you to build completely custom CSV importers with any design system. They will work seamlessly with shadcn/ui, Material-UI, Chakra UI, or your own custom components.
+
+## Why Headless?
+
+- **Full Design Control**: Build your own UI from scratch
+- **Design System Agnostic**: Works with any design system (shadcn, MUI, Chakra, etc.)
+- **Type-Safe**: Full TypeScript support with Zod schema integration
+- **Lightweight**: No CSS dependencies, tree-shakeable
+- **Composable**: Mix and match primitives as needed
+
+## Quick Start
+
+```bash
+npm install @importcsv/react zod
+```
+
+```tsx
+import * as CSV from '@importcsv/react/headless';
+import { z } from 'zod';
+
+const schema = z.object({
+  name: z.string().min(1),
+  email: z.string().email()
+});
+
+function CustomImporter() {
+  return (
+    <CSV.Root schema={schema} onComplete={(data) => console.log(data)}>
+      <CSV.UploadTrigger>Upload CSV</CSV.UploadTrigger>
+      <CSV.Validator>
+        {({ errors, validate, isValidating }) => (
+          <div>
+            <button onClick={validate} disabled={isValidating}>
+              Validate
+            </button>
+            {errors.map((error, i) => (
+              <div key={i}>
+                Row {error.row + 1}, {error.column}: {error.message}
+              </div>
+            ))}
+          </div>
+        )}
+      </CSV.Validator>
+    </CSV.Root>
+  );
+}
+```
+
+## Core Components
+
+### `<Root>`
+
+Context provider with Zod schema support. All other headless components must be wrapped in a `<Root>`.
+
+```tsx
+import * as CSV from '@importcsv/react/headless';
+import { z } from 'zod';
+
+const schema = z.object({
+  name: z.string(),
+  email: z.string().email()
+});
+
+<CSV.Root
+  schema={schema}
+  onComplete={(data) => {
+    // data is fully typed based on your Zod schema
+    console.log(data);
+  }}
+>
+  {/* Other CSV components */}
+</CSV.Root>
+```
+
+**Props:**
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `schema` | `ZodSchema` | Zod schema for validation and type inference |
+| `columns` | `Column[]` | Legacy columns array (for backward compatibility) |
+| `onComplete` | `(data) => void` | Callback when import completes |
+| `data` | `any` | Optional initial data |
+
+### `<Validator>`
+
+Validation component with render props pattern. Provides validation state and functions.
+
+```tsx
+<CSV.Validator>
+  {({ errors, validate, isValidating }) => (
+    <div>
+      <button onClick={validate} disabled={isValidating}>
+        {isValidating ? 'Validating...' : 'Validate Data'}
+      </button>
+
+      {errors.length > 0 && (
+        <div className="errors">
+          <h3>{errors.length} Validation Errors</h3>
+          {errors.map((error, i) => (
+            <div key={i} className="error">
+              <strong>Row {error.row + 1}</strong>
+              <span>{error.column}: {error.message}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )}
+</CSV.Validator>
+```
+
+**Render Props:**
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `errors` | `ValidationError[]` | Array of validation errors |
+| `validate` | `() => Promise<ValidationError[]>` | Function to trigger validation |
+| `isValidating` | `boolean` | Validation in progress |
+
+### `<UploadTrigger>`
+
+Trigger component for file upload with `asChild` pattern support.
+
+```tsx
+// Default button
+<CSV.UploadTrigger>
+  Upload CSV
+</CSV.UploadTrigger>
+
+// With shadcn/ui Button
+import { Button } from '@/components/ui/button';
+
+<CSV.UploadTrigger asChild>
+  <Button variant="primary">Upload CSV</Button>
+</CSV.UploadTrigger>
+
+// With Material-UI
+import { Button } from '@mui/material';
+
+<CSV.UploadTrigger asChild>
+  <Button variant="contained" color="primary">
+    Upload CSV
+  </Button>
+</CSV.UploadTrigger>
+```
+
+**Props:**
+
+| Prop | Type | Description |
+|------|------|-------------|
+| `asChild` | `boolean` | Use child element instead of default button |
+| `onClick` | `() => void` | Additional click handler |
+
+### `<NextButton>`, `<BackButton>`, `<SubmitButton>`
+
+Navigation buttons with `asChild` pattern support.
+
+```tsx
+// Default buttons
+<CSV.NextButton onClick={goToNextStep}>Next</CSV.NextButton>
+<CSV.BackButton onClick={goToPrevStep}>Back</CSV.BackButton>
+<CSV.SubmitButton onClick={handleSubmit}>Submit</CSV.SubmitButton>
+
+// With design system components
+<CSV.NextButton asChild>
+  <Button variant="primary">Continue →</Button>
+</CSV.NextButton>
+
+<CSV.BackButton asChild>
+  <Button variant="ghost">← Back</Button>
+</CSV.BackButton>
+
+<CSV.SubmitButton asChild>
+  <Button variant="success">Complete Import ✓</Button>
+</CSV.SubmitButton>
+```
+
+## Design System Integration
+
+### shadcn/ui
+
+Perfect integration with shadcn/ui components:
+
+```tsx
+import * as CSV from '@importcsv/react/headless';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { z } from 'zod';
+
+const schema = z.object({
+  name: z.string().min(1),
+  email: z.string().email()
+});
+
+function ContactImporter() {
+  return (
+    <CSV.Root schema={schema} onComplete={handleComplete}>
+      <Card>
+        <CardHeader>
+          <CardTitle>Import Contacts</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <CSV.UploadTrigger asChild>
+            <Button className="w-full">Upload CSV File</Button>
+          </CSV.UploadTrigger>
+
+          <CSV.Validator>
+            {({ errors, validate, isValidating }) => (
+              <div className="space-y-4">
+                <Button
+                  onClick={validate}
+                  disabled={isValidating}
+                  variant="secondary"
+                >
+                  {isValidating ? 'Validating...' : 'Validate'}
+                </Button>
+
+                {errors.length > 0 && (
+                  <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+                    <h4 className="font-semibold text-red-800">
+                      {errors.length} Errors Found
+                    </h4>
+                    <div className="mt-2 space-y-1">
+                      {errors.map((error, i) => (
+                        <p key={i} className="text-sm text-red-700">
+                          Row {error.row + 1} - {error.column}: {error.message}
+                        </p>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </CSV.Validator>
+        </CardContent>
+      </Card>
+    </CSV.Root>
+  );
+}
+```
+
+### Material-UI
+
+Works seamlessly with Material-UI:
+
+```tsx
+import * as CSV from '@importcsv/react/headless';
+import { Button, Card, CardContent, Alert, AlertTitle } from '@mui/material';
+import { z } from 'zod';
+
+const schema = z.object({
+  name: z.string().min(1),
+  email: z.string().email()
+});
+
+function ProductImporter() {
+  return (
+    <CSV.Root schema={schema} onComplete={handleComplete}>
+      <Card>
+        <CardContent>
+          <CSV.UploadTrigger asChild>
+            <Button variant="contained" fullWidth>
+              Upload Products CSV
+            </Button>
+          </CSV.UploadTrigger>
+
+          <CSV.Validator>
+            {({ errors, validate, isValidating }) => (
+              <>
+                <Button
+                  onClick={validate}
+                  disabled={isValidating}
+                  variant="outlined"
+                  sx={{ mt: 2 }}
+                >
+                  Validate Data
+                </Button>
+
+                {errors.length > 0 && (
+                  <Alert severity="error" sx={{ mt: 2 }}>
+                    <AlertTitle>{errors.length} Validation Errors</AlertTitle>
+                    {errors.map((error, i) => (
+                      <div key={i}>
+                        Row {error.row + 1} - {error.column}: {error.message}
+                      </div>
+                    ))}
+                  </Alert>
+                )}
+              </>
+            )}
+          </CSV.Validator>
+        </CardContent>
+      </Card>
+    </CSV.Root>
+  );
+}
+```
+
+### Chakra UI
+
+Integrates with Chakra UI components:
+
+```tsx
+import * as CSV from '@importcsv/react/headless';
+import { Button, Box, Alert, AlertIcon, AlertTitle } from '@chakra-ui/react';
+import { z } from 'zod';
+
+const schema = z.object({
+  name: z.string().min(1),
+  email: z.string().email()
+});
+
+function LeadImporter() {
+  return (
+    <CSV.Root schema={schema} onComplete={handleComplete}>
+      <Box p={4} borderWidth="1px" borderRadius="lg">
+        <CSV.UploadTrigger asChild>
+          <Button colorScheme="blue" width="full">
+            Upload Leads CSV
+          </Button>
+        </CSV.UploadTrigger>
+
+        <CSV.Validator>
+          {({ errors, validate, isValidating }) => (
+            <Box mt={4}>
+              <Button
+                onClick={validate}
+                isLoading={isValidating}
+                colorScheme="green"
+              >
+                Validate
+              </Button>
+
+              {errors.length > 0 && (
+                <Alert status="error" mt={4}>
+                  <AlertIcon />
+                  <AlertTitle>{errors.length} Errors Found</AlertTitle>
+                </Alert>
+              )}
+            </Box>
+          )}
+        </CSV.Validator>
+      </Box>
+    </CSV.Root>
+  );
+}
+```
+
+## The `asChild` Pattern
+
+The `asChild` prop is inspired by Radix UI and allows you to use your own components while preserving the headless component's functionality.
+
+**How it works:**
+
+```tsx
+// Without asChild - renders default <button>
+<CSV.UploadTrigger>Upload</CSV.UploadTrigger>
+
+// With asChild - uses your Button component
+<CSV.UploadTrigger asChild>
+  <Button>Upload</Button>
+</CSV.UploadTrigger>
+```
+
+**Components with `asChild` support:**
+- `<UploadTrigger>`
+- `<NextButton>`
+- `<BackButton>`
+- `<SubmitButton>`
+
+## TypeScript Support
+
+Full type safety with Zod schema inference:
+
+```tsx
+import * as CSV from '@importcsv/react/headless';
+import { z } from 'zod';
+
+const contactSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+  phone: z.string().optional(),
+  company: z.string()
+});
+
+// Automatic type inference
+type Contact = z.infer<typeof contactSchema>;
+
+function ContactImporter() {
+  return (
+    <CSV.Root
+      schema={contactSchema}
+      onComplete={(data: Contact[]) => {
+        // `data` is fully typed!
+        data.forEach(contact => {
+          console.log(contact.name); // ✓ TypeScript knows this exists
+          console.log(contact.email); // ✓ TypeScript knows this exists
+          // console.log(contact.age); // ✗ TypeScript error: Property 'age' does not exist
+        });
+      }}
+    >
+      {/* ... */}
+    </CSV.Root>
+  );
+}
+```
+
+## Advanced Examples
+
+### Multi-Step Importer
+
+Build a multi-step flow with headless components:
+
+```tsx
+import * as CSV from '@importcsv/react/headless';
+import { useState } from 'react';
+import { z } from 'zod';
+
+const schema = z.object({
+  name: z.string().min(1),
+  email: z.string().email()
+});
+
+function MultiStepImporter() {
+  const [step, setStep] = useState<'upload' | 'validate' | 'complete'>('upload');
+  const [data, setData] = useState(null);
+
+  return (
+    <CSV.Root schema={schema} data={data} onComplete={handleComplete}>
+      {step === 'upload' && (
+        <div>
+          <h2>Step 1: Upload File</h2>
+          <CSV.UploadTrigger
+            asChild
+            onClick={(uploadedData) => {
+              setData(uploadedData);
+              setStep('validate');
+            }}
+          >
+            <Button>Select CSV File</Button>
+          </CSV.UploadTrigger>
+        </div>
+      )}
+
+      {step === 'validate' && (
+        <CSV.Validator>
+          {({ errors, validate, isValidating }) => (
+            <div>
+              <h2>Step 2: Validate Data</h2>
+              <Button onClick={validate} disabled={isValidating}>
+                Validate
+              </Button>
+              {errors.length === 0 && !isValidating && (
+                <Button onClick={() => setStep('complete')}>
+                  Continue to Import
+                </Button>
+              )}
+            </div>
+          )}
+        </CSV.Validator>
+      )}
+
+      {step === 'complete' && (
+        <div>
+          <h2>Step 3: Complete Import</h2>
+          <CSV.SubmitButton asChild>
+            <Button>Finish Import</Button>
+          </CSV.SubmitButton>
+        </div>
+      )}
+    </CSV.Root>
+  );
+}
+```
+
+### Custom Validation UI
+
+Build custom error displays:
+
+```tsx
+<CSV.Validator>
+  {({ errors, validate, isValidating }) => (
+    <div>
+      <button onClick={validate}>Validate</button>
+
+      {errors.length > 0 && (
+        <div className="error-summary">
+          <h3>{errors.length} Errors</h3>
+
+          {/* Group by row */}
+          {Object.entries(groupByRow(errors)).map(([row, rowErrors]) => (
+            <div key={row} className="row-errors">
+              <h4>Row {parseInt(row) + 1}</h4>
+              <ul>
+                {rowErrors.map((error, i) => (
+                  <li key={i}>
+                    <strong>{error.column}</strong>: {error.message}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )}
+</CSV.Validator>
+```
+
+## API Reference
+
+### Types
+
+```tsx
+import type {
+  Column,
+  ValidationError,
+  CSVContextValue,
+  RootProps,
+  ValidatorProps,
+  UploadTriggerProps,
+  NextButtonProps,
+  BackButtonProps,
+  SubmitButtonProps
+} from '@importcsv/react/headless';
+
+interface ValidationError {
+  row: number;
+  column: string;
+  message: string;
+}
+
+interface ValidatorChildProps {
+  errors: ValidationError[];
+  validate: () => Promise<ValidationError[]>;
+  isValidating: boolean;
+}
+```
+
+### Utilities
+
+```tsx
+import { zodSchemaToColumns } from '@importcsv/react/headless';
+
+// Convert Zod schema to legacy columns format
+const columns = zodSchemaToColumns(mySchema);
+```
+
+## Next Steps
+
+<Cards>
+  <Card title="🛡️ Zod Schemas" href="/guides/zod-schemas" description="Advanced validation patterns" />
+  <Card title="📖 API Reference" href="/api" description="Complete props documentation" />
+  <Card title="💡 Examples" href="/examples/basic" description="More examples" />
+  <Card title="🎨 Theming" href="/guides/theming" description="Styling the full component" />
+</Cards>

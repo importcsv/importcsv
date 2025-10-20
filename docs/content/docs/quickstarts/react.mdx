@@ -1,0 +1,334 @@
+---
+title: React Quickstart
+description: Complete setup guide for ImportCSV in React apps (Vite, CRA, etc.)
+---
+
+## Installation
+
+```bash
+npm install @importcsv/react
+# Optional: for Excel support
+npm install xlsx
+```
+
+## Basic Setup (Vite)
+
+```tsx title="src/App.tsx"
+import { CSVImporter } from '@importcsv/react';
+import { useState } from 'react';
+
+function App() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="App">
+      <button onClick={() => setIsOpen(true)}>
+        Import CSV
+      </button>
+
+      <CSVImporter
+        modalIsOpen={isOpen}
+        modalOnCloseTriggered={() => setIsOpen(false)}
+        columns={[
+          { id: 'name', label: 'Name', validators: [{ type: 'required' }] },
+          { id: 'email', label: 'Email', type: 'email' },
+          { id: 'phone', label: 'Phone', type: 'phone' }
+        ]}
+        onComplete={(data) => {
+          console.log(`Imported ${data.num_rows} rows`, data.rows);
+          setIsOpen(false);
+        }}
+      />
+    </div>
+  );
+}
+
+export default App;
+```
+
+## Using Zod Schemas (Recommended)
+
+For better type safety and validation:
+
+```bash
+npm install zod
+```
+
+```tsx title="src/App.tsx"
+import { CSVImporter } from '@importcsv/react';
+import { z } from 'zod';
+import { useState } from 'react';
+
+const userSchema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Invalid email address'),
+  age: z.number().min(18, 'Must be 18 or older').optional(),
+  role: z.enum(['admin', 'user', 'guest'])
+});
+
+type User = z.infer<typeof userSchema>;
+
+function App() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+
+  return (
+    <div className="App">
+      <button onClick={() => setIsOpen(true)}>
+        Import Users
+      </button>
+
+      <CSVImporter
+        modalIsOpen={isOpen}
+        modalOnCloseTriggered={() => setIsOpen(false)}
+        schema={userSchema}
+        onComplete={(data: User[]) => {
+          setUsers(data);
+          setIsOpen(false);
+        }}
+      />
+
+      {/* Display imported users */}
+      {users.length > 0 && (
+        <div>
+          <h2>Imported Users</h2>
+          <ul>
+            {users.map((user, i) => (
+              <li key={i}>{user.name} - {user.email}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default App;
+```
+
+## Inline Mode
+
+Display the importer directly in the page:
+
+```tsx title="src/ImportPage.tsx"
+import { CSVImporter } from '@importcsv/react';
+import { z } from 'zod';
+
+const productSchema = z.object({
+  name: z.string().min(1),
+  price: z.number().positive(),
+  sku: z.string(),
+  category: z.string()
+});
+
+export function ImportPage() {
+  return (
+    <div className="container">
+      <h1>Import Products</h1>
+
+      <CSVImporter
+        isModal={false}
+        schema={productSchema}
+        onComplete={(data) => {
+          console.log('Imported products:', data);
+          // Send to API, update state, etc.
+        }}
+      />
+    </div>
+  );
+}
+```
+
+## API Integration
+
+Process imported data with a backend API:
+
+```tsx title="src/App.tsx"
+import { CSVImporter } from '@importcsv/react';
+import { z } from 'zod';
+import { useState } from 'react';
+
+const contactSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+  company: z.string()
+});
+
+function App() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleComplete = async (data: z.infer<typeof contactSchema>[]) => {
+    setLoading(true);
+    try {
+      const response = await fetch('/api/contacts/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contacts: data })
+      });
+
+      if (response.ok) {
+        alert(`Successfully imported ${data.length} contacts`);
+      } else {
+        alert('Import failed');
+      }
+    } catch (error) {
+      console.error('Import error:', error);
+      alert('Import failed');
+    } finally {
+      setLoading(false);
+      setIsOpen(false);
+    }
+  };
+
+  return (
+    <div className="App">
+      <button onClick={() => setIsOpen(true)} disabled={loading}>
+        {loading ? 'Importing...' : 'Import Contacts'}
+      </button>
+
+      <CSVImporter
+        modalIsOpen={isOpen}
+        modalOnCloseTriggered={() => setIsOpen(false)}
+        schema={contactSchema}
+        onComplete={handleComplete}
+      />
+    </div>
+  );
+}
+
+export default App;
+```
+
+## Theming
+
+Customize the importer to match your brand:
+
+```tsx
+<CSVImporter
+  schema={schema}
+  onComplete={handleComplete}
+  theme="dark"
+  primaryColor="#10b981"
+/>
+```
+
+Available themes:
+- `"default"` - Clean, modern light theme
+- `"dark"` - Dark mode
+- `"professional"` - Enterprise styling
+- Custom CSS variables (see [Theming Guide](/guides/theming))
+
+## Create React App (CRA)
+
+ImportCSV works out of the box with CRA. No additional configuration needed:
+
+```tsx title="src/App.js"
+import { CSVImporter } from '@importcsv/react';
+import { useState } from 'react';
+
+function App() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="App">
+      <button onClick={() => setIsOpen(true)}>
+        Import CSV
+      </button>
+
+      <CSVImporter
+        modalIsOpen={isOpen}
+        modalOnCloseTriggered={() => setIsOpen(false)}
+        columns={[
+          { id: 'name', label: 'Name' },
+          { id: 'email', label: 'Email' }
+        ]}
+        onComplete={(data) => {
+          console.log(data);
+          setIsOpen(false);
+        }}
+      />
+    </div>
+  );
+}
+
+export default App;
+```
+
+## TypeScript
+
+ImportCSV is fully typed. Enable strict type checking:
+
+```tsx title="src/App.tsx"
+import { CSVImporter, CSVImporterProps } from '@importcsv/react';
+import { z } from 'zod';
+
+const schema = z.object({
+  name: z.string(),
+  email: z.string().email()
+});
+
+type Contact = z.infer<typeof schema>;
+
+const importerProps: CSVImporterProps = {
+  schema,
+  onComplete: (data: Contact[]) => {
+    // data is fully typed
+    console.log(data);
+  }
+};
+
+export function ContactImporter() {
+  return <CSVImporter {...importerProps} />;
+}
+```
+
+## Next Steps
+
+<Cards>
+  <Card title="🎨 Headless Components" href="/headless" description="Build custom UI with primitives" />
+  <Card title="🛡️ Zod Schemas" href="/guides/zod-schemas" description="Advanced validation patterns" />
+  <Card title="📖 API Reference" href="/api" description="Complete props documentation" />
+  <Card title="💡 Examples" href="/examples/basic" description="More advanced examples" />
+</Cards>
+
+## Common Issues
+
+### Excel files not working
+
+Install the xlsx library:
+
+```bash
+npm install xlsx
+```
+
+### Bundle size concerns
+
+ImportCSV is ~100KB gzipped. For further optimization, use code splitting:
+
+```tsx
+import { lazy, Suspense } from 'react';
+
+const CSVImporter = lazy(() =>
+  import('@importcsv/react').then(mod => ({ default: mod.CSVImporter }))
+);
+
+function App() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CSVImporter {...props} />
+    </Suspense>
+  );
+}
+```
+
+### Styling conflicts
+
+ImportCSV auto-injects CSS. If you experience conflicts, use the `className` prop to scope styles:
+
+```tsx
+<CSVImporter
+  className="my-custom-importer"
+  {...props}
+/>
+```
