@@ -13,7 +13,7 @@ import "./style/csv-importer.css";
 import "./style/dark-mode.css";
 import "../Modal/style.css";
 
-const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: any) => {
+const CSVImporter = forwardRef(<TSchema = any,>(importerProps: CSVImporterProps<TSchema>, forwardRef?: any) => {
   
   // Destructure all known props from CSVImporterProps
   const {
@@ -171,6 +171,8 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
       <ImporterComponent />
     </div>
   );
-}) as any;
+}) as <TSchema = any>(
+  props: CSVImporterProps<TSchema> & { ref?: any }
+) => JSX.Element;
 
 export default CSVImporter;

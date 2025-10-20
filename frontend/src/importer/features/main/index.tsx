@@ -331,19 +331,10 @@ export default function Main(props: CSVImporterProps) {
 
     // Standalone mode: directly call onComplete with data
     if (isStandaloneMode) {
-      // For standalone mode, preserve the original row structure with values array
-      // This ensures compatibility with examples that expect rows with values
-      const standaloneData = validatedData.rows.slice(startIndex);
-      
-      onComplete && onComplete({
-        success: true,
-        data: standaloneData,  // Send rows with values array intact
-        mappedData: mappedRows,  // Also include mapped data for compatibility
-        num_rows: mappedRows.length,
-        num_columns: includedColumns.length,
-        headers: headerRow.values,
-        columnMapping: columnMapping
-      });
+      // Extract just the data portion from mapped rows
+      const cleanData = mappedRows.map(row => row.data);
+
+      onComplete && onComplete(cleanData as any);
       setIsSubmitting(false);
       goNext();
       return;
@@ -403,34 +394,16 @@ export default function Main(props: CSVImporterProps) {
 
         // The backend now returns a simplified response with just success/failure status
         // and a job_id that can be used to track the job
+        // Note: In backend mode, onComplete receives empty array since data is sent to server
         if (result.success) {
-          onComplete &&
-            onComplete({
-              success: true,
-              message: result.message || "Import job successfully enqueued",
-              num_rows: mappedRows.length,
-              num_columns: includedColumns.length,
-            });
+          onComplete && onComplete([] as any);
         } else {
-          onComplete &&
-            onComplete({
-              success: false,
-              message: result.message || "Failed to process import",
-              num_rows: mappedRows.length,
-              num_columns: includedColumns.length,
-            });
+          onComplete && onComplete([] as any);
         }
       })
       .catch((error) => {
-        // Call onComplete with the error
-
-        onComplete &&
-          onComplete({
-            success: false,
-            message: error.message || "Error processing import",
-            num_rows: mappedRows.length,
-            num_columns: includedColumns.length,
-          });
+        // Call onComplete with empty array in backend mode
+        onComplete && onComplete([] as any);
       });
 
     setIsSubmitting(false);

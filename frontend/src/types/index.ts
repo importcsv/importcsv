@@ -76,18 +76,18 @@ import { ThemeConfig } from './theme';
 import { z } from 'zod';
 
 // Main CSV Importer Props
-export type CSVImporterProps = {
+export type CSVImporterProps<TSchema = any> = {
   // Schema definition (recommended - one of schema or columns required)
-  schema?: z.ZodSchema<any>;
+  schema?: z.ZodSchema<TSchema>;
 
   /**
    * @deprecated Use `schema` prop instead for better type safety
    */
   columns?: Column[];          // For standalone mode (HelloCSV-style)
   importerKey?: string;        // For backend mode
-  
+
   // Required callback
-  onComplete?: (data: any) => void;
+  onComplete?: (data: TSchema[]) => void;
   
   // Optional configuration
   backendUrl?: string;         // API endpoint (default from config)
