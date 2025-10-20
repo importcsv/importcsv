@@ -1,6 +1,7 @@
 import { FileData } from "../main/types";
 import { TemplateColumnMapping } from "../map-columns/types";
 import { Column } from "../../../types";
+import { z } from 'zod';
 
 export interface ValidationError {
   rowIndex: number;
@@ -11,6 +12,7 @@ export interface ValidationError {
 
 export interface ValidationProps {
   columns?: Column[];
+  schema?: z.ZodSchema<any>;
   data: FileData;
   columnMapping: { [index: number]: TemplateColumnMapping };
   selectedHeaderRow: number | null;

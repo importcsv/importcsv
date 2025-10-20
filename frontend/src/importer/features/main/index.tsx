@@ -50,6 +50,7 @@ export default function Main(props: CSVImporterProps) {
     includeUnmatchedColumns: propIncludeUnmatchedColumns = false,
     importerKey,
     columns: propColumns, // HelloCSV-style columns for standalone mode
+    schema, // Zod schema for standalone mode
     backendUrl,
     user,
     metadata,
@@ -560,6 +561,7 @@ export default function Main(props: CSVImporterProps) {
         return (
           <Validation
             columns={importColumns || propColumns}
+            schema={schema}
             data={data}
             columnMapping={columnMapping}
             selectedHeaderRow={selectedHeaderRow}

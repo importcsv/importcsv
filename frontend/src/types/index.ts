@@ -73,10 +73,16 @@ type CustomTranslationResource = {
 };
 
 import { ThemeConfig } from './theme';
+import { z } from 'zod';
 
 // Main CSV Importer Props
 export type CSVImporterProps = {
-  // Mode determination (one or the other)
+  // Schema definition (recommended - one of schema or columns required)
+  schema?: z.ZodSchema<any>;
+
+  /**
+   * @deprecated Use `schema` prop instead for better type safety
+   */
   columns?: Column[];          // For standalone mode (HelloCSV-style)
   importerKey?: string;        // For backend mode
   

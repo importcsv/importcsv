@@ -1,11 +1,12 @@
 import { forwardRef, JSX } from 'preact/compat';
-import { useRef, useEffect, useState } from 'preact/hooks';
+import { useRef, useEffect, useState, useMemo } from 'preact/hooks';
 import Importer from "../../importer/features/main";
 import Providers from "../../importer/providers";
 import useThemeStore from "../../importer/stores/theme";
 import { darkenColor, isValidColor } from "../../importer/utils/colorUtils";
 import { CSVImporterProps } from "../../types";
 import Modal from "../Modal";
+import { zodSchemaToColumns } from "../../headless/utils/zodSchemaToColumns";
 // Import styles - with proper scoping under .importcsv, these won't leak
 import "../../index.css";
 import "./style/csv-importer.css";
@@ -38,13 +39,38 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
     user,
     metadata,
     demoData,
-    columns,
+    schema,
+    columns: propColumns,
     // Any remaining props will be valid DOM props
     ...domProps
   } = importerProps;
   const ref = forwardRef ?? useRef(null);
   // Control modal state internally if needed
   const [internalModalOpen, setInternalModalOpen] = useState(modalIsOpen);
+
+  // Convert schema to columns internally
+  const derivedColumns = useMemo(() => {
+    if (schema) {
+      // Deprecation warning if both provided
+      if (propColumns) {
+        console.warn(
+          'ImportCSV: Both `schema` and `columns` props provided. Using `schema`. ' +
+          'The `columns` prop is deprecated and will be removed in v2.0.'
+        );
+      }
+      return zodSchemaToColumns(schema);
+    }
+
+    // Deprecation warning for columns-only usage
+    if (propColumns) {
+      console.warn(
+        'ImportCSV: The `columns` prop is deprecated. Use `schema` prop with Zod schemas instead. ' +
+        'See migration guide: https://docs.importcsv.com/guides/zod-schemas'
+      );
+    }
+
+    return propColumns;
+  }, [schema, propColumns]);
 
   // Sync internal state with prop
   useEffect(() => {
@@ -122,7 +148,8 @@ const CSVImporter = forwardRef((importerProps: CSVImporterProps, forwardRef?: an
         user={user}
         metadata={metadata}
         demoData={demoData}
-        columns={columns}
+        columns={derivedColumns}
+        schema={schema}
       />
     </Providers>
   );
