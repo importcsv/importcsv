@@ -1,0 +1,11 @@
+sku,name,description,price,cost,quantity,category,isActive,weight,dimensions,brand
+LAPTOP-001,MacBook Pro 16",High-performance laptop for professionals,2499.99,1800.00,50,electronics,true,4.3,14x9.8x0.66,Apple
+TSHIRT-BLU-M,Blue Cotton T-Shirt,Comfortable cotton t-shirt in blue,29.99,12.00,200,clothing,true,0.5,,,
+DESK-LAMP-LED,LED Desk Lamp,Adjustable LED desk lamp with USB charging,49.99,25.00,75,home,true,2.1,18x8x8,
+BOOK-PROG-101,Programming 101,Introduction to programming for beginners,39.99,15.00,100,books,true,1.2,9x6x1.5,TechBooks
+TOY-ROBOT-AI,AI Robot Toy,Interactive AI-powered robot toy for kids,89.99,45.00,30,toys,true,3.5,12x10x8,RoboTech
+YOGA-MAT-PRO,Professional Yoga Mat,Premium non-slip yoga mat,59.99,28.00,120,sports,true,5.0,72x24x0.25,YogaPro
+PHONE-ANDR-128,Android Smartphone,Latest Android phone with 128GB storage,799.99,500.00,80,electronics,true,0.4,6.2x2.9x0.3,Samsung
+JEANS-BLK-32,Black Denim Jeans,Classic black denim jeans size 32,79.99,35.00,150,clothing,true,1.2,,,Levi's
+COFFEE-MAKER,Programmable Coffee Maker,12-cup programmable coffee maker,69.99,32.00,60,home,true,3.8,12x9x12,Cuisinart
+COOKBOOK-ITAL,Italian Cooking,Authentic Italian recipes and techniques,24.99,10.00,75,books,true,0.9,10x8x0.8,FoodPress

@@ -1,0 +1,11 @@
+firstName,lastName,email,phone,company,jobTitle,companySize,industry,source,campaign,leadScore,status,website,notes,estimatedValue
+John,Doe,john.doe@techcorp.com,5551234567,TechCorp,CTO,51-200,Technology,website,Q1-2024-Website,85,qualified,https://techcorp.com,Interested in enterprise plan,50000
+Jane,Smith,jane.smith@startup.io,5559876543,Startup.io,CEO,1-10,SaaS,referral,,75,contacted,https://startup.io,Referred by existing customer,25000
+Bob,Johnson,bob@enterprise.com,5555551234,Enterprise Co,VP of Engineering,1000+,Enterprise,event,TechConf-2024,90,proposal,https://enterprise.com,Met at tech conference,150000
+Alice,Williams,alice.w@design.co,5554567890,Design Co,Creative Director,11-50,Design,social_media,LinkedIn-Campaign,60,new,https://design.co,,15000
+Charlie,Brown,charlie@agency.com,5553334444,Agency LLC,Marketing Manager,51-200,Marketing,cold_outreach,,55,contacted,https://agency.com,Reached out via email,30000
+Emily,Davis,emily@saascompany.com,5556667777,SaaS Company,Product Manager,201-500,Software,partner,Partner-Referral-2024,80,qualified,https://saascompany.com,Partner referral - high priority,75000
+Michael,Wilson,michael@consulting.biz,5558889999,Consulting Biz,Senior Consultant,11-50,Consulting,advertisement,Google-Ads-Q1,65,new,https://consulting.biz,,20000
+Sarah,Martinez,sarah@retailco.com,5552223333,Retail Co,Operations Director,501-1000,Retail,website,Homepage-Form,70,contacted,https://retailco.com,Interested in API integration,40000
+David,Anderson,david@fintech.io,5557778888,FinTech Innovations,Head of Product,201-500,Finance,referral,Customer-Referral,88,proposal,https://fintech.io,High-value opportunity,120000
+Lisa,Taylor,lisa@media.agency,5554445555,Media Agency,Account Director,51-200,Media,event,Marketing-Summit-2024,72,qualified,https://media.agency,Following up from event booth,35000

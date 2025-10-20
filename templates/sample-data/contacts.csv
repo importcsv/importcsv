@@ -1,0 +1,11 @@
+firstName,lastName,email,phone,company,jobTitle,linkedIn
+John,Doe,john.doe@example.com,5551234567,Acme Corp,Software Engineer,https://linkedin.com/in/johndoe
+Jane,Smith,jane.smith@example.com,5559876543,Tech Inc,Product Manager,https://linkedin.com/in/janesmith
+Bob,Johnson,bob.johnson@example.com,5555551234,StartupXYZ,CEO,https://linkedin.com/in/bobjohnson
+Alice,Williams,alice.w@example.com,5554567890,Design Co,UX Designer,
+Charlie,Brown,charlie@example.com,5553334444,,,
+Emily,Davis,emily.davis@example.com,5556667777,Marketing Pro,CMO,https://linkedin.com/in/emilydavis
+Michael,Wilson,michael@example.com,5558889999,Dev Shop,Senior Developer,
+Sarah,Martinez,sarah.m@example.com,5552223333,Consulting LLC,Consultant,https://linkedin.com/in/sarahmartinez
+David,Anderson,david.anderson@example.com,5557778888,Enterprise Co,VP of Sales,
+Lisa,Taylor,lisa.taylor@example.com,5554445555,SaaS Startup,Head of Growth,https://linkedin.com/in/lisataylor

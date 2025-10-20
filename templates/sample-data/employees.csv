@@ -1,0 +1,11 @@
+employeeId,firstName,lastName,email,department,position,startDate,salary,manager,skills,isActive,location
+EMP001,John,Doe,john.doe@company.com,engineering,Senior Software Engineer,2020-03-15,120000,EMP100,"JavaScript,TypeScript,React",true,San Francisco
+EMP002,Jane,Smith,jane.smith@company.com,sales,Sales Manager,2019-07-01,95000,EMP101,"Sales,CRM,Negotiation",true,New York
+EMP003,Bob,Johnson,bob.johnson@company.com,marketing,Marketing Director,2018-01-10,110000,,"Marketing,SEO,Content",true,Remote
+EMP004,Alice,Williams,alice.w@company.com,engineering,DevOps Engineer,2021-06-20,105000,EMP100,"AWS,Docker,Kubernetes",true,Austin
+EMP005,Charlie,Brown,charlie@company.com,hr,HR Manager,2017-11-05,85000,,"Recruiting,Benefits,Compliance",true,Chicago
+EMP006,Emily,Davis,emily.davis@company.com,finance,Financial Analyst,2022-02-14,75000,EMP102,"Excel,SQL,Accounting",true,Boston
+EMP007,Michael,Wilson,michael@company.com,engineering,Frontend Developer,2023-04-01,90000,EMP001,"React,CSS,JavaScript",true,Remote
+EMP008,Sarah,Martinez,sarah.m@company.com,customer_support,Support Lead,2021-09-12,70000,EMP103,"Customer Service,Zendesk",true,Denver
+EMP009,David,Anderson,david.anderson@company.com,operations,Operations Manager,2019-05-20,98000,,"Logistics,Process Improvement",true,Seattle
+EMP010,Lisa,Taylor,lisa.taylor@company.com,sales,Account Executive,2022-11-01,80000,EMP002,"B2B Sales,Salesforce",true,Los Angeles

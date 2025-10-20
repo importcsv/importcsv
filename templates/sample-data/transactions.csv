@@ -1,0 +1,11 @@
+transactionId,date,amount,type,category,description,merchant,accountNumber,status,reference
+550e8400-e29b-41d4-a716-446655440000,2024-01-15T10:30:00Z,125.50,debit,groceries,Weekly grocery shopping,Whole Foods,1234,completed,REF-001
+6ba7b810-9dad-11d1-80b4-00c04fd430c8,2024-01-15T14:20:00Z,3500.00,credit,salary,Monthly salary deposit,Acme Corp,1234,completed,PAY-JAN-2024
+7c9e6679-7425-40de-944b-e07fc1f90ae7,2024-01-16T09:15:00Z,89.99,debit,utilities,Electric bill payment,Power Co,1234,completed,UTIL-JAN
+8e7f8c5d-4f2e-4d1c-8a3b-1c5d6e7f8a9b,2024-01-17T16:45:00Z,1200.00,debit,rent,Monthly rent payment,Landlord LLC,1234,completed,RENT-JAN
+9f8e9d6c-5e3f-4e2d-9b4c-2d6e7f8e9c0a,2024-01-18T11:00:00Z,45.00,debit,entertainment,Movie tickets and snacks,AMC Theaters,1234,completed,
+a0f9e8d7-6f4e-5f3d-0c5b-3e7f8e9d0b1a,2024-01-19T08:30:00Z,250.00,credit,refund,Product return refund,Amazon,1234,completed,AMZ-RET-456
+b1f0e9d8-7f5e-6f4d-1c6b-4e8f9e0d1b2a,2024-01-20T12:15:00Z,67.25,debit,dining,Lunch with clients,Restaurant XYZ,1234,completed,
+c2f1e0d9-8f6e-7f5d-2c7b-5e9f0e1d2b3a,2024-01-21T15:45:00Z,199.99,debit,shopping,New shoes,Nike Store,1234,completed,
+d3f2e1d0-9f7e-8f6d-3c8b-6e0f1e2d3b4a,2024-01-22T09:00:00Z,1500.00,credit,freelance,Client project payment,Client LLC,1234,completed,INV-2024-001
+e4f3e2d1-0f8e-9f7d-4c9b-7e1f2e3d4b5a,2024-01-23T13:30:00Z,54.99,debit,transportation,Gas station fill-up,Shell,1234,completed,
