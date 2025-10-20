@@ -2,32 +2,50 @@ import React, { useState } from 'react'
 import ValidationExample from './examples/ValidationExample'
 import LargeFileExample from './examples/LargeFileExample'
 import DarkModeExample from './examples/DarkModeExample'
+import HeadlessExample from './examples/HeadlessExample'
+import ZodSchemaExample from './examples/ZodSchemaExample'
 
-type ExampleType = 'validation' | 'large-file' | 'dark-mode' | null
+type ExampleType = 'validation' | 'large-file' | 'dark-mode' | 'headless' | 'zod-schema' | null
 
 const App: React.FC = () => {
   const [activeExample, setActiveExample] = useState<ExampleType>(null)
 
   const examples = [
-    { 
-      id: 'validation' as ExampleType, 
-      name: 'Validation & Transformation', 
+    {
+      id: 'headless' as ExampleType,
+      name: 'Headless Components',
+      description: 'Build custom CSV importers with unstyled primitives',
+      icon: '🎨',
+      color: 'from-indigo-500 to-indigo-600',
+      badge: 'New'
+    },
+    {
+      id: 'zod-schema' as ExampleType,
+      name: 'Zod Schema Validation',
+      description: 'Type-safe validation with automatic TypeScript inference',
+      icon: '🛡️',
+      color: 'from-emerald-500 to-emerald-600',
+      badge: 'New'
+    },
+    {
+      id: 'validation' as ExampleType,
+      name: 'Validation & Transformation',
       description: 'Test data validation rules and automatic transformations',
       icon: '✅',
       color: 'from-blue-500 to-blue-600'
     },
-    { 
-      id: 'large-file' as ExampleType, 
-      name: 'Large Dataset Performance', 
+    {
+      id: 'large-file' as ExampleType,
+      name: 'Large Dataset Performance',
       description: 'Test performance with 10k-100k rows using virtual scrolling',
       icon: '🚀',
       color: 'from-green-500 to-green-600'
     },
-    { 
-      id: 'dark-mode' as ExampleType, 
-      name: 'Theme & Dark Mode', 
+    {
+      id: 'dark-mode' as ExampleType,
+      name: 'Theme & Dark Mode',
       description: 'Explore different visual themes including dark mode',
-      icon: '🎨',
+      icon: '🌙',
       color: 'from-purple-500 to-purple-600'
     }
   ]
@@ -48,6 +66,8 @@ const App: React.FC = () => {
             </button>
           </div>
           
+          {activeExample === 'headless' && <HeadlessExample />}
+          {activeExample === 'zod-schema' && <ZodSchemaExample />}
           {activeExample === 'validation' && <ValidationExample />}
           {activeExample === 'large-file' && <LargeFileExample />}
           {activeExample === 'dark-mode' && <DarkModeExample />}
@@ -70,7 +90,7 @@ const App: React.FC = () => {
 
         <div className="grid md:grid-cols-3 gap-6">
           {examples.map(example => (
-            <div 
+            <div
               key={example.id}
               className="group cursor-pointer transform transition-all duration-200 hover:scale-105"
               onClick={() => setActiveExample(example.id)}
@@ -78,7 +98,14 @@ const App: React.FC = () => {
               <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow">
                 <div className={`h-2 bg-gradient-to-r ${example.color}`}></div>
                 <div className="p-6">
-                  <div className="text-4xl mb-4">{example.icon}</div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="text-4xl">{example.icon}</div>
+                    {example.badge && (
+                      <span className="px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">
+                        {example.badge}
+                      </span>
+                    )}
+                  </div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">
                     {example.name}
                   </h3>

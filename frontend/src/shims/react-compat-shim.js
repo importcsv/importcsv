@@ -8,6 +8,34 @@ import * as ReactDOM from 'react-dom';
 export * from 'react';
 export { default } from 'react';
 
+// Explicitly export commonly used React hooks and functions
+export const {
+  useState,
+  useEffect,
+  useContext,
+  useReducer,
+  useCallback,
+  useMemo,
+  useRef,
+  useImperativeHandle,
+  useLayoutEffect,
+  useDebugValue,
+  createContext,
+  createElement,
+  createRef,
+  Component,
+  PureComponent,
+  memo,
+  forwardRef,
+  lazy,
+  Suspense,
+  Fragment,
+  StrictMode,
+  isValidElement,
+  cloneElement,
+  Children
+} = React;
+
 // Export ReactDOM functions that preact/compat would normally provide
 export const createPortal = ReactDOM.createPortal;
 export const render = ReactDOM.render;

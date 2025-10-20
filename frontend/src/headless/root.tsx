@@ -1,5 +1,5 @@
 // frontend/src/headless/root.tsx
-import { createContext, type VNode, h } from 'preact';
+import { createContext } from 'preact';
 import { useContext, useMemo } from 'preact/hooks';
 import { z } from 'zod';
 import type { CSVContextValue, RootProps } from './types';
@@ -40,7 +40,7 @@ export function Root<TSchema = any>({
   columns,
   onComplete,
   data
-}: RootProps<TSchema>): VNode<any> {
+}: RootProps<TSchema>) {
   // Memoize column derivation for performance
   const derivedColumns = useMemo(
     () => (schema ? zodSchemaToColumns(schema) : columns || []),
@@ -69,7 +69,8 @@ export function Root<TSchema = any>({
     [derivedColumns, schema, validate, onComplete, data]
   );
 
-  return h(CSVContext.Provider, { value }, children) as VNode<any>;
+  const ProviderComponent = CSVContext.Provider as any;
+  return <ProviderComponent value={value}>{children}</ProviderComponent>;
 }
 
 /**
