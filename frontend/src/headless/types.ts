@@ -7,6 +7,11 @@ export interface Column {
   label?: string;
   type?: string;
   required?: boolean;
+  validators?: Array<{ type: string; value?: any; message?: string; pattern?: string }>;
+  transformations?: Array<{ type: string; [key: string]: any }>;
+  options?: string[];
+  description?: string;
+  placeholder?: string;
 }
 
 export interface ValidationError {

@@ -38,7 +38,7 @@ describe('CSV.Root - Zod Schema Support', () => {
         <div>
           {ctx.columns.map(col => (
             <div key={col.id} data-testid={`col-${col.id}`}>
-              {col.id}:{col.required ? 'required' : 'optional'}
+              {col.id}:{col.validators?.some((v: any) => v.type === 'required') ? 'required' : 'optional'}
             </div>
           ))}
         </div>
