@@ -1,51 +1,41 @@
 import React, { useState } from 'react'
-import ValidationExample from './examples/ValidationExample'
+import BasicExample from './examples/BasicExample'
+import AdvancedExample from './examples/AdvancedExample'
 import LargeFileExample from './examples/LargeFileExample'
-import DarkModeExample from './examples/DarkModeExample'
-import HeadlessExample from './examples/HeadlessExample'
-import ZodSchemaExample from './examples/ZodSchemaExample'
+import CustomizationExample from './examples/CustomizationExample'
 
-type ExampleType = 'validation' | 'large-file' | 'dark-mode' | 'headless' | 'zod-schema' | null
+type ExampleType = 'basic' | 'advanced' | 'large-file' | 'customization' | null
 
 const App: React.FC = () => {
   const [activeExample, setActiveExample] = useState<ExampleType>(null)
 
   const examples = [
     {
-      id: 'headless' as ExampleType,
-      name: 'Headless Components',
-      description: 'Build custom CSV importers with unstyled primitives',
-      icon: '🎨',
-      color: 'from-indigo-500 to-indigo-600',
-      badge: 'New'
-    },
-    {
-      id: 'zod-schema' as ExampleType,
-      name: 'Zod Schema Validation',
-      description: 'Type-safe validation with automatic TypeScript inference',
-      icon: '🛡️',
-      color: 'from-emerald-500 to-emerald-600',
-      badge: 'New'
-    },
-    {
-      id: 'validation' as ExampleType,
-      name: 'Validation & Transformation',
-      description: 'Test data validation rules and automatic transformations',
-      icon: '✅',
+      id: 'basic' as ExampleType,
+      name: 'Getting Started',
+      description: 'Simple example to get up and running in 2 minutes',
+      icon: '🚀',
       color: 'from-blue-500 to-blue-600'
     },
     {
-      id: 'large-file' as ExampleType,
-      name: 'Large Dataset Performance',
-      description: 'Test performance with 10k-100k rows using virtual scrolling',
-      icon: '🚀',
+      id: 'advanced' as ExampleType,
+      name: 'Validation & Transformations',
+      description: 'Comprehensive validation rules and data transformations',
+      icon: '✨',
       color: 'from-green-500 to-green-600'
     },
     {
-      id: 'dark-mode' as ExampleType,
-      name: 'Theme & Dark Mode',
-      description: 'Explore different visual themes including dark mode',
-      icon: '🌙',
+      id: 'large-file' as ExampleType,
+      name: 'Large Datasets',
+      description: 'Performance testing with 10k-100k rows',
+      icon: '⚡',
+      color: 'from-orange-500 to-orange-600'
+    },
+    {
+      id: 'customization' as ExampleType,
+      name: 'Themes & Styling',
+      description: 'Customize colors, themes, and dark mode',
+      icon: '🎨',
       color: 'from-purple-500 to-purple-600'
     }
   ]
@@ -66,11 +56,10 @@ const App: React.FC = () => {
             </button>
           </div>
           
-          {activeExample === 'headless' && <HeadlessExample />}
-          {activeExample === 'zod-schema' && <ZodSchemaExample />}
-          {activeExample === 'validation' && <ValidationExample />}
+          {activeExample === 'basic' && <BasicExample />}
+          {activeExample === 'advanced' && <AdvancedExample />}
           {activeExample === 'large-file' && <LargeFileExample />}
-          {activeExample === 'dark-mode' && <DarkModeExample />}
+          {activeExample === 'customization' && <CustomizationExample />}
         </div>
       </div>
     )
@@ -88,7 +77,7 @@ const App: React.FC = () => {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
           {examples.map(example => (
             <div
               key={example.id}
@@ -98,13 +87,8 @@ const App: React.FC = () => {
               <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow">
                 <div className={`h-2 bg-gradient-to-r ${example.color}`}></div>
                 <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center mb-4">
                     <div className="text-4xl">{example.icon}</div>
-                    {example.badge && (
-                      <span className="px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">
-                        {example.badge}
-                      </span>
-                    )}
                   </div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">
                     {example.name}
