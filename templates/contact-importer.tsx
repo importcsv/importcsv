@@ -77,8 +77,6 @@ export function ContactImporter({
     <CSVImporter
       modalIsOpen={isOpen}
       modalOnCloseTriggered={onClose}
-      // ⚠️ WARNING: schema prop is not yet implemented (coming in Phase 1)
-      // Use ContactImporterLegacy below for production use
       schema={contactSchema}
       onComplete={onComplete}
       theme="modern"

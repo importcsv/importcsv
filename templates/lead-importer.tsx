@@ -116,8 +116,6 @@ export function LeadImporter({
     <CSVImporter
       modalIsOpen={isOpen}
       modalOnCloseTriggered={onClose}
-      // ⚠️ WARNING: schema prop is not yet implemented (coming in Phase 1)
-      // For production use, convert this schema to columns array format
       schema={leadSchema}
       onComplete={onComplete}
       theme="modern"

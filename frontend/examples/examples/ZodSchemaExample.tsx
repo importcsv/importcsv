@@ -211,23 +211,11 @@ type Product = z.infer<typeof productSchema>;`}
         </div>
       )}
 
-      {/* CSV Importer Modal - Using columns (schema support coming in Phase 1) */}
+      {/* CSV Importer Modal - Now with full Zod schema support! */}
       <CSVImporter
         modalIsOpen={isOpen}
         modalOnCloseTriggered={() => setIsOpen(false)}
-        columns={[
-          { id: 'sku', label: 'SKU', type: 'string', validators: [{ type: 'required' }] },
-          { id: 'name', label: 'Product Name', type: 'string', validators: [{ type: 'required' }] },
-          { id: 'description', label: 'Description', type: 'string' },
-          { id: 'price', label: 'Price', type: 'number', validators: [{ type: 'required' }] },
-          { id: 'cost', label: 'Cost', type: 'number', validators: [{ type: 'required' }] },
-          { id: 'quantity', label: 'Quantity', type: 'number', validators: [{ type: 'required' }] },
-          { id: 'category', label: 'Category', type: 'select', options: ['electronics', 'clothing', 'home', 'books', 'toys', 'sports'], validators: [{ type: 'required' }] },
-          { id: 'isActive', label: 'Active', type: 'string' },
-          { id: 'weight', label: 'Weight (lbs)', type: 'number' },
-          { id: 'dimensions', label: 'Dimensions', type: 'string' },
-          { id: 'brand', label: 'Brand', type: 'string' }
-        ]}
+        schema={productSchema}
         onComplete={handleComplete}
         theme="professional"
         primaryColor="#16a34a"
