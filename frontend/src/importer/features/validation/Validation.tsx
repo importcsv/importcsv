@@ -69,7 +69,9 @@ export default function Validation<TSchema = unknown>({
     const map = new Map<string, number>();
     Object.entries(columnMapping).forEach(([idx, mapping]) => {
       if (mapping.include) {
-        const id = (mapping as any).id || (mapping as any).key;
+        // Type assertion: ColumnMapping may have additional properties
+        const extendedMapping = mapping as typeof mapping & { id?: string; key?: string };
+        const id = extendedMapping.id || extendedMapping.key;
         if (id) {
           map.set(id, parseInt(idx));
         }
@@ -84,24 +86,31 @@ export default function Validation<TSchema = unknown>({
     rowIdx: number,
     errors: Array<{rowIndex: number, columnIndex: number, message: string}>
   ) => {
-    // Build row object for Zod validation (only when schema exists - performance optimization)
-    const rowObject: Record<string, unknown> = {};
+    // VALIDATION HIERARCHY: Single source of truth to avoid race conditions
+    // - If schema exists: Use ONLY Zod validation
+    // - If only columns exist: Use ONLY Column validation
+    // This prevents duplicate/conflicting errors from both validators
 
-    includedColumns.forEach(colIdx => {
-      const value = row.values[colIdx];
-      const mapping = columnMapping[colIdx];
-      if (!mapping || !mapping.include) return;
+    if (schema) {
+      // === ZOD VALIDATION PATH ===
+      const rowObject: Record<string, unknown> = {};
 
-      const columnId = (mapping as any).id || (mapping as any).key;
-      const column = columns?.find(c => c.id === columnId);
-      if (!column) return;
+      includedColumns.forEach(colIdx => {
+        const value = row.values[colIdx];
+        const mapping = columnMapping[colIdx];
+        if (!mapping || !mapping.include) return;
 
-      // Apply pre-transformations before validation
-      const { pre } = categorizeTransformations(column.transformations);
-      const preTransformedValue = applyTransformations(value, pre);
+        const extendedMapping = mapping as typeof mapping & { id?: string; key?: string };
+        const columnId = extendedMapping.id || extendedMapping.key;
+        if (!columnId) return;
 
-      // Only build row object if schema exists
-      if (schema) {
+        const column = columns?.find(c => c.id === columnId);
+        if (!column) return;
+
+        // Apply pre-transformations before validation
+        const { pre } = categorizeTransformations(column.transformations);
+        const preTransformedValue = applyTransformations(value, pre);
+
         // Convert value to appropriate type for Zod validation
         const isRequired = column.validators?.some(v => v.type === 'required') ?? false;
         let zodValue: unknown = preTransformedValue;
@@ -122,55 +131,56 @@ export default function Validation<TSchema = unknown>({
           zodValue = undefined;
         }
 
-        // Store transformed value for Zod validation
         rowObject[columnId] = zodValue;
-      }
+      });
 
-      // Existing column validation
-      const error = validateColumn(preTransformedValue, column);
-      if (error) {
-        errors.push({
-          rowIndex: rowIdx + headerRowIndex + 1,
-          columnIndex: colIdx,
-          message: error
-        });
-      }
-    });
-
-    // Zod validation if schema provided
-    if (schema) {
+      // Run Zod validation
       const result = schema.safeParse(rowObject);
 
       if (!result.success) {
         // Convert Zod errors to ValidationError format
         result.error.issues.forEach(issue => {
-          // Handle nested paths by joining with dot notation
-          const fieldPath = issue.path.join('.');
           const fieldName = issue.path[0] as string;
           const column = columns?.find(c => c.id === fieldName);
           if (!column) return;
 
-          // Use optimized reverse mapping for column index lookup
           const colIdx = columnIdToIndex.get(fieldName);
 
-          if (colIdx !== undefined) {
-            const rowIndex = rowIdx + headerRowIndex + 1;
-
-            // Check for duplicate errors before adding (prevent both column and Zod from adding same error)
-            const existingError = errors.find(
-              e => e.rowIndex === rowIndex && e.columnIndex === colIdx
-            );
-
-            if (!existingError) {
-              errors.push({
-                rowIndex,
-                columnIndex: colIdx,
-                message: issue.message
-              });
-            }
+          if (colIdx !== undefined && colIdx !== null) {
+            errors.push({
+              rowIndex: rowIdx + headerRowIndex + 1,
+              columnIndex: colIdx,
+              message: issue.message
+            });
           }
         });
       }
+    } else {
+      // === COLUMN VALIDATION PATH (Legacy) ===
+      includedColumns.forEach(colIdx => {
+        const value = row.values[colIdx];
+        const mapping = columnMapping[colIdx];
+        if (!mapping || !mapping.include) return;
+
+        const extendedMapping = mapping as typeof mapping & { id?: string; key?: string };
+        const columnId = extendedMapping.id || extendedMapping.key;
+        const column = columns?.find(c => c.id === columnId);
+        if (!column) return;
+
+        // Apply pre-transformations before validation
+        const { pre } = categorizeTransformations(column.transformations);
+        const preTransformedValue = applyTransformations(value, pre);
+
+        // Column validation
+        const error = validateColumn(preTransformedValue, column);
+        if (error) {
+          errors.push({
+            rowIndex: rowIdx + headerRowIndex + 1,
+            columnIndex: colIdx,
+            message: error
+          });
+        }
+      });
     }
   }, [includedColumns, columnMapping, columns, schema, headerRowIndex, columnIdToIndex]);
 
@@ -188,7 +198,8 @@ export default function Validation<TSchema = unknown>({
     const columnIds = columns.map(col => col.id);
     const mismatches = Object.entries(columnMapping).filter(([_, mapping]) => {
       if (!mapping.include) return false;
-      return !columnIds.includes((mapping as any).id || (mapping as any).key);
+      const extendedMapping = mapping as typeof mapping & { id?: string; key?: string };
+      return !columnIds.includes(extendedMapping.id || extendedMapping.key || '');
     });
 
     if (mismatches.length > 0) {
@@ -297,8 +308,9 @@ export default function Validation<TSchema = unknown>({
       includedColumns.forEach(colIdx => {
         const mapping = columnMapping[colIdx];
         if (!mapping || !mapping.include) return;
-        
-        const columnId = (mapping as any).id || (mapping as any).key;
+
+        const extendedMapping = mapping as typeof mapping & { id?: string; key?: string };
+        const columnId = extendedMapping.id || extendedMapping.key;
         const column = columns.find(c => c.id === columnId);
         if (!column || !column.transformations) return;
         
@@ -383,10 +395,11 @@ export default function Validation<TSchema = unknown>({
 
         // Get the column mapping
         const mapping = columnMapping[colIdx];
-        if (!mapping || !((mapping as any).id || (mapping as any).key)) return value;
+        const extendedMapping = mapping as typeof mapping & { id?: string; key?: string };
+        if (!mapping || !(extendedMapping.id || extendedMapping.key)) return value;
 
         // Find the column definition
-        const column = columns?.find(c => c.id === ((mapping as any).id || (mapping as any).key));
+        const column = columns?.find(c => c.id === (extendedMapping.id || extendedMapping.key));
         if (!column || !column.transformations) return value;
 
         // Apply both pre and post transformations for final output
@@ -609,9 +622,11 @@ export default function Validation<TSchema = unknown>({
           validationErrors={errors.map(e => {
             // Convert display row index to data array index
             const dataRowIndex = e.rowIndex - headerRowIndex - 1;
+            const mapping = columnMapping[e.columnIndex];
+            const extendedMapping = mapping as typeof mapping & { id?: string; key?: string };
             return {
               rowIndex: dataRowIndex,
-              columnKey: ((columnMapping[e.columnIndex] as any)?.id || (columnMapping[e.columnIndex] as any)?.key) || '',
+              columnKey: (extendedMapping?.id || extendedMapping?.key) || '',
               message: e.message,
               value: dataRows[dataRowIndex]?.values[e.columnIndex]
             };
