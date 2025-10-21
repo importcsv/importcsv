@@ -14,30 +14,10 @@ A production-ready React component for importing CSV, XLS, and XLSX files with i
   <Card title="🛠️ Production Ready" description="Built-in validation, transformations, and error handling" />
 </Cards>
 
-## Get Started in 5 Minutes
-
-Choose your framework for a complete setup guide:
-
-<Cards cols={3}>
-  <Card
-    title="Next.js App Router"
-    href="/quickstarts/nextjs-app-router"
-    description="Complete setup for Next.js 15+ with App Router"
-  />
-  <Card
-    title="React"
-    href="/quickstarts/react"
-    description="Vite, CRA, or any React setup"
-  />
-  <Card
-    title="Preact"
-    href="/quickstarts/preact"
-    description="Lightweight React alternative"
-  />
-</Cards>
+## Installation
 
 ```bash
-npm install @importcsv/react
+npm install @importcsv/react zod
 ```
 
 ```tsx
@@ -75,68 +55,17 @@ const schema = z.object({
   <Card title="🤖 AI-Powered Features" href="/guides/ai-features" description="Smart mapping and natural language transforms" />
 </Cards>
 
-### 🚀 Performance at Scale
-- **Virtual Scrolling**: Efficiently render 10,000+ rows without browser freezing
-- **Progressive Validation**: Validates first 50 rows instantly, processes rest asynchronously
-- **Optimized Bundle**: ~100KB gzipped using Preact internals
+## Get Started
 
-### 📊 Data Processing
-- **File Support**: CSV, XLS, XLSX, TSV formats
-- **Smart Mapping**: Automatic column detection and mapping
-- **10+ Transformations**: trim, uppercase, normalize phone/date, custom functions
-- **Comprehensive Validation**: Required, unique, regex, min/max, custom validators
+<Card
+  title="Quick Start Guide"
+  href="/getting-started"
+  description="Install and integrate ImportCSV in under 5 minutes"
+/>
 
-### 🤖 AI-Powered Features
-- **Smart Column Mapping**: AI suggests the best column mappings
-- **Natural Language Transformations**: Fix errors and transform data with simple prompts
-- **Validation Auto-Fix**: Automatically correct common validation errors
+## Next Steps
 
-### 🎨 Developer Experience
-- **TypeScript Support**: Fully typed API
-- **Auto-injected CSS**: No separate stylesheet imports
-- **Framework Agnostic**: Works with React, Next.js, vanilla JavaScript
-- **Dark Mode**: Built-in theme support
-
-## Performance Metrics
-
-| Metric | Value |
-|--------|-------|
-| Bundle Size | ~100KB gzipped |
-| Max Rows Tested | 10,000+ |
-| Initial Validation | 50 rows (instant) |
-| Progressive Validation | Remaining rows (async) |
-| Dependencies | Minimal (Preact-based) |
-
-## Quick Links
-
-<Cards>
-  <Card
-    title="Installation"
-    href="/getting-started"
-    description="Get up and running in 5 minutes"
-  />
-  <Card
-    title="Playground"
-    href="/playground"
-    description="Try ImportCSV interactively"
-  />
-  <Card
-    title="Next.js Integration"
-    href="/quickstarts/nextjs-app-router"
-    description="Add to your Next.js app"
-  />
-  <Card
-    title="API Reference"
-    href="/api"
-    description="Complete documentation"
-  />
-</Cards>
-
-## Backend Features
-
-<Cards>
-  <Card title="🔧 Backend Setup" href="/backend/getting-started" description="Set up FastAPI backend and database" />
-  <Card title="📊 Admin Dashboard" href="/backend/admin-dashboard" description="Manage importers through web UI" />
-  <Card title="🔌 API Reference" href="/backend/api-reference" description="REST API documentation" />
-  <Card title="⚖️ Choose Your Mode" href="/backend/comparison" description="Local vs Backend comparison" />
-</Cards>
+- [View Examples](/examples/basic) - See real-world usage patterns
+- [API Reference](/api) - Complete documentation
+- [Zod Schema Guide](/guides/zod-schemas) - Advanced validation
+- [Framework Integration](/quickstarts/nextjs-app-router) - Next.js, React, or Preact setup
