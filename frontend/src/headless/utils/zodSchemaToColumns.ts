@@ -2,6 +2,29 @@
 import { z } from 'zod';
 import type { Column, Validator, Transformer } from '../../types';
 
+// Type aliases for better type safety when working with Zod internals
+type ZodDef = {
+  typeName: string;
+  innerType?: z.ZodTypeAny;
+  schema?: z.ZodTypeAny;
+  checks?: Array<{
+    kind: string;
+    value?: number;
+    message?: string;
+    regex?: RegExp;
+  }>;
+  description?: string;
+  values?: string[];
+  effect?: {
+    type: string;
+    transform?: (...args: unknown[]) => unknown;
+  };
+};
+
+type ZodTypeWithDef = z.ZodTypeAny & {
+  _def: ZodDef;
+};
+
 /**
  * Converts a Zod schema to Column[] with full validator/transformer extraction
  *
@@ -30,13 +53,13 @@ export function zodSchemaToColumns<T>(schema: z.ZodSchema<T>): Column[] {
     return [];
   }
 
-  const shape = (schema as any).shape;
+  const shape = (schema as z.ZodObject<z.ZodRawShape>).shape;
 
-  return Object.entries(shape).map(([key, zodType]: [string, any]) => {
-    const validators = extractValidators(zodType);
-    const transformations = extractTransformations(zodType, key);
-    const { type, options } = inferTypeAndOptions(zodType);
-    const description = extractDescription(zodType);
+  return Object.entries(shape).map(([key, zodType]: [string, z.ZodTypeAny]) => {
+    const validators = extractValidators(zodType as ZodTypeWithDef);
+    const transformations = extractTransformations(zodType as ZodTypeWithDef, key);
+    const { type, options } = inferTypeAndOptions(zodType as ZodTypeWithDef);
+    const description = extractDescription(zodType as ZodTypeWithDef);
 
     const column: Column = {
       id: key,
@@ -65,13 +88,13 @@ export function zodSchemaToColumns<T>(schema: z.ZodSchema<T>): Column[] {
 /**
  * Extract validators from Zod type checks
  */
-function extractValidators(zodType: any): Validator[] {
+function extractValidators(zodType: ZodTypeWithDef): Validator[] {
   const validators: Validator[] = [];
 
   // Unwrap optional/nullable
-  let innerType = zodType;
+  let innerType: ZodTypeWithDef = zodType;
   while (innerType._def.typeName === 'ZodOptional' || innerType._def.typeName === 'ZodNullable') {
-    innerType = innerType._def.innerType;
+    innerType = innerType._def.innerType as ZodTypeWithDef;
   }
 
   // Add required validator if not optional
@@ -137,24 +160,24 @@ function extractValidators(zodType: any): Validator[] {
 /**
  * Extract transformations from Zod transforms
  */
-function extractTransformations(zodType: any, fieldName: string): Transformer[] {
+function extractTransformations(zodType: ZodTypeWithDef, fieldName: string): Transformer[] {
   const transformations: Transformer[] = [];
 
   // Unwrap to find transforms
-  let currentType = zodType;
-  const transformChain: any[] = [];
+  let currentType: ZodTypeWithDef | undefined = zodType;
+  const transformChain: ZodDef['effect'][] = [];
 
   // Traverse transform chain
   while (currentType) {
-    if (currentType._def.typeName === 'ZodEffects' && currentType._def.effect.type === 'transform') {
+    if (currentType._def.typeName === 'ZodEffects' && currentType._def.effect?.type === 'transform') {
       transformChain.push(currentType._def.effect);
     }
 
     // Move to inner type
     if (currentType._def.innerType) {
-      currentType = currentType._def.innerType;
+      currentType = currentType._def.innerType as ZodTypeWithDef;
     } else if (currentType._def.schema) {
-      currentType = currentType._def.schema;
+      currentType = currentType._def.schema as ZodTypeWithDef;
     } else {
       break;
     }
@@ -162,6 +185,8 @@ function extractTransformations(zodType: any, fieldName: string): Transformer[] 
 
   // Try to detect common transform patterns
   for (const effect of transformChain) {
+    if (!effect) continue;
+
     const fnString = effect.transform?.toString() || '';
 
     // Pattern matching for common transforms
@@ -187,19 +212,19 @@ function extractTransformations(zodType: any, fieldName: string): Transformer[] 
 /**
  * Infer column type and options from Zod type
  */
-function inferTypeAndOptions(zodType: any): { type: Column['type']; options?: string[] } {
-  let innerType = zodType;
+function inferTypeAndOptions(zodType: ZodTypeWithDef): { type: Column['type']; options?: string[] } {
+  let innerType: ZodTypeWithDef = zodType;
 
   // Unwrap optional/nullable
   while (innerType._def.typeName === 'ZodOptional' || innerType._def.typeName === 'ZodNullable') {
-    innerType = innerType._def.innerType;
+    innerType = innerType._def.innerType as ZodTypeWithDef;
   }
 
   const typeName = innerType._def.typeName;
 
   // Check for email validation
   const checks = innerType._def.checks || [];
-  const hasEmailCheck = checks.some((c: any) => c.kind === 'email');
+  const hasEmailCheck = checks.some((c: { kind: string }) => c.kind === 'email');
   if (hasEmailCheck) {
     return { type: 'email' };
   }
@@ -226,8 +251,8 @@ function inferTypeAndOptions(zodType: any): { type: Column['type']; options?: st
 /**
  * Extract description from Zod type (if using .describe())
  */
-function extractDescription(zodType: any): string | undefined {
-  let currentType = zodType;
+function extractDescription(zodType: ZodTypeWithDef): string | undefined {
+  let currentType: ZodTypeWithDef | undefined = zodType;
 
   // Traverse chain to find description
   while (currentType) {
@@ -236,7 +261,7 @@ function extractDescription(zodType: any): string | undefined {
     }
 
     if (currentType._def.innerType) {
-      currentType = currentType._def.innerType;
+      currentType = currentType._def.innerType as ZodTypeWithDef;
     } else {
       break;
     }
