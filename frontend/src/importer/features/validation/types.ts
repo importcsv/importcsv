@@ -10,9 +10,9 @@ export interface ValidationError {
   value: string | number;
 }
 
-export interface ValidationProps {
+export interface ValidationProps<TSchema = unknown> {
   columns?: Column[];
-  schema?: z.ZodSchema<any>;
+  schema?: z.ZodSchema<TSchema>;
   data: FileData;
   columnMapping: { [index: number]: TemplateColumnMapping };
   selectedHeaderRow: number | null;

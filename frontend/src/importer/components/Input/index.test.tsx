@@ -13,14 +13,16 @@ describe('Input component', () => {
   it('handles user input', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
+    const onInput = vi.fn();
 
-    render(h(Input, { name: 'test', onChange }));
-    const input = screen.getByRole('textbox');
+    render(h(Input, { name: 'test', onChange, onInput }));
+    const input = screen.getByRole('textbox') as HTMLInputElement;
 
     await user.type(input, 'Hello');
 
-    expect(onChange).toHaveBeenCalled();
-    expect(input).toHaveValue('Hello');
+    // In Preact, onInput fires for text input events
+    expect(onInput).toHaveBeenCalled();
+    expect(input.value).toBe('Hello');
   });
 
   it('shows error message when invalid', () => {

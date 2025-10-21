@@ -16,8 +16,9 @@ import { cn } from '../../../utils/cn';
 
 
 // Validation component for checking imported data
-export default function Validation({
+export default function Validation<TSchema = unknown>({
   columns,
+  schema,
   data: fileData,
   columnMapping,
   selectedHeaderRow,
@@ -28,7 +29,7 @@ export default function Validation({
   importerKey,
   filterInvalidRows,
   disableOnInvalidRows,
-}: ValidationProps) {
+}: ValidationProps<TSchema>) {
   // State management
   const [errors, setErrors] = useState<Array<{rowIndex: number, columnIndex: number, message: string}>>([]);
   const [filterMode, setFilterMode] = useState<'all' | 'valid' | 'error'>('all');
@@ -62,8 +63,116 @@ export default function Validation({
 
   // Validation tracking
   const shouldValidateRef = useRef(true);
-  const validationBatchSize = 100; // Process 100 rows at a time
-  const validationTimeoutRef = useRef<number | null>(null);
+
+  // Create reverse mapping for efficient column lookups (optimization for Zod validation)
+  const columnIdToIndex = useMemo(() => {
+    const map = new Map<string, number>();
+    Object.entries(columnMapping).forEach(([idx, mapping]) => {
+      if (mapping.include) {
+        const id = (mapping as any).id || (mapping as any).key;
+        if (id) {
+          map.set(id, parseInt(idx));
+        }
+      }
+    });
+    return map;
+  }, [columnMapping]);
+
+  // Helper function to validate a single row
+  const validateSingleRow = useCallback((
+    row: typeof dataRows[0],
+    rowIdx: number,
+    errors: Array<{rowIndex: number, columnIndex: number, message: string}>
+  ) => {
+    // Build row object for Zod validation (only when schema exists - performance optimization)
+    const rowObject: Record<string, unknown> = {};
+
+    includedColumns.forEach(colIdx => {
+      const value = row.values[colIdx];
+      const mapping = columnMapping[colIdx];
+      if (!mapping || !mapping.include) return;
+
+      const columnId = (mapping as any).id || (mapping as any).key;
+      const column = columns?.find(c => c.id === columnId);
+      if (!column) return;
+
+      // Apply pre-transformations before validation
+      const { pre } = categorizeTransformations(column.transformations);
+      const preTransformedValue = applyTransformations(value, pre);
+
+      // Only build row object if schema exists
+      if (schema) {
+        // Convert value to appropriate type for Zod validation
+        const isRequired = column.validators?.some(v => v.type === 'required') ?? false;
+        let zodValue: unknown = preTransformedValue;
+
+        if (column.type === 'number') {
+          const num = Number(preTransformedValue);
+          zodValue = preTransformedValue === ''
+            ? (isRequired ? '' : undefined)
+            : (isNaN(num) ? preTransformedValue : num);
+        } else if (column.type === 'date') {
+          if (preTransformedValue === '') {
+            zodValue = isRequired ? '' : undefined;
+          } else {
+            const date = new Date(preTransformedValue);
+            zodValue = isNaN(date.getTime()) ? preTransformedValue : date;
+          }
+        } else if (preTransformedValue === '' && !isRequired) {
+          zodValue = undefined;
+        }
+
+        // Store transformed value for Zod validation
+        rowObject[columnId] = zodValue;
+      }
+
+      // Existing column validation
+      const error = validateColumn(preTransformedValue, column);
+      if (error) {
+        errors.push({
+          rowIndex: rowIdx + headerRowIndex + 1,
+          columnIndex: colIdx,
+          message: error
+        });
+      }
+    });
+
+    // Zod validation if schema provided
+    if (schema) {
+      const result = schema.safeParse(rowObject);
+
+      if (!result.success) {
+        // Convert Zod errors to ValidationError format
+        result.error.issues.forEach(issue => {
+          // Handle nested paths by joining with dot notation
+          const fieldPath = issue.path.join('.');
+          const fieldName = issue.path[0] as string;
+          const column = columns?.find(c => c.id === fieldName);
+          if (!column) return;
+
+          // Use optimized reverse mapping for column index lookup
+          const colIdx = columnIdToIndex.get(fieldName);
+
+          if (colIdx !== undefined) {
+            const rowIndex = rowIdx + headerRowIndex + 1;
+
+            // Check for duplicate errors before adding (prevent both column and Zod from adding same error)
+            const existingError = errors.find(
+              e => e.rowIndex === rowIndex && e.columnIndex === colIdx
+            );
+
+            if (!existingError) {
+              errors.push({
+                rowIndex,
+                columnIndex: colIdx,
+                message: issue.message
+              });
+            }
+          }
+        });
+      }
+    }
+  }, [includedColumns, columnMapping, columns, schema, headerRowIndex, columnIdToIndex]);
 
   // Reset scroll position when component mounts
   useEffect(() => {
@@ -102,28 +211,7 @@ export default function Validation({
 
     for (let rowIdx = 0; rowIdx < immediateRows; rowIdx++) {
       const row = dataRows[rowIdx];
-      includedColumns.forEach(colIdx => {
-        const value = row.values[colIdx];
-        const mapping = columnMapping[colIdx];
-        if (!mapping || !mapping.include) return;
-
-        const columnId = (mapping as any).id || (mapping as any).key;
-        const column = columns.find(c => c.id === columnId);
-        if (!column) return;
-
-        // Apply pre-transformations before validation
-        const { pre } = categorizeTransformations(column.transformations);
-        const preTransformedValue = applyTransformations(value, pre);
-        
-        const error = validateColumn(preTransformedValue, column);
-        if (error) {
-          newErrors.push({
-            rowIndex: rowIdx + headerRowIndex + 1,
-            columnIndex: colIdx,
-            message: error
-          });
-        }
-      });
+      validateSingleRow(row, rowIdx, newErrors);
     }
 
     // Update errors for immediate feedback
@@ -140,28 +228,7 @@ export default function Validation({
 
         for (let rowIdx = currentRow; rowIdx < endRow; rowIdx++) {
           const row = dataRows[rowIdx];
-          includedColumns.forEach(colIdx => {
-            const value = row.values[colIdx];
-            const mapping = columnMapping[colIdx];
-            if (!mapping || !mapping.include) return;
-
-            const columnId = (mapping as any).id || (mapping as any).key;
-            const column = columns.find(c => c.id === columnId);
-            if (!column) return;
-
-            // Apply pre-transformations before validation
-            const { pre } = categorizeTransformations(column.transformations);
-            const preTransformedValue = applyTransformations(value, pre);
-            
-            const error = validateColumn(preTransformedValue, column);
-            if (error) {
-              newErrors.push({
-                rowIndex: rowIdx + headerRowIndex + 1,
-                columnIndex: colIdx,
-                message: error
-              });
-            }
-          });
+          validateSingleRow(row, rowIdx, newErrors);
         }
 
         currentRow = endRow;
@@ -186,7 +253,7 @@ export default function Validation({
       setIsValidating(false);
       shouldValidateRef.current = false;
     }
-  }, [dataRows, columns, columnMapping, includedColumns, headerRowIndex]);
+  }, [dataRows, validateSingleRow]);
 
   // Trigger validation when data changes
   useEffect(() => {
