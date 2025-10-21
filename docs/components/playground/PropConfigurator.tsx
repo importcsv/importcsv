@@ -20,8 +20,8 @@ const AVAILABLE_TRANSFORMERS = [
   { type: 'lowercase', label: 'Lowercase', description: 'Convert to lowercase' },
   { type: 'uppercase', label: 'Uppercase', description: 'Convert to uppercase' },
   { type: 'capitalize', label: 'Capitalize', description: 'Capitalize first letter of each word' },
-  { type: 'normalizePhone', label: 'Normalize Phone', description: 'Format phone numbers' },
-  { type: 'parseDate', label: 'Parse Date', description: 'Parse date strings' },
+  { type: 'normalize_phone', label: 'Normalize Phone', description: 'Format phone numbers' },
+  { type: 'normalize_date', label: 'Parse Date', description: 'Parse date strings' },
 ];
 
 // Common column templates
@@ -145,7 +145,7 @@ export default function PropConfigurator({
       const newValidator: Validator = { type: validatorType as any };
       if (validatorType === 'min' || validatorType === 'max') {
         (newValidator as any).value = 0;
-      } else if (validatorType === 'minLength' || validatorType === 'maxLength') {
+      } else if (validatorType === 'min_length' || validatorType === 'max_length') {
         (newValidator as any).value = 1;
       } else if (validatorType === 'regex') {
         (newValidator as any).value = '.*';
@@ -190,77 +190,98 @@ export default function PropConfigurator({
     <div className="space-y-6">
       {/* Display Options */}
       <div className="space-y-4">
-        <h3 className="font-semibold text-sm text-fd-foreground">Display Options</h3>
+        <div>
+          <h3 className="font-semibold text-sm text-fd-foreground">UI Settings</h3>
+          <p className="text-xs text-fd-muted-foreground mt-1">Configure how the importer appears to users</p>
+        </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <label className="flex items-center gap-2 text-sm text-fd-foreground cursor-pointer">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <label className="flex items-start gap-3 text-sm text-fd-foreground cursor-pointer p-3 rounded-lg border border-fd-border/50 hover:bg-fd-muted/30 transition-colors">
             <input
               type="checkbox"
               checked={config.darkMode}
               onChange={(e) => updateConfig({ darkMode: e.target.checked })}
-              className="rounded border-fd-border text-fd-primary focus:ring-2 focus:ring-fd-primary focus:ring-offset-2 cursor-pointer"
+              className="mt-0.5 rounded border-fd-border text-fd-primary focus:ring-2 focus:ring-fd-primary focus:ring-offset-2 cursor-pointer"
             />
-            Dark Mode
+            <div className="flex-1">
+              <div className="font-medium">Dark Mode</div>
+              <div className="text-xs text-fd-muted-foreground">Enable dark theme colors</div>
+            </div>
           </label>
 
-          <label className="flex items-center gap-2 text-sm text-fd-foreground cursor-pointer">
+          <label className="flex items-start gap-3 text-sm text-fd-foreground cursor-pointer p-3 rounded-lg border border-fd-border/50 hover:bg-fd-muted/30 transition-colors">
             <input
               type="checkbox"
               checked={config.isModal}
               onChange={(e) => updateConfig({ isModal: e.target.checked })}
-              className="rounded border-fd-border text-fd-primary focus:ring-2 focus:ring-fd-primary focus:ring-offset-2 cursor-pointer"
+              className="mt-0.5 rounded border-fd-border text-fd-primary focus:ring-2 focus:ring-fd-primary focus:ring-offset-2 cursor-pointer"
             />
-            Modal Mode
+            <div className="flex-1">
+              <div className="font-medium">Modal Mode</div>
+              <div className="text-xs text-fd-muted-foreground">Open in overlay popup (recommended)</div>
+            </div>
           </label>
 
-          <label className="flex items-center gap-2 text-sm text-fd-foreground cursor-pointer">
+          <label className="flex items-start gap-3 text-sm text-fd-foreground cursor-pointer p-3 rounded-lg border border-fd-border/50 hover:bg-fd-muted/30 transition-colors">
             <input
               type="checkbox"
               checked={config.showDownloadTemplateButton}
               onChange={(e) => updateConfig({ showDownloadTemplateButton: e.target.checked })}
-              className="rounded border-fd-border text-fd-primary focus:ring-2 focus:ring-fd-primary focus:ring-offset-2 cursor-pointer"
+              className="mt-0.5 rounded border-fd-border text-fd-primary focus:ring-2 focus:ring-fd-primary focus:ring-offset-2 cursor-pointer"
             />
-            Template Button
+            <div className="flex-1">
+              <div className="font-medium">Show Template Button</div>
+              <div className="text-xs text-fd-muted-foreground">Let users download CSV template</div>
+            </div>
           </label>
 
-          <label className="flex items-center gap-2 text-sm text-fd-foreground cursor-pointer">
+          <label className="flex items-start gap-3 text-sm text-fd-foreground cursor-pointer p-3 rounded-lg border border-fd-border/50 hover:bg-fd-muted/30 transition-colors">
             <input
               type="checkbox"
               checked={config.skipHeaderRowSelection}
               onChange={(e) => updateConfig({ skipHeaderRowSelection: e.target.checked })}
-              className="rounded border-fd-border text-fd-primary focus:ring-2 focus:ring-fd-primary focus:ring-offset-2 cursor-pointer"
+              className="mt-0.5 rounded border-fd-border text-fd-primary focus:ring-2 focus:ring-fd-primary focus:ring-offset-2 cursor-pointer"
             />
-            Skip Header Selection
+            <div className="flex-1">
+              <div className="font-medium">Skip Header Selection</div>
+              <div className="text-xs text-fd-muted-foreground">Auto-detect first row as headers</div>
+            </div>
           </label>
         </div>
       </div>
 
       {/* Column Templates */}
       <div className="space-y-4">
-        <h3 className="font-semibold text-sm text-fd-foreground">Quick Add Column Templates</h3>
+        <div>
+          <h3 className="font-semibold text-sm text-fd-foreground">Add Columns</h3>
+          <p className="text-xs text-fd-muted-foreground mt-1">Start with pre-configured templates or create custom columns</p>
+        </div>
         <div className="flex flex-wrap gap-2">
           {Object.keys(COLUMN_TEMPLATES).map(templateKey => (
             <button
               key={templateKey}
               onClick={() => addColumnFromTemplate(templateKey)}
-              className="px-3 py-1 text-xs border border-fd-border/50 rounded-md bg-fd-card/30 hover:bg-fd-muted/50 text-fd-foreground font-medium transition-colors capitalize backdrop-blur-sm"
+              className="px-3 py-1.5 text-sm border border-fd-border/50 rounded-md bg-fd-card/30 hover:bg-fd-primary/10 hover:border-fd-primary/30 text-fd-foreground font-medium transition-colors capitalize backdrop-blur-sm"
             >
               + {templateKey}
             </button>
           ))}
+          <button
+            onClick={addColumn}
+            className="px-3 py-1.5 text-sm border border-fd-border/50 rounded-md bg-fd-muted/30 hover:bg-fd-muted/50 text-fd-muted-foreground font-medium transition-colors backdrop-blur-sm"
+          >
+            + Custom Column
+          </button>
         </div>
       </div>
 
       {/* Columns Configuration */}
       <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h3 className="font-semibold text-sm text-fd-foreground">Columns ({config.columns.length})</h3>
-          <button
-            onClick={addColumn}
-            className="text-sm px-3 py-1 border border-fd-border/50 rounded-md bg-fd-card/30 hover:bg-fd-muted/50 text-fd-foreground font-medium transition-colors backdrop-blur-sm"
-          >
-            + Add Custom Column
-          </button>
+        <div className="flex justify-between items-start">
+          <div>
+            <h3 className="font-semibold text-sm text-fd-foreground">Configure Columns ({config.columns.length})</h3>
+            <p className="text-xs text-fd-muted-foreground mt-1">Set up validation rules and data transformations</p>
+          </div>
         </div>
 
         <div className="space-y-3">
@@ -293,7 +314,7 @@ export default function PropConfigurator({
                   <option value="email">Email</option>
                   <option value="date">Date</option>
                   <option value="phone">Phone</option>
-                  <option value="boolean">Boolean</option>
+                  <option value="select">Select</option>
                 </select>
                 <button
                   onClick={() => removeColumn(index)}
@@ -305,16 +326,20 @@ export default function PropConfigurator({
 
               {/* Validators Section */}
               <div className="space-y-2">
-                <div className="text-xs font-medium text-fd-foreground/70">Validators</div>
-                <div className="flex flex-wrap gap-1">
+                <div className="flex items-center gap-2">
+                  <div className="text-xs font-medium text-fd-foreground/70">Validation Rules</div>
+                  <div className="text-xs text-fd-muted-foreground/60">(click to toggle)</div>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
                   {['required', 'unique'].map(validatorType => (
                     <button
                       key={validatorType}
                       onClick={() => toggleValidator(index, validatorType)}
-                      className={`px-2 py-0.5 text-xs rounded font-medium transition-colors ${
+                      title={validatorType === 'required' ? 'Field must have a value' : 'All values must be unique'}
+                      className={`px-2.5 py-1 text-xs rounded-md font-medium transition-all ${
                         column.validators?.some(v => v.type === validatorType)
-                          ? 'bg-fd-primary text-fd-primary-foreground'
-                          : 'bg-fd-muted text-fd-foreground hover:bg-fd-muted/80'
+                          ? 'bg-fd-primary text-fd-primary-foreground shadow-sm'
+                          : 'bg-fd-muted text-fd-foreground hover:bg-fd-muted/80 border border-fd-border/30'
                       }`}
                     >
                       {validatorType}
@@ -325,27 +350,33 @@ export default function PropConfigurator({
                     <button
                       key={validatorType}
                       onClick={() => toggleValidator(index, validatorType)}
-                      className={`px-2 py-0.5 text-xs rounded font-medium transition-colors ${
+                      title={validatorType === 'min' ? 'Minimum value allowed' : 'Maximum value allowed'}
+                      className={`px-2.5 py-1 text-xs rounded-md font-medium transition-all ${
                         column.validators?.some(v => v.type === validatorType)
-                          ? 'bg-fd-primary text-fd-primary-foreground'
-                          : 'bg-fd-muted text-fd-foreground hover:bg-fd-muted/80'
+                          ? 'bg-fd-primary text-fd-primary-foreground shadow-sm'
+                          : 'bg-fd-muted text-fd-foreground hover:bg-fd-muted/80 border border-fd-border/30'
                       }`}
                     >
                       {validatorType}
                     </button>
                   ))}
 
-                  {column.type === 'string' && ['minLength', 'maxLength', 'regex'].map(validatorType => (
+                  {column.type === 'string' && ['min_length', 'max_length', 'regex'].map(validatorType => (
                     <button
                       key={validatorType}
                       onClick={() => toggleValidator(index, validatorType)}
-                      className={`px-2 py-0.5 text-xs rounded font-medium transition-colors ${
+                      title={
+                        validatorType === 'min_length' ? 'Minimum text length' :
+                        validatorType === 'max_length' ? 'Maximum text length' :
+                        'Custom pattern matching'
+                      }
+                      className={`px-2.5 py-1 text-xs rounded-md font-medium transition-all ${
                         column.validators?.some(v => v.type === validatorType)
-                          ? 'bg-fd-primary text-fd-primary-foreground'
-                          : 'bg-fd-muted text-fd-foreground hover:bg-fd-muted/80'
+                          ? 'bg-fd-primary text-fd-primary-foreground shadow-sm'
+                          : 'bg-fd-muted text-fd-foreground hover:bg-fd-muted/80 border border-fd-border/30'
                       }`}
                     >
-                      {validatorType}
+                      {validatorType === 'min_length' ? 'minLength' : validatorType === 'max_length' ? 'maxLength' : validatorType}
                     </button>
                   ))}
                 </div>
@@ -421,17 +452,20 @@ export default function PropConfigurator({
 
               {/* Transformers Section */}
               <div className="space-y-2">
-                <div className="text-xs font-medium text-fd-foreground/70">Transformers (Applied in order)</div>
-                <div className="flex flex-wrap gap-1">
+                <div className="flex items-center gap-2">
+                  <div className="text-xs font-medium text-fd-foreground/70">Data Transformations</div>
+                  <div className="text-xs text-fd-muted-foreground/60">(applied in order)</div>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
                   {AVAILABLE_TRANSFORMERS.map(transformer => (
                     <button
                       key={transformer.type}
                       onClick={() => toggleTransformer(index, transformer.type)}
                       title={transformer.description}
-                      className={`px-2 py-0.5 text-xs rounded font-medium transition-colors ${
+                      className={`px-2.5 py-1 text-xs rounded-md font-medium transition-all ${
                         column.transformers?.some(t => t.type === transformer.type)
-                          ? 'bg-fd-success/20 text-fd-success-foreground border border-fd-success/30'
-                          : 'bg-fd-muted text-fd-foreground hover:bg-fd-muted/80'
+                          ? 'bg-green-500/20 text-green-700 dark:text-green-400 border border-green-500/30 shadow-sm'
+                          : 'bg-fd-muted text-fd-foreground hover:bg-fd-muted/80 border border-fd-border/30'
                       }`}
                     >
                       {transformer.label}
@@ -486,18 +520,24 @@ export default function PropConfigurator({
 
       {/* Test Importer Section */}
       <div className="space-y-4">
+        <div>
+          <h3 className="font-semibold text-sm text-fd-foreground">Test Your Configuration</h3>
+          <p className="text-xs text-fd-muted-foreground mt-1">Try the importer with your settings</p>
+        </div>
         <div className="space-y-3">
           <button
             onClick={onOpenImporter}
-            className="inline-flex items-center justify-center px-4 py-2 bg-fd-primary text-fd-primary-foreground rounded-md hover:bg-fd-primary/90 transition-colors font-medium shadow-sm"
+            className="inline-flex items-center justify-center px-5 py-2.5 bg-fd-primary text-fd-primary-foreground rounded-lg hover:bg-fd-primary/90 transition-colors font-medium shadow-md hover:shadow-lg"
           >
-            Open Importer
+            <span className="mr-2">▶</span>
+            Test Importer
           </button>
 
           {importedData && (
-            <div className="p-3 rounded-lg bg-fd-success/10 border border-fd-success/20">
-              <p className="text-fd-success-foreground text-sm font-medium">
-                ✓ Imported {importedData.num_rows} rows successfully
+            <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
+              <p className="text-green-700 dark:text-green-400 text-sm font-medium flex items-center gap-2">
+                <span className="text-lg">✓</span>
+                Successfully imported {importedData.num_rows} rows
               </p>
             </div>
           )}

@@ -1,8 +1,69 @@
 ---
 title: Interactive Playground
-description: Configure and test ImportCSV with real-time code generation
+description: Configure your CSV importer visually and generate production-ready code
 ---
 
 import ImporterPlayground from '@/components/playground/ImporterPlayground';
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Interactive Playground
+
+Configure your CSV importer, test with sample data, and generate production-ready code you can copy directly into your app.
+
+## How It Works
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+  <div className="p-4 rounded-lg border border-fd-border/50 bg-fd-card/30">
+    <div className="font-semibold text-sm mb-2">1. Configure</div>
+    <p className="text-sm text-fd-muted-foreground">Add columns, set validation rules, and configure transformations using the visual interface</p>
+  </div>
+  <div className="p-4 rounded-lg border border-fd-border/50 bg-fd-card/30">
+    <div className="font-semibold text-sm mb-2">2. Test</div>
+    <p className="text-sm text-fd-muted-foreground">Try your configuration with real CSV files or generate sample data</p>
+  </div>
+  <div className="p-4 rounded-lg border border-fd-border/50 bg-fd-card/30">
+    <div className="font-semibold text-sm mb-2">3. Generate Code</div>
+    <p className="text-sm text-fd-muted-foreground">Switch to the "Code" tab to get Zod schema code with TypeScript types</p>
+  </div>
+  <div className="p-4 rounded-lg border border-fd-border/50 bg-fd-card/30">
+    <div className="font-semibold text-sm mb-2">4. Copy & Use</div>
+    <p className="text-sm text-fd-muted-foreground">Paste the generated code into your React/Next.js app</p>
+  </div>
+</div>
 
 <ImporterPlayground />
+
+---
+
+## Next Steps
+
+After generating your code:
+
+- **[Next.js Integration](/integration/nextjs)** - Add to Next.js app with API routes
+- **[React Integration](/integration/react)** - Add to Vite, CRA, or any React setup
+- **[Handling Data](/integration/handling-data)** - Process imported data and send to your API
+- **[Validation Guide](/configuration/validation)** - Advanced validation patterns
+- **[Schema Guide](/configuration/schemas)** - Deep dive into Zod schemas
+
+## Troubleshooting
+
+### Generated code doesn't compile
+
+Make sure you have both dependencies installed:
+```bash
+npm install @importcsv/react zod
+```
+
+### Validation isn't working
+
+1. Check that validators are enabled in the "Validation Rules" section
+2. Test with sample data to see validation in action
+3. Review the generated Zod schema to ensure validators are included
+
+### Transformations not applied
+
+Transformations are shown in the generated code but only execute during import. Test the importer with real data to see transformations in action.
+
+---
+
+Need help? Check out our [integration guides](/integration/nextjs) or review the [API documentation](/reference/api).

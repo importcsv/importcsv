@@ -40,11 +40,28 @@ const schema = z.object({
 
 ## Try It Now
 
-<Card
-  title="Interactive Playground"
-  href="/playground"
-  description="Configure your importer visually and generate code instantly"
-/>
+<div className="not-prose my-8">
+  <a
+    href="/playground"
+    className="block p-6 rounded-xl border-2 border-fd-primary/30 bg-gradient-to-br from-fd-primary/5 to-fd-primary/10 hover:border-fd-primary/50 hover:shadow-lg transition-all group"
+  >
+    <div className="flex items-start gap-4">
+      <div className="text-4xl">🎮</div>
+      <div className="flex-1">
+        <div className="text-lg font-semibold mb-2 group-hover:text-fd-primary transition-colors">Interactive Playground</div>
+        <div className="text-fd-muted-foreground mb-3">
+          Configure your importer visually, test with sample data, and generate production-ready Zod schema code
+        </div>
+        <div className="flex flex-wrap gap-2 text-sm">
+          <span className="px-2 py-1 rounded-md bg-fd-primary/10 text-fd-primary font-medium">✓ Visual Configuration</span>
+          <span className="px-2 py-1 rounded-md bg-fd-primary/10 text-fd-primary font-medium">✓ Live Testing</span>
+          <span className="px-2 py-1 rounded-md bg-fd-primary/10 text-fd-primary font-medium">✓ Code Generation</span>
+        </div>
+      </div>
+      <div className="text-fd-muted-foreground group-hover:text-fd-primary transition-colors text-2xl">→</div>
+    </div>
+  </a>
+</div>
 
 ## Key Features
 

@@ -65,6 +65,7 @@ const generateValue = (
     }
 
     case 'phone': {
+      // Base phone number in E.164 format (digits only with +)
       let phone = `+1${String(2000000000 + index).padStart(10, '0')}`;
 
       if (shouldError) {
@@ -72,15 +73,14 @@ const generateValue = (
       } else if (shouldMessy) {
         // Different formats that need normalization
         const formats = [
-          `${phone.slice(2, 5)}-${phone.slice(5, 8)}-${phone.slice(8)}`,
-          `(${phone.slice(2, 5)}) ${phone.slice(5, 8)}-${phone.slice(8)}`,
-          phone.slice(2), // No country code
+          `${phone.slice(2, 5)}-${phone.slice(5, 8)}-${phone.slice(8)}`, // 200-000-0000
+          `(${phone.slice(2, 5)}) ${phone.slice(5, 8)}-${phone.slice(8)}`, // (200) 000-0000
+          phone.slice(2), // No country code: 2000000000
           `  ${phone}  ` // Extra spaces
         ];
         phone = formats[Math.floor(Math.random() * formats.length)];
-      } else {
-        phone = `+1 (${phone.slice(2, 5)}) ${phone.slice(5, 8)}-${phone.slice(8)}`;
       }
+      // Clean format: E.164 (digits only with +): +12000000000
       return phone;
     }
 
@@ -317,10 +317,10 @@ export default function DataGenerator({ columns }: DataGeneratorProps) {
         {/* Quality descriptions */}
         <div className="p-2 rounded-md bg-fd-muted/20 border border-fd-border/30">
           <p className="text-xs text-fd-foreground/60">
-            {quality === 'clean' && 'All data will be valid according to your validators'}
-            {quality === 'errors' && 'Includes invalid emails, out-of-range numbers, missing required fields (30% error rate)'}
-            {quality === 'messy' && 'Valid data but needs transformations: wrong case, extra spaces, unformatted phones'}
-            {quality === 'mixed' && 'Combination of clean, errors, and messy data'}
+            {quality === 'clean' && 'All data passes validation - properly formatted and ready to import'}
+            {quality === 'errors' && 'Contains validation errors: invalid emails, out-of-range numbers, missing required fields'}
+            {quality === 'messy' && 'Valid data that needs transformations: wrong case, extra spaces, formatted phone numbers'}
+            {quality === 'mixed' && 'Random mix of clean, messy, and invalid data for comprehensive testing'}
           </p>
         </div>
 
