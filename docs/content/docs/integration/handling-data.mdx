@@ -1,0 +1,273 @@
+---
+title: Handling Imported Data
+description: Process and validate CSV import results in your application
+---
+
+## Understanding the Data
+
+When import completes, `onComplete` receives an array of typed objects:
+
+```tsx
+const schema = z.object({
+  name: z.string(),
+  email: z.string().email(),
+  age: z.number().optional()
+});
+
+<CSVImporter
+  schema={schema}
+  onComplete={(data) => {
+    // data is: { name: string; email: string; age?: number }[]
+    console.log(data[0].name);   // TypeScript knows: string
+    console.log(data[0].email);  // TypeScript knows: string
+    console.log(data[0].age);    // TypeScript knows: number | undefined
+  }}
+/>
+```
+
+## Common Patterns
+
+### 1. Send to API
+
+```tsx
+async function handleImport(users: User[]) {
+  const response = await fetch('/api/users/import', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ users })
+  });
+
+  if (!response.ok) {
+    throw new Error('Import failed');
+  }
+
+  const result = await response.json();
+  console.log(`Imported ${result.count} users`);
+}
+```
+
+### 2. Save to Local State
+
+```tsx
+function App() {
+  const [users, setUsers] = useState<User[]>([]);
+
+  return (
+    <CSVImporter
+      schema={userSchema}
+      onComplete={(data) => {
+        setUsers(prev => [...prev, ...data]);
+      }}
+    />
+  );
+}
+```
+
+### 3. Batch Processing (Large Imports)
+
+```tsx
+async function handleLargeImport(users: User[]) {
+  const batchSize = 100;
+
+  for (let i = 0; i < users.length; i += batchSize) {
+    const batch = users.slice(i, i + batchSize);
+
+    await fetch('/api/users/import', {
+      method: 'POST',
+      body: JSON.stringify({ users: batch })
+    });
+
+    console.log(`Processed ${Math.min(i + batchSize, users.length)} / ${users.length}`);
+  }
+}
+```
+
+### 4. Additional Validation
+
+```tsx
+function handleImport(users: User[]) {
+  // Check for duplicates within import
+  const emails = new Set();
+  const duplicates = users.filter(u => {
+    if (emails.has(u.email)) return true;
+    emails.add(u.email);
+    return false;
+  });
+
+  if (duplicates.length > 0) {
+    alert(`Found ${duplicates.length} duplicate emails`);
+    return;
+  }
+
+  // Proceed with import
+  submitToAPI(users);
+}
+```
+
+## Error Handling
+
+### Handle API Errors
+
+```tsx
+async function handleImport(users: User[]) {
+  try {
+    const response = await fetch('/api/users/import', {
+      method: 'POST',
+      body: JSON.stringify({ users })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Import failed');
+    }
+
+    showSuccess(`Imported ${users.length} users`);
+  } catch (error) {
+    showError(error instanceof Error ? error.message : 'Import failed');
+  }
+}
+```
+
+### Show Loading State
+
+```tsx
+function UserImporter() {
+  const [importing, setImporting] = useState(false);
+
+  const handleImport = async (users: User[]) => {
+    setImporting(true);
+    try {
+      await submitToAPI(users);
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  return (
+    <CSVImporter
+      schema={userSchema}
+      onComplete={handleImport}
+      waitOnComplete={importing}  // Blocks UI until done
+    />
+  );
+}
+```
+
+## Backend Examples
+
+### Next.js App Router
+
+```tsx
+// app/api/users/import/route.ts
+import { NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+
+export async function POST(request: Request) {
+  const { users } = await request.json();
+
+  const result = await db.user.createMany({
+    data: users,
+    skipDuplicates: true
+  });
+
+  return NextResponse.json({ count: result.count });
+}
+```
+
+### Express
+
+```tsx
+app.post('/api/users/import', async (req, res) => {
+  const { users } = req.body;
+
+  try {
+    const result = await db.user.bulkCreate(users, {
+      ignoreDuplicates: true
+    });
+    res.json({ success: true, count: result.length });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+```
+
+### tRPC
+
+```tsx
+export const importUsers = publicProcedure
+  .input(z.object({
+    users: z.array(userSchema)
+  }))
+  .mutation(async ({ input, ctx }) => {
+    const result = await ctx.db.user.createMany({
+      data: input.users,
+      skipDuplicates: true
+    });
+    return { count: result.count };
+  });
+```
+
+## Real-World Complete Example
+
+```tsx
+function CustomerImporter() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const router = useRouter();
+
+  const handleImport = async (customers: Customer[]) => {
+    setImporting(true);
+
+    try {
+      // Business logic validation
+      if (customers.length > 1000) {
+        throw new Error('Maximum 1000 customers per import');
+      }
+
+      // Send to API
+      const response = await fetch('/api/customers/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customers })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Import failed');
+      }
+
+      const result = await response.json();
+      toast.success(`Successfully imported ${result.count} customers`);
+
+      setIsOpen(false);
+      router.refresh(); // Refresh data
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Import failed');
+    } finally {
+      setImporting(false);
+    }
+  };
+
+  return (
+    <>
+      <button onClick={() => setIsOpen(true)}>
+        Import Customers
+      </button>
+
+      <CSVImporter
+        modalIsOpen={isOpen}
+        modalOnCloseTriggered={() => setIsOpen(false)}
+        schema={customerSchema}
+        onComplete={handleImport}
+        waitOnComplete={importing}
+      />
+    </>
+  );
+}
+```
+
+## Next Steps
+
+- [Deployment](/integration/deployment) - Production considerations
+- [Validation](/configuration/validation) - Custom validation rules
+- [API Reference](/reference/api) - All available props
