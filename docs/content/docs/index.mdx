@@ -42,21 +42,35 @@ npm install @importcsv/react
 
 ```tsx
 import { CSVImporter } from '@importcsv/react';
+import { z } from 'zod';
+
+const schema = z.object({
+  name: z.string().min(1),
+  email: z.string().email()
+});
 
 <CSVImporter
-  columns={[
-    { id: 'name', label: 'Name', validators: [{ type: 'required' }] },
-    { id: 'email', label: 'Email', type: 'email' }
-  ]}
-  onComplete={data => console.log(data)}
+  schema={schema}
+  onComplete={(data) => {
+    // data is typed: { name: string; email: string }[]
+    console.log(`Imported ${data.length} rows`);
+  }}
 />
 ```
+
+## Try It Now
+
+<Card
+  title="Interactive Playground"
+  href="/playground"
+  description="Configure your importer visually and generate code instantly"
+/>
 
 ## Key Features
 
 <Cards cols={2}>
   <Card title="🎨 Headless Components" href="/headless" description="Build custom CSV importers with unstyled primitives" />
-  <Card title="🛡️ Type-Safe with Zod" href="/guides/zod-schemas" description="Runtime validation with automatic TypeScript inference" />
+  <Card title="🛡️ Type-Safe with Zod" href="/guides/zod-schemas" description="Define your schema once, get full TypeScript types automatically" />
   <Card title="⚡ 10k+ Rows Support" href="/core-concepts/performance" description="Virtual scrolling and progressive validation" />
   <Card title="🤖 AI-Powered Features" href="/guides/ai-features" description="Smart mapping and natural language transforms" />
 </Cards>
@@ -93,38 +107,29 @@ import { CSVImporter } from '@importcsv/react';
 | Progressive Validation | Remaining rows (async) |
 | Dependencies | Minimal (Preact-based) |
 
-## Choose Your Setup
-
-### 🚀 Local Mode (Quick Start)
-Self-contained React component with configuration in code. Perfect for prototypes and simple use cases.
-
-```tsx
-<CSVImporter
-  columns={[...]}
-  onComplete={data => console.log(data)}
-/>
-```
-
-### ⚡ Backend Mode (Production)
-Database-driven configuration with admin dashboard. Ideal for production apps with dynamic requirements.
-
-```tsx
-<CSVImporter
-  importerKey="your-key"
-  apiUrl="https://api.yourapp.com"
-  onComplete={data => console.log(data)}
-/>
-```
-
-[Compare Local vs Backend →](/backend/comparison)
-
 ## Quick Links
 
 <Cards>
-  <Card title="🚀 Getting Started" href="/getting-started" description="5-minute setup guide" />
-  <Card title="🎮 Playground" href="/playground" description="Interactive configuration tool" />
-  <Card title="📖 API Reference" href="/api" description="Complete props and methods" />
-  <Card title="💡 Examples" href="/examples/basic" description="Production-ready examples" />
+  <Card
+    title="Installation"
+    href="/getting-started"
+    description="Get up and running in 5 minutes"
+  />
+  <Card
+    title="Playground"
+    href="/playground"
+    description="Try ImportCSV interactively"
+  />
+  <Card
+    title="Next.js Integration"
+    href="/quickstarts/nextjs-app-router"
+    description="Add to your Next.js app"
+  />
+  <Card
+    title="API Reference"
+    href="/api"
+    description="Complete documentation"
+  />
 </Cards>
 
 ## Backend Features

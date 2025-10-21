@@ -1,75 +1,34 @@
 ---
-title: Zod Schemas
-description: Type-safe CSV validation with automatic TypeScript inference
+title: Schema Definition
+description: Define type-safe CSV import schemas with Zod
 ---
-
-<Callout type="warn" title="Feature Status: Coming in Phase 1">
-Direct `schema` prop support is planned for Phase 1 implementation. This guide shows the future API to help you prepare your schemas.
-
-**For now**, use the `columns` array with validators (see [Migration Guide](#migration-guide) below).
-</Callout>
-
-## Why Zod?
-
-Zod provides runtime validation with automatic TypeScript type inference, making your CSV imports type-safe from upload to database.
-
-**Benefits:**
-- ✅ **Automatic TypeScript inference** - No manual type definitions needed
-- ✅ **Runtime + compile-time validation** - Catch errors before and during execution
-- ✅ **Better error messages** - Clear, actionable validation errors
-- ✅ **Ecosystem integration** - Works with tRPC, React Hook Form, Prisma, etc.
-- ✅ **Schema composition** - Reuse and compose schemas easily
-
-## Installation
-
-```bash
-npm install zod
-```
 
 ## Basic Usage
 
-Replace the legacy `columns` array with a Zod schema:
+Define your data schema using Zod:
 
-### Before (Legacy Columns)
-
-```tsx
-<CSVImporter
-  columns={[
-    { id: 'name', label: 'Name', type: 'string', required: true },
-    { id: 'email', label: 'Email', type: 'email', required: true },
-    { id: 'age', label: 'Age', type: 'number' }
-  ]}
-  onComplete={(data) => {
-    // data is type `any` ❌
-    console.log(data);
-  }}
-/>
-```
-
-### After (Zod Schema)
-
-```tsx
+```typescript
 import { z } from 'zod';
+import { CSVImporter } from '@importcsv/react';
 
 const userSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  email: z.string().email('Invalid email address'),
-  age: z.number().optional()
+  name: z.string().min(1),
+  email: z.string().email(),
+  age: z.number().int().positive().optional()
 });
 
-type User = z.infer<typeof userSchema>; // Automatic type inference! ✅
+// TypeScript automatically infers the type
+type User = z.infer<typeof userSchema>;
 
-<CSVImporter
-  schema={userSchema}
-  onComplete={(data: User[]) => {
-    // data is fully typed! ✅
-    data.forEach(user => {
-      console.log(user.name); // TypeScript knows this exists
-      console.log(user.email); // TypeScript knows this exists
-      console.log(user.age); // TypeScript knows this is optional
-    });
-  }}
-/>
+function UserImporter() {
+  const handleComplete = (users: User[]) => {
+    // TypeScript knows: users[0].name is string
+    // TypeScript knows: users[0].age is number | undefined
+    console.log(users);
+  };
+
+  return <CSVImporter schema={userSchema} onComplete={handleComplete} />;
+}
 ```
 
 ## Common Validation Patterns

@@ -7,7 +7,8 @@ description: Complete API documentation for ImportCSV
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `columns` | `Column[]` | - | Column definitions (required for local mode) |
+| `schema` | `z.ZodSchema<T>` | - | Zod schema for type-safe validation and inference (recommended) |
+| `columns` | `Column[]` | - | Manual column definitions (use `schema` instead for better DX) |
 | `onComplete` | `(data: any) => void` | - | Callback when import completes |
 | `isModal` | `boolean` | `true` | Show as modal vs embedded |
 | `modalIsOpen` | `boolean` | `true` | Control modal state |
@@ -31,7 +32,32 @@ description: Complete API documentation for ImportCSV
 | `metadata` | `object` | - | Additional metadata for import |
 | `demoData` | `object` | - | Demo data for testing |
 
-## Column Definition
+## Schema Definition (Recommended)
+
+Use Zod to define your schema for automatic TypeScript inference:
+
+```typescript
+import { z } from 'zod';
+
+const schema = z.object({
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Invalid email'),
+  age: z.number().int().positive().optional()
+});
+
+<CSVImporter
+  schema={schema}
+  onComplete={(data) => {
+    // data is typed as: { name: string; email: string; age?: number }[]
+  }}
+/>
+```
+
+See [Schema Definition Guide](/guides/zod-schemas) for all validation patterns.
+
+## Column Definition (Manual)
+
+If you need dynamic columns or can't use Zod, define columns manually:
 
 Each column in the `columns` array should have the following structure:
 
