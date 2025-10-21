@@ -1,148 +1,139 @@
 ---
 title: Transformations Example
-description: Transform data during import
+description: Transform data during import with Zod
 ---
+
+## Basic Transformations
 
 ```tsx
 import { CSVImporter } from '@importcsv/react';
-import type { Column } from '@importcsv/react';
+import { z } from 'zod';
 
-const columns: Column[] = [
-  {
-    id: 'name',
-    label: 'Name',
-    transformations: [
-      { type: 'trim' },
-      { type: 'capitalize' }
-    ]
-  },
-  {
-    id: 'email',
-    label: 'Email',
-    type: 'email',
-    transformations: [
-      { type: 'trim' },
-      { type: 'lowercase' }
-    ]
-  },
-  {
-    id: 'phone',
-    label: 'Phone',
-    transformations: [
-      { type: 'normalize_phone' }
-    ]
-  },
-  {
-    id: 'country_code',
-    label: 'Country',
-    transformations: [
-      { type: 'uppercase' },
-      { type: 'default', value: 'US' }
-    ]
-  },
-  {
-    id: 'start_date',
-    label: 'Start Date',
-    type: 'date',
-    transformations: [
-      { type: 'normalize_date', format: 'YYYY-MM-DD' }
-    ]
-  },
-  {
-    id: 'product_sku',
-    label: 'SKU',
-    transformations: [
-      { type: 'remove_special_chars' },
-      { type: 'replace', find: ' ', replace: '-' },
-      { type: 'uppercase' }
-    ]
-  },
-  {
-    id: 'price',
-    label: 'Price',
-    type: 'number',
-    transformations: [
-      { 
-        type: 'custom', 
-        fn: (value) => {
-          // Remove $ and convert to number
-          return parseFloat(value.replace('$', ''));
-        }
-      }
-    ]
-  }
-];
+const contactSchema = z.object({
+  // Trim and normalize name
+  name: z.string()
+    .transform(s => s.trim())
+    .transform(s => s.replace(/\s+/g, ' ')), // Remove extra spaces
 
-export default function TransformationsExample() {
+  // Lowercase and trim email
+  email: z.string()
+    .email()
+    .transform(s => s.trim().toLowerCase()),
+
+  // Normalize phone number
+  phone: z.string()
+    .transform(s => s.replace(/[^0-9]/g, '')) // Remove non-digits
+    .transform(s => s.length === 10 ? `+1${s}` : s) // Add country code
+    .optional(),
+
+  // Uppercase country code
+  country: z.string()
+    .transform(s => s.toUpperCase())
+    .default('US'),
+
+  // Parse date string
+  created_at: z.string()
+    .transform(s => new Date(s))
+    .optional()
+});
+
+type Contact = z.infer<typeof contactSchema>;
+
+export default function ContactImporter() {
   return (
     <CSVImporter
-      columns={columns}
-      onComplete={(data) => {
-        console.log('Transformed data:', data);
+      schema={contactSchema}
+      onComplete={(contacts: Contact[]) => {
+        // All data is transformed and typed
+        console.log(contacts[0].email); // "john@example.com" (lowercased)
+        console.log(contacts[0].phone); // "+15550100" (normalized)
       }}
     />
   );
 }
 ```
 
-## Input CSV
+## Common Transformation Patterns
+
+### Currency to Number
+
+```tsx
+const schema = z.object({
+  price: z.string()
+    .transform(s => s.replace(/[$,]/g, '')) // Remove $ and commas
+    .transform(s => parseFloat(s))
+});
+```
+
+### Date Parsing
+
+```tsx
+const schema = z.object({
+  // ISO date strings
+  iso_date: z.string().datetime(),
+
+  // Custom date format
+  custom_date: z.string()
+    .transform(s => {
+      // Parse "MM/DD/YYYY" format
+      const [month, day, year] = s.split('/');
+      return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    })
+});
+```
+
+### Enum Mapping
+
+```tsx
+const statusMap = {
+  'active': 'ACTIVE',
+  'inactive': 'INACTIVE',
+  'pending': 'PENDING'
+} as const;
+
+const schema = z.object({
+  status: z.string()
+    .transform(s => s.toLowerCase())
+    .transform(s => statusMap[s as keyof typeof statusMap] || 'UNKNOWN')
+});
+```
+
+### Conditional Transformations
+
+```tsx
+const schema = z.object({
+  email: z.string()
+    .email()
+    .transform(s => {
+      // Add default domain if missing
+      return s.includes('@') ? s : `${s}@company.com`;
+    })
+});
+```
+
+## Sample CSV
 
 ```csv
-Name,Email,Phone,Country,Start Date,SKU,Price
-  john doe  ,JOHN@EXAMPLE.COM,(555) 123-4567,us,01/15/2024,PRD #123!,$99.99
-JANE SMITH,Jane@Example.Com,555.987.6543,,2024-02-20,item 456,$149.50
+Name,Email,Phone,Country,Created At
+  John Doe  ,JOHN@EXAMPLE.COM,(555) 010-0100,us,2024-01-15
+Jane Smith  ,jane@EXAMPLE.COM,555-010-0101,US,2024-02-01
 ```
 
-## Output After Transformations
+### After Transformation
 
 ```json
-{
-  "success": true,
-  "data": [
-    {
-      "index": 1,
-      "values": ["John Doe", "john@example.com", "+15551234567", "US", "2024-01-15", "PRD-123", "99.99"]
-    },
-    {
-      "index": 2,
-      "values": ["Jane Smith", "jane@example.com", "+15559876543", "US", "2024-02-20", "ITEM-456", "149.50"]
-    }
-  ],
-  "mappedData": [
-    {
-      "data": {
-        "name": "John Doe",
-        "email": "john@example.com",
-        "phone": "+15551234567",
-        "country_code": "US",
-        "start_date": "2024-01-15",
-        "product_sku": "PRD-123",
-        "price": 99.99
-      }
-    },
-    {
-      "data": {
-        "name": "Jane Smith",
-        "email": "jane@example.com",
-        "phone": "+15559876543",
-        "country_code": "US",
-        "start_date": "2024-02-20",
-        "product_sku": "ITEM-456",
-        "price": 149.50
-      }
-    }
-  ],
-  "num_rows": 2,
-  "num_columns": 7,
-  "headers": ["Name", "Email", "Phone", "Country", "Start Date", "SKU", "Price"],
-  "columnMapping": {
-    "0": { "id": "name", "label": "Name", "include": true },
-    "1": { "id": "email", "label": "Email", "include": true },
-    "2": { "id": "phone", "label": "Phone", "include": true },
-    "3": { "id": "country_code", "label": "Country", "include": true },
-    "4": { "id": "start_date", "label": "Start Date", "include": true },
-    "5": { "id": "product_sku", "label": "SKU", "include": true },
-    "6": { "id": "price", "label": "Price", "include": true }
+[
+  {
+    "name": "John Doe",
+    "email": "john@example.com",
+    "phone": "+15550100100",
+    "country": "US",
+    "created_at": "2024-01-15T00:00:00.000Z"
   }
-}
+]
 ```
+
+## Next Steps
+
+- [Validation](/examples/validation) - Add validation rules
+- [Schema Guide](/guides/zod-schemas) - All transformation patterns

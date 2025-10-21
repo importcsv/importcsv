@@ -6,57 +6,14 @@ description: Complete setup guide for ImportCSV in Next.js 15+ with App Router
 ## Installation
 
 ```bash
-npm install @importcsv/react
+npm install @importcsv/react zod
 # Optional: for Excel support
 npm install xlsx
 ```
 
-## Basic Setup
+## Quick Start (Recommended)
 
 Since ImportCSV uses client-side file processing, you need to mark components as client components:
-
-```tsx title="app/import/page.tsx"
-'use client';
-
-import { CSVImporter } from '@importcsv/react';
-import { useState } from 'react';
-
-export default function ImportPage() {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="p-8">
-      <button
-        onClick={() => setIsOpen(true)}
-        className="px-4 py-2 bg-blue-500 text-white rounded"
-      >
-        Import CSV
-      </button>
-
-      <CSVImporter
-        modalIsOpen={isOpen}
-        modalOnCloseTriggered={() => setIsOpen(false)}
-        columns={[
-          { id: 'name', label: 'Name', validators: [{ type: 'required' }] },
-          { id: 'email', label: 'Email', type: 'email' }
-        ]}
-        onComplete={(data) => {
-          console.log(`Imported ${data.num_rows} rows`, data.rows);
-          setIsOpen(false);
-        }}
-      />
-    </div>
-  );
-}
-```
-
-## Using Zod Schemas (Recommended)
-
-For better type safety and validation, use Zod schemas:
-
-```bash
-npm install zod
-```
 
 ```tsx title="app/import/page.tsx"
 'use client';
@@ -65,6 +22,7 @@ import { CSVImporter } from '@importcsv/react';
 import { z } from 'zod';
 import { useState } from 'react';
 
+// Define your data schema
 const contactSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string().email('Must be a valid email'),
@@ -72,10 +30,17 @@ const contactSchema = z.object({
   company: z.string()
 });
 
+// TypeScript automatically infers the type
 type Contact = z.infer<typeof contactSchema>;
 
 export default function ImportPage() {
   const [isOpen, setIsOpen] = useState(false);
+
+  const handleComplete = (contacts: Contact[]) => {
+    console.log(`Imported ${contacts.length} contacts`);
+    // contacts is fully typed: contacts[0].name, contacts[0].email, etc.
+    setIsOpen(false);
+  };
 
   return (
     <div className="p-8">
@@ -90,15 +55,77 @@ export default function ImportPage() {
         modalIsOpen={isOpen}
         modalOnCloseTriggered={() => setIsOpen(false)}
         schema={contactSchema}
-        onComplete={(data: Contact[]) => {
-          // data is fully typed!
-          console.log('Imported contacts:', data);
-          setIsOpen(false);
-        }}
+        onComplete={handleComplete}
       />
     </div>
   );
 }
+```
+
+## With API Route
+
+Create an API route to handle the imported data:
+
+```tsx title="app/api/contacts/import/route.ts"
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { db } from '@/lib/db'; // Your database
+
+const contactSchema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+  phone: z.string().optional(),
+  company: z.string()
+});
+
+export async function POST(request: Request) {
+  try {
+    const { contacts } = await request.json();
+
+    // Validate all contacts
+    const validated = contacts.map((c: unknown) =>
+      contactSchema.parse(c)
+    );
+
+    // Insert into database
+    const result = await db.contact.createMany({
+      data: validated,
+      skipDuplicates: true
+    });
+
+    return NextResponse.json({
+      success: true,
+      count: result.count
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Import failed' },
+      { status: 400 }
+    );
+  }
+}
+```
+
+Update your component to call the API:
+
+```tsx title="app/import/page.tsx"
+const handleComplete = async (contacts: Contact[]) => {
+  try {
+    const response = await fetch('/api/contacts/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contacts })
+    });
+
+    if (!response.ok) throw new Error('Import failed');
+
+    const result = await response.json();
+    console.log(`Successfully imported ${result.count} contacts`);
+    setIsOpen(false);
+  } catch (error) {
+    console.error('Import error:', error);
+  }
+};
 ```
 
 ## Server Actions Integration

@@ -90,13 +90,16 @@ const CSVImporter = dynamic(
 
 ```html
 <script src="https://unpkg.com/@importcsv/react@latest/build/index.js"></script>
+<script src="https://unpkg.com/zod@latest/lib/index.umd.js"></script>
 <script>
+  const schema = z.object({
+    name: z.string().min(1),
+    email: z.string().email()
+  });
+
   const importer = CSVImporter.createCSVImporter({
     domElement: document.getElementById('app'),
-    columns: [
-      { id: 'name', label: 'Name' },
-      { id: 'email', label: 'Email' }
-    ],
+    schema: schema,
     onComplete: (data) => console.log(data)
   });
 
@@ -124,8 +127,16 @@ The entire library is ~100KB gzipped, including:
 ### Recommended Configuration
 
 ```tsx
+import { z } from 'zod';
+
+const schema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+  company: z.string().optional()
+});
+
 <CSVImporter
-  columns={columns}
+  schema={schema}
   onComplete={handleComplete}
   primaryColor={brandColor}     // Match your brand
   darkMode={prefersDarkMode}    // Respect user preference
@@ -139,8 +150,8 @@ The entire library is ~100KB gzipped, including:
 const handleComplete = (data) => {
   try {
     // Process imported data
-    processData(data.rows);
-    showSuccess(`Imported ${data.num_rows} records`);
+    processData(data);
+    showSuccess(`Imported ${data.length} records`);
   } catch (error) {
     showError('Failed to process imported data');
     console.error(error);

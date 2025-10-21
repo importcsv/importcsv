@@ -1,39 +1,43 @@
 ---
 title: Basic Example
-description: Simple CSV import example
+description: Simple CSV import with Zod schema
 ---
+
+## Basic Import
 
 ```tsx
 import { CSVImporter } from '@importcsv/react';
+import { z } from 'zod';
 import { useState } from 'react';
+
+// Define your data schema
+const schema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+  phone: z.string().optional()
+});
+
+type Contact = z.infer<typeof schema>;
 
 export default function BasicImport() {
   const [isOpen, setIsOpen] = useState(false);
-  const [data, setData] = useState(null);
 
   return (
     <>
       <button onClick={() => setIsOpen(true)}>
-        Import Data
+        Import Contacts
       </button>
 
       <CSVImporter
         modalIsOpen={isOpen}
         modalOnCloseTriggered={() => setIsOpen(false)}
-        onComplete={(result) => {
-          setData(result);
+        schema={schema}
+        onComplete={(data: Contact[]) => {
+          console.log(`Imported ${data.length} contacts`);
+          // data is fully typed: data[0].name, data[0].email, data[0].phone
           setIsOpen(false);
         }}
-        columns={[
-          { id: 'name', label: 'Name' },
-          { id: 'email', label: 'Email' },
-          { id: 'phone', label: 'Phone' }
-        ]}
       />
-
-      {data && (
-        <pre>{JSON.stringify(data, null, 2)}</pre>
-      )}
     </>
   );
 }
@@ -47,44 +51,15 @@ John Doe,john@example.com,555-0100
 Jane Smith,jane@example.com,555-0101
 ```
 
-## Result
+## What You Get
 
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "index": 1,
-      "values": ["John Doe", "john@example.com", "555-0100"]
-    },
-    {
-      "index": 2,
-      "values": ["Jane Smith", "jane@example.com", "555-0101"]
-    }
-  ],
-  "mappedData": [
-    {
-      "data": {
-        "name": "John Doe",
-        "email": "john@example.com",
-        "phone": "555-0100"
-      }
-    },
-    {
-      "data": {
-        "name": "Jane Smith",
-        "email": "jane@example.com",
-        "phone": "555-0101"
-      }
-    }
-  ],
-  "num_rows": 2,
-  "num_columns": 3,
-  "headers": ["Name", "Email", "Phone"],
-  "columnMapping": {
-    "0": { "id": "name", "label": "Name", "include": true },
-    "1": { "id": "email", "label": "Email", "include": true },
-    "2": { "id": "phone", "label": "Phone", "include": true }
-  }
-}
-```
+- ✅ **Type-safe data** - Full TypeScript types from schema
+- ✅ **Automatic validation** - Email format validated
+- ✅ **Optional fields** - Phone is optional, properly typed
+- ✅ **Clean code** - Define schema once, use everywhere
+
+## Next Steps
+
+- [Validation](/examples/validation) - Add custom validation rules
+- [Transformations](/examples/transformations) - Transform data during import
+- [Integration Guide](/integration/nextjs) - Add to your app

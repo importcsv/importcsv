@@ -39,8 +39,16 @@ Fix validation errors and transform data using simple prompts. Just describe wha
 Enable AI features by providing these props to your CSVImporter:
 
 ```tsx
+import { z } from 'zod';
+
+const schema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+  company: z.string().optional()
+});
+
 <CSVImporter
-  columns={columns}
+  schema={schema}
   backendUrl="https://your-api.com"  // Your backend API URL
   importerKey="your-importer-key"     // Your importer key
   onComplete={handleComplete}

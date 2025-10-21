@@ -6,57 +6,19 @@ description: Complete setup guide for ImportCSV in Preact apps
 ## Installation
 
 ```bash
-npm install @importcsv/preact
+npm install @importcsv/preact zod
 # Optional: for Excel support
 npm install xlsx
 ```
 
-## Basic Setup
-
-```tsx title="src/app.tsx"
-import { CSVImporter } from '@importcsv/preact';
-import { useState } from 'preact/hooks';
-
-export function App() {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div>
-      <button onClick={() => setIsOpen(true)}>
-        Import CSV
-      </button>
-
-      <CSVImporter
-        modalIsOpen={isOpen}
-        modalOnCloseTriggered={() => setIsOpen(false)}
-        columns={[
-          { id: 'name', label: 'Name', validators: [{ type: 'required' }] },
-          { id: 'email', label: 'Email', type: 'email' },
-          { id: 'phone', label: 'Phone', type: 'phone' }
-        ]}
-        onComplete={(data) => {
-          console.log(`Imported ${data.num_rows} rows`, data.rows);
-          setIsOpen(false);
-        }}
-      />
-    </div>
-  );
-}
-```
-
-## Using Zod Schemas (Recommended)
-
-For better type safety and validation:
-
-```bash
-npm install zod
-```
+## Quick Start
 
 ```tsx title="src/app.tsx"
 import { CSVImporter } from '@importcsv/preact';
 import { z } from 'zod';
 import { useState } from 'preact/hooks';
 
+// Define your data schema
 const contactSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string().email('Invalid email'),

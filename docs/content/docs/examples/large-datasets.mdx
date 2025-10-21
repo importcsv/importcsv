@@ -9,84 +9,45 @@ This example demonstrates how ImportCSV handles large CSV files with thousands o
 
 ```tsx
 import { CSVImporter } from '@importcsv/react';
+import { z } from 'zod';
 import { useState } from 'react';
 
+// Define schema with validation and transformations
+const transactionSchema = z.object({
+  transaction_id: z.string().min(1, 'Transaction ID is required'),
+  date: z.string().datetime(),
+  customer_email: z.string()
+    .email('Must be valid email')
+    .transform(s => s.trim().toLowerCase()),
+  amount: z.number().nonnegative('Amount must be positive'),
+  status: z.enum(['pending', 'completed', 'failed', 'refunded']),
+  notes: z.string().default('N/A').transform(s => s.trim())
+});
+
+type Transaction = z.infer<typeof transactionSchema>;
+
 export default function LargeDatasetExample() {
-  const [importStats, setImportStats] = useState(null);
+  const [importStats, setImportStats] = useState<{
+    totalRows: number;
+    sampleData: Transaction[];
+    timestamp: string;
+  } | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
-  const columns = [
-    {
-      id: 'transaction_id',
-      label: 'Transaction ID',
-      validators: [
-        { type: 'required' },
-        { type: 'unique', message: 'Transaction ID must be unique' }
-      ]
-    },
-    {
-      id: 'date',
-      label: 'Date',
-      type: 'date',
-      validators: [{ type: 'required' }],
-      transformations: [
-        { type: 'normalize_date', format: 'YYYY-MM-DD' }
-      ]
-    },
-    {
-      id: 'customer_email',
-      label: 'Customer Email',
-      type: 'email',
-      validators: [{ type: 'required' }],
-      transformations: [
-        { type: 'trim' },
-        { type: 'lowercase' }
-      ]
-    },
-    {
-      id: 'amount',
-      label: 'Amount',
-      type: 'number',
-      validators: [
-        { type: 'required' },
-        { type: 'min', value: 0, message: 'Amount must be positive' }
-      ]
-    },
-    {
-      id: 'status',
-      label: 'Status',
-      type: 'select',
-      options: ['pending', 'completed', 'failed', 'refunded'],
-      validators: [{ type: 'required' }],
-      transformations: [
-        { type: 'lowercase' }
-      ]
-    },
-    {
-      id: 'notes',
-      label: 'Notes',
-      transformations: [
-        { type: 'trim' },
-        { type: 'default', value: 'N/A' }
-      ]
-    }
-  ];
-
-  const handleComplete = (data) => {
+  const handleComplete = (data: Transaction[]) => {
     setImportStats({
-      totalRows: data.num_rows,
-      totalColumns: data.num_columns,
-      sampleData: data.rows.slice(0, 5), // Show first 5 rows
+      totalRows: data.length,
+      sampleData: data.slice(0, 5), // Show first 5 rows
       timestamp: new Date().toISOString()
     });
     setIsOpen(false);
-    
-    console.log(`Successfully imported ${data.num_rows} rows`);
+
+    console.log(`Successfully imported ${data.length} rows`);
   };
 
   return (
     <div>
-      <button 
+      <button
         onClick={() => setIsOpen(true)}
         className="px-4 py-2 bg-blue-500 text-white rounded"
       >
@@ -96,7 +57,8 @@ export default function LargeDatasetExample() {
       <CSVImporter
         modalIsOpen={isOpen}
         modalOnCloseTriggered={() => setIsOpen(false)}
-        columns={columns}
+        schema={transactionSchema}
+        validateUnique={['transaction_id']}
         onComplete={handleComplete}
         primaryColor="#3B82F6"
         darkMode={false}
@@ -106,9 +68,8 @@ export default function LargeDatasetExample() {
         <div className="mt-4 p-4 border rounded">
           <h3 className="font-bold mb-2">Import Statistics</h3>
           <p>✅ Successfully imported {importStats.totalRows} rows</p>
-          <p>📊 Total columns: {importStats.totalColumns}</p>
           <p>🕐 Imported at: {new Date(importStats.timestamp).toLocaleTimeString()}</p>
-          
+
           <h4 className="font-bold mt-4 mb-2">Sample Data (First 5 Rows)</h4>
           <pre className="text-xs bg-gray-100 p-2 rounded overflow-auto">
             {JSON.stringify(importStats.sampleData, null, 2)}
@@ -232,39 +193,36 @@ function PerformanceMonitor({ onImport }) {
 ### 1. Optimize Validators
 ```tsx
 // ❌ Complex regex - slower
-{ type: 'regex', pattern: '^(?:[a-z0-9!#$%&\'*+/=?^_`{|}~-]+(?:\\.[a-z0-9!#$%&\'*+/=?^_`{|}~-]+)*|"(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21\\x23-\\x5b\\x5d-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\\.)*[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\\x01-\\x08\\x0b\\x0c\\x0e-\\x1f\\x21-\\x5a\\x53-\\x7f]|\\\\[\\x01-\\x09\\x0b\\x0c\\x0e-\\x7f])+)\\])$' }
+email: z.string().regex(/^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])$/)
 
-// ✅ Use built-in type - faster
-{ type: 'email' }
+// ✅ Use built-in validator - faster
+email: z.string().email()
 ```
 
 ### 2. Minimize Transformations
 ```tsx
 // Only apply necessary transformations
-columns: [
-  {
-    id: 'email',
-    transformations: [
-      { type: 'trim' },        // Essential
-      { type: 'lowercase' }    // Essential
-      // Don't add unnecessary transformations
-    ]
-  }
-]
+const schema = z.object({
+  email: z.string()
+    .email()
+    .transform(s => s.trim())        // Essential
+    .transform(s => s.toLowerCase()) // Essential
+    // Don't add unnecessary transformations
+});
 ```
 
 ### 3. Handle Results Efficiently
 ```tsx
-const handleComplete = async (data) => {
+const handleComplete = async (data: Transaction[]) => {
   // Process in batches for very large datasets
   const BATCH_SIZE = 1000;
-  
-  for (let i = 0; i < data.rows.length; i += BATCH_SIZE) {
-    const batch = data.rows.slice(i, i + BATCH_SIZE);
+
+  for (let i = 0; i < data.length; i += BATCH_SIZE) {
+    const batch = data.slice(i, i + BATCH_SIZE);
     await processBatch(batch);
-    
+
     // Update progress
-    setProgress((i + BATCH_SIZE) / data.rows.length * 100);
+    setProgress((i + BATCH_SIZE) / data.length * 100);
   }
 };
 ```

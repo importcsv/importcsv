@@ -6,16 +6,33 @@ description: Customize the importer appearance
 ## Dark Mode
 
 ```tsx
+import { CSVImporter } from '@importcsv/react';
+import { z } from 'zod';
+
+const schema = z.object({
+  name: z.string().min(1),
+  email: z.string().email()
+});
+
 <CSVImporter
   darkMode={true}
-  columns={columns}
-  onComplete={handleComplete}
+  schema={schema}
+  onComplete={(data) => console.log(data)}
 />
 ```
 
 ## Custom Theme
 
 ```tsx
+import { CSVImporter } from '@importcsv/react';
+import { z } from 'zod';
+
+const schema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+  company: z.string()
+});
+
 <CSVImporter
   primaryColor="#8B5CF6"
   customStyles={{
@@ -29,19 +46,27 @@ description: Customize the importer appearance
     'color-background': '#FFFFFF',
     'color-background-modal': '#F9FAFB'
   }}
-  columns={columns}
-  onComplete={handleComplete}
+  schema={schema}
+  onComplete={(data) => console.log(data)}
 />
 ```
 
 ## Embedded Mode (Not Modal)
 
 ```tsx
+import { CSVImporter } from '@importcsv/react';
+import { z } from 'zod';
+
+const schema = z.object({
+  name: z.string().min(1),
+  email: z.string().email()
+});
+
 <div style={{ height: '600px', border: '1px solid #E5E7EB' }}>
   <CSVImporter
     isModal={false}
-    columns={columns}
-    onComplete={handleComplete}
+    schema={schema}
+    onComplete={(data) => console.log(data)}
   />
 </div>
 ```
@@ -71,15 +96,23 @@ customStyles={{
 ## Complete Custom Theme
 
 ```tsx
+import { CSVImporter } from '@importcsv/react';
+import { z } from 'zod';
+
+const schema = z.object({
+  name: z.string(),
+  email: z.string().email()
+});
+
 const customTheme = {
   // Typography
   'font-family': '"SF Pro Display", -apple-system, sans-serif',
   'font-size': '15px',
   'base-spacing': '1.5rem',
-  
+
   // Shape
   'border-radius': '16px',
-  
+
   // Colors
   'color-primary': '#FF6B6B',
   'color-primary-hover': '#FF5252',
@@ -87,21 +120,21 @@ const customTheme = {
   'color-secondary-hover': '#38B2A9',
   'color-tertiary': '#45B7D1',
   'color-tertiary-hover': '#36A2C2',
-  
+
   // Neutral colors
   'color-border': '#DDD6FE',
   'color-text': '#1E293B',
   'color-text-soft': '#64748B',
   'color-text-on-primary': '#FFFFFF',
   'color-text-on-secondary': '#FFFFFF',
-  
+
   // Backgrounds
   'color-background': '#FAFAF9',
   'color-background-modal': '#FFFFFF',
   'color-input-background': '#F8FAFC',
   'color-input-background-soft': '#F1F5F9',
   'color-background-menu-hover': '#F3F4F6',
-  
+
   // Misc
   'color-importer-link': '#8B5CF6',
   'color-progress-bar': '#10B981'
@@ -109,7 +142,7 @@ const customTheme = {
 
 <CSVImporter
   customStyles={customTheme}
-  columns={columns}
-  onComplete={handleComplete}
+  schema={schema}
+  onComplete={(data) => console.log(data)}
 />
 ```

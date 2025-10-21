@@ -85,8 +85,16 @@ const rows = [
 ### For Large Datasets (1,000+ rows)
 
 ```tsx
+import { z } from 'zod';
+
+const schema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  email: z.string().email()
+});
+
 <CSVImporter
-  columns={columns}
+  schema={schema}
   onComplete={handleComplete}
   // Virtual scrolling is automatic for large files
 />
@@ -112,18 +120,24 @@ Virtual scrolling and progressive validation work on all modern browsers:
 
 ```tsx
 import { CSVImporter } from '@importcsv/react';
+import { z } from 'zod';
+
+const transactionSchema = z.object({
+  id: z.string().min(1, 'ID is required'),
+  name: z.string().min(1, 'Name is required'),
+  email: z.string().email('Must be a valid email'),
+  amount: z.number().nonnegative('Amount must be positive')
+});
+
+type Transaction = z.infer<typeof transactionSchema>;
 
 function LargeDatasetExample() {
   return (
     <CSVImporter
-      columns={[
-        { id: 'id', label: 'ID', validators: [{ type: 'required' }] },
-        { id: 'name', label: 'Name', validators: [{ type: 'required' }] },
-        { id: 'email', label: 'Email', type: 'email' },
-        { id: 'amount', label: 'Amount', type: 'number' }
-      ]}
-      onComplete={(data) => {
-        console.log(`Imported ${data.num_rows} rows successfully`);
+      schema={transactionSchema}
+      validateUnique={['id']}
+      onComplete={(data: Transaction[]) => {
+        console.log(`Imported ${data.length} rows successfully`);
       }}
     />
   );

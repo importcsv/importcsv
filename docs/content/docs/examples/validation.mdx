@@ -1,187 +1,107 @@
 ---
 title: Validation Example
-description: CSV import with data validation
+description: Advanced validation with Zod
 ---
+
+## Built-in Validators
 
 ```tsx
 import { CSVImporter } from '@importcsv/react';
-import type { Column } from '@importcsv/react';
+import { z } from 'zod';
 
-const columns: Column[] = [
-  {
-    id: 'employee_id',
-    label: 'Employee ID',
-    validators: [
-      { type: 'required' },
-      { type: 'unique' },
-      { type: 'regex', pattern: '^EMP[0-9]{3}$', message: 'Format: EMP001' }
-    ]
-  },
-  {
-    id: 'email',
-    label: 'Email',
-    type: 'email',
-    validators: [
-      { type: 'required' },
-      { type: 'unique' }
-    ]
-  },
-  {
-    id: 'age',
-    label: 'Age',
-    type: 'number',
-    validators: [
-      { type: 'required' },
-      { type: 'min', value: 18, message: 'Must be 18+' },
-      { type: 'max', value: 65, message: 'Must be under 65' }
-    ]
-  },
-  {
-    id: 'department',
-    label: 'Department',
-    type: 'select',
-    options: ['Engineering', 'Sales', 'Marketing', 'HR'],
-    validators: [{ type: 'required' }]
-  },
-  {
-    id: 'phone',
-    label: 'Phone',
-    validators: [
-      { type: 'regex', pattern: '^\\+?[1-9]\\d{1,14}$', message: 'Invalid phone' }
-    ]
-  }
-];
+const employeeSchema = z.object({
+  employee_id: z.string()
+    .min(1, 'Employee ID is required')
+    .regex(/^EMP[0-9]{3}$/, 'Format must be EMP001'),
 
-export default function ValidationExample() {
+  email: z.string()
+    .email('Must be a valid email')
+    .min(1, 'Email is required'),
+
+  age: z.number()
+    .int('Must be a whole number')
+    .min(18, 'Must be 18 or older')
+    .max(65, 'Must be under 65'),
+
+  department: z.enum(['Engineering', 'Sales', 'Marketing', 'HR']),
+
+  salary: z.number()
+    .positive('Must be positive')
+    .optional(),
+
+  start_date: z.string()
+    .datetime({ message: 'Must be ISO date' })
+    .optional()
+});
+
+type Employee = z.infer<typeof employeeSchema>;
+
+export default function EmployeeImporter() {
   return (
     <CSVImporter
-      columns={columns}
-      invalidRowHandling="block" // Default: prevent import if errors exist
-      onComplete={(data) => {
-        console.log('Valid data imported:', data);
+      schema={employeeSchema}
+      onComplete={(employees: Employee[]) => {
+        // All data is validated and typed
+        console.log(`Imported ${employees.length} employees`);
       }}
+      invalidRowHandling="exclude" // Skip invalid rows
     />
   );
 }
 ```
 
-## Invalid Data Example
+## Custom Validation
+
+Use Zod's `.refine()` for complex validation:
+
+```tsx
+const schema = z.object({
+  email: z.string().email(),
+  confirm_email: z.string().email()
+}).refine(data => data.email === data.confirm_email, {
+  message: "Emails don't match",
+  path: ['confirm_email']
+});
+```
+
+## Unique Validation
+
+```tsx
+// ImportCSV handles unique validation automatically
+const schema = z.object({
+  employee_id: z.string().min(1),
+  email: z.string().email()
+});
+
+<CSVImporter
+  schema={schema}
+  // Add this prop to enable unique validation
+  validateUnique={['employee_id', 'email']}
+/>
+```
+
+## Error Handling Modes
+
+```tsx
+// Block import if any rows invalid (default)
+<CSVImporter schema={schema} invalidRowHandling="block" />
+
+// Exclude invalid rows, import valid ones
+<CSVImporter schema={schema} invalidRowHandling="exclude" />
+
+// Include all rows, mark invalid
+<CSVImporter schema={schema} invalidRowHandling="include" />
+```
+
+## Sample CSV
 
 ```csv
-Employee ID,Email,Age,Department,Phone
-EMP001,john@example.com,25,Engineering,+1234567890
-INVALID,not-an-email,17,Unknown,abc
-EMP001,duplicate@example.com,70,Sales,555
+Employee ID,Email,Age,Department,Salary,Start Date
+EMP001,john@example.com,28,Engineering,75000,2024-01-15T00:00:00Z
+EMP002,jane@example.com,32,Sales,65000,2024-02-01T00:00:00Z
 ```
 
-## Validation Errors Shown
+## Next Steps
 
-- Row 2: "INVALID" → Must match pattern EMP###
-- Row 2: "not-an-email" → Invalid email format
-- Row 2: "17" → Must be 18+
-- Row 2: "Unknown" → Must be one of: Engineering, Sales, Marketing, HR
-- Row 2: "abc" → Invalid phone
-- Row 3: "EMP001" → Must be unique
-- Row 3: "70" → Must be under 65
-
-## Handling Invalid Rows
-
-You can control how the importer handles validation errors using the `invalidRowHandling` prop:
-
-### Block Import (Default)
-```tsx
-// Prevents import if ANY row has errors
-<CSVImporter
-  columns={columns}
-  invalidRowHandling="block"
-  onComplete={(data) => {
-    // Only called if ALL rows are valid
-    console.log('All rows validated successfully');
-  }}
-/>
-```
-
-### Filter Invalid Rows
-```tsx
-// Imports only valid rows, skips invalid ones
-<CSVImporter
-  columns={columns}
-  invalidRowHandling="exclude"
-  onComplete={(data) => {
-    // data contains only valid rows
-    console.log(`Imported ${data.num_rows} valid rows`);
-    console.log('Mapped data:', data.mappedData);
-  }}
-/>
-```
-
-### Include All Rows
-```tsx
-// Imports everything, shows warnings for invalid rows
-<CSVImporter
-  columns={columns}
-  invalidRowHandling="include"
-  onComplete={(data) => {
-    // data contains all rows including invalid ones
-    console.log(`Imported ${data.num_rows} rows (check for validation warnings)`);
-    console.log('All data:', data.mappedData);
-  }}
-/>
-```
-
-## Dynamic Columns Example
-
-Handle CSVs with unknown or extra columns:
-
-```tsx
-// CSV might have: Name,Email,CustomField1,CustomField2
-<CSVImporter
-  columns={[
-    { id: 'name', label: 'Name', validators: [{ type: 'required' }] },
-    { id: 'email', label: 'Email', type: 'email' }
-  ]}
-  includeUnmatchedColumns={true}
-  onComplete={(data) => {
-    // data.mappedData contains the mapped columns (name and email)
-    // data includes additional properties for unmapped columns when includeUnmatchedColumns is true
-    console.log('Mapped data:', data.mappedData);
-    console.log(`Imported ${data.num_rows} rows`);
-    console.log('Headers:', data.headers);
-  }}
-/>
-
-## Example Result Structure
-
-When import completes successfully, the `onComplete` callback receives:
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "index": 1,
-      "values": ["EMP001", "john@example.com", "25", "Engineering", "+1234567890"]
-    }
-  ],
-  "mappedData": [
-    {
-      "data": {
-        "employee_id": "EMP001",
-        "email": "john@example.com",
-        "age": 25,
-        "department": "Engineering",
-        "phone": "+1234567890"
-      }
-    }
-  ],
-  "num_rows": 1,
-  "num_columns": 5,
-  "headers": ["Employee ID", "Email", "Age", "Department", "Phone"],
-  "columnMapping": {
-    "0": { "id": "employee_id", "label": "Employee ID", "include": true },
-    "1": { "id": "email", "label": "Email", "include": true },
-    "2": { "id": "age", "label": "Age", "include": true },
-    "3": { "id": "department", "label": "Department", "include": true },
-    "4": { "id": "phone", "label": "Phone", "include": true }
-  }
-}
+- [Transformations](/examples/transformations) - Transform data during import
+- [Schema Guide](/guides/zod-schemas) - All validation patterns
