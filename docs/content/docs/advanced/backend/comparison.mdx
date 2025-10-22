@@ -26,14 +26,10 @@ ImportCSV can be used in two modes:
 
 ## When to Use Local Mode
 
-Choose local mode when you:
-
-- Need a quick prototype or POC
-- Have simple, static import requirements
-- Want minimal infrastructure
-- Don't need persistent configuration
-- Have a single application
-- Prefer configuration as code
+- Quick prototypes or POCs
+- Simple, static import requirements
+- Minimal infrastructure preferred
+- Configuration as code approach
 
 ### Local Mode Example
 
@@ -58,15 +54,11 @@ Choose local mode when you:
 
 ## When to Use Backend Mode
 
-Choose backend mode when you:
-
-- Need centralized configuration management
-- Want non-developers to manage importers
-- Require webhook notifications
-- Process large files with background jobs
-- Need authentication and user management
-- Want to reuse configurations across apps
-- Need API access for programmatic control
+- Centralized configuration management
+- Non-developers managing importers via UI
+- Webhook notifications and background processing
+- Authentication and multi-app configuration reuse
+- API access for programmatic control
 
 ### Backend Mode Example
 
@@ -81,32 +73,12 @@ Choose backend mode when you:
 
 ## Migration Path
 
-### From Local to Backend
-
-1. **Set up backend infrastructure**:
-   - Install PostgreSQL and Redis
-   - Deploy FastAPI backend
-   - Configure Clerk authentication
-
-2. **Create importers in admin**:
-   - Recreate column configurations
-   - Set up validation rules
-   - Configure webhooks if needed
-
-3. **Update frontend code**:
+1. **Set up backend**: PostgreSQL + Redis + FastAPI + Clerk auth
+2. **Create importers**: Recreate columns and validation rules in admin UI
+3. **Update frontend**:
    ```tsx
-   // Before (Local)
-   <CSVImporter
-     columns={[...]}
-     onComplete={handleComplete}
-   />
-   
-   // After (Backend)
-   <CSVImporter
-     importerKey="your-key"
-     apiUrl="https://api.yourapp.com"
-     onComplete={handleComplete}
-   />
+   // Before: <CSVImporter columns={[...]} onComplete={handleComplete} />
+   // After: <CSVImporter importerKey="your-key" apiUrl="https://..." onComplete={handleComplete} />
    ```
 
 ## Performance Considerations
@@ -120,18 +92,6 @@ Choose backend mode when you:
 - **Bundle Size**: Minimal (just importer key)
 - **Processing**: Server-side with Redis Queue
 - **Scalability**: Horizontal scaling possible
-
-## Cost Analysis
-
-### Local Mode
-- **Infrastructure**: None
-- **Maintenance**: Developer time for code changes
-- **Scaling**: N/A
-
-### Backend Mode
-- **Infrastructure**: Server + Database + Redis
-- **Maintenance**: Admin UI reduces developer time
-- **Scaling**: Standard backend scaling costs
 
 ## Decision Matrix
 
@@ -150,11 +110,4 @@ Choose backend mode when you:
 
 ## Hybrid Approach
 
-You can start with local mode and migrate to backend mode as your needs grow:
-
-1. **Phase 1**: Use local mode for MVP
-2. **Phase 2**: Set up backend for production
-3. **Phase 3**: Gradually migrate importers
-4. **Phase 4**: Deprecate local configurations
-
-This approach minimizes initial complexity while providing a clear upgrade path.
+Start with local mode for your MVP, then migrate to backend mode as needs grow. This minimizes initial complexity while providing a clear upgrade path.
