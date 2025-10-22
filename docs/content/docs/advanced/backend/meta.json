@@ -1,0 +1,9 @@
+{
+  "title": "Backend",
+  "pages": [
+    "getting-started",
+    "comparison",
+    "api-reference",
+    "admin-dashboard"
+  ]
+}

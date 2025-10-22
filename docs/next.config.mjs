@@ -7,15 +7,74 @@ const config = {
   reactStrictMode: true,
   async redirects() {
     return [
-      // Quickstarts → Integration
+      // Old Quick Start → New Getting Started
+      {
+        source: '/quick-start/installation',
+        destination: '/getting-started',
+        permanent: true
+      },
+      {
+        source: '/quick-start/introduction',
+        destination: '/getting-started',
+        permanent: true
+      },
+      {
+        source: '/quick-start/:slug*',
+        destination: '/getting-started',
+        permanent: true
+      },
+
+      // Old Integration → New Getting Started
+      {
+        source: '/integration/nextjs',
+        destination: '/getting-started/nextjs',
+        permanent: true
+      },
+      {
+        source: '/integration/react',
+        destination: '/getting-started/react',
+        permanent: true
+      },
+      {
+        source: '/integration/handling-data',
+        destination: '/getting-started/handling-data',
+        permanent: true
+      },
+      {
+        source: '/integration/deployment',
+        destination: '/getting-started',
+        permanent: true
+      },
+      {
+        source: '/integration/preact',
+        destination: '/getting-started/react',
+        permanent: true
+      },
+      {
+        source: '/integration/:slug*',
+        destination: '/getting-started',
+        permanent: true
+      },
+
+      // Quickstarts → Getting Started
       {
         source: '/quickstarts/nextjs-app-router',
-        destination: '/integration/nextjs',
+        destination: '/getting-started/nextjs',
+        permanent: true
+      },
+      {
+        source: '/quickstarts/nextjs',
+        destination: '/getting-started/nextjs',
+        permanent: true
+      },
+      {
+        source: '/quickstarts/react',
+        destination: '/getting-started/react',
         permanent: true
       },
       {
         source: '/quickstarts/:framework',
-        destination: '/integration/:framework',
+        destination: '/getting-started',
         permanent: true
       },
 
@@ -65,13 +124,6 @@ const config = {
       {
         source: '/guides/:slug',
         destination: '/advanced/:slug',
-        permanent: true
-      },
-
-      // Getting Started → Quick Start
-      {
-        source: '/getting-started',
-        destination: '/quick-start/installation',
         permanent: true
       },
 

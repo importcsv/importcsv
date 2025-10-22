@@ -1,0 +1,10 @@
+{
+  "pages": [
+    "index",
+    "getting-started",
+    "playground",
+    "configuration",
+    "advanced",
+    "reference"
+  ]
+}
