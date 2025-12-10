@@ -42,3 +42,6 @@ export const render = ReactDOM.render;
 export const hydrate = ReactDOM.hydrate;
 export const unmountComponentAtNode = ReactDOM.unmountComponentAtNode;
 export const findDOMNode = ReactDOM.findDOMNode;
+
+// Preact-specific functions shimmed for React
+export const toChildArray = (children) => React.Children.toArray(children).filter(Boolean);

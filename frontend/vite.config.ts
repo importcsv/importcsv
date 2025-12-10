@@ -81,7 +81,8 @@ export default defineConfig(({ mode }) => {
         'preact/compat': resolve(__dirname, 'src/shims/react-compat-shim.js'),
         'preact/jsx-runtime': 'react/jsx-runtime',
         'preact/jsx-dev-runtime': 'react/jsx-dev-runtime',
-        'preact': 'react',
+        // Map preact to compat shim (not directly to react) to get toChildArray etc.
+        'preact': resolve(__dirname, 'src/shims/react-compat-shim.js'),
       } : {
         // For Preact/Bundled mode, map React imports to Preact compat
         'react': 'preact/compat',
