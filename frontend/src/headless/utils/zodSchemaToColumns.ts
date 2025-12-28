@@ -49,7 +49,15 @@ type ZodTypeWithDef = z.ZodTypeAny & {
  */
 export function zodSchemaToColumns<T>(schema: z.ZodSchema<T>): Column[] {
   if (!(schema instanceof z.ZodObject)) {
-    console.warn('zodSchemaToColumns: Only z.object() schemas supported');
+    // Check if it looks like a Zod schema but failed instanceof (multiple Zod versions)
+    if (schema && typeof schema === 'object' && '_def' in schema) {
+      console.error(
+        'ImportCSV: Schema detection failed. This usually means multiple Zod versions are installed. ' +
+        'Ensure you have only one version: run "npm ls zod" to check.'
+      );
+    } else {
+      console.warn('zodSchemaToColumns: Only z.object() schemas supported');
+    }
     return [];
   }
 

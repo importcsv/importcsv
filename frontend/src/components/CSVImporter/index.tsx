@@ -58,7 +58,14 @@ const CSVImporter = forwardRef(<TSchema = any,>(importerProps: CSVImporterProps<
           'The `columns` prop is deprecated and will be removed in v2.0.'
         );
       }
-      return zodSchemaToColumns(schema);
+      const columns = zodSchemaToColumns(schema);
+      if (columns.length === 0) {
+        console.error(
+          'ImportCSV: Failed to extract columns from schema. ' +
+          'Ensure schema is z.object({...}) and you have a single Zod version installed.'
+        );
+      }
+      return columns;
     }
 
     // Deprecation warning for columns-only usage
