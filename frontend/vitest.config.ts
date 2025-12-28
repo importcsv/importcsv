@@ -35,6 +35,7 @@ export default defineConfig({
         'scripts/**',
         // Entry points are thin wrappers
         'src/App.jsx',
+        'src/main.tsx',
         'src/js.tsx',
         'src/index.ts',
         'src/styles.ts',
@@ -54,8 +55,10 @@ export default defineConfig({
         'src/importer/stores/**',
         'src/importer/theme/runtime.ts',
         'src/settings/**',
+        'src/config/**',
         'src/shims/**',
         'src/i18n/**',
+        'src/services/**',
       ],
       // Only report files that are actually tested
       all: false,
