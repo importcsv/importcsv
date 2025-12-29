@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,16 +10,25 @@ import Link from 'next/link';
 import { useToast } from '@/components/ui/use-toast';
 import apiClient from '@/utils/apiClient';
 import { signIn } from '@/lib/auth';
+import { useUser } from '@/hooks/useUser';
 
 export default function SignUp() {
   const router = useRouter();
   const { toast } = useToast();
+  const { isAuthenticated, isLoading: authLoading } = useUser();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fullName, setFullName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect authenticated users away from signup page
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push('/importers');
+    }
+  }, [isAuthenticated, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,6 +91,15 @@ export default function SignUp() {
       setIsLoading(false);
     }
   };
+
+  // Show loading while checking auth to avoid flash of signup form
+  if (authLoading || isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">

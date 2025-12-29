@@ -9,5 +9,6 @@ import app.models.user
 import app.models.import_job
 import app.models.importer
 import app.models.webhook
+import app.models.usage
 
 # Add any new model imports here

@@ -9,12 +9,10 @@ export function middleware(request: NextRequest) {
   const publicPaths = ["/auth/signin", "/auth/signup", "/auth/error"];
   const isPublicPath = publicPaths.some((path) => pathname.startsWith(path));
 
-  // Allow public paths
+  // Allow public paths (signin, signup, error)
+  // Note: Don't redirect authenticated users from signin here - the token may be expired/invalid.
+  // Let the client-side useUser hook handle authenticated user redirects after validating the token.
   if (isPublicPath) {
-    // If already authenticated and on signin, redirect to importers
-    if (token && pathname === "/auth/signin") {
-      return NextResponse.redirect(new URL("/importers", request.url));
-    }
     return NextResponse.next();
   }
 

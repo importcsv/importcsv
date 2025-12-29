@@ -27,3 +27,4 @@ class User(Base):
     importers = relationship("Importer", back_populates="user")
     import_jobs = relationship("ImportJob", back_populates="user")
     webhook_events = relationship("WebhookEvent", back_populates="user")
+    usage_records = relationship("UsageRecord", back_populates="user")

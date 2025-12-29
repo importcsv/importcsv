@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1 import auth, auth_oauth, importers, imports
+from app.api.v1 import auth, auth_oauth, importers, imports, usage
 
 api_router = APIRouter()
 
@@ -15,3 +15,6 @@ api_router.include_router(imports.router, prefix="/v1/imports", tags=["Imports"]
 
 # Key-authenticated routes (no user authentication required)
 api_router.include_router(imports.key_router, prefix="/v1/imports", tags=["Key Imports"])
+
+# Usage tracking routes
+api_router.include_router(usage.router, prefix="/v1/usage", tags=["Usage"])

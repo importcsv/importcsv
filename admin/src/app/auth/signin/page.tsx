@@ -16,6 +16,7 @@ import {
 import Link from "next/link";
 import { useToast } from "@/components/ui/use-toast";
 import { signIn, getProviders } from "@/lib/auth";
+import { useUser } from "@/hooks/useUser";
 
 function SignInForm() {
   const router = useRouter();
@@ -24,11 +25,19 @@ function SignInForm() {
   const error = searchParams.get("error");
   const errorMessage = searchParams.get("message");
   const { toast } = useToast();
+  const { isAuthenticated, isLoading: authLoading } = useUser();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [providers, setProviders] = useState({ google: false, github: false });
+
+  // Redirect authenticated users away from signin page
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push(callbackUrl);
+    }
+  }, [isAuthenticated, router, callbackUrl]);
 
   // Load available providers
   useEffect(() => {
@@ -70,6 +79,15 @@ function SignInForm() {
       setIsLoading(false);
     }
   };
+
+  // Show loading while checking auth to avoid flash of signin form
+  if (authLoading || isAuthenticated) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-50">

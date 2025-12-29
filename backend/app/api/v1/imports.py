@@ -22,6 +22,7 @@ from app.services.importer import get_importer_by_key
 from app.services.queue import enqueue_job
 from app.services.mapping import enhance_column_mappings
 from app.services.transformation import generate_transformations
+from app.services.usage import check_and_increment_usage, is_usage_limits_enabled
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +85,21 @@ async def create_import_job(
     try:
         # Parse column mapping
         column_mapping_dict = json.loads(column_mapping)
+
+        # Calculate row count for usage tracking
+        data = column_mapping_dict.get("data", [])
+        invalid_data = column_mapping_dict.get("invalid_data", [])
+        total_rows = len(data) + len(invalid_data)
+
+        # Check usage limits and increment atomically
+        limit_exceeded, current_count, limit = check_and_increment_usage(
+            db, current_user.id, rows=total_rows
+        )
+        if limit_exceeded:
+            raise HTTPException(
+                status_code=402,  # Payment Required
+                detail=f"Monthly import limit reached ({current_count}/{limit}). Please upgrade to continue importing."
+            )
 
         import_job = await import_service.create_import_job(
             db=db,
@@ -186,6 +202,16 @@ async def process_import_by_key(
     user_data = request.user
     metadata = request.metadata
     total_rows = len(valid_data) + len(invalid_data)
+
+    # Check usage limits and increment atomically
+    limit_exceeded, current_count, limit = check_and_increment_usage(
+        db, importer.user_id, rows=total_rows
+    )
+    if limit_exceeded:
+        raise HTTPException(
+            status_code=402,  # Payment Required
+            detail=f"Monthly import limit reached ({current_count}/{limit}). Please upgrade to continue importing."
+        )
 
     # Create import job
     import_job = ImportJobModel(

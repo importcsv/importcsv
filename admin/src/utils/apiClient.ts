@@ -77,6 +77,46 @@ export const importsApi = {
   },
 };
 
+/**
+ * Usage API
+ */
+export const usageApi = {
+  getCurrent: async () => {
+    const response = await apiClient.get("/usage/current");
+    return response.data;
+  },
+
+  getHistory: async (months = 6) => {
+    const response = await apiClient.get(`/usage/history?months=${months}`);
+    return response.data;
+  },
+
+  getFeatures: async () => {
+    const response = await apiClient.get("/usage/features");
+    return response.data;
+  },
+};
+
+/**
+ * Billing API (cloud mode only)
+ */
+export const billingApi = {
+  getSubscription: async () => {
+    const response = await apiClient.get("/billing/subscription");
+    return response.data;
+  },
+
+  createCheckout: async () => {
+    const response = await apiClient.post("/billing/checkout");
+    return response.data;
+  },
+
+  createPortal: async () => {
+    const response = await apiClient.post("/billing/portal");
+    return response.data;
+  },
+};
+
 // Export the axios instance as default and named
 export default apiClient;
 export { apiClient };

@@ -10,7 +10,7 @@ export default function Home() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/importers');
+      router.push('/dashboard');
     } else if (isUnauthenticated) {
       router.push('/auth/signin');
     }
@@ -21,7 +21,7 @@ export default function Home() {
       <div className="text-center">
         <h1 className="text-2xl font-bold mb-4">ImportCSV Admin</h1>
         <p className="text-gray-500">
-          {isLoading ? 'Loading...' : isAuthenticated ? 'Redirecting to importers...' : 'Redirecting to sign in...'}
+          {isLoading ? 'Loading...' : isAuthenticated ? 'Redirecting to dashboard...' : 'Redirecting to sign in...'}
         </p>
       </div>
     </div>

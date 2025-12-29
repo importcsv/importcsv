@@ -122,6 +122,27 @@ class BaseAppSettings(BaseSettings):
     )
     COOKIE_MAX_AGE: int = 30 * 24 * 60 * 60  # 30 days
 
+    # Cloud Mode settings
+    IMPORTCSV_CLOUD: bool = Field(
+        default_factory=lambda: os.getenv("IMPORTCSV_CLOUD", "false").lower() == "true"
+    )
+
+    # Stripe settings (only required if IMPORTCSV_CLOUD=true)
+    STRIPE_SECRET_KEY: Optional[str] = Field(
+        default_factory=lambda: os.getenv("STRIPE_SECRET_KEY")
+    )
+    STRIPE_WEBHOOK_SECRET: Optional[str] = Field(
+        default_factory=lambda: os.getenv("STRIPE_WEBHOOK_SECRET")
+    )
+    STRIPE_PRICE_ID_PRO: Optional[str] = Field(
+        default_factory=lambda: os.getenv("STRIPE_PRICE_ID_PRO")
+    )
+
+    # Usage limits
+    FREE_TIER_IMPORTS_PER_MONTH: int = Field(
+        default_factory=lambda: int(os.getenv("FREE_TIER_IMPORTS_PER_MONTH", "100"))
+    )
+
     @field_validator("SECRET_KEY")
     @classmethod
     def secret_key_must_be_secure(cls, v):
