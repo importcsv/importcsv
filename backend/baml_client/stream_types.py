@@ -23,18 +23,25 @@ class StreamState(BaseModel, typing.Generic[StreamStateValueT]):
     value: StreamStateValueT
     state: typing_extensions.Literal["Pending", "Incomplete", "Complete"]
 # #########################################################################
-# Generated classes (6)
+# Generated classes (9)
 # #########################################################################
 
-class Resume(BaseModel):
-    name: typing.Optional[str] = None
-    email: typing.Optional[str] = None
-    experience: typing.List[str]
-    skills: typing.List[str]
+class ColumnMapping(BaseModel):
+    upload_index: typing.Optional[int] = None
+    template_key: typing.Optional[str] = None
+    confidence: typing.Optional[float] = None
+
+class MappingResult(BaseModel):
+    mappings: typing.List["ColumnMapping"]
 
 class RowData(BaseModel):
     row_index: typing.Optional[int] = None
     data: typing.Dict[str, str]
+
+class TemplateColumn(BaseModel):
+    key: typing.Optional[str] = None
+    name: typing.Optional[str] = None
+    required: typing.Optional[bool] = None
 
 class Transformation(BaseModel):
     row_index: typing.Optional[int] = None
@@ -45,6 +52,11 @@ class Transformation(BaseModel):
 
 class TransformationResult(BaseModel):
     transformations: typing.List["Transformation"]
+
+class UploadColumn(BaseModel):
+    index: typing.Optional[int] = None
+    name: typing.Optional[str] = None
+    sample: typing.Optional[str] = None
 
 class ValidationError(BaseModel):
     row_index: typing.Optional[int] = None

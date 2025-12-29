@@ -41,18 +41,25 @@ def all_succeeded(checks: typing.Dict[CheckName, Check]) -> bool:
 # #########################################################################
 
 # #########################################################################
-# Generated classes (6)
+# Generated classes (9)
 # #########################################################################
 
-class Resume(BaseModel):
-    name: str
-    email: str
-    experience: typing.List[str]
-    skills: typing.List[str]
+class ColumnMapping(BaseModel):
+    upload_index: int
+    template_key: str
+    confidence: float
+
+class MappingResult(BaseModel):
+    mappings: typing.List["ColumnMapping"]
 
 class RowData(BaseModel):
     row_index: int
     data: typing.Dict[str, str]
+
+class TemplateColumn(BaseModel):
+    key: str
+    name: str
+    required: bool
 
 class Transformation(BaseModel):
     row_index: int
@@ -63,6 +70,11 @@ class Transformation(BaseModel):
 
 class TransformationResult(BaseModel):
     transformations: typing.List["Transformation"]
+
+class UploadColumn(BaseModel):
+    index: int
+    name: str
+    sample: typing.Optional[str] = None
 
 class ValidationError(BaseModel):
     row_index: int

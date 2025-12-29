@@ -13,6 +13,8 @@
 import typing
 import typing_extensions
 
+import baml_py
+
 from . import stream_types, types
 from .runtime import DoNotUseDirectlyCallManager, BamlCallOptions
 
@@ -21,12 +23,6 @@ class LlmResponseParser:
 
     def __init__(self, options: DoNotUseDirectlyCallManager):
         self.__options = options
-
-    def ExtractResume(
-        self, llm_response: str, baml_options: BamlCallOptions = {},
-    ) -> types.Resume:
-        result = self.__options.merge_options(baml_options).parse_response(function_name="ExtractResume", llm_response=llm_response, mode="request")
-        return typing.cast(types.Resume, result)
 
     def FixValidationErrors(
         self, llm_response: str, baml_options: BamlCallOptions = {},
@@ -39,6 +35,12 @@ class LlmResponseParser:
     ) -> typing.List[str]:
         result = self.__options.merge_options(baml_options).parse_response(function_name="IdentifyRelevantColumns", llm_response=llm_response, mode="request")
         return typing.cast(typing.List[str], result)
+
+    def MapColumns(
+        self, llm_response: str, baml_options: BamlCallOptions = {},
+    ) -> types.MappingResult:
+        result = self.__options.merge_options(baml_options).parse_response(function_name="MapColumns", llm_response=llm_response, mode="request")
+        return typing.cast(types.MappingResult, result)
 
     def TransformDataGeneral(
         self, llm_response: str, baml_options: BamlCallOptions = {},
@@ -54,12 +56,6 @@ class LlmStreamParser:
     def __init__(self, options: DoNotUseDirectlyCallManager):
         self.__options = options
 
-    def ExtractResume(
-        self, llm_response: str, baml_options: BamlCallOptions = {},
-    ) -> stream_types.Resume:
-        result = self.__options.merge_options(baml_options).parse_response(function_name="ExtractResume", llm_response=llm_response, mode="stream")
-        return typing.cast(stream_types.Resume, result)
-
     def FixValidationErrors(
         self, llm_response: str, baml_options: BamlCallOptions = {},
     ) -> stream_types.TransformationResult:
@@ -71,6 +67,12 @@ class LlmStreamParser:
     ) -> typing.List[str]:
         result = self.__options.merge_options(baml_options).parse_response(function_name="IdentifyRelevantColumns", llm_response=llm_response, mode="stream")
         return typing.cast(typing.List[str], result)
+
+    def MapColumns(
+        self, llm_response: str, baml_options: BamlCallOptions = {},
+    ) -> stream_types.MappingResult:
+        result = self.__options.merge_options(baml_options).parse_response(function_name="MapColumns", llm_response=llm_response, mode="stream")
+        return typing.cast(stream_types.MappingResult, result)
 
     def TransformDataGeneral(
         self, llm_response: str, baml_options: BamlCallOptions = {},

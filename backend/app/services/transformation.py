@@ -11,7 +11,7 @@ from baml_client.async_client import b
 logger = logging.getLogger(__name__)
 
 # Constants
-MIN_CONFIDENCE_THRESHOLD = 0.7
+MIN_CONFIDENCE_THRESHOLD = 0.8
 
 # Validation rule definitions to help LLM understand what makes data valid
 # Regex patterns match the frontend validation logic for consistency

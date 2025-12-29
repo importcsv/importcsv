@@ -16,17 +16,26 @@ from . import stream_types
 
 type_map = {
 
-    "types.Resume": types.Resume,
-    "stream_types.Resume": stream_types.Resume,
+    "types.ColumnMapping": types.ColumnMapping,
+    "stream_types.ColumnMapping": stream_types.ColumnMapping,
+
+    "types.MappingResult": types.MappingResult,
+    "stream_types.MappingResult": stream_types.MappingResult,
 
     "types.RowData": types.RowData,
     "stream_types.RowData": stream_types.RowData,
+
+    "types.TemplateColumn": types.TemplateColumn,
+    "stream_types.TemplateColumn": stream_types.TemplateColumn,
 
     "types.Transformation": types.Transformation,
     "stream_types.Transformation": stream_types.Transformation,
 
     "types.TransformationResult": types.TransformationResult,
     "stream_types.TransformationResult": stream_types.TransformationResult,
+
+    "types.UploadColumn": types.UploadColumn,
+    "stream_types.UploadColumn": stream_types.UploadColumn,
 
     "types.ValidationError": types.ValidationError,
     "stream_types.ValidationError": stream_types.ValidationError,

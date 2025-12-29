@@ -53,6 +53,8 @@ class BamlSyncClient:
         client_registry: typing.Optional[baml_py.baml_py.ClientRegistry] = None,
         collector: typing.Optional[typing.Union[baml_py.baml_py.Collector, typing.List[baml_py.baml_py.Collector]]] = None,
         env: typing.Optional[typing.Dict[str, typing.Optional[str]]] = None,
+        tags: typing.Optional[typing.Dict[str, str]] = None,
+        on_tick: typing.Optional[typing.Callable[[str, baml_py.baml_py.FunctionLog], None]] = None,
     ) -> "BamlSyncClient":
         options: BamlCallOptions = {}
         if tb is not None:
@@ -63,6 +65,10 @@ class BamlSyncClient:
             options["collector"] = collector
         if env is not None:
             options["env"] = env
+        if tags is not None:
+            options["tags"] = tags
+        if on_tick is not None:
+            options["on_tick"] = on_tick
         return BamlSyncClient(self.__options.merge_options(options))
 
     @property
@@ -85,34 +91,62 @@ class BamlSyncClient:
     def parse_stream(self):
       return self.__llm_stream_parser
     
-    def ExtractResume(self, resume: str,
-        baml_options: BamlCallOptions = {},
-    ) -> types.Resume:
-        result = self.__options.merge_options(baml_options).call_function_sync(function_name="ExtractResume", args={
-            "resume": resume,
-        })
-        return typing.cast(types.Resume, result.cast_to(types, types, stream_types, False, __runtime__))
     def FixValidationErrors(self, user_prompt: str,validation_errors: typing.List["types.ValidationError"],row_data: typing.List["types.RowData"],validation_rules: typing.List["types.ValidationRule"],
         baml_options: BamlCallOptions = {},
     ) -> types.TransformationResult:
-        result = self.__options.merge_options(baml_options).call_function_sync(function_name="FixValidationErrors", args={
-            "user_prompt": user_prompt,"validation_errors": validation_errors,"row_data": row_data,"validation_rules": validation_rules,
-        })
-        return typing.cast(types.TransformationResult, result.cast_to(types, types, stream_types, False, __runtime__))
+        # Check if on_tick is provided
+        if 'on_tick' in baml_options:
+            stream = self.stream.FixValidationErrors(user_prompt=user_prompt,validation_errors=validation_errors,row_data=row_data,validation_rules=validation_rules,
+                baml_options=baml_options)
+            return stream.get_final_response()
+        else:
+            # Original non-streaming code
+            result = self.__options.merge_options(baml_options).call_function_sync(function_name="FixValidationErrors", args={
+                "user_prompt": user_prompt,"validation_errors": validation_errors,"row_data": row_data,"validation_rules": validation_rules,
+            })
+            return typing.cast(types.TransformationResult, result.cast_to(types, types, stream_types, False, __runtime__))
     def IdentifyRelevantColumns(self, prompt: str,available_columns: typing.List[str],
         baml_options: BamlCallOptions = {},
     ) -> typing.List[str]:
-        result = self.__options.merge_options(baml_options).call_function_sync(function_name="IdentifyRelevantColumns", args={
-            "prompt": prompt,"available_columns": available_columns,
-        })
-        return typing.cast(typing.List[str], result.cast_to(types, types, stream_types, False, __runtime__))
+        # Check if on_tick is provided
+        if 'on_tick' in baml_options:
+            stream = self.stream.IdentifyRelevantColumns(prompt=prompt,available_columns=available_columns,
+                baml_options=baml_options)
+            return stream.get_final_response()
+        else:
+            # Original non-streaming code
+            result = self.__options.merge_options(baml_options).call_function_sync(function_name="IdentifyRelevantColumns", args={
+                "prompt": prompt,"available_columns": available_columns,
+            })
+            return typing.cast(typing.List[str], result.cast_to(types, types, stream_types, False, __runtime__))
+    def MapColumns(self, upload_columns: typing.List["types.UploadColumn"],template_columns: typing.List["types.TemplateColumn"],
+        baml_options: BamlCallOptions = {},
+    ) -> types.MappingResult:
+        # Check if on_tick is provided
+        if 'on_tick' in baml_options:
+            stream = self.stream.MapColumns(upload_columns=upload_columns,template_columns=template_columns,
+                baml_options=baml_options)
+            return stream.get_final_response()
+        else:
+            # Original non-streaming code
+            result = self.__options.merge_options(baml_options).call_function_sync(function_name="MapColumns", args={
+                "upload_columns": upload_columns,"template_columns": template_columns,
+            })
+            return typing.cast(types.MappingResult, result.cast_to(types, types, stream_types, False, __runtime__))
     def TransformDataGeneral(self, user_prompt: str,row_data: typing.List["types.RowData"],
         baml_options: BamlCallOptions = {},
     ) -> types.TransformationResult:
-        result = self.__options.merge_options(baml_options).call_function_sync(function_name="TransformDataGeneral", args={
-            "user_prompt": user_prompt,"row_data": row_data,
-        })
-        return typing.cast(types.TransformationResult, result.cast_to(types, types, stream_types, False, __runtime__))
+        # Check if on_tick is provided
+        if 'on_tick' in baml_options:
+            stream = self.stream.TransformDataGeneral(user_prompt=user_prompt,row_data=row_data,
+                baml_options=baml_options)
+            return stream.get_final_response()
+        else:
+            # Original non-streaming code
+            result = self.__options.merge_options(baml_options).call_function_sync(function_name="TransformDataGeneral", args={
+                "user_prompt": user_prompt,"row_data": row_data,
+            })
+            return typing.cast(types.TransformationResult, result.cast_to(types, types, stream_types, False, __runtime__))
     
 
 
@@ -122,18 +156,6 @@ class BamlStreamClient:
     def __init__(self, options: DoNotUseDirectlyCallManager):
         self.__options = options
 
-    def ExtractResume(self, resume: str,
-        baml_options: BamlCallOptions = {},
-    ) -> baml_py.BamlSyncStream[stream_types.Resume, types.Resume]:
-        ctx, result = self.__options.merge_options(baml_options).create_sync_stream(function_name="ExtractResume", args={
-            "resume": resume,
-        })
-        return baml_py.BamlSyncStream[stream_types.Resume, types.Resume](
-          result,
-          lambda x: typing.cast(stream_types.Resume, x.cast_to(types, types, stream_types, True, __runtime__)),
-          lambda x: typing.cast(types.Resume, x.cast_to(types, types, stream_types, False, __runtime__)),
-          ctx,
-        )
     def FixValidationErrors(self, user_prompt: str,validation_errors: typing.List["types.ValidationError"],row_data: typing.List["types.RowData"],validation_rules: typing.List["types.ValidationRule"],
         baml_options: BamlCallOptions = {},
     ) -> baml_py.BamlSyncStream[stream_types.TransformationResult, types.TransformationResult]:
@@ -158,6 +180,18 @@ class BamlStreamClient:
           lambda x: typing.cast(typing.List[str], x.cast_to(types, types, stream_types, False, __runtime__)),
           ctx,
         )
+    def MapColumns(self, upload_columns: typing.List["types.UploadColumn"],template_columns: typing.List["types.TemplateColumn"],
+        baml_options: BamlCallOptions = {},
+    ) -> baml_py.BamlSyncStream[stream_types.MappingResult, types.MappingResult]:
+        ctx, result = self.__options.merge_options(baml_options).create_sync_stream(function_name="MapColumns", args={
+            "upload_columns": upload_columns,"template_columns": template_columns,
+        })
+        return baml_py.BamlSyncStream[stream_types.MappingResult, types.MappingResult](
+          result,
+          lambda x: typing.cast(stream_types.MappingResult, x.cast_to(types, types, stream_types, True, __runtime__)),
+          lambda x: typing.cast(types.MappingResult, x.cast_to(types, types, stream_types, False, __runtime__)),
+          ctx,
+        )
     def TransformDataGeneral(self, user_prompt: str,row_data: typing.List["types.RowData"],
         baml_options: BamlCallOptions = {},
     ) -> baml_py.BamlSyncStream[stream_types.TransformationResult, types.TransformationResult]:
@@ -178,13 +212,6 @@ class BamlHttpRequestClient:
     def __init__(self, options: DoNotUseDirectlyCallManager):
         self.__options = options
 
-    def ExtractResume(self, resume: str,
-        baml_options: BamlCallOptions = {},
-    ) -> baml_py.baml_py.HTTPRequest:
-        result = self.__options.merge_options(baml_options).create_http_request_sync(function_name="ExtractResume", args={
-            "resume": resume,
-        }, mode="request")
-        return result
     def FixValidationErrors(self, user_prompt: str,validation_errors: typing.List["types.ValidationError"],row_data: typing.List["types.RowData"],validation_rules: typing.List["types.ValidationRule"],
         baml_options: BamlCallOptions = {},
     ) -> baml_py.baml_py.HTTPRequest:
@@ -197,6 +224,13 @@ class BamlHttpRequestClient:
     ) -> baml_py.baml_py.HTTPRequest:
         result = self.__options.merge_options(baml_options).create_http_request_sync(function_name="IdentifyRelevantColumns", args={
             "prompt": prompt,"available_columns": available_columns,
+        }, mode="request")
+        return result
+    def MapColumns(self, upload_columns: typing.List["types.UploadColumn"],template_columns: typing.List["types.TemplateColumn"],
+        baml_options: BamlCallOptions = {},
+    ) -> baml_py.baml_py.HTTPRequest:
+        result = self.__options.merge_options(baml_options).create_http_request_sync(function_name="MapColumns", args={
+            "upload_columns": upload_columns,"template_columns": template_columns,
         }, mode="request")
         return result
     def TransformDataGeneral(self, user_prompt: str,row_data: typing.List["types.RowData"],
@@ -214,13 +248,6 @@ class BamlHttpStreamRequestClient:
     def __init__(self, options: DoNotUseDirectlyCallManager):
         self.__options = options
 
-    def ExtractResume(self, resume: str,
-        baml_options: BamlCallOptions = {},
-    ) -> baml_py.baml_py.HTTPRequest:
-        result = self.__options.merge_options(baml_options).create_http_request_sync(function_name="ExtractResume", args={
-            "resume": resume,
-        }, mode="stream")
-        return result
     def FixValidationErrors(self, user_prompt: str,validation_errors: typing.List["types.ValidationError"],row_data: typing.List["types.RowData"],validation_rules: typing.List["types.ValidationRule"],
         baml_options: BamlCallOptions = {},
     ) -> baml_py.baml_py.HTTPRequest:
@@ -233,6 +260,13 @@ class BamlHttpStreamRequestClient:
     ) -> baml_py.baml_py.HTTPRequest:
         result = self.__options.merge_options(baml_options).create_http_request_sync(function_name="IdentifyRelevantColumns", args={
             "prompt": prompt,"available_columns": available_columns,
+        }, mode="stream")
+        return result
+    def MapColumns(self, upload_columns: typing.List["types.UploadColumn"],template_columns: typing.List["types.TemplateColumn"],
+        baml_options: BamlCallOptions = {},
+    ) -> baml_py.baml_py.HTTPRequest:
+        result = self.__options.merge_options(baml_options).create_http_request_sync(function_name="MapColumns", args={
+            "upload_columns": upload_columns,"template_columns": template_columns,
         }, mode="stream")
         return result
     def TransformDataGeneral(self, user_prompt: str,row_data: typing.List["types.RowData"],
