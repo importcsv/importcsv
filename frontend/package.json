@@ -74,7 +74,9 @@
     "test:visual": "playwright test",
     "test:all": "npm run test && npm run test:visual",
     "test:local": "npm run build:react && npm link && echo 'Package linked! Run \"npm link @importcsv/react\" in your test app'",
-    "test:app": "cd /Users/abhishekray/Projects/importcsv/test/csv-importer-test && npm link @importcsv/react && npm run dev"
+    "test:app": "cd /Users/abhishekray/Projects/importcsv/test/csv-importer-test && npm link @importcsv/react && npm run dev",
+    "clean:stale": "find src -name '*.js' -not -path '*/shims/*' -type f -delete && find src -name '*.js.map' -type f -delete && echo 'Cleaned stale JS files'",
+    "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
     "preact": "^10.0.0",

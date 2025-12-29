@@ -1,3 +1,14 @@
+# Check for stale JS files in frontend/src (these cause build issues)
+STALE_JS=$(find frontend/src -name "*.js" -not -path "*/shims/*" -type f 2>/dev/null | wc -l | tr -d ' ')
+if [ "$STALE_JS" -gt 0 ]; then
+  echo "Error: Found $STALE_JS stale .js files in frontend/src"
+  echo "These files shadow .tsx source files and cause build issues."
+  echo ""
+  echo "Run: cd frontend && npm run clean:stale"
+  echo ""
+  exit 1
+fi
+
 # Check if any frontend files are staged
 FRONTEND_CHANGED=$(git diff --cached --name-only | grep "^frontend/" | wc -l)
 
