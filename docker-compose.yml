@@ -83,6 +83,7 @@ services:
       - admin_node_modules:/app/node_modules
     environment:
       - NODE_ENV=development
+      - FRONTEND_WATCH=true  # Auto-rebuild frontend on source changes
       - BACKEND_URL=http://backend:8000  # Server-side URL for internal Docker communication
       - NEXT_PUBLIC_BACKEND_URL=http://localhost:8000  # Client-side URL accessible from browser
       - NEXTAUTH_URL=http://localhost:3000

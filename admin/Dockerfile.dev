@@ -14,14 +14,12 @@ RUN npm install --legacy-peer-deps
 COPY frontend/ ./
 RUN npm run build:react
 
-# Link the built frontend to admin's node_modules
+# Copy entrypoint script (updates frontend on every start, after volume mount)
 WORKDIR /app
-RUN rm -rf ./node_modules/@importcsv/react && \
-    mkdir -p ./node_modules/@importcsv/react/build && \
-    cp -r /frontend/build/react ./node_modules/@importcsv/react/build/react && \
-    cp /frontend/package.json ./node_modules/@importcsv/react/package.json
+COPY admin/docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
 EXPOSE 3000
 
-# Default command (overridden by docker-compose)
+ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["npm", "run", "dev"]
