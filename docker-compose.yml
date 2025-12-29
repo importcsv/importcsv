@@ -66,25 +66,32 @@ services:
       - ./backend:/app
       - ./backend/uploads:/app/uploads
     restart: unless-stopped
-    command: python -m app.worker
+    command: python -m watchfiles --filter python 'python -m app.worker' /app
 
   admin:
     build:
       context: .
-      dockerfile: admin/Dockerfile
+      dockerfile: admin/Dockerfile.dev
     container_name: importcsv-admin
     depends_on:
       - backend
     ports:
       - "3000:3000"
+    volumes:
+      - ./admin:/app
+      - ./frontend:/frontend
+      - admin_node_modules:/app/node_modules
     environment:
+      - NODE_ENV=development
       - BACKEND_URL=http://backend:8000  # Server-side URL for internal Docker communication
       - NEXT_PUBLIC_BACKEND_URL=http://localhost:8000  # Client-side URL accessible from browser
       - NEXTAUTH_URL=http://localhost:3000
       - NEXTAUTH_SECRET=your-secret-key-at-least-32-characters-long
     restart: unless-stopped
+    command: npm run dev
 
 volumes:
   postgres_data:
   redis_data:
   backend_logs:
+  admin_node_modules:
