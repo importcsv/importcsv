@@ -2,26 +2,26 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useUser } from '@/hooks/useUser';
 
 export default function Home() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { isAuthenticated, isUnauthenticated, isLoading } = useUser();
 
   useEffect(() => {
-    if (status === 'authenticated') {
+    if (isAuthenticated) {
       router.push('/importers');
-    } else if (status === 'unauthenticated') {
+    } else if (isUnauthenticated) {
       router.push('/auth/signin');
     }
-  }, [status, router]);
+  }, [isAuthenticated, isUnauthenticated, router]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">
       <div className="text-center">
         <h1 className="text-2xl font-bold mb-4">ImportCSV Admin</h1>
         <p className="text-gray-500">
-          {status === 'loading' ? 'Loading...' : status === 'authenticated' ? 'Redirecting to importers...' : 'Redirecting to sign in...'}
+          {isLoading ? 'Loading...' : isAuthenticated ? 'Redirecting to importers...' : 'Redirecting to sign in...'}
         </p>
       </div>
     </div>

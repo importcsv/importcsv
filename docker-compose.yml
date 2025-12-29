@@ -34,13 +34,12 @@ services:
       - redis
     ports:
       - "8000:8000"
+    env_file:
+      - ./backend/.env
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/importcsv
       - REDIS_URL=redis://redis:6379/0
       - ENVIRONMENT=development
-      - SECRET_KEY=your-secret-key-at-least-32-characters-long
-      - NEXTAUTH_SECRET=your-secret-key-at-least-32-characters-long
-      - WEBHOOK_SECRET=your-webhook-secret-for-callbacks
     volumes:
       - ./backend:/app
       - ./backend/uploads:/app/uploads
@@ -57,13 +56,12 @@ services:
       - postgres
       - redis
       - backend
+    env_file:
+      - ./backend/.env
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/importcsv
       - REDIS_URL=redis://redis:6379/0
       - ENVIRONMENT=development
-      - SECRET_KEY=your-secret-key-at-least-32-characters-long
-      - NEXTAUTH_SECRET=your-secret-key-at-least-32-characters-long
-      - WEBHOOK_SECRET=your-webhook-secret-for-callbacks
     volumes:
       - ./backend:/app
       - ./backend/uploads:/app/uploads

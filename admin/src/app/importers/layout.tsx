@@ -3,7 +3,8 @@
 import React, { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { signOut, useSession } from 'next-auth/react';
+import { useUser } from '@/hooks/useUser';
+import { signOut } from '@/lib/auth';
 import {
   LogOut,
   Menu,
@@ -26,13 +27,13 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { data: session } = useSession();
+  const { user } = useUser();
   const router = useRouter();
   const pathname = usePathname();
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const handleLogout = async () => {
-    await signOut({ callbackUrl: '/auth/signin' });
+    await signOut();
   };
 
   const toggleSidebar = () => {
@@ -71,7 +72,7 @@ export default function DashboardLayout({
           <h1 className="text-xl font-semibold">ImportCSV Admin</h1>
         </div>
         <div className="flex items-center gap-4">
-          {session?.user && (
+          {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="h-8 w-8 rounded-full">
@@ -81,9 +82,9 @@ export default function DashboardLayout({
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{session.user.name}</p>
+                    <p className="text-sm font-medium leading-none">{user.full_name}</p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      {session.user.email}
+                      {user.email}
                     </p>
                   </div>
                 </DropdownMenuLabel>

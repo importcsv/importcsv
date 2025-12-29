@@ -37,9 +37,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { useSession } from 'next-auth/react';
+import { useUser } from '@/hooks/useUser';
 import { useRouter } from 'next/navigation';
-import apiClient, { importersApi } from '@/utils/apiClient';
+import { importersApi } from '@/utils/apiClient';
 
 // Dynamically import the CSV Importer component
 const CSVImporter = dynamic(
@@ -119,17 +119,16 @@ Charlotte,Martin,charlotte@.com,32,2021-13-01
 Oliver,Lee,oliver@example.com,38,2021-05-20`
   };
 
-  const { data: session, status } = useSession();
+  const { isAuthenticated, isUnauthenticated } = useUser();
   const router = useRouter();
 
   useEffect(() => {
-    if (status === 'authenticated') {
+    if (isAuthenticated) {
       fetchImporters();
-    } else if (status === 'unauthenticated') {
-      // Redirect to sign-in if not signed in
+    } else if (isUnauthenticated) {
       router.push('/auth/signin');
     }
-  }, [status, session?.user?.id]);
+  }, [isAuthenticated, isUnauthenticated]);
 
   // Fetch importers logic
   const fetchImporters = async () => {
@@ -143,12 +142,6 @@ Oliver,Lee,oliver@example.com,38,2021-05-20`
       setImporters(data);
     } catch (err: any) {
       setError(err.message || 'An error occurred while fetching importers');
-
-      // If the error is authentication-related and not handled by the client,
-      // redirect to login
-      if (err.response && err.response.status === 401) {
-        router.push('/sign-in');
-      }
     } finally {
       setIsLoading(false);
     }

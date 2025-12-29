@@ -1,6 +1,5 @@
 'use client';
 
-import { signIn } from 'next-auth/react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
@@ -9,12 +8,13 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import Link from 'next/link';
 import { useToast } from '@/components/ui/use-toast';
-import axios from 'axios';
+import apiClient from '@/utils/apiClient';
+import { signIn } from '@/lib/auth';
 
 export default function SignUp() {
   const router = useRouter();
   const { toast } = useToast();
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -23,7 +23,7 @@ export default function SignUp() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (password !== confirmPassword) {
       toast({
         title: "Error",
@@ -45,8 +45,8 @@ export default function SignUp() {
     setIsLoading(true);
 
     try {
-      // Register the user via our API route (which handles server-side communication)
-      const response = await axios.post('/api/auth/register', {
+      // Register the user via the backend API
+      await apiClient.post('/auth/register', {
         email,
         password,
         full_name: fullName,
@@ -54,30 +54,22 @@ export default function SignUp() {
         is_active: true,
       });
 
-      if (response.data) {
-        // Auto sign in after successful registration
-        const result = await signIn('credentials', {
-          email,
-          password,
-          redirect: false,
-          callbackUrl: '/importers',
+      // Auto sign in after successful registration
+      try {
+        await signIn.credentials(email, password);
+        toast({
+          title: "Success",
+          description: "Account created successfully!",
         });
-
-        if (result?.ok) {
-          toast({
-            title: "Success",
-            description: "Account created successfully!",
-          });
-          router.push('/importers');
-          router.refresh();
-        } else {
-          // Registration successful but auto-login failed
-          toast({
-            title: "Account created",
-            description: "Please sign in with your new account",
-          });
-          router.push('/auth/signin');
-        }
+        router.push('/importers');
+        router.refresh();
+      } catch {
+        // Registration successful but auto-login failed
+        toast({
+          title: "Account created",
+          description: "Please sign in with your new account",
+        });
+        router.push('/auth/signin');
       }
     } catch (error: any) {
       const errorMessage = error.response?.data?.detail || "Failed to create account";

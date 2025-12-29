@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile for admin app with local frontend build
 
 # Stage 1: Build the frontend package
-FROM node:20 AS frontend-builder
+FROM node:22 AS frontend-builder
 WORKDIR /frontend
 
 # Copy frontend package files
@@ -13,19 +13,18 @@ COPY frontend/ ./
 RUN npm run build:react
 
 # Stage 2: Build the admin app
-FROM node:20 AS builder
+FROM node:22 AS builder
 WORKDIR /app
 
 # Set environment variables for build time
 # Client-side URL must be accessible from browser
 ENV NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
 
-# Copy and use package.prod.json
-COPY admin/package.prod.json ./package.json
+# Copy package files
+COPY admin/package.json admin/package-lock.json ./
 
-# Install all dependencies including @importcsv/react from npm
-# This ensures all peer dependencies are resolved
-RUN npm install --legacy-peer-deps
+# Install dependencies (using lockfile for reproducible builds)
+RUN npm ci --legacy-peer-deps
 
 # Now replace the npm version with our locally built version
 # We need to preserve the build/react structure that package.json expects
@@ -41,7 +40,7 @@ COPY admin/ ./
 RUN npm run build
 
 # Production runner
-FROM node:20 AS runner
+FROM node:22 AS runner
 WORKDIR /app
 
 # Set environment to production

@@ -127,11 +127,6 @@ export default function ImporterDetailPage() {
             errorMessage = axiosError.response.data.detail;
           }
           
-          // If the error is authentication-related and not handled by the client,
-          // redirect to login
-          if (axiosError.response?.status === 401) {
-            router.push("/login");
-          }
         } else if (err instanceof Error) {
           errorMessage = err.message;
         }

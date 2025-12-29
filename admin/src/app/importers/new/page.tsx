@@ -6,8 +6,7 @@ import ImporterColumnsManager from '@/components/ImporterColumnsManager';
 import WebhookSettings from '@/components/WebhookSettings';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
-import apiClient, { importersApi } from '@/utils/apiClient';
+import { importersApi } from '@/utils/apiClient';
 import { 
   Card, 
   CardContent, 
@@ -26,7 +25,6 @@ import { ChevronLeft, Plus, Trash2 } from 'lucide-react';
 
 export default function NewImporterPage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
   const [importerName, setImporterName] = useState('');
   const [fields, setFields] = useState<ImporterField[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -95,12 +93,6 @@ export default function NewImporterPage() {
       }
       
       setError(errorMessage);
-      
-      // If the error is authentication-related and not handled by the client,
-      // redirect to login
-      if (err.response && err.response.status === 401) {
-        router.push('/login');
-      }
     } finally {
       setIsLoading(false);
     }

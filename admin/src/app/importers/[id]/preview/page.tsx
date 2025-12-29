@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams } from "next/navigation";
-import { useSession } from "next-auth/react";
+import { useUser } from "@/hooks/useUser";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -66,7 +66,7 @@ function ImporterComponent({ importerKey, onComplete }: { importerKey: string, o
 
 export default function ImporterPreviewPage() {
   const params = useParams();
-  const { data: session, status } = useSession();
+  const { isAuthenticated } = useUser();
   const [error, setError] = useState<string | null>(null);
   const [importer, setImporter] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -78,7 +78,7 @@ export default function ImporterPreviewPage() {
 
   // Fetch importer details to get the key
   useEffect(() => {
-    if (status !== 'authenticated') return;
+    if (!isAuthenticated) return;
 
     let isMounted = true;
     setLoading(true);
@@ -95,7 +95,7 @@ export default function ImporterPreviewPage() {
       });
 
     return () => { isMounted = false; };
-  }, [params.id, status]);
+  }, [params.id, isAuthenticated]);
 
   if (error)
     return (
