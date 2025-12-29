@@ -22,9 +22,9 @@
     },
     "./bundled": {
       "types": "./build/bundled/types/index.d.ts",
+      "script": "./build/bundled/index.umd.js",
       "import": "./build/bundled/index.esm.js",
-      "require": "./build/bundled/index.js",
-      "script": "./build/bundled/index.umd.js"
+      "require": "./build/bundled/index.js"
     },
     "./styles.css": "./build/style.css"
   },

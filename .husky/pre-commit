@@ -1,12 +1,9 @@
-#!/bin/sh
-. "$(dirname "$0")/_/husky.sh"
-
 # Check if any frontend files are staged
 FRONTEND_CHANGED=$(git diff --cached --name-only | grep "^frontend/" | wc -l)
 
 if [ "$FRONTEND_CHANGED" -gt 0 ]; then
   echo "Frontend files changed - running type check and tests..."
-  cd frontend && npx tsc --noEmit && npm test -- --run --reporter=basic
+  cd frontend && npx tsc --noEmit && npm test -- --run --reporter=default
 else
   echo "No frontend files changed - skipping tests"
   exit 0
