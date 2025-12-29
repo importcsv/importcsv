@@ -39,7 +39,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { useUser } from '@/hooks/useUser';
 import { useRouter } from 'next/navigation';
+import { FileSpreadsheet } from 'lucide-react';
 import { importersApi } from '@/utils/apiClient';
+import { EmptyState } from '@/components/EmptyState';
 
 // Dynamically import the CSV Importer component
 const CSVImporter = dynamic(
@@ -732,6 +734,18 @@ Oliver,Lee,oliver@example.com,38,2021-05-20`
 
       {/* Importers Table */}
       {!isLoading && !error && (
+        importers.length === 0 ? (
+          <EmptyState
+            icon={FileSpreadsheet}
+            title="No importers yet"
+            description="Create your first importer to start accepting CSV uploads from your users."
+            action={{
+              label: "Create Importer",
+              onClick: () => router.push("/importers/new")
+            }}
+            tip="Importers define the schema for your CSV uploads — column names, validation rules, and more."
+          />
+        ) : (
         <AlertDialog>
           <AlertDialogTrigger className="hidden" />
           <Table>
@@ -793,6 +807,7 @@ Oliver,Lee,oliver@example.com,38,2021-05-20`
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+        )
       )}
     </div>
   );

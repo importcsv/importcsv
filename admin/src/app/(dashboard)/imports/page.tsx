@@ -12,7 +12,9 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { importsApi } from "@/utils/apiClient";
-import { FileSpreadsheet, CheckCircle, XCircle, Clock, RefreshCw } from "lucide-react";
+import { FileSpreadsheet, CheckCircle, XCircle, Clock, RefreshCw, History } from "lucide-react";
+import { EmptyState } from "@/components/EmptyState";
+import { useRouter } from "next/navigation";
 
 type ImportJob = {
   id: string;
@@ -53,6 +55,7 @@ export default function ImportsPage() {
   const [imports, setImports] = useState<ImportJob[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const router = useRouter();
 
   // Auth is handled by the layout - just load data on mount
   useEffect(() => {
@@ -119,11 +122,16 @@ export default function ImportsPage() {
       </div>
 
       {imports.length === 0 ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg border border-dashed">
-          <FileSpreadsheet className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium">No imports yet</h3>
-          <p className="text-gray-500 mt-1">Import history will appear here.</p>
-        </div>
+        <EmptyState
+          icon={History}
+          title="No imports yet"
+          description="Once users upload CSVs through your importer, you'll see them here."
+          action={{
+            label: "View Your Importers",
+            onClick: () => router.push("/importers")
+          }}
+          tip="Need to test? Use the preview mode in any importer to try it out."
+        />
       ) : (
         <Table>
           <TableHeader>
