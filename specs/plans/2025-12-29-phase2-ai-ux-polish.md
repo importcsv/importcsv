@@ -45,19 +45,23 @@ After:
 | 1 | Create BAML mapping function | ✅ Done |
 | 2 | Rewrite mapping.py to use BAML | ✅ Done |
 | 3 | Raise transformation threshold to 0.8 | ✅ Done |
-| 4 | Create MappingSkeleton component | ⬚ Pending |
-| 5 | Add prefetch logic to configure-import | ⬚ Pending |
-| 6 | Update useMapColumnsTable to accept mappings as prop | ⬚ Pending |
-| 7 | Add staggered fade-in animation | ⬚ Pending |
-| 8 | Update TransformPanel to show diffs | ⬚ Pending |
-| 9 | Add confidence tier logic and visual indicators | ⬚ Pending |
-| 10 | Update selection summary text | ⬚ Pending |
-| 11 | Create onboarding status endpoint | ⬚ Pending |
-| 12 | Create OnboardingChecklist component | ⬚ Pending |
-| 13 | Add OnboardingChecklist to Sidebar | ⬚ Pending |
-| 14 | Create reusable EmptyState component | ⬚ Pending |
-| 15 | Add empty state to importers list | ⬚ Pending |
-| 16 | Add empty state to imports history | ⬚ Pending |
+| 4 | Create MappingSkeleton component | ✅ Done |
+| 5-7 | Add skeleton/animation to ConfigureImport (adapted from plan) | ✅ Done |
+| 8 | Update TransformPanel to show diffs | ✅ Done |
+| 9 | Add confidence tier logic and visual indicators | ✅ Done |
+| 10 | Update selection summary text | ✅ Done |
+| 11 | Create onboarding status endpoint | ✅ Done |
+| 12 | Create OnboardingChecklist component | ✅ Done |
+| 13 | Add OnboardingChecklist to Sidebar | ✅ Done |
+| 14 | Create reusable EmptyState component | ✅ Done |
+| 15 | Add empty state to importers list | ✅ Done |
+| 16 | Add empty state to imports history | ✅ Done |
+
+> **Note:** Tasks 5-7 were combined and adapted. The plan specified `MapColumns`/`useMapColumnsTable` but those aren't used in the main flow. Implementation was done on `ConfigureImport` which is the actual component used.
+
+> **Note:** Tasks 8-10 included code review fixes: extracted `HIGH_CONFIDENCE_THRESHOLD` constant, added `useMemo` for performance, improved accessibility with `aria-label` and keyboard handlers.
+
+> **Note:** Tasks 11-13 included code review fixes: replaced PostgreSQL-specific `json_array_length` with DB-agnostic approach, used EXISTS subqueries for efficiency, added Pydantic response schema, namespaced localStorage key, added error logging.
 
 ---
 
