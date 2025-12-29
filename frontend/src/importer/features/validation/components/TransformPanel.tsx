@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef, useCallback } from 'preact/hooks';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'preact/hooks';
 import type { ComponentChildren, FunctionComponent, JSX } from 'preact';
 import { Button } from '../../../components/ui/button';
 import { Input } from '../../../components/ui/input';
 import { Checkbox } from '../../../components/ui/checkbox';
 import { Alert, AlertDescription } from '../../../components/ui/alert';
-import { Sparkles, X, Check, Info, AlertCircle, ChevronRight } from 'lucide-react';
+import { Sparkles, X, Check, Info, AlertCircle, ChevronRight, ArrowRight, AlertTriangle } from 'lucide-react';
+import { cn } from '../../../../utils/cn';
 import { useTranslation } from '../../../../i18n/useTranslation';
 import {
   generateTransformations,
@@ -23,6 +24,14 @@ import {
   countSelectedErrors,
   type ErrorGroup
 } from '../../../utils/errorAnalysis';
+
+const HIGH_CONFIDENCE_THRESHOLD = 0.9;
+
+type ConfidenceTier = 'high' | 'medium';
+
+function getConfidenceTier(confidence: number): ConfidenceTier {
+  return confidence >= HIGH_CONFIDENCE_THRESHOLD ? 'high' : 'medium';
+}
 
 interface TransformPanelProps {
   isOpen: boolean;
@@ -62,7 +71,6 @@ export default function TransformPanel({
   const [isGenerating, setIsGenerating] = useState(false);
   const [showExamples, setShowExamples] = useState(false);
   const [errorGroups, setErrorGroups] = useState<ErrorGroup[]>([]);
-  const [showPreview, setShowPreview] = useState(false);
 
   // Determine if we're in error-fixing mode
   const hasValidationErrors = validationErrors && validationErrors.length > 0;
@@ -201,8 +209,20 @@ export default function TransformPanel({
     onClose();
   }, [onClose]);
 
+  // Keyboard handler for clickable elements
+  const handleKeyDown = useCallback((e: KeyboardEvent, callback: () => void) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      callback();
+    }
+  }, []);
+
   const selectedCount = countSelectedChanges(changes);
   const hasChanges = changes.length > 0;
+  const needsReviewCount = useMemo(
+    () => changes.filter(c => c.confidence < HIGH_CONFIDENCE_THRESHOLD).length,
+    [changes]
+  );
 
   if (!isOpen) return null;
 
@@ -236,7 +256,7 @@ export default function TransformPanel({
           <div className="flex items-center gap-2">
             <span className="text-orange-500">!</span>
             <h2 className="text-base font-medium text-gray-900 dark:text-gray-100">
-              {hasValidationErrors && !hasChanges ? t('Transform Data') : t('Transform Data')}
+              {t('Transform Data')}
             </h2>
           </div>
           <button
@@ -270,8 +290,11 @@ export default function TransformPanel({
                   {errorGroups.map(group => (
                     <div
                       key={group.type}
+                      role="button"
+                      tabIndex={0}
                       className="flex items-center gap-3 py-2 px-1 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer rounded transition-colors"
                       onClick={() => handleToggleErrorGroup(group.type)}
+                      onKeyDown={(e) => handleKeyDown(e, () => handleToggleErrorGroup(group.type))}
                     >
                       <Checkbox
                         checked={group.selected}
@@ -429,8 +452,11 @@ export default function TransformPanel({
                     {changes.slice(0, 100).map((change, index) => (
                       <div
                         key={index}
+                        role="button"
+                        tabIndex={0}
                         className="flex items-center gap-3 py-2 px-1 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors rounded"
                         onClick={() => handleToggleChange(index)}
+                        onKeyDown={(e) => handleKeyDown(e, () => handleToggleChange(index))}
                       >
                         <Checkbox
                           checked={change.selected}
@@ -439,12 +465,38 @@ export default function TransformPanel({
                           className="flex-shrink-0"
                         />
                         <div className="flex-1 min-w-0">
-                          <div className="text-sm text-gray-900 dark:text-gray-100 font-medium truncate">
-                            {String(change.newValue)}
+                          {/* Diff display */}
+                          <div className="flex items-center gap-2 text-sm flex-wrap">
+                            <span className="line-through text-gray-400 truncate max-w-[120px]" title={String(change.oldValue || '')}>
+                              {String(change.oldValue || '(empty)')}
+                            </span>
+                            <ArrowRight size={14} className="text-gray-400 flex-shrink-0" />
+                            <span className={cn(
+                              "font-medium truncate max-w-[200px]",
+                              getConfidenceTier(change.confidence) === 'high'
+                                ? "text-green-600 dark:text-green-400"
+                                : "text-amber-600 dark:text-amber-400"
+                            )} title={String(change.newValue)}>
+                              {String(change.newValue)}
+                            </span>
+                            {/* Warning icon for medium confidence */}
+                            {getConfidenceTier(change.confidence) === 'medium' && (
+                              <span
+                                title={`Confidence: ${Math.round(change.confidence * 100)}%`}
+                                aria-label={`Low confidence: ${Math.round(change.confidence * 100)}%`}
+                              >
+                                <AlertTriangle
+                                  size={14}
+                                  className="text-amber-500 flex-shrink-0"
+                                  aria-hidden="true"
+                                />
+                              </span>
+                            )}
                           </div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                            {String(change.oldValue || '')} • Row {change.rowIndex + 1}, {change.columnKey}
-                          </p>
+                          {/* Row info */}
+                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            Row {change.rowIndex + 1}, {change.columnKey}
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -466,9 +518,14 @@ export default function TransformPanel({
         {hasChanges && (
           <div className="border-t dark:border-gray-700 p-4">
             <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-500 dark:text-gray-400">
+              <div className="text-sm text-gray-500 dark:text-gray-400">
                 {selectedCount} selected
-              </span>
+                {needsReviewCount > 0 && (
+                  <span className="text-amber-600 dark:text-amber-400 ml-1">
+                    ({needsReviewCount} need review)
+                  </span>
+                )}
+              </div>
               <button
                 type="button"
                 className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
