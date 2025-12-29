@@ -97,6 +97,31 @@ class BaseAppSettings(BaseSettings):
         default_factory=lambda: os.getenv("ALLOWED_HOSTS", "*").split(",")
     )
 
+    # Frontend URL for OAuth redirects
+    FRONTEND_URL: str = Field(
+        default_factory=lambda: os.getenv("FRONTEND_URL", "http://localhost:3000")
+    )
+
+    # OAuth providers (optional - OAuth disabled if not configured)
+    GOOGLE_CLIENT_ID: Optional[str] = Field(
+        default_factory=lambda: os.getenv("GOOGLE_CLIENT_ID")
+    )
+    GOOGLE_CLIENT_SECRET: Optional[str] = Field(
+        default_factory=lambda: os.getenv("GOOGLE_CLIENT_SECRET")
+    )
+    GITHUB_CLIENT_ID: Optional[str] = Field(
+        default_factory=lambda: os.getenv("GITHUB_CLIENT_ID")
+    )
+    GITHUB_CLIENT_SECRET: Optional[str] = Field(
+        default_factory=lambda: os.getenv("GITHUB_CLIENT_SECRET")
+    )
+
+    # Cookie settings
+    COOKIE_SECURE: bool = Field(
+        default_factory=lambda: os.getenv("ENVIRONMENT", "development") == "production"
+    )
+    COOKIE_MAX_AGE: int = 30 * 24 * 60 * 60  # 30 days
+
     @field_validator("SECRET_KEY")
     @classmethod
     def secret_key_must_be_secure(cls, v):

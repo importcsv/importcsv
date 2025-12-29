@@ -1,12 +1,14 @@
 """
-Authentication endpoints for NextAuth integration.
+Authentication endpoints with backend-driven auth.
+Supports both API token and HTTP-only cookie authentication.
 """
 import uuid
 import secrets
 from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, status, Form
+from fastapi import APIRouter, Depends, HTTPException, status, Form, Response
+from fastapi.responses import RedirectResponse
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 import jwt
@@ -41,7 +43,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
         expire = datetime.utcnow() + expires_delta
     else:
         expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    
+
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(
         to_encode,
@@ -51,24 +53,47 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 
+def set_auth_cookie(response: Response, token: str) -> None:
+    """Set HTTP-only authentication cookie."""
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        secure=settings.COOKIE_SECURE,
+        samesite="lax",
+        max_age=settings.COOKIE_MAX_AGE,
+        path="/",
+    )
+
+
+def clear_auth_cookie(response: Response) -> None:
+    """Clear authentication cookie."""
+    response.delete_cookie(
+        key="access_token",
+        path="/",
+    )
+
+
 @router.post("/login")
 async def login(
+    response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ) -> Dict[str, Any]:
     """
-    OAuth2 compatible token login, get an access token for future requests
+    OAuth2 compatible token login, get an access token for future requests.
+    Also sets HTTP-only cookie for browser-based authentication.
     """
     # Find user by email
     user = db.query(UserModel).filter(UserModel.email == form_data.username).first()
-    
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     # Verify password
     if not user.hashed_password or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
@@ -76,22 +101,25 @@ async def login(
             detail="Incorrect email or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     # Check if user is active
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Inactive user"
+            detail="Inactive user",
         )
-    
+
     # Create access token
     access_token = create_access_token(
         data={"sub": str(user.id), "email": user.email}
     )
-    
+
+    # Set HTTP-only cookie for browser auth
+    set_auth_cookie(response, access_token)
+
     return {
         "access_token": access_token,
-        "token_type": "bearer"
+        "token_type": "bearer",
     }
 
 
@@ -197,4 +225,22 @@ async def get_user_me(
         "is_superuser": user.is_superuser,
         "is_verified": user.is_verified,
         "profile_image": user.profile_image,
+        "created_at": user.created_at.isoformat() if user.created_at else None,
     }
+
+
+@router.post("/logout")
+async def logout(response: Response) -> Dict[str, str]:
+    """Clear authentication cookie and logout."""
+    clear_auth_cookie(response)
+    return {"message": "Successfully logged out"}
+
+
+@router.get("/logout")
+async def logout_redirect(response: Response) -> RedirectResponse:
+    """Logout and redirect to frontend signin page."""
+    clear_auth_cookie(response)
+    return RedirectResponse(
+        url=f"{settings.FRONTEND_URL}/auth/signin",
+        status_code=303,
+    )

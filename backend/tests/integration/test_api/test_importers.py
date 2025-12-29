@@ -30,7 +30,7 @@ def test_list_importers_unauthenticated(client: TestClient):
     """Test listing importers without authentication fails."""
     response = client.get("/api/v1/importers/")
 
-    assert response.status_code == 403  # HTTPBearer returns 403 for missing auth
+    assert response.status_code == 401  # Unauthenticated
 
 
 @pytest.mark.integration
@@ -158,7 +158,7 @@ def test_create_importer_unauthenticated(client: TestClient, sample_importer_dat
     """Test creating importer without authentication fails."""
     response = client.post("/api/v1/importers/", json=sample_importer_data)
 
-    assert response.status_code == 403
+    assert response.status_code == 401  # Unauthenticated
 
 
 @pytest.mark.integration
@@ -259,7 +259,7 @@ def test_get_importer_unauthenticated(client: TestClient, sample_importer: Impor
     """Test retrieving importer without authentication fails."""
     response = client.get(f"/api/v1/importers/{sample_importer.id}")
 
-    assert response.status_code == 403
+    assert response.status_code == 401  # Unauthenticated
 
 
 # ============================================================================
@@ -358,7 +358,7 @@ def test_update_importer_unauthenticated(client: TestClient, sample_importer: Im
         json=update_data
     )
 
-    assert response.status_code == 403
+    assert response.status_code == 401  # Unauthenticated
 
 
 # ============================================================================
@@ -416,7 +416,7 @@ def test_delete_importer_unauthenticated(client: TestClient, sample_importer: Im
     """Test deleting importer without authentication fails."""
     response = client.delete(f"/api/v1/importers/{sample_importer.id}")
 
-    assert response.status_code == 403
+    assert response.status_code == 401  # Unauthenticated
 
 
 # ============================================================================
