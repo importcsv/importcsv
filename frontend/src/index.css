@@ -174,6 +174,24 @@
       opacity: 1;
     }
   }
+
+  /* Staggered fade-in animation for mapping rows */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .mapping-row-animate {
+    animation: fadeInUp 0.3s ease-out forwards;
+    opacity: 0;
+    will-change: opacity, transform;
+  }
 }
 
 /* Dialog backdrop styling */

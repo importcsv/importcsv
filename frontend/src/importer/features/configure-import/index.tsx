@@ -5,6 +5,7 @@ import { Box, Flex, Text, VStack, HStack } from '../../components/ui/flex';
 import { Switch } from '../../components/ui/switch';
 import { Select } from '../../components/ui/select';
 import StepLayout from '../../components/StepLayout';
+import MappingSkeleton from '../../components/MappingSkeleton';
 import { CheckCircle } from 'lucide-react';
 import { useTranslation } from '../../../i18n/useTranslation';
 import { Column, ColumnMapping, ColumnMappingDictionary } from '../../../types';
@@ -38,6 +39,8 @@ export default function ConfigureImport({
   const selectedHeaderRow = 0; // Always use first row as headers
   const [columnMapping, setColumnMapping] = useState<ColumnMappingDictionary>({});
   const [error, setError] = useState<string | null>(null);
+  const [isLoadingMappings, setIsLoadingMappings] = useState(false);
+  const [mappingsReady, setMappingsReady] = useState(false);
   const llmEnhancementCalled = useRef(false);
 
   // Get preview data (first 5 rows)
@@ -80,6 +83,11 @@ export default function ConfigureImport({
 
   // Auto-map columns based on name similarity
   useEffect(() => {
+    // Start loading if we have backend URL and importer key (will fetch AI mappings)
+    if (backendUrl && importerKey && columnHeaders.length > 0 && templateColumns.length > 0) {
+      setIsLoadingMappings(true);
+    }
+
     const autoMap: ColumnMappingDictionary = {};
 
     columnHeaders.forEach((header: string, index: number) => {
@@ -106,7 +114,12 @@ export default function ConfigureImport({
     });
 
     setColumnMapping(autoMap);
-  }, [columnHeaders, templateColumns]);
+
+    // If no backend, mark mappings as ready immediately (string match only)
+    if (!backendUrl || !importerKey) {
+      setMappingsReady(true);
+    }
+  }, [columnHeaders, templateColumns, backendUrl, importerKey]);
 
   // Enhance mappings with LLM suggestions after initial load
   useEffect(() => {
@@ -118,6 +131,8 @@ export default function ConfigureImport({
 
       // Only run if we have columns, backend URL, and importer key
       if (!uploadColumns.length || !templateColumns.length || !backendUrl || !importerKey) {
+        setIsLoadingMappings(false);
+        setMappingsReady(true);
         return;
       }
 
@@ -176,6 +191,10 @@ export default function ConfigureImport({
         }
       } catch (error) {
         // Silently fail - fallback to string similarity is already applied
+      } finally {
+        // Mark loading complete and trigger animation
+        setIsLoadingMappings(false);
+        setMappingsReady(true);
       }
     };
 
@@ -271,6 +290,20 @@ export default function ConfigureImport({
     </>
   );
 
+  // Show skeleton while loading AI mappings
+  if (isLoadingMappings) {
+    return (
+      <StepLayout
+        title={t('Configure Import')}
+        subtitle={t('Analyzing your columns...')}
+        footerContent={footerContent}
+        contentClassName="px-6 py-4"
+      >
+        <MappingSkeleton rows={templateColumns.length || 5} />
+      </StepLayout>
+    );
+  }
+
   return (
     <StepLayout
       title={t('Configure Import')}
@@ -306,7 +339,14 @@ export default function ConfigureImport({
               const isRequired = field.validators?.some((v: any) => v.type === 'required');
 
               return (
-                <tr key={field.id} className={designTokens.components.tableRow}>
+                <tr
+                  key={field.id}
+                  className={cn(
+                    designTokens.components.tableRow,
+                    mappingsReady && "mapping-row-animate"
+                  )}
+                  style={mappingsReady ? { animationDelay: `${index * 50}ms` } : undefined}
+                >
                   <td className="px-6 py-4">
                     <HStack className="gap-2 items-center">
                       {isMapped && (
@@ -327,8 +367,8 @@ export default function ConfigureImport({
                     </HStack>
                   </td>
                     <td className="px-6 py-4">
-                      <Select 
-                        value={mappedColumn} 
+                      <Select
+                        value={mappedColumn}
                         onValueChange={(value) => handleMappingChange(field.id, value)}
                         placeholder={t('Select...')}
                         className="h-9 w-full max-w-[250px]"
@@ -337,7 +377,7 @@ export default function ConfigureImport({
                           ...columnHeaders.map((header: string, idx: number) => {
                             const isAlreadyMapped = Object.keys(columnMapping).includes(idx.toString()) &&
                               columnMapping[idx].id !== field.id;
-                            
+
                             return {
                               value: idx.toString(),
                               label: isAlreadyMapped ? `${header} (mapped)` : header,
