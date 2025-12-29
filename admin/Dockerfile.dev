@@ -1,0 +1,27 @@
+# Development Dockerfile for admin - hot reload enabled
+FROM node:22
+
+WORKDIR /app
+
+# Install dependencies first (cached unless package.json changes)
+COPY admin/package.json admin/package-lock.json ./
+RUN npm install --legacy-peer-deps
+
+# Build and link local frontend package
+WORKDIR /frontend
+COPY frontend/package*.json ./
+RUN npm install --legacy-peer-deps
+COPY frontend/ ./
+RUN npm run build:react
+
+# Link the built frontend to admin's node_modules
+WORKDIR /app
+RUN rm -rf ./node_modules/@importcsv/react && \
+    mkdir -p ./node_modules/@importcsv/react/build && \
+    cp -r /frontend/build/react ./node_modules/@importcsv/react/build/react && \
+    cp /frontend/package.json ./node_modules/@importcsv/react/package.json
+
+EXPOSE 3000
+
+# Default command (overridden by docker-compose)
+CMD ["npm", "run", "dev"]
