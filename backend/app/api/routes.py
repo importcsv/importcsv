@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1 import auth, auth_oauth, importers, imports, usage
+from app.api.v1 import auth, auth_oauth, importers, imports, usage, onboarding
 
 api_router = APIRouter()
 
@@ -18,3 +18,10 @@ api_router.include_router(imports.key_router, prefix="/v1/imports", tags=["Key I
 
 # Usage tracking routes
 api_router.include_router(usage.router, prefix="/v1/usage", tags=["Usage"])
+
+# Onboarding routes (under /v1/users/me)
+api_router.include_router(
+    onboarding.router,
+    prefix="/v1/users/me",
+    tags=["Onboarding"]
+)

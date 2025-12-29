@@ -13,6 +13,7 @@ import {
   Settings,
   LogOut,
 } from "lucide-react";
+import { OnboardingChecklist } from "./OnboardingChecklist";
 
 const nav = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
@@ -86,6 +87,9 @@ export function Sidebar() {
           );
         })}
       </nav>
+
+      {/* Onboarding checklist - shows until complete */}
+      <OnboardingChecklist />
 
       <div className="p-4 border-t border-gray-800">
         <button
