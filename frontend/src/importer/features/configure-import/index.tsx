@@ -311,22 +311,22 @@ export default function ConfigureImport({
       footerContent={footerContent}
       contentClassName="px-6 py-4"
     >
-      <div className="overflow-x-auto border border-gray-200 rounded-lg">
+      <div className="overflow-x-auto border border-slate-200 rounded-xl bg-gradient-to-b from-white to-slate-50/50 shadow-sm">
         <table className={cn(designTokens.components.table, "min-w-[600px]")}>
-          <thead className={designTokens.components.tableHeader}>
+          <thead className="bg-slate-50/80 border-b border-slate-200">
             <tr>
-              <th className="text-left px-6 py-3 w-[30%]">
-                <span className={cn(designTokens.typography.label)}>
+              <th className="text-left px-6 py-3.5 w-[30%]">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   {t('Fields')}
                 </span>
               </th>
-              <th className="text-left px-6 py-3 w-[35%]">
-                <span className={cn(designTokens.typography.label)}>
+              <th className="text-left px-6 py-3.5 w-[35%]">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   {t('CSV Column')}
                 </span>
               </th>
-              <th className="text-left px-6 py-3 w-[35%]">
-                <span className={cn(designTokens.typography.label)}>
+              <th className="text-left px-6 py-3.5 w-[35%]">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
                   {t('Preview')}
                 </span>
               </th>
@@ -342,18 +342,21 @@ export default function ConfigureImport({
                 <tr
                   key={field.id}
                   className={cn(
-                    designTokens.components.tableRow,
+                    "border-b border-slate-100 transition-all duration-200",
+                    "hover:bg-blue-50/50",
                     mappingsReady && "mapping-row-animate"
                   )}
                   style={mappingsReady ? { animationDelay: `${index * 50}ms` } : undefined}
                 >
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-5">
                     <HStack className="gap-2 items-center">
                       {isMapped && (
-                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
+                        <CheckCircle className="w-5 h-5 text-blue-500 flex-shrink-0 check-pulse" />
                       )}
                       {!isMapped && isRequired && (
-                        <Box className="w-5 h-5 rounded-full border-2 border-gray-300 flex-shrink-0" />
+                        <div className="w-5 h-5 rounded-full border-2 border-dashed border-slate-300 flex-shrink-0 flex items-center justify-center">
+                          <div className="w-1.5 h-1.5 rounded-full bg-slate-300" />
+                        </div>
                       )}
                       {!isMapped && !isRequired && (
                         <Box className="w-5 h-5 flex-shrink-0" />
@@ -366,31 +369,43 @@ export default function ConfigureImport({
                       </span>
                     </HStack>
                   </td>
-                    <td className="px-6 py-4">
-                      <Select
-                        value={mappedColumn}
-                        onValueChange={(value) => handleMappingChange(field.id, value)}
-                        placeholder={t('Select...')}
-                        className="h-9 w-full max-w-[250px]"
-                        options={[
-                          { value: "none", label: "— None —" },
-                          ...columnHeaders.map((header: string, idx: number) => {
-                            const isAlreadyMapped = Object.keys(columnMapping).includes(idx.toString()) &&
-                              columnMapping[idx].id !== field.id;
+                  <td className="px-6 py-5">
+                    <Select
+                      value={mappedColumn}
+                      onValueChange={(value) => handleMappingChange(field.id, value)}
+                      placeholder={t('Select...')}
+                      className="h-9 w-full max-w-[250px]"
+                      options={[
+                        { value: "none", label: "— None —" },
+                        ...columnHeaders.map((header: string, idx: number) => {
+                          const isAlreadyMapped = Object.keys(columnMapping).includes(idx.toString()) &&
+                            columnMapping[idx].id !== field.id;
 
-                            return {
-                              value: idx.toString(),
-                              label: isAlreadyMapped ? `${header} (mapped)` : header,
-                              disabled: isAlreadyMapped
-                            };
-                          })
-                        ]}
-                      />
-                    </td>
-                  <td className="px-6 py-4">
-                    <span className={cn(designTokens.typography.body, "text-gray-600 truncate block max-w-[300px]")} title={mappedColumn ? getSampleData(parseInt(mappedColumn)) : ''}>
-                      {mappedColumn ? (getSampleData(parseInt(mappedColumn)) || '-') : ''}
-                    </span>
+                          return {
+                            value: idx.toString(),
+                            label: isAlreadyMapped ? `${header} (mapped)` : header,
+                            disabled: isAlreadyMapped
+                          };
+                        })
+                      ]}
+                    />
+                  </td>
+                  <td className="px-6 py-5">
+                    {mappedColumn ? (
+                      <div className="flex flex-wrap gap-1.5 max-w-[320px]">
+                        {getSampleData(parseInt(mappedColumn)).split(', ').filter(Boolean).slice(0, 3).map((sample: string, i: number) => (
+                          <span
+                            key={i}
+                            className="inline-flex px-2 py-0.5 text-xs bg-slate-100 text-slate-600 rounded-md truncate max-w-[100px]"
+                            title={sample}
+                          >
+                            {sample}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-sm text-slate-400">—</span>
+                    )}
                   </td>
                 </tr>
               );

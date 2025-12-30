@@ -192,6 +192,23 @@
     opacity: 0;
     will-change: opacity, transform;
   }
+
+  /* Checkmark success pulse */
+  @keyframes checkPulse {
+    0% {
+      transform: scale(1);
+    }
+    50% {
+      transform: scale(1.2);
+    }
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .check-pulse {
+    animation: checkPulse 0.3s ease-out;
+  }
 }
 
 /* Dialog backdrop styling */
