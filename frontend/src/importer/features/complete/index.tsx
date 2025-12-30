@@ -17,10 +17,13 @@ export default function Complete({ reload, close, isModal, rowCount }: CompleteP
     >
       <div className="flex flex-col items-center justify-center text-center">
         {/* Success Icon */}
-        <div className={cn(
-          "w-20 h-20 rounded-full flex items-center justify-center mb-6",
-          "bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-lg shadow-emerald-200"
-        )}>
+        <div
+          className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
+          style={{
+            background: 'linear-gradient(to bottom right, #34d399, #059669)',
+            boxShadow: '0 10px 15px -3px rgba(167, 243, 208, 0.4), 0 4px 6px -4px rgba(167, 243, 208, 0.4)'
+          }}
+        >
           <Check className="w-10 h-10 text-white" strokeWidth={3} />
         </div>
 

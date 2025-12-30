@@ -5,6 +5,11 @@ module.exports = {
     "./src/**/*.{js,jsx,ts,tsx}",
     "./examples/**/*.{js,jsx,ts,tsx}",
   ],
+  safelist: [
+    'from-emerald-400',
+    'to-emerald-600',
+    'shadow-emerald-200',
+  ],
   important: '.importcsv',
   theme: {
     extend: {
