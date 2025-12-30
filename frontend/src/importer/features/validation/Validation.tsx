@@ -452,7 +452,7 @@ export default function Validation<TSchema = unknown>({
             <span className={designTokens.typography.body}>Validating data...</span>
             <span className={designTokens.typography.body}>{validationProgress}%</span>
           </div>
-          <div className="w-full bg-gray-200 rounded-full h-2">
+          <div className="w-full bg-slate-200 rounded-full h-2">
             <div
               className="bg-blue-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${validationProgress}%` }}
@@ -478,41 +478,41 @@ export default function Validation<TSchema = unknown>({
               <button
                 type="button"
                 className={cn(
-                  "px-4 py-2 rounded-md transition-all",
+                  "px-4 py-2 rounded-lg transition-all",
                   designTokens.typography.body,
                   filterMode === 'all'
-                    ? 'bg-blue-50 text-blue-700 border-2 border-blue-500 font-medium'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-transparent'
+                    ? 'bg-slate-100 text-slate-900 border border-slate-300 font-medium shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50 border border-transparent'
                 )}
                 onClick={() => setFilterMode('all')}
               >
-                All <span className={cn("ml-2 px-2 py-0.5 rounded-full", designTokens.typography.caption, filterMode === 'all' ? 'bg-blue-100 text-blue-700' : 'bg-gray-200')}>{dataRows.length}</span>
+                All <span className={cn("ml-2 px-2 py-0.5 rounded-full text-xs font-medium", filterMode === 'all' ? 'bg-white text-slate-700 shadow-sm' : 'bg-slate-200 text-slate-600')}>{dataRows.length}</span>
               </button>
               <button
                 type="button"
                 className={cn(
-                  "px-4 py-2 rounded-md transition-all",
+                  "px-4 py-2 rounded-lg transition-all",
                   designTokens.typography.body,
                   filterMode === 'valid'
-                    ? 'bg-blue-50 text-blue-700 border-2 border-blue-500 font-medium'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-transparent'
+                    ? 'bg-slate-100 text-slate-900 border border-slate-300 font-medium shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50 border border-transparent'
                 )}
                 onClick={() => setFilterMode('valid')}
               >
-                Valid <span className={cn("ml-2 px-2 py-0.5 rounded-full", designTokens.typography.caption, filterMode === 'valid' ? 'bg-green-100 text-green-700' : 'bg-green-100 text-green-700')}>{validCount}</span>
+                Valid <span className={cn("ml-2 px-2 py-0.5 rounded-full text-xs font-medium", filterMode === 'valid' ? 'bg-emerald-100 text-emerald-700' : 'bg-emerald-50 text-emerald-600')}>{validCount}</span>
               </button>
               <button
                 type="button"
                 className={cn(
-                  "px-4 py-2 rounded-md transition-all",
+                  "px-4 py-2 rounded-lg transition-all",
                   designTokens.typography.body,
                   filterMode === 'error'
-                    ? 'bg-blue-50 text-blue-700 border-2 border-blue-500 font-medium'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50 border border-transparent'
+                    ? 'bg-slate-100 text-slate-900 border border-slate-300 font-medium shadow-sm'
+                    : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50 border border-transparent'
                 )}
                 onClick={() => setFilterMode('error')}
               >
-                Error <span className={cn("ml-2 px-2 py-0.5 rounded-full", designTokens.typography.caption, filterMode === 'error' ? 'bg-red-100 text-red-700' : 'bg-red-100 text-red-700')}>{errorCount}</span>
+                Error <span className={cn("ml-2 px-2 py-0.5 rounded-full text-xs font-medium", filterMode === 'error' ? 'bg-red-100 text-red-700' : 'bg-red-50 text-red-600')}>{errorCount}</span>
               </button>
             </div>
             <div className="flex items-center space-x-2">
@@ -546,7 +546,7 @@ export default function Validation<TSchema = unknown>({
     >
       <form onSubmit={handleSubmit} className="h-full">
 
-        <div className="h-full overflow-x-auto border border-gray-200 rounded-lg" ref={scrollableSectionRef}>
+        <div className="h-full overflow-x-auto border border-slate-200 rounded-xl bg-gradient-to-b from-white to-slate-50/50 shadow-sm" ref={scrollableSectionRef}>
           {visibleRows.length > 0 ? (
             <VirtualTable
             headers={headers}
@@ -560,7 +560,7 @@ export default function Validation<TSchema = unknown>({
             getRowClassName={(row, actualRowIdx) => {
               const displayRowIndex = actualRowIdx + headerRowIndex + 1;
               const rowHasError = errors.some(err => err.rowIndex === displayRowIndex);
-              return rowHasError ? 'bg-red-50 hover:bg-red-100' : '';
+              return rowHasError ? 'bg-red-50/70 hover:bg-red-100/70' : '';
             }}
             renderCell={(row, colIdx, actualRowIdx) => {
               const value = row.values[colIdx];
@@ -582,7 +582,7 @@ export default function Validation<TSchema = unknown>({
                       }
                     }}
                     tabIndex={0}
-                    className={`w-full px-3 py-2 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${error ? 'border-red-500 bg-red-50' : 'border-gray-300 hover:border-gray-400'}`}
+                    className={`w-full px-3 py-2 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-400 transition-colors ${error ? 'border-red-400 bg-red-50/70' : 'border-slate-200 hover:border-slate-300 bg-white'}`}
                   />
                   {error && (
                     <Tooltip content={error.message}>
@@ -601,7 +601,7 @@ export default function Validation<TSchema = unknown>({
             />
           ) : (
             <div className="p-8 text-center">
-              <span className={cn(designTokens.typography.body, "text-gray-500")}>
+              <span className={cn(designTokens.typography.body, "text-slate-400")}>
                 {filterMode === 'error' ? 'No rows with errors found' :
                  filterMode === 'valid' ? 'No valid rows found' :
                  'No data to display'}

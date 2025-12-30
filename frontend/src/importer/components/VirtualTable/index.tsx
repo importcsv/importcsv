@@ -53,13 +53,13 @@ export default function VirtualTable({
       {/* Sticky Header */}
       {stickyHeader && (
         <div 
-          className="bg-gray-50 border-b-2 border-gray-200 sticky top-0 z-20 overflow-hidden"
+          className="bg-slate-50/80 border-b border-slate-200 sticky top-0 z-20 overflow-hidden"
           style={{ minWidth: tableWidth }}
         >
           <div className="flex">
             {stickyFirstColumn && (
               <div 
-                className="text-left px-6 py-3 text-sm font-semibold text-gray-700 bg-gray-50 border-r border-gray-200"
+                className="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider bg-slate-50/80 border-r border-slate-200"
                 style={{ 
                   position: 'sticky', 
                   left: 0, 
@@ -74,7 +74,7 @@ export default function VirtualTable({
             {headers.map((header, idx) => (
               <div 
                 key={idx} 
-                className="text-left px-6 py-3 text-sm font-semibold text-gray-700 bg-gray-50"
+                className="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider bg-slate-50/80"
                 style={{ minWidth: '200px', flex: '0 0 200px' }}
               >
                 {header}
@@ -113,7 +113,7 @@ export default function VirtualTable({
               <div
                 key={virtualRow.key}
                 className={cn(
-                  "flex border-b border-gray-200 hover:bg-gray-50 transition-colors",
+                  "flex border-b border-slate-100 hover:bg-blue-50/50 transition-colors",
                   rowClassName
                 )}
                 style={{
@@ -128,12 +128,12 @@ export default function VirtualTable({
                 {/* Sticky Row Number */}
                 {stickyFirstColumn && (
                   <div 
-                    className="px-6 py-3 text-sm text-gray-700 border-r border-gray-200 flex items-center"
+                    className="px-6 py-3 text-sm text-slate-600 border-r border-slate-200 flex items-center"
                     style={{ 
                       position: 'sticky', 
                       left: 0, 
                       zIndex: 5, 
-                      backgroundColor: rowClassName.includes('bg-red-50') ? '#FEF2F2' : '#F9FAFB',
+                      backgroundColor: rowClassName.includes('bg-red-50') ? '#FEF2F2' : '#F8FAFC',
                       minWidth: '60px', 
                       width: '60px' 
                     }}
