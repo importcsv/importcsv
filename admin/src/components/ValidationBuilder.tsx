@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card } from '@/components/ui/card';
-import { Plus, Trash2, GripVertical } from 'lucide-react';
+import { Plus, GripVertical, CheckCircle, X, Shield } from 'lucide-react';
 
 export interface Validator {
   type: 'required' | 'unique' | 'regex' | 'min' | 'max' | 'min_length' | 'max_length';
@@ -22,7 +21,6 @@ interface ValidationBuilderProps {
 }
 
 export default function ValidationBuilder({ validators = [], onChange, fieldType }: ValidationBuilderProps) {
-  const [newValidatorType, setNewValidatorType] = useState<Validator['type'] | ''>('');
 
   // Get available validator types based on field type
   const getAvailableValidators = () => {
@@ -48,22 +46,6 @@ export default function ValidationBuilder({ validators = [], onChange, fieldType
     }
   };
 
-  const addValidator = () => {
-    if (!newValidatorType) return;
-
-    const newValidator: Validator = { type: newValidatorType };
-    
-    // Set default values based on type
-    if (newValidatorType === 'regex') {
-      newValidator.pattern = '';
-    } else if (['min', 'max', 'min_length', 'max_length'].includes(newValidatorType)) {
-      newValidator.value = 0;
-    }
-
-    onChange([...validators, newValidator]);
-    setNewValidatorType('');
-  };
-
   const updateValidator = (index: number, updates: Partial<Validator>) => {
     const updated = [...validators];
     updated[index] = { ...updated[index], ...updates };
@@ -72,13 +54,6 @@ export default function ValidationBuilder({ validators = [], onChange, fieldType
 
   const removeValidator = (index: number) => {
     onChange(validators.filter((_, i) => i !== index));
-  };
-
-  const moveValidator = (fromIndex: number, toIndex: number) => {
-    const updated = [...validators];
-    const [removed] = updated.splice(fromIndex, 1);
-    updated.splice(toIndex, 0, removed);
-    onChange(updated);
   };
 
   const getValidatorLabel = (type: Validator['type']) => {
@@ -101,106 +76,129 @@ export default function ValidationBuilder({ validators = [], onChange, fieldType
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <Select value={newValidatorType} onValueChange={(value: Validator['type']) => setNewValidatorType(value)}>
-          <SelectTrigger className="flex-1">
-            <SelectValue placeholder="Add validation rule..." />
-          </SelectTrigger>
-          <SelectContent>
-            {unusedValidators.map(type => (
-              <SelectItem key={type} value={type}>
-                {getValidatorLabel(type)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button 
-          type="button" 
-          onClick={addValidator} 
-          disabled={!newValidatorType}
-          size="sm"
-        >
-          <Plus className="h-4 w-4" />
-          Add
-        </Button>
+      {/* Quick-add buttons */}
+      <div className="space-y-2">
+        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          Add Validation Rule
+        </Label>
+        <div className="flex flex-wrap gap-2">
+          {unusedValidators.map(type => (
+            <Button
+              key={type}
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const newValidator: Validator = { type };
+                if (type === 'regex') {
+                  newValidator.pattern = '';
+                } else if (['min', 'max', 'min_length', 'max_length'].includes(type)) {
+                  newValidator.value = 0;
+                }
+                onChange([...validators, newValidator]);
+              }}
+              className="h-7 text-xs hover:bg-primary hover:text-primary-foreground transition-colors"
+            >
+              <Plus className="h-3 w-3 mr-1" />
+              {getValidatorLabel(type)}
+            </Button>
+          ))}
+        </div>
+        {unusedValidators.length === 0 && validators.length > 0 && (
+          <p className="text-xs text-muted-foreground">All available rules added</p>
+        )}
       </div>
 
+      {/* Active validation rules */}
       <div className="space-y-2">
         {validators.map((validator, index) => (
-          <Card key={index} className="p-3">
+          <Card key={index} className="group p-3 hover:border-primary/30 transition-colors">
             <div className="flex items-start gap-2">
+              {/* Drag handle - visible on hover */}
               <button
                 type="button"
-                className="mt-1 cursor-move text-gray-400 hover:text-gray-600"
+                className="mt-1 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab text-muted-foreground hover:text-foreground"
                 onMouseDown={(e) => {
                   e.preventDefault();
-                  // Simple drag handling - in production, use a library like react-sortable-hoc
                 }}
               >
                 <GripVertical className="h-4 w-4" />
               </button>
 
-              <div className="flex-1 space-y-2">
+              <div className="flex-1 min-w-0 space-y-2">
+                {/* Rule header with icon */}
                 <div className="flex items-center justify-between">
-                  <Label className="font-medium">{getValidatorLabel(validator.type)}</Label>
-                  <Button
+                  <div className="flex items-center gap-2">
+                    <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center">
+                      <CheckCircle className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                    <span className="font-medium text-sm">{getValidatorLabel(validator.type)}</span>
+                  </div>
+                  {/* Delete - visible on hover */}
+                  <button
                     type="button"
-                    variant="ghost"
-                    size="sm"
                     onClick={() => removeValidator(index)}
+                    aria-label={`Remove ${getValidatorLabel(validator.type)} rule`}
+                    className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-destructive/10"
                   >
-                    <Trash2 className="h-4 w-4 text-red-500" />
-                  </Button>
+                    <X className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                  </button>
                 </div>
 
+                {/* Regex pattern input */}
                 {validator.type === 'regex' && (
-                  <div>
-                    <Label htmlFor={`pattern-${index}`} className="text-sm">Pattern</Label>
+                  <div className="space-y-1">
+                    <Label htmlFor={`pattern-${index}`} className="text-xs text-muted-foreground">Pattern</Label>
                     <Input
                       id={`pattern-${index}`}
                       value={validator.pattern || ''}
                       onChange={(e) => updateValidator(index, { pattern: e.target.value })}
                       placeholder="e.g., ^[A-Z].*"
-                      className="mt-1"
+                      className="h-8 text-sm font-mono"
                     />
                   </div>
                 )}
 
+                {/* Numeric value input */}
                 {['min', 'max'].includes(validator.type) && (
-                  <div>
-                    <Label htmlFor={`value-${index}`} className="text-sm">Value</Label>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor={`value-${index}`} className="text-xs text-muted-foreground shrink-0">Value:</Label>
                     <Input
                       id={`value-${index}`}
                       type="number"
                       value={validator.value || 0}
                       onChange={(e) => updateValidator(index, { value: parseFloat(e.target.value) })}
-                      className="mt-1"
+                      className="h-8 w-24 text-sm"
                     />
                   </div>
                 )}
 
+                {/* Length value input */}
                 {['min_length', 'max_length'].includes(validator.type) && (
-                  <div>
-                    <Label htmlFor={`length-${index}`} className="text-sm">Characters</Label>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor={`length-${index}`} className="text-xs text-muted-foreground shrink-0">Characters:</Label>
                     <Input
                       id={`length-${index}`}
                       type="number"
                       min="0"
                       value={validator.value || 0}
                       onChange={(e) => updateValidator(index, { value: parseInt(e.target.value) })}
-                      className="mt-1"
+                      className="h-8 w-24 text-sm"
                     />
                   </div>
                 )}
 
-                <div>
-                  <Label htmlFor={`message-${index}`} className="text-sm">Custom error message (optional)</Label>
+                {/* Custom error message - collapsed by default */}
+                <div className="space-y-1">
+                  <Label htmlFor={`message-${index}`} className="text-xs text-muted-foreground">
+                    Custom error message (optional)
+                  </Label>
                   <Input
                     id={`message-${index}`}
                     value={validator.message || ''}
                     onChange={(e) => updateValidator(index, { message: e.target.value })}
                     placeholder="e.g., Please enter a valid value"
-                    className="mt-1"
+                    className="h-8 text-sm"
                   />
                 </div>
               </div>
@@ -210,9 +208,14 @@ export default function ValidationBuilder({ validators = [], onChange, fieldType
       </div>
 
       {validators.length === 0 && (
-        <div className="text-center py-8 text-gray-500 border-2 border-dashed rounded-lg">
-          <p>No validation rules configured</p>
-          <p className="text-sm mt-1">Add rules to validate user input</p>
+        <div className="flex flex-col items-center justify-center py-10 text-center border-2 border-dashed rounded-lg bg-muted/20">
+          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
+            <Shield className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <p className="font-medium text-sm text-foreground">No validation rules</p>
+          <p className="text-xs text-muted-foreground mt-1 max-w-[200px]">
+            Add rules above to ensure imported data meets your requirements
+          </p>
         </div>
       )}
     </div>

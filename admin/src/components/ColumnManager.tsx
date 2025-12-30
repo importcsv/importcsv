@@ -72,7 +72,6 @@ export default function ColumnManager({
             <AddColumnForm
               onAddColumn={handleAddColumn}
               existingFields={columns}
-              compact={true}
             />
           </DialogContent>
         </Dialog>
@@ -123,7 +122,6 @@ export default function ColumnManager({
                             onAddColumn={handleEditColumn}
                             existingFields={columns.filter((_, i) => i !== editingIndex)}
                             initialField={columns[editingIndex]}
-                            compact={true}
                             submitButtonText="Save Changes"
                           />
                         )}

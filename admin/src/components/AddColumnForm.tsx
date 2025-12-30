@@ -4,10 +4,9 @@ import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus } from 'lucide-react';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { ChevronRight, Plus } from 'lucide-react';
 import ValidationBuilder, { Validator } from './ValidationBuilder';
 import TransformationBuilder, { Transformation } from './TransformationBuilder';
 
@@ -25,16 +24,14 @@ interface AddColumnFormProps {
   onAddColumn: (field: ImporterField) => void;
   existingFields: ImporterField[];
   className?: string;
-  compact?: boolean;
   initialField?: ImporterField; // For editing existing columns
   submitButtonText?: string; // Custom text for submit button
 }
 
-export default function AddColumnForm({ 
-  onAddColumn, 
-  existingFields, 
-  className = '', 
-  compact = false,
+export default function AddColumnForm({
+  onAddColumn,
+  existingFields,
+  className = '',
   initialField,
   submitButtonText = 'Add Column'
 }: AddColumnFormProps) {
@@ -47,7 +44,8 @@ export default function AddColumnForm({
     transformations: [],
     options: []
   });
-  const [activeTab, setActiveTab] = useState('basic');
+  const [validationOpen, setValidationOpen] = useState(false);
+  const [transformationOpen, setTransformationOpen] = useState(false);
   
   // Helper function to generate display name from column name
   const generateDisplayName = (columnName: string): string => {
@@ -174,190 +172,248 @@ export default function AddColumnForm({
     setFieldErrors({});
   };
 
+  const validatorCount = newField.validators?.length ?? 0;
+  const transformationCount = newField.transformations?.length ?? 0;
+
   return (
-    <div className={`${className}`}>
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="basic">Basic Info</TabsTrigger>
-          <TabsTrigger value="validation">Validation</TabsTrigger>
-          <TabsTrigger value="transformation">Transformation</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="basic" className="space-y-4 mt-4">
-          <div className={`${compact ? 'space-y-4' : 'grid grid-cols-1 md:grid-cols-2 gap-4'}`}>
-        {/* Column Name */}
-        <div className="space-y-2">
-          <Label htmlFor="fieldName" className="text-base font-medium">Column Name</Label>
-          <Input
-            id="fieldName"
-            name="name"
-            value={newField.name}
-            onChange={handleFieldInputChange}
-            placeholder="e.g. email, first_name"
-            className={`mt-1 ${fieldErrors.name ? 'border-red-500' : ''}`}
-            required
-          />
-          {fieldErrors.name ? (
-            <p className="text-sm text-red-500 mt-1">{fieldErrors.name}</p>
-          ) : (
-            <p className="text-sm text-gray-500 mt-1">Input the column name exactly as in your CSV file.</p>
+    <div className={`space-y-3 ${className}`}>
+      {/* Basic Info Section - Always visible */}
+      <div className="rounded-lg border border-border bg-card">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+          <span className="text-sm font-medium">Basic Info</span>
+          {newField.name && (
+            <span className="text-xs text-green-600 font-medium">Ready</span>
           )}
         </div>
-        
-        {/* Display Name */}
-        <div className="space-y-2">
-          <Label htmlFor="fieldDisplayName">Display Name</Label>
-          <Input
-            id="fieldDisplayName"
-            name="display_name"
-            value={newField.display_name}
-            onChange={handleFieldInputChange}
-            placeholder="e.g. Email Address"
-            className="mt-1"
-          />
-          <p className="text-sm text-gray-500 mt-1">Optional display name for users.</p>
-        </div>
-        
-        {/* Format */}
-        <div className="space-y-2">
-          <Label htmlFor="fieldType">Format</Label>
-          <Select
-            value={newField.type}
-            onValueChange={handleTypeChange}
-          >
-            <SelectTrigger id="fieldType" className={`mt-1 ${fieldErrors.type ? 'border-red-500' : ''}`}>
-              <SelectValue placeholder="Select a format" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="text">Text (any value)</SelectItem>
-              <SelectItem value="number">Number</SelectItem>
-              <SelectItem value="date">Date</SelectItem>
-              <SelectItem value="email">Email</SelectItem>
-              <SelectItem value="phone">Phone Number</SelectItem>
-              <SelectItem value="boolean">Boolean</SelectItem>
-              <SelectItem value="select">Select (options)</SelectItem>
-              <SelectItem value="custom_regex">Custom Regular Expression</SelectItem>
-            </SelectContent>
-          </Select>
-          {fieldErrors.type && (
-            <p className="text-sm text-red-500 mt-1">{fieldErrors.type}</p>
-          )}
-        </div>
-        
-        {/* Options for Select type */}
-        {newField.type === 'select' && (
-          <div className="space-y-2">
-            <Label htmlFor="fieldOptions">Options</Label>
-            <Input
-              id="fieldOptions"
-              name="validation_format"
-              value={newField.validation_format || ''}
-              onChange={handleFieldInputChange}
-              placeholder="blue,red,yellow,white"
-              className={`mt-1 ${fieldErrors.validation_format ? 'border-red-500' : ''}`}
-              required
-            />
-            {fieldErrors.validation_format ? (
-              <p className="text-sm text-red-500 mt-1">{fieldErrors.validation_format}</p>
-            ) : (
-              <p className="text-sm text-gray-500 mt-1">Comma separated list of options</p>
-            )}
-            
-            {/* Example of how the options will appear */}
-            {newField.validation_format && (
-              <div className="mt-3 p-3 bg-gray-50 rounded-md border border-gray-200">
-                <p className="text-sm font-medium mb-2">Preview:</p>
-                <div className="flex flex-wrap gap-2">
-                  {newField.validation_format.split(',').map((option, index) => (
-                    <span 
-                      key={index} 
-                      className="px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-sm"
-                    >
-                      {option.trim()}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
+        <div className="p-4 space-y-4">
+          {/* Grouped name fields */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {/* Column Name */}
+            <div className="space-y-1.5">
+              <Label htmlFor="fieldName" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Column Name
+              </Label>
+              <Input
+                id="fieldName"
+                name="name"
+                value={newField.name}
+                onChange={handleFieldInputChange}
+                placeholder="e.g. email, first_name"
+                className={`h-9 ${fieldErrors.name ? 'border-red-500' : ''}`}
+                required
+              />
+              {fieldErrors.name ? (
+                <p className="text-xs text-red-500">{fieldErrors.name}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">Exact name from CSV file</p>
+              )}
+            </div>
+
+            {/* Display Name */}
+            <div className="space-y-1.5">
+              <Label htmlFor="fieldDisplayName" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Display Name
+              </Label>
+              <Input
+                id="fieldDisplayName"
+                name="display_name"
+                value={newField.display_name}
+                onChange={handleFieldInputChange}
+                placeholder="e.g. Email Address"
+                className="h-9"
+              />
+              <p className="text-xs text-muted-foreground">Shown to users (optional)</p>
+            </div>
           </div>
-        )}
-        
-        {/* Template for Boolean type */}
-        {newField.type === 'boolean' && (
-          <div className="space-y-2">
-            <Label htmlFor="fieldTemplate">Boolean Format</Label>
+
+          {/* Format selector */}
+          <div className="space-y-1.5">
+            <Label htmlFor="fieldType" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Data Format
+            </Label>
             <Select
-              value={newField.template || 'true/false'}
-              onValueChange={(value) => setNewField(prev => ({
-                ...prev,
-                template: value
-              }))}
+              value={newField.type}
+              onValueChange={handleTypeChange}
             >
-              <SelectTrigger id="fieldTemplate" className="mt-1">
-                <SelectValue placeholder="Choose template" />
+              <SelectTrigger id="fieldType" className={`h-9 ${fieldErrors.type ? 'border-red-500' : ''}`}>
+                <SelectValue placeholder="Select a format" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="true/false">true/false</SelectItem>
-                <SelectItem value="yes/no">yes/no</SelectItem>
-                <SelectItem value="1/0">1/0</SelectItem>
+                <SelectItem value="text">Text (any value)</SelectItem>
+                <SelectItem value="number">Number</SelectItem>
+                <SelectItem value="date">Date</SelectItem>
+                <SelectItem value="email">Email</SelectItem>
+                <SelectItem value="phone">Phone Number</SelectItem>
+                <SelectItem value="boolean">Boolean</SelectItem>
+                <SelectItem value="select">Select (options)</SelectItem>
+                <SelectItem value="custom_regex">Custom Regular Expression</SelectItem>
               </SelectContent>
             </Select>
-            <p className="text-sm text-gray-500 mt-1">Format for boolean values in CSV</p>
-          </div>
-        )}
-        
-        {/* Custom Regular Expression */}
-        {newField.type === 'custom_regex' && (
-          <div className="space-y-2">
-            <Label htmlFor="fieldRegex">Regular Expression</Label>
-            <Input
-              id="fieldRegex"
-              name="validation_format"
-              value={newField.validation_format || ''}
-              onChange={handleFieldInputChange}
-              placeholder="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
-              className={`mt-1 ${fieldErrors.validation_format ? 'border-red-500' : ''}`}
-              required
-            />
-            {fieldErrors.validation_format ? (
-              <p className="text-sm text-red-500 mt-1">{fieldErrors.validation_format}</p>
-            ) : (
-              <p className="text-sm text-gray-500 mt-1">Enter a valid regular expression pattern</p>
+            {fieldErrors.type && (
+              <p className="text-xs text-red-500">{fieldErrors.type}</p>
             )}
           </div>
-        )}
-        
-          </div>
-        </TabsContent>
-        
-        <TabsContent value="validation" className="mt-4">
-          <ValidationBuilder
-            validators={newField.validators || []}
-            onChange={(validators) => {
-              setNewField(prev => ({ 
-                ...prev, 
-                validators
-              }));
-            }}
-            fieldType={newField.type}
-          />
-        </TabsContent>
-        
-        <TabsContent value="transformation" className="mt-4">
-          <TransformationBuilder
-            transformations={newField.transformations || []}
-            onChange={(transformations) => setNewField(prev => ({ ...prev, transformations }))}
-            fieldType={newField.type}
-          />
-        </TabsContent>
-      </Tabs>
-      
-      <Button 
+
+          {/* Options for Select type */}
+          {newField.type === 'select' && (
+            <div className="space-y-1.5">
+              <Label htmlFor="fieldOptions" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Options
+              </Label>
+              <Input
+                id="fieldOptions"
+                name="validation_format"
+                value={newField.validation_format || ''}
+                onChange={handleFieldInputChange}
+                placeholder="blue,red,yellow,white"
+                className={`h-9 ${fieldErrors.validation_format ? 'border-red-500' : ''}`}
+                required
+              />
+              {fieldErrors.validation_format ? (
+                <p className="text-xs text-red-500">{fieldErrors.validation_format}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">Comma separated list of options</p>
+              )}
+
+              {/* Preview badges */}
+              {newField.validation_format && (
+                <div className="mt-2 p-3 bg-muted/50 rounded-md border border-border/50">
+                  <p className="text-xs font-medium text-muted-foreground mb-2">Preview:</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {newField.validation_format.split(',').map((option, index) => (
+                      <span
+                        key={index}
+                        className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-medium"
+                      >
+                        {option.trim()}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Template for Boolean type */}
+          {newField.type === 'boolean' && (
+            <div className="space-y-1.5">
+              <Label htmlFor="fieldTemplate" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Boolean Format
+              </Label>
+              <Select
+                value={newField.template || 'true/false'}
+                onValueChange={(value) => setNewField(prev => ({
+                  ...prev,
+                  template: value
+                }))}
+              >
+                <SelectTrigger id="fieldTemplate" className="h-9">
+                  <SelectValue placeholder="Choose template" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="true/false">true/false</SelectItem>
+                  <SelectItem value="yes/no">yes/no</SelectItem>
+                  <SelectItem value="1/0">1/0</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">Format for boolean values in CSV</p>
+            </div>
+          )}
+
+          {/* Custom Regular Expression */}
+          {newField.type === 'custom_regex' && (
+            <div className="space-y-1.5">
+              <Label htmlFor="fieldRegex" className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                Regular Expression
+              </Label>
+              <Input
+                id="fieldRegex"
+                name="validation_format"
+                value={newField.validation_format || ''}
+                onChange={handleFieldInputChange}
+                placeholder="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                className={`h-9 font-mono text-sm ${fieldErrors.validation_format ? 'border-red-500' : ''}`}
+                required
+              />
+              {fieldErrors.validation_format ? (
+                <p className="text-xs text-red-500">{fieldErrors.validation_format}</p>
+              ) : (
+                <p className="text-xs text-muted-foreground">Enter a valid regular expression pattern</p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Validation Section - Collapsible */}
+      <Collapsible open={validationOpen} onOpenChange={setValidationOpen}>
+        <div className="rounded-lg border border-border bg-card">
+          <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 hover:bg-muted/50 transition-colors">
+            <div className="flex items-center gap-2">
+              <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${validationOpen ? 'rotate-90' : ''}`} />
+              <span className="text-sm font-medium">Validation</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className={`w-2 h-2 rounded-full ${validatorCount > 0 ? 'bg-green-500' : 'bg-muted-foreground/30'}`} />
+              <span className="text-xs text-muted-foreground">
+                {validatorCount > 0 ? `${validatorCount} rule${validatorCount !== 1 ? 's' : ''}` : 'No rules'}
+              </span>
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="px-4 pb-4 border-t border-border/50">
+              <div className="pt-4">
+                <ValidationBuilder
+                  validators={newField.validators || []}
+                  onChange={(validators) => {
+                    setNewField(prev => ({
+                      ...prev,
+                      validators
+                    }));
+                  }}
+                  fieldType={newField.type}
+                />
+              </div>
+            </div>
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
+
+      {/* Transformation Section - Collapsible */}
+      <Collapsible open={transformationOpen} onOpenChange={setTransformationOpen}>
+        <div className="rounded-lg border border-border bg-card">
+          <CollapsibleTrigger className="flex items-center justify-between w-full px-4 py-3 hover:bg-muted/50 transition-colors">
+            <div className="flex items-center gap-2">
+              <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${transformationOpen ? 'rotate-90' : ''}`} />
+              <span className="text-sm font-medium">Transformation</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className={`w-2 h-2 rounded-full ${transformationCount > 0 ? 'bg-green-500' : 'bg-muted-foreground/30'}`} />
+              <span className="text-xs text-muted-foreground">
+                {transformationCount > 0 ? `${transformationCount} transform${transformationCount !== 1 ? 's' : ''}` : 'No transforms'}
+              </span>
+            </div>
+          </CollapsibleTrigger>
+          <CollapsibleContent>
+            <div className="px-4 pb-4 border-t border-border/50">
+              <div className="pt-4">
+                <TransformationBuilder
+                  transformations={newField.transformations || []}
+                  onChange={(transformations) => setNewField(prev => ({ ...prev, transformations }))}
+                  fieldType={newField.type}
+                />
+              </div>
+            </div>
+          </CollapsibleContent>
+        </div>
+      </Collapsible>
+
+      <Button
         type="button"
         onClick={addFieldHandler}
-        className="mt-6 w-full"
+        className="w-full h-10 font-medium"
       >
-        <Plus className="h-4 w-4 mr-1" />
+        <Plus className="h-4 w-4 mr-2" />
         {submitButtonText}
       </Button>
     </div>

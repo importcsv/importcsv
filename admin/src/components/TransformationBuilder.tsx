@@ -1,12 +1,11 @@
 'use client';
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
-import { GripVertical, Trash2, ArrowRight } from 'lucide-react';
+import { GripVertical, ChevronRight, Sparkles } from 'lucide-react';
 
 export interface Transformation {
   type: 'trim' | 'uppercase' | 'lowercase' | 'capitalize' | 'remove_special_chars' | 
@@ -94,13 +93,6 @@ export default function TransformationBuilder({
     onChange(updated);
   };
 
-  const moveTransformation = (fromIndex: number, toIndex: number) => {
-    const updated = [...transformations];
-    const [removed] = updated.splice(fromIndex, 1);
-    updated.splice(toIndex, 0, removed);
-    onChange(updated);
-  };
-
   const availableTransformations = getAvailableTransformations();
 
   // Create example preview
@@ -149,32 +141,75 @@ export default function TransformationBuilder({
 
   return (
     <div className="space-y-4">
+      {/* Pipeline visualization at top - always visible when transformations exist */}
+      {transformations.length > 0 && (
+        <div className="p-4 bg-gradient-to-r from-muted/50 to-muted/30 rounded-xl border">
+          {/* Visual pipeline */}
+          <div className="flex items-center gap-1 overflow-x-auto pb-2">
+            <div className="shrink-0 px-3 py-1.5 rounded-md bg-background border text-xs font-mono">
+              Input
+            </div>
+            {transformations.map((t, i) => (
+              <React.Fragment key={i}>
+                <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                <div className="shrink-0 px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium">
+                  {getTransformationLabel(t.type).split(' ')[0]}
+                </div>
+              </React.Fragment>
+            ))}
+            <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+            <div className="shrink-0 px-3 py-1.5 rounded-md bg-background border text-xs font-mono">
+              Output
+            </div>
+          </div>
+
+          {/* Live preview */}
+          <div className="mt-3 pt-3 border-t border-border/50">
+            <div className="flex items-center gap-2 text-xs flex-wrap">
+              <span className="text-muted-foreground">Preview:</span>
+              <code className="px-2 py-0.5 bg-background rounded border font-mono text-muted-foreground">
+                {fieldType === 'phone' ? '  (555) 123-4567  ' :
+                 fieldType === 'date' ? '  12/25/2024  ' :
+                 fieldType === 'email' ? '  JOHN.DOE@EXAMPLE.COM  ' :
+                 '  Hello World!  '}
+              </code>
+              <span className="text-muted-foreground">→</span>
+              <code className="px-2 py-0.5 bg-green-500/10 text-green-700 dark:text-green-400 rounded border border-green-500/20 font-mono font-medium">
+                {getExamplePreview()}
+              </code>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Transformation toggles */}
       <div className="space-y-2">
-        <Label>Available Transformations</Label>
+        <Label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+          Available Transformations
+        </Label>
         <div className="space-y-2">
           {availableTransformations.map(type => {
             const isActive = transformations.some(t => t.type === type);
             const transformation = transformations.find(t => t.type === type);
             const index = transformations.findIndex(t => t.type === type);
-            
+
             return (
-              <Card key={type} className={`p-3 ${isActive ? 'border-blue-500' : ''}`}>
+              <Card key={type} className={`p-3 transition-colors ${isActive ? 'border-primary/50 bg-primary/5' : 'hover:border-border'}`}>
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       {isActive && (
                         <button
                           type="button"
-                          className="cursor-move text-gray-400 hover:text-gray-600"
+                          className="cursor-grab text-muted-foreground hover:text-foreground transition-colors"
                           onMouseDown={(e) => {
                             e.preventDefault();
-                            // Simple drag handling
                           }}
                         >
                           <GripVertical className="h-4 w-4" />
                         </button>
                       )}
-                      <Label htmlFor={`transform-${type}`} className="cursor-pointer">
+                      <Label htmlFor={`transform-${type}`} className="cursor-pointer text-sm">
                         {getTransformationLabel(type)}
                       </Label>
                     </div>
@@ -184,56 +219,56 @@ export default function TransformationBuilder({
                       onCheckedChange={() => toggleTransformation(type)}
                     />
                   </div>
-                  
+
                   {isActive && transformation && (
                     <div className="ml-6 space-y-2">
                       {type === 'default' && (
-                        <div>
-                          <Label htmlFor={`default-value-${index}`} className="text-sm">Default value</Label>
+                        <div className="space-y-1">
+                          <Label htmlFor={`default-value-${index}`} className="text-xs text-muted-foreground">Default value</Label>
                           <Input
                             id={`default-value-${index}`}
                             value={transformation.value || ''}
                             onChange={(e) => updateTransformation(index, { value: e.target.value })}
                             placeholder="Value to use when field is empty"
-                            className="mt-1"
+                            className="h-8 text-sm"
                           />
                         </div>
                       )}
-                      
+
                       {type === 'replace' && (
-                        <div className="space-y-2">
-                          <div>
-                            <Label htmlFor={`find-${index}`} className="text-sm">Find</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <div className="space-y-1">
+                            <Label htmlFor={`find-${index}`} className="text-xs text-muted-foreground">Find</Label>
                             <Input
                               id={`find-${index}`}
                               value={transformation.find || ''}
                               onChange={(e) => updateTransformation(index, { find: e.target.value })}
                               placeholder="Text to find"
-                              className="mt-1"
+                              className="h-8 text-sm"
                             />
                           </div>
-                          <div>
-                            <Label htmlFor={`replace-${index}`} className="text-sm">Replace with</Label>
+                          <div className="space-y-1">
+                            <Label htmlFor={`replace-${index}`} className="text-xs text-muted-foreground">Replace with</Label>
                             <Input
                               id={`replace-${index}`}
                               value={transformation.replace || ''}
                               onChange={(e) => updateTransformation(index, { replace: e.target.value })}
                               placeholder="Replacement text"
-                              className="mt-1"
+                              className="h-8 text-sm"
                             />
                           </div>
                         </div>
                       )}
-                      
+
                       {type === 'normalize_date' && (
-                        <div>
-                          <Label htmlFor={`date-format-${index}`} className="text-sm">Output format</Label>
+                        <div className="space-y-1">
+                          <Label htmlFor={`date-format-${index}`} className="text-xs text-muted-foreground">Output format</Label>
                           <Input
                             id={`date-format-${index}`}
                             value={transformation.format || 'YYYY-MM-DD'}
                             onChange={(e) => updateTransformation(index, { format: e.target.value })}
                             placeholder="e.g., YYYY-MM-DD"
-                            className="mt-1"
+                            className="h-8 text-sm font-mono"
                           />
                         </div>
                       )}
@@ -246,54 +281,16 @@ export default function TransformationBuilder({
         </div>
       </div>
 
-      {transformations.length > 0 && (
-        <div className="space-y-2">
-          <Label>Transformation Pipeline</Label>
-          <Card className="p-3 bg-gray-50">
-            <div className="flex items-center gap-2 text-sm">
-              <span className="font-mono">Input</span>
-              {transformations.map((t, i) => (
-                <React.Fragment key={i}>
-                  <ArrowRight className="h-4 w-4 text-gray-400" />
-                  <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">
-                    {getTransformationLabel(t.type).split(' ')[0]}
-                  </span>
-                </React.Fragment>
-              ))}
-              <ArrowRight className="h-4 w-4 text-gray-400" />
-              <span className="font-mono">Output</span>
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {transformations.length > 0 && (
-        <div className="space-y-2">
-          <Label>Preview</Label>
-          <Card className="p-3 bg-blue-50">
-            <div className="text-sm">
-              <span className="text-gray-600">Example input: </span>
-              <span className="font-mono">
-                {fieldType === 'phone' ? '  (555) 123-4567  ' : 
-                 fieldType === 'date' ? '  12/25/2024  ' :
-                 fieldType === 'email' ? '  JOHN.DOE@EXAMPLE.COM  ' :
-                 '  Hello World!  '}
-              </span>
-            </div>
-            <div className="text-sm mt-1">
-              <span className="text-gray-600">Result: </span>
-              <span className="font-mono font-semibold text-blue-700">
-                {getExamplePreview()}
-              </span>
-            </div>
-          </Card>
-        </div>
-      )}
-
+      {/* Empty state */}
       {transformations.length === 0 && (
-        <div className="text-center py-8 text-gray-500 border-2 border-dashed rounded-lg">
-          <p>No transformations configured</p>
-          <p className="text-sm mt-1">Enable transformations to automatically clean and format data</p>
+        <div className="flex flex-col items-center justify-center py-10 text-center border-2 border-dashed rounded-lg bg-muted/20">
+          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
+            <Sparkles className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <p className="font-medium text-sm text-foreground">No transformations</p>
+          <p className="text-xs text-muted-foreground mt-1 max-w-[220px]">
+            Enable transformations above to automatically clean and format data
+          </p>
         </div>
       )}
     </div>
