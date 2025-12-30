@@ -556,7 +556,7 @@ export default function Main(props: CSVImporterProps) {
 
   const content = (
     <div className={cn(
-      "flex flex-col h-auto min-h-[400px] p-4 w-full box-border overflow-auto"
+      "flex flex-col h-auto min-h-[400px] p-4 w-full box-border overflow-visible"
     )}>
       <div>
         <Stepper {...stepper} />
@@ -602,7 +602,7 @@ export default function Main(props: CSVImporterProps) {
   // Wrap in Root component for isolation
   return (
     <Root primaryColor={props.primaryColor}>
-      <div className="csv-importer" data-theme={props.darkMode ? 'dark' : 'light'}>
+      <div className="csv-importer relative" data-theme={props.darkMode ? 'dark' : 'light'}>
         {content}
       </div>
     </Root>

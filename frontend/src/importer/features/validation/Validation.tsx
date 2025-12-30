@@ -542,7 +542,7 @@ export default function Validation<TSchema = unknown>({
       subtitle="Review and correct any errors in your data before importing."
       headerContent={headerContent}
       footerContent={footerContent}
-      contentClassName="px-6 py-4 overflow-hidden relative"
+      contentClassName="px-6 py-4 overflow-visible"
     >
       <form onSubmit={handleSubmit} className="h-full">
 

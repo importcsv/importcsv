@@ -228,9 +228,9 @@ export default function TransformPanel({
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop - covers entire importer */}
       <div
-        className="absolute inset-0 bg-black/20 dark:bg-black/50 z-40 transition-opacity duration-200"
+        className="absolute inset-0 bg-slate-900/50 dark:bg-slate-900/70 z-[100] transition-opacity duration-200"
         onClick={handleClose}
         style={{
           pointerEvents: isOpen ? 'auto' : 'none',
@@ -238,61 +238,66 @@ export default function TransformPanel({
         }}
       />
 
-      {/* Panel */}
+      {/* Modal - centered in importer */}
       <div
         ref={panelRef}
         tabIndex={-1}
-        className={`absolute right-0 top-0 h-full bg-white dark:bg-gray-800 shadow-lg z-50 flex flex-col transform transition-transform duration-200 ease-out rounded-l-lg ${
-          isOpen ? 'translate-x-0' : 'translate-x-full'
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+        className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-slate-800 shadow-2xl z-[101] flex flex-col rounded-xl border border-slate-200 dark:border-slate-700 transition-all duration-200 ${
+          isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
         }`}
         style={{
-          width: 'min(500px, 50%)',
-          minWidth: '320px',
+          width: 'min(480px, calc(100% - 48px))',
+          maxHeight: 'calc(100% - 96px)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b dark:border-gray-700">
-          <div className="flex items-center gap-2">
-            <span className="text-orange-500">!</span>
-            <h2 className="text-base font-medium text-gray-900 dark:text-gray-100">
-              {t('Transform Data')}
-            </h2>
-          </div>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+          <h2 id="modal-title" className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            {t('Fix Errors')}
+          </h2>
           <button
             onClick={handleClose}
-            className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+            className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
             aria-label="Close panel"
           >
-            <X className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+            <X className="h-5 w-5 text-slate-500 dark:text-slate-400" />
           </button>
         </div>
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto">
-          <div className="p-6 space-y-4">
+          <div className="px-6 py-5 space-y-4">
           {/* Error groups display when validation errors exist */}
           {hasValidationErrors && !hasChanges && errorGroups.length > 0 && (
             <>
               <div>
                 {/* Header */}
                 <div className="mb-4">
-                  <h3 className="text-base font-medium text-gray-900 dark:text-gray-100">
-                    {countSelectedErrors(errorGroups)} validation errors
+                  <h3 className="text-base font-medium text-slate-900 dark:text-slate-100">
+                    {countSelectedErrors(errorGroups)} validation {countSelectedErrors(errorGroups) === 1 ? 'error' : 'errors'}
                   </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                     Select errors to fix automatically
                   </p>
                 </div>
 
                 {/* Error list */}
-                <div className="space-y-1 mb-4">
+                <div className="space-y-1.5 mb-4">
                   {errorGroups.map(group => (
                     <div
                       key={group.type}
                       role="button"
                       tabIndex={0}
-                      className="flex items-center gap-3 py-2 px-1 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer rounded transition-colors"
+                      className={cn(
+                        "flex items-center gap-3 py-3 px-3 cursor-pointer rounded-lg transition-all",
+                        group.selected
+                          ? "bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800"
+                          : "hover:bg-slate-50 dark:hover:bg-slate-800 border border-transparent"
+                      )}
                       onClick={() => handleToggleErrorGroup(group.type)}
                       onKeyDown={(e) => handleKeyDown(e, () => handleToggleErrorGroup(group.type))}
                     >
@@ -303,10 +308,10 @@ export default function TransformPanel({
                         className="flex-shrink-0"
                       />
                       <div className="flex-1">
-                        <div className="text-sm text-gray-900 dark:text-gray-100">
+                        <div className="text-sm text-slate-900 dark:text-slate-100">
                           {group.title}
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
                           {group.count} {group.count === 1 ? 'error' : 'errors'} in {group.columns.join(', ')}
                         </p>
                       </div>
@@ -314,21 +319,22 @@ export default function TransformPanel({
                   ))}
                 </div>
 
-                {/* Action buttons */}
-                <div className="flex gap-2 mb-4">
+                {/* Action links */}
+                <div className="flex items-center gap-2 mb-4">
                   <button
                     type="button"
-                    className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition-colors"
                     onClick={() => handleSelectAllErrors(true)}
                   >
                     Select all
                   </button>
+                  <span className="text-slate-300 dark:text-slate-600">|</span>
                   <button
                     type="button"
-                    className="px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    className="text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 hover:underline transition-colors"
                     onClick={() => handleSelectAllErrors(false)}
                   >
-                    Clear all
+                    Clear
                   </button>
                 </div>
 
@@ -336,7 +342,7 @@ export default function TransformPanel({
                 <div className="flex justify-end">
                   <button
                     type="button"
-                    className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-4 py-2.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                     onClick={handleFixSelectedErrors}
                     disabled={isGenerating || countSelectedErrors(errorGroups) === 0}
                   >
@@ -384,15 +390,15 @@ export default function TransformPanel({
               </button>
 
               {showExamples && (
-                <div className="mt-2 p-2 bg-gray-50 dark:bg-gray-900 rounded-md">
-                  <p className="text-xs mb-1 font-bold dark:text-gray-300">
+                <div className="mt-2 p-3 bg-slate-50 dark:bg-slate-900 rounded-lg">
+                  <p className="text-xs mb-2 font-medium text-slate-600 dark:text-slate-300">
                     {t('Click to use:')}
                   </p>
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex flex-wrap gap-1.5">
                     {COMMON_PROMPTS.slice(0, 5).map((example, i) => (
                       <span
                         key={i}
-                        className="px-2 py-1 text-xs bg-gray-200 dark:bg-gray-700 dark:text-gray-300 rounded cursor-pointer hover:bg-blue-100 dark:hover:bg-gray-600"
+                        className="px-2.5 py-1 text-xs bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-md cursor-pointer hover:bg-blue-100 hover:text-blue-700 dark:hover:bg-slate-600 transition-colors"
                         onClick={() => handleUseExample(example)}
                       >
                         {example}
@@ -415,8 +421,11 @@ export default function TransformPanel({
           {isGenerating && (
             <div className="text-center py-8">
               <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
-              <p className="mt-2 text-gray-600">
-                {t('Analyzing data and generating transformations...')}
+              <p className="mt-3 font-medium text-slate-700 dark:text-slate-300">
+                {t('Generating fixes...')}
+              </p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                {t('Analyzing errors and suggesting corrections')}
               </p>
             </div>
           )}
@@ -427,10 +436,10 @@ export default function TransformPanel({
               <div>
                 {/* Header with count */}
                 <div className="mb-4">
-                  <h3 className="text-base font-medium text-gray-900 dark:text-gray-100">
-                    {changes.length} {changes[0]?.columnKey || ''} values will be transformed
+                  <h3 className="text-base font-medium text-slate-900 dark:text-slate-100">
+                    {changes.length} {changes[0]?.columnKey || ''} {changes.length === 1 ? 'value' : 'values'} will be transformed
                   </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
                     Review and select the changes you want to apply
                   </p>
                 </div>
@@ -448,13 +457,18 @@ export default function TransformPanel({
 
                 {/* Changes list */}
                 <div>
-                  <div className="space-y-0.5">
+                  <div className="space-y-1">
                     {changes.slice(0, 100).map((change, index) => (
                       <div
                         key={index}
                         role="button"
                         tabIndex={0}
-                        className="flex items-center gap-3 py-2 px-1 hover:bg-gray-50 dark:hover:bg-gray-800 cursor-pointer transition-colors rounded"
+                        className={cn(
+                          "flex items-center gap-3 py-2.5 px-3 cursor-pointer transition-all rounded-lg",
+                          change.selected
+                            ? "bg-blue-50 border border-blue-200 dark:bg-blue-900/20 dark:border-blue-800"
+                            : "hover:bg-slate-50 dark:hover:bg-slate-800 border border-transparent"
+                        )}
                         onClick={() => handleToggleChange(index)}
                         onKeyDown={(e) => handleKeyDown(e, () => handleToggleChange(index))}
                       >
@@ -494,7 +508,7 @@ export default function TransformPanel({
                             )}
                           </div>
                           {/* Row info */}
-                          <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
                             Row {change.rowIndex + 1}, {change.columnKey}
                           </div>
                         </div>
@@ -502,7 +516,7 @@ export default function TransformPanel({
                     ))}
 
                     {changes.length > 100 && (
-                      <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">
+                      <p className="text-sm text-slate-500 dark:text-slate-400 text-center py-2">
                         {t(`Showing first 100 of ${changes.length} changes`)}
                       </p>
                     )}
@@ -516,23 +530,26 @@ export default function TransformPanel({
 
         {/* Footer */}
         {hasChanges && (
-          <div className="border-t dark:border-gray-700 p-4">
+          <div className="border-t border-slate-200 dark:border-slate-700 px-6 py-4 bg-white dark:bg-slate-800 rounded-b-xl">
             <div className="flex justify-between items-center">
-              <div className="text-sm text-gray-500 dark:text-gray-400">
-                {selectedCount} selected
+              <div>
+                <span className="text-lg font-semibold text-slate-900 dark:text-slate-100">{selectedCount}</span>
+                <span className="text-sm text-slate-500 dark:text-slate-400 ml-1.5">
+                  {selectedCount === 1 ? 'change' : 'changes'} selected
+                </span>
                 {needsReviewCount > 0 && (
-                  <span className="text-amber-600 dark:text-amber-400 ml-1">
+                  <span className="text-sm text-amber-600 dark:text-amber-400 ml-2">
                     ({needsReviewCount} need review)
                   </span>
                 )}
               </div>
               <button
                 type="button"
-                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2.5 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
                 onClick={() => handleApply(selectedCount === changes.length)}
                 disabled={selectedCount === 0}
               >
-                {t(`Apply ${selectedCount}`)}
+                {t('Apply')}
               </button>
             </div>
           </div>
