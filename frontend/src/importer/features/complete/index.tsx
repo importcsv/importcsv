@@ -3,7 +3,6 @@ import { Button } from "../../components/ui/button";
 import StepLayout from "../../components/StepLayout";
 import { CompleteProps } from "./types";
 import { RotateCcw, Check } from "lucide-react";
-import { cn } from "../../../utils/cn";
 
 export default function Complete({ reload, close, isModal, rowCount }: CompleteProps) {
   const { t } = useTranslation();
@@ -16,7 +15,8 @@ export default function Complete({ reload, close, isModal, rowCount }: CompleteP
       contentClassName="px-6 py-12"
     >
       <div className="flex flex-col items-center justify-center text-center">
-        {/* Success Icon */}
+        {/* Success Icon - Inline styles required: Tailwind gradient utilities
+            don't resolve correctly with .importcsv selector scoping */}
         <div
           className="w-20 h-20 rounded-full flex items-center justify-center mb-6"
           style={{
