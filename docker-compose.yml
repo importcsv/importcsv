@@ -81,6 +81,7 @@ services:
       - ./admin:/app
       - ./frontend:/frontend
       - admin_node_modules:/app/node_modules
+      - frontend_node_modules:/frontend/node_modules
     environment:
       - NODE_ENV=development
       - FRONTEND_WATCH=true  # Auto-rebuild frontend on source changes
@@ -96,3 +97,4 @@ volumes:
   redis_data:
   backend_logs:
   admin_node_modules:
+  frontend_node_modules:

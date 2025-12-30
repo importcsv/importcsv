@@ -1,6 +1,13 @@
 #!/bin/sh
 set -e
 
+# Install frontend dependencies if missing (named volume may be empty on first run)
+if [ ! -d "/frontend/node_modules/react" ]; then
+  echo "Installing frontend dependencies..."
+  cd /frontend && npm install --legacy-peer-deps 2>&1 | tail -5
+  cd /app
+fi
+
 # Function to copy frontend build to node_modules
 copy_frontend() {
   if [ -d "/frontend/build/react" ]; then
