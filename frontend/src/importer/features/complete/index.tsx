@@ -1,42 +1,35 @@
 import { useTranslation } from "../../../i18n/useTranslation";
 import { Button } from "../../components/ui/button";
-import Box from "../../components/Box";
+import StepLayout from "../../components/StepLayout";
 import { CompleteProps } from "./types";
 import { RotateCcw, Check } from "lucide-react";
 import { cn } from "../../../utils/cn";
 
-export default function Complete({ reload, close, isModal }: CompleteProps) {
+export default function Complete({ reload, close, isModal, rowCount }: CompleteProps) {
   const { t } = useTranslation();
+
   return (
-    <Box className={cn(
-      "max-w-[1000px] pt-4 h-full flex-1 shadow-none bg-transparent self-center",
-      "flex items-center justify-center text-2xl flex-col gap-4 text-center relative"
-    )}>
-      <>
-        <span className={cn(
-          "w-16 h-16 relative isolate flex items-center justify-center",
-          "before:content-[''] before:absolute before:inset-0 before:rounded-full",
-          "before:bg-green-500 before:-z-10"
-        )}>
-          <Check className="w-6 h-6 text-white" />
-        </span>
-        <div>{t("Import Successful")}</div>
+    <StepLayout
+      title={t("Import Complete")}
+      subtitle={rowCount ? t("{{count}} rows imported successfully", { count: rowCount }) : t("Your data has been imported successfully")}
+      showFooter={false}
+      contentClassName="px-6 py-12"
+    >
+      <div className="flex flex-col items-center justify-center text-center">
+        {/* Success Icon */}
         <div className={cn(
-          "flex gap-8 items-center justify-center mt-12",
-          "[&>*]:flex-1 [&>*]:min-w-[190px]"
+          "w-20 h-20 rounded-full flex items-center justify-center mb-6",
+          "bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-lg shadow-emerald-200"
         )}>
-          <Button type="button" variant="outline" onClick={reload}>
-            <RotateCcw className="mr-2 h-4 w-4" />
-            {t("Upload another file")}
-          </Button>
-          {isModal && (
-            <Button type="button" onClick={close}>
-              <Check className="mr-2 h-4 w-4" />
-              {t("Done")}
-            </Button>
-          )}
+          <Check className="w-10 h-10 text-white" strokeWidth={3} />
         </div>
-      </>
-    </Box>
+
+        {/* Action Button - Centered */}
+        <Button type="button" variant="outline" onClick={reload} className="mt-4">
+          <RotateCcw className="mr-2 h-4 w-4" />
+          {t("Upload another file")}
+        </Button>
+      </div>
+    </StepLayout>
   );
 }

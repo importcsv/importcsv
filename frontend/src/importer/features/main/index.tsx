@@ -94,6 +94,9 @@ export default function Main(props: CSVImporterProps) {
 
   // Used in the final step to show a loading indicator while the data is submitting
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+
+  // Track imported row count for the success screen
+  const [importedRowCount, setImportedRowCount] = useState<number>(0);
   
   // Loading state for Excel parser
   const [isLoadingExcelParser, setIsLoadingExcelParser] = useState<boolean>(false);
@@ -327,6 +330,9 @@ export default function Main(props: CSVImporterProps) {
       return resultingRow;
     });
 
+    // Track row count for success screen
+    setImportedRowCount(mappedRows.length);
+
     const includedColumns = Object.values(columnMapping).filter(({ include }) => include);
 
     // Standalone mode: directly call onComplete with data
@@ -548,7 +554,7 @@ export default function Main(props: CSVImporterProps) {
           />
         );
       case StepEnum.Complete:
-        return <Complete reload={reload} close={requestClose} isModal={isModal} />;
+        return <Complete reload={reload} close={requestClose} isModal={isModal} rowCount={importedRowCount} />;
       default:
         return null;
     }
