@@ -24,7 +24,7 @@ describe('Stepper component', () => {
     render(h(Stepper, { steps, current: 1 }));
 
     const mapStep = screen.getByText('Map Columns');
-    expect(mapStep).toHaveClass('text-blue-600');
+    expect(mapStep).toHaveClass('text-slate-900');
     expect(mapStep).toHaveClass('font-semibold');
   });
 
@@ -35,8 +35,8 @@ describe('Stepper component', () => {
     const uploadLabel = screen.getByText('Upload');
     expect(uploadLabel).toHaveClass('font-medium');
 
-    // Completed steps should have check icon styling (border-blue-600)
-    const stepCircles = container.querySelectorAll('.border-blue-600');
+    // Completed steps should have solid blue background
+    const stepCircles = container.querySelectorAll('.bg-blue-600');
     expect(stepCircles.length).toBeGreaterThan(0);
   });
 
@@ -68,7 +68,7 @@ describe('Stepper component', () => {
     const { container } = render(h(Stepper, { steps, current: 0 }));
 
     // Connector lines should exist between steps (there should be 3 connectors for 4 steps)
-    const connectors = container.querySelectorAll('.mx-3');
+    const connectors = container.querySelectorAll('.mx-4');
     expect(connectors.length).toBe(3);
   });
 
@@ -86,36 +86,36 @@ describe('Stepper component', () => {
     const validateStep = screen.getByText('Validate');
 
     // Active step (Map Columns)
-    expect(mapStep).toHaveClass('text-blue-600', 'font-semibold');
+    expect(mapStep).toHaveClass('text-slate-900', 'font-semibold');
 
     // Done step (Upload)
-    expect(uploadStep).toHaveClass('text-gray-700', 'font-medium');
+    expect(uploadStep).toHaveClass('text-slate-700', 'font-medium');
 
     // Pending step (Validate)
-    expect(validateStep).toHaveClass('text-gray-500');
+    expect(validateStep).toHaveClass('text-slate-400');
   });
 
   it('shows all steps as pending when current is 0', () => {
     render(h(Stepper, { steps, current: 0 }));
 
     const uploadStep = screen.getByText('Upload');
-    expect(uploadStep).toHaveClass('text-blue-600');
+    expect(uploadStep).toHaveClass('text-slate-900');
 
     // All other steps should be pending
     const mapStep = screen.getByText('Map Columns');
     const validateStep = screen.getByText('Validate');
     const completeStep = screen.getByText('Complete');
 
-    expect(mapStep).toHaveClass('text-gray-500');
-    expect(validateStep).toHaveClass('text-gray-500');
-    expect(completeStep).toHaveClass('text-gray-500');
+    expect(mapStep).toHaveClass('text-slate-400');
+    expect(validateStep).toHaveClass('text-slate-400');
+    expect(completeStep).toHaveClass('text-slate-400');
   });
 
   it('shows all steps as completed when current is last step', () => {
     render(h(Stepper, { steps, current: 3 }));
 
     const completeStep = screen.getByText('Complete');
-    expect(completeStep).toHaveClass('text-blue-600', 'font-semibold');
+    expect(completeStep).toHaveClass('text-slate-900', 'font-semibold');
 
     // Previous steps should be marked as done
     const uploadStep = screen.getByText('Upload');

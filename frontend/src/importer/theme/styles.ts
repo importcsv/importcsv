@@ -62,38 +62,44 @@ export const styles = {
 
 // CSS variables for dynamic theming
 export const cssVariables = {
-  // Colors
+  // Colors - refined slate palette
   '--csv-color-primary': '#2563eb',
   '--csv-color-primary-hover': '#1d4ed8',
   '--csv-color-primary-foreground': '#ffffff',
-  '--csv-color-secondary': '#f3f4f6',
-  '--csv-color-secondary-foreground': '#111827',
+  '--csv-color-secondary': '#f1f5f9', // slate-100
+  '--csv-color-secondary-foreground': '#0f172a', // slate-900
   '--csv-color-background': '#ffffff',
-  '--csv-color-foreground': '#111827',
-  '--csv-color-border': '#e5e7eb',
-  '--csv-color-muted': '#f9fafb',
-  '--csv-color-muted-foreground': '#6b7280',
-  
-  // Typography
-  '--csv-font-family': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  '--csv-color-foreground': '#0f172a', // slate-900
+  '--csv-color-border': '#e2e8f0', // slate-200
+  '--csv-color-muted': '#f8fafc', // slate-50
+  '--csv-color-muted-foreground': '#64748b', // slate-500
+
+  // Typography - distinctive font stack
+  '--csv-font-family': '"DM Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+  '--csv-font-family-display': '"DM Sans", sans-serif',
   '--csv-font-size-xs': '0.75rem',
   '--csv-font-size-sm': '0.875rem',
   '--csv-font-size-base': '1rem',
   '--csv-font-size-lg': '1.125rem',
   '--csv-font-size-xl': '1.25rem',
-  
+
   // Spacing
   '--csv-spacing-xs': '0.25rem',
   '--csv-spacing-sm': '0.5rem',
   '--csv-spacing-md': '1rem',
   '--csv-spacing-lg': '1.5rem',
   '--csv-spacing-xl': '2rem',
-  
-  // Borders
-  '--csv-radius-sm': '0.25rem',
+
+  // Borders - slightly larger radii for modern feel
+  '--csv-radius-sm': '0.375rem',
   '--csv-radius-md': '0.5rem',
   '--csv-radius-lg': '0.75rem',
   '--csv-radius-xl': '1rem',
+
+  // Shadows for depth
+  '--csv-shadow-sm': '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+  '--csv-shadow-md': '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+  '--csv-shadow-lg': '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
 };
 
 // Backward compatibility export

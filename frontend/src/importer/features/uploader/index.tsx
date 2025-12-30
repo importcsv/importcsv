@@ -58,21 +58,26 @@ export default function Uploader({
             "grid gap-8 w-full items-start",
             columns && columns.length > 0 ? "grid-cols-[320px_1fr]" : "grid-cols-1"
           )}>
-          {/* Schema Section (Left Side) */}
+          {/* Schema Section (Left Side) - Enhanced */}
           {columns && columns.length > 0 && (
-            <div
-              className={cn(designTokens.components.card, "p-6 h-fit sticky top-4")}>
+            <div className="p-6 h-fit sticky top-4 bg-white border border-slate-200 rounded-xl shadow-sm">
               {/* Required Columns */}
               {requiredColumns.length > 0 && (
-                <div className={designTokens.spacing.section}>
-                  <div className={cn(designTokens.typography.caption, "mb-3 uppercase tracking-wider")}>
-                    {t("Required")}
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="w-2 h-2 rounded-full bg-blue-500" />
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                      {t("Required")}
+                    </span>
                   </div>
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {requiredColumns.map((col) => (
-                      <div key={col.id} className="flex items-center">
-                        <span className={designTokens.typography.body}>{col.label}</span>
-                      </div>
+                      <span
+                        key={col.id}
+                        className="px-3 py-1.5 text-sm font-medium bg-slate-100 text-slate-700 rounded-lg"
+                      >
+                        {col.label}
+                      </span>
                     ))}
                   </div>
                 </div>
@@ -80,35 +85,41 @@ export default function Uploader({
 
               {/* Optional Columns */}
               {optionalColumns.length > 0 && (
-                <div className="">
-                  <div className={cn(designTokens.typography.caption, "mb-3 uppercase tracking-wider")}>
-                    {t("Optional")}
+                <div className="mb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="w-2 h-2 rounded-full bg-slate-300" />
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                      {t("Optional")}
+                    </span>
                   </div>
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-wrap gap-2">
                     {optionalColumns.map((col) => (
-                      <div key={col.id} className="flex items-center">
-                        <span className={cn(designTokens.typography.body, "text-gray-600")}>{col.label}</span>
-                      </div>
+                      <span
+                        key={col.id}
+                        className="px-3 py-1.5 text-sm bg-slate-50 text-slate-500 rounded-lg border border-slate-200"
+                      >
+                        {col.label}
+                      </span>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* Info Box with Download Button */}
+              {/* Template Download - Enhanced */}
               {showDownloadTemplateButton && (
-                <div className="mt-6 pt-6 border-t border-gray-200">
-                  <div className="flex items-start gap-2 p-3 rounded-lg bg-blue-50 mb-3">
-                    <AlertCircle className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                    <p className={cn(designTokens.typography.caption, "text-blue-700")}>
+                <div className="pt-5 border-t border-slate-200">
+                  <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-50 border border-amber-200 mb-4">
+                    <AlertCircle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-amber-800 leading-relaxed">
                       {t("Make sure your file includes all the required columns.")}
                     </p>
                   </div>
                   <Button
                     onClick={downloadTemplate}
                     variant="outline"
-                    className="w-full"
+                    className="w-full group hover:border-blue-400 hover:bg-blue-50 transition-all duration-200"
                   >
-                    <Download className="w-4 h-4 mr-2" />
+                    <Download className="w-4 h-4 mr-2 transition-transform group-hover:-translate-y-0.5" />
                     {t("Download CSV template")}
                   </Button>
                 </div>

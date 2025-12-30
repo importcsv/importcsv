@@ -37,27 +37,55 @@ export default function UploaderWrapper({ onSuccess, setDataError, ...props }: U
       accept={acceptedTypes}
       disabled={loading}
       loading={loading}
-      className={`w-full flex justify-center items-center flex-col bg-gray-50 border-2 border-dashed rounded-lg transition-all duration-200 hover:bg-gray-100 ${
-        isMobile ? 'min-h-[220px] py-8 px-6' : 'min-h-[380px] py-12 px-10'
-      } border-gray-300 hover:border-gray-400 [&.drag-active]:border-blue-500 [&.drag-active]:bg-blue-50`}
+      className={`
+        group
+        w-full flex justify-center items-center flex-col
+        bg-gradient-to-b from-slate-50 to-slate-100
+        border-2 rounded-xl
+        transition-all duration-300 ease-out
+        hover:shadow-lg hover:shadow-blue-500/10
+        hover:border-blue-400 hover:from-blue-50 hover:to-slate-50
+        [&.drag-active]:border-blue-500
+        [&.drag-active]:bg-gradient-to-b [&.drag-active]:from-blue-50 [&.drag-active]:to-blue-100
+        [&.drag-active]:shadow-xl [&.drag-active]:shadow-blue-500/20
+        [&.drag-active]:scale-[1.02]
+        ${isMobile ? 'min-h-[220px] py-8 px-6' : 'min-h-[380px] py-12 px-10'}
+        border-slate-200
+      `}
     >
-      {/* Upload Icon */}
+      {/* Animated Icon Container */}
       <Box
-        className={`mb-4 p-4 rounded-full bg-white transition-all duration-200 text-gray-400`}
+        className={`
+          mb-6 p-5 rounded-2xl
+          bg-white shadow-sm
+          border border-slate-200
+          transition-all duration-300 ease-out
+          group-hover:shadow-md group-hover:scale-110 group-hover:border-blue-200
+          [.drag-active_&]:scale-125 [.drag-active_&]:shadow-lg [.drag-active_&]:bg-blue-500
+        `}
       >
-        <CloudUpload size={isMobile ? 32 : 48} />
+        <CloudUpload
+          size={isMobile ? 36 : 52}
+          className="text-slate-400 transition-colors duration-300 group-hover:text-blue-500 [.drag-active_&]:text-white"
+          strokeWidth={1.5}
+        />
       </Box>
-      
+
       {loading ? (
-        <Text className={`${isMobile ? 'text-base' : 'text-lg'} font-medium text-gray-700`}>
+        <Text className={`${isMobile ? 'text-base' : 'text-lg'} font-medium text-slate-700`}>
           {t("Loading...")}
         </Text>
       ) : (
-        <Text 
-          className={`${isMobile ? 'text-base' : 'text-lg'} font-medium text-gray-700`}
-        >
-          {t("Drop a file or click to browse")}
-        </Text>
+        <>
+          <Text
+            className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold text-slate-800 mb-2 transition-colors duration-300 group-hover:text-blue-600`}
+          >
+            {t("Drop a file or click to browse")}
+          </Text>
+          <Text className="text-sm text-slate-500">
+            {t("CSV, XLS, or XLSX up to 50MB")}
+          </Text>
+        </>
       )}
     </NativeDropzone>
   );
