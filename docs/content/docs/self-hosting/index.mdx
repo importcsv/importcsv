@@ -1,0 +1,50 @@
+---
+title: Self-Hosting ImportCSV
+description: Deploy ImportCSV backend on your own infrastructure
+---
+
+# Self-Hosting
+
+<Callout type="info">
+**Most users don't need this.** The [cloud offering](https://importcsv.com) provides AI features, admin dashboard, and managed infrastructure without any setup.
+</Callout>
+
+This section is for teams who want to self-host the ImportCSV backend on their own infrastructure.
+
+## When to Self-Host
+
+- You need data to stay on your own servers
+- You have specific compliance requirements
+- You want to customize the backend behavior
+
+## What You'll Deploy
+
+- **FastAPI Backend** - Handles imports, validation, webhooks
+- **Admin Dashboard** - Next.js app for managing importers
+- **PostgreSQL** - Stores importer configurations and import history
+- **Redis** - Job queue for background processing
+
+## Getting Started
+
+<Cards>
+  <Card
+    title="Quick Start"
+    href="/self-hosting/getting-started"
+    description="Set up the backend and admin dashboard"
+  />
+  <Card
+    title="Backend vs Cloud"
+    href="/self-hosting/comparison"
+    description="Compare approaches"
+  />
+  <Card
+    title="API Reference"
+    href="/self-hosting/api-reference"
+    description="Backend API documentation"
+  />
+  <Card
+    title="Admin Dashboard"
+    href="/self-hosting/admin-dashboard"
+    description="Managing importers"
+  />
+</Cards>

@@ -3,42 +3,82 @@ title: AI-Powered Features
 description: Smart column mapping and natural language data transformations
 ---
 
-ImportCSV includes AI features to make data imports smarter and faster.
+ImportCSV includes AI features that make data imports faster and more accurate. These features require connecting to the cloud backend.
 
 ## Smart Column Mapping
 
-Automatically suggests which CSV columns map to your schema fields using AI. The system analyzes column names and sample data to provide intelligent mapping suggestions with confidence scores.
+When users upload a CSV, the importer automatically suggests which columns map to your schema fields.
 
-When you upload a CSV, the AI:
-- Analyzes column names and sample data
-- Suggests the best matches for your schema
-- Shows confidence scores for each suggestion
-- Falls back to string similarity if AI is unavailable
+### How It Works
+
+1. **Instant suggestions** - Column names are matched using similarity (e.g., "Email Address" → `email`)
+2. **AI enhancement** - Cloud AI analyzes column names and sample data for smarter matches
+3. **Confidence indicators** - High-confidence matches show a checkmark; users can always adjust
+
+### What Users See
+
+- Suggested mappings appear automatically after upload
+- High-confidence suggestions are pre-selected
+- Users can click any mapping to change it
+- Unmapped columns are clearly indicated
+
+### Graceful Fallback
+
+If the cloud is unavailable or AI features aren't configured:
+- String similarity matching still works
+- Users can manually map all columns
+- No errors shown - the experience degrades gracefully
 
 ## Natural Language Transformations
 
-Fix validation errors and transform data using simple prompts. Just describe what you want in plain English.
+Fix validation errors and transform data using plain English prompts.
 
-### Common transformations:
+### The Transform Panel
+
+When validation errors occur, users can open the Transform Panel to fix them:
+
+1. **Click "Fix with AI"** in the validation step
+2. **Describe the fix** - e.g., "Fix email addresses" or "Convert dates to YYYY-MM-DD"
+3. **Review changes** - Each suggestion shows:
+   - Original value → New value
+   - Confidence indicator (high/medium)
+4. **Select changes** - Check/uncheck individual fixes
+5. **Apply** - Selected changes are applied to the data
+
+### Common Prompts
+
+The Transform Panel suggests common fixes:
+
 - "Fix all email addresses"
 - "Convert dates to YYYY-MM-DD format"
 - "Format phone numbers as (XXX) XXX-XXXX"
-- "Capitalize all names"
+- "Capitalize names"
 - "Remove special characters"
 - "Fill empty values with N/A"
 
-### How it works:
-1. Click the transformation button in the validation step
-2. Type your transformation request
-3. Preview the changes with confidence scores
-4. Select/deselect specific changes
-5. Apply the transformations
+### What AI Can Fix
+
+**Works well:**
+- Email format issues (missing @, typos in domains)
+- Date format conversions (MM/DD/YYYY → YYYY-MM-DD)
+- Phone number normalization
+- Text case corrections
+- Whitespace cleanup
+
+**Still needs Zod transforms:**
+- Complex business logic
+- Custom calculations
+- Data lookups or enrichment
+- Conditional transformations
 
 ## Setup
 
-Enable AI features by providing these props to your CSVImporter:
+### Cloud Mode (Recommended)
+
+Connect to the cloud backend to enable AI features:
 
 ```tsx
+import { CSVImporter } from '@importcsv/react';
 import { z } from 'zod';
 
 const schema = z.object({
@@ -49,40 +89,43 @@ const schema = z.object({
 
 <CSVImporter
   schema={schema}
-  backendUrl="https://your-api.com"  // Your backend API URL
-  importerKey="your-importer-key"     // Your importer key
+  backendUrl="https://api.importcsv.com"
+  importerKey="your-importer-key"
   onComplete={handleComplete}
 />
 ```
 
-## Backend Configuration
+Get your importer key from the [ImportCSV dashboard](https://importcsv.com).
 
-Add this to your backend `.env` file:
+### Local Mode
 
-```bash
-# AI Features (optional but recommended)
-OPENAI_API_KEY=sk-xxxxx
+Without cloud connection, the importer still works:
+- Column mapping uses string similarity (still helpful)
+- Validation uses your Zod schema (full functionality)
+- AI transformations are unavailable
+
+```tsx
+// Local mode - no backendUrl needed
+<CSVImporter
+  schema={schema}
+  onComplete={handleComplete}
+/>
 ```
 
-The AI features will gracefully degrade if not configured - column mapping will use string similarity and transformations will be unavailable.
+## Best Practices
 
-## Technology
+1. **Use clear column names in your schema** - AI works better when schema field names are descriptive (`customer_email` vs `field1`)
 
-Built with [BAML](https://github.com/BoundaryML/baml) for reliable AI prompt engineering and OpenAI GPT models. Results are cached in Redis for better performance and cost efficiency.
+2. **Provide sample data in your schema descriptions** - Helps AI understand expected formats
 
-## Examples
+3. **Combine with Zod transforms** - Use AI for user-facing fixes, Zod transforms for guaranteed formatting
 
-### Fixing validation errors:
-When validation errors occur, the AI can automatically fix them:
-- Invalid emails are corrected
-- Dates are reformatted to match requirements  
-- Phone numbers are normalized
+4. **Test with real data** - Upload sample CSVs your users will actually import
 
-### Bulk transformations:
-Transform entire columns at once:
-- Standardize date formats across all rows
-- Clean and format phone numbers
-- Normalize text casing
-- Remove unwanted characters
+## Next Steps
 
-The AI understands context and applies appropriate transformations based on the data type and validation rules.
+<Cards>
+  <Card title="Schema Guide" href="/configuration/schemas" description="Define validation with Zod" />
+  <Card title="Transformations" href="/configuration/transformations" description="Programmatic data transforms" />
+  <Card title="Handling Large Files" href="/advanced/handling-large-files" description="Performance for big datasets" />
+</Cards>

@@ -130,7 +130,12 @@ const config = {
       // Core Concepts → Advanced
       {
         source: '/core-concepts/performance',
-        destination: '/advanced/performance',
+        destination: '/advanced/handling-large-files',
+        permanent: true
+      },
+      {
+        source: '/advanced/performance',
+        destination: '/advanced/handling-large-files',
         permanent: true
       },
       {
@@ -139,10 +144,20 @@ const config = {
         permanent: true
       },
 
-      // Backend → Advanced/Backend
+      // Backend → Self-Hosting
       {
         source: '/backend/:slug*',
-        destination: '/advanced/backend/:slug*',
+        destination: '/self-hosting/:slug*',
+        permanent: true
+      },
+      {
+        source: '/advanced/backend',
+        destination: '/self-hosting',
+        permanent: true
+      },
+      {
+        source: '/advanced/backend/:slug*',
+        destination: '/self-hosting/:slug*',
         permanent: true
       },
 

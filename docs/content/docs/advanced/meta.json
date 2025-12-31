@@ -3,7 +3,6 @@
   "pages": [
     "headless",
     "ai-features",
-    "handling-large-files",
-    "backend"
+    "handling-large-files"
   ]
 }

@@ -1,128 +1,55 @@
 ---
 title: Handling Large Files
-description: Best practices for importing 10,000+ rows efficiently
+description: Performance optimizations for importing large datasets
 ---
 
-ImportCSV handles large datasets efficiently through virtual scrolling and progressive validation, supporting 10,000+ rows without freezing your browser.
+ImportCSV automatically handles large files with optimizations that require no configuration.
 
-## Quick Example
+## Automatic Optimizations
 
-```tsx
-import { CSVImporter } from '@importcsv/react';
-import { z } from 'zod';
-import { useState } from 'react';
+### Virtual Scrolling
 
-// Define schema with validation and transformations
-const transactionSchema = z.object({
-  transaction_id: z.string().min(1, 'Transaction ID is required'),
-  date: z.string().datetime(),
-  customer_email: z.string()
-    .email('Must be valid email')
-    .transform(s => s.trim().toLowerCase()),
-  amount: z.number().nonnegative('Amount must be positive'),
-  status: z.enum(['pending', 'completed', 'failed', 'refunded']),
-  notes: z.string().default('N/A').transform(s => s.trim())
-});
+Only ~20 rows are rendered in the DOM at any time, regardless of file size. Users can scroll through thousands of rows smoothly at 60fps.
 
-type Transaction = z.infer<typeof transactionSchema>;
+### Progressive Validation
 
-export default function LargeDatasetExample() {
-  const [importStats, setImportStats] = useState<{
-    totalRows: number;
-    sampleData: Transaction[];
-    timestamp: string;
-  } | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
+- **First 50 rows**: Validated instantly on upload (< 100ms)
+- **Remaining rows**: Validated in background chunks of 100 rows
+- **Progress indicator**: Shows validation progress for large files
 
-  const handleComplete = (data: Transaction[]) => {
-    setImportStats({
-      totalRows: data.length,
-      sampleData: data.slice(0, 5), // Show first 5 rows
-      timestamp: new Date().toISOString()
-    });
-    setIsOpen(false);
+### Memory Efficiency
 
-    console.log(`Successfully imported ${data.length} rows`);
-  };
+Data is stored in memory-efficient structures. Constant memory usage regardless of visible rows - only the rendered rows are kept in the DOM.
 
-  return (
-    <div>
-      <button
-        onClick={() => setIsOpen(true)}
-        className="px-4 py-2 bg-blue-500 text-white rounded"
-      >
-        Import Large Dataset
-      </button>
+## What to Expect
 
-      <CSVImporter
-        modalIsOpen={isOpen}
-        modalOnCloseTriggered={() => setIsOpen(false)}
-        schema={transactionSchema}
-        validateUnique={['transaction_id']}
-        onComplete={handleComplete}
-        primaryColor="#3B82F6"
-        darkMode={false}
-      />
+| File Size | Experience |
+|-----------|------------|
+| Under 1,000 rows | Instant - validation completes immediately |
+| 1,000 - 10,000 rows | Fast - brief validation progress shown |
+| 10,000+ rows | Works well - may see loading states |
+| 50,000+ rows | Consider chunking on your server |
 
-      {importStats && (
-        <div className="mt-4 p-4 border rounded">
-          <h3 className="font-bold mb-2">Import Statistics</h3>
-          <p>✅ Successfully imported {importStats.totalRows} rows</p>
-          <p>🕐 Imported at: {new Date(importStats.timestamp).toLocaleTimeString()}</p>
-
-          <h4 className="font-bold mt-4 mb-2">Sample Data (First 5 Rows)</h4>
-          <pre className="text-xs bg-gray-100 p-2 rounded overflow-auto">
-            {JSON.stringify(importStats.sampleData, null, 2)}
-          </pre>
-        </div>
-      )}
-    </div>
-  );
-}
-```
-
-## How It Works
-
-ImportCSV uses two key techniques to handle large files:
-
-**Virtual Scrolling**: Renders only visible rows (~20 at a time) instead of all 10,000+ rows, keeping memory usage constant and scrolling smooth at 60fps.
-
-**Progressive Validation**: First 50 rows validate instantly (< 100ms), while remaining rows validate asynchronously in the background without blocking the UI.
-
-**Memory Efficient**: Constant memory usage regardless of file size. Only visible rows are kept in the DOM.
-
-## Performance Expectations
-
-| Dataset Size | Initial Render | Full Validation | Memory Usage |
-|-------------|---------------|-----------------|--------------|
-| 100 rows | < 50ms | < 100ms | ~5MB |
-| 1,000 rows | < 50ms | < 500ms | ~8MB |
-| 5,000 rows | < 50ms | ~2s | ~15MB |
-| 10,000 rows | < 50ms | ~4s | ~20MB |
-
-*Tested on Chrome 120, MacBook Pro M1*
-
-## Optimization Tips
+## Tips for Best Performance
 
 ### 1. Use Built-in Validators
 
 ```tsx
-// ❌ Complex regex - slower
-email: z.string().regex(/^(?:[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)*[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])$/)
+// Slower - complex regex
+email: z.string().regex(/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/)
 
-// ✅ Use built-in validator - faster
+// Faster - use built-in validator
 email: z.string().email()
 ```
 
-### 2. Minimize Transformations
+### 2. Keep Transforms Simple
 
 ```tsx
 // Only apply necessary transformations
 const schema = z.object({
   email: z.string()
     .email()
-    .transform(s => s.trim())        // Essential
-    .transform(s => s.toLowerCase()) // Essential
+    .transform(s => s.trim().toLowerCase()) // Essential
     // Don't add unnecessary transformations
 });
 ```
@@ -131,39 +58,53 @@ const schema = z.object({
 
 ```tsx
 const handleComplete = async (data: Transaction[]) => {
-  // Process in batches for very large datasets
   const BATCH_SIZE = 1000;
 
   for (let i = 0; i < data.length; i += BATCH_SIZE) {
     const batch = data.slice(i, i + BATCH_SIZE);
-    await processBatch(batch);
-
-    // Update progress
-    setProgress((i + BATCH_SIZE) / data.length * 100);
+    await sendToServer(batch);
   }
 };
 ```
 
-## Browser Requirements
+## Server-Side Chunking
 
-For optimal performance with large datasets:
-- Chrome 90+ (recommended)
-- 4GB+ RAM
-- Modern CPU (2015+)
+For very large files (50k+ rows), process in chunks before importing:
+
+```tsx
+// Example: Split large file before import
+async function handleLargeFile(file: File) {
+  const CHUNK_SIZE = 10000;
+  const text = await file.text();
+  const lines = text.split('\n');
+  const header = lines[0];
+
+  for (let i = 1; i < lines.length; i += CHUNK_SIZE) {
+    const chunk = [header, ...lines.slice(i, i + CHUNK_SIZE)].join('\n');
+    await processChunk(chunk);
+  }
+}
+```
 
 ## Troubleshooting
 
-### File takes too long to validate
-- Simplify validators (use built-in types)
+**File takes too long to validate**
+- Simplify validators (use built-in types like `.email()`, `.url()`)
 - Reduce number of required fields
-- Consider server-side validation for 10,000+ rows
+- Consider server-side validation for 50k+ rows
 
-### Browser becomes unresponsive
-- Check file size (should be < 50MB)
+**Browser becomes unresponsive**
+- Check file size (should be < 50MB for browser processing)
 - Close other tabs to free memory
 - Try Chrome for best performance
 
-### Memory issues
-- Monitor with Chrome DevTools
+**Memory issues**
 - Process data in batches after import
-- Consider pagination for display
+- Consider pagination for displaying results
+
+## Next Steps
+
+<Cards>
+  <Card title="AI Features" href="/advanced/ai-features" description="Smart mapping and transforms" />
+  <Card title="Headless Components" href="/advanced/headless" description="Custom UI with full control" />
+</Cards>

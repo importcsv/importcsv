@@ -1,6 +1,7 @@
 {
-  "title": "Backend",
+  "title": "Self-Hosting",
   "pages": [
+    "index",
     "getting-started",
     "comparison",
     "api-reference",
