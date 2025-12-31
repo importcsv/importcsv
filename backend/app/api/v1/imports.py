@@ -22,7 +22,8 @@ from app.services.importer import get_importer_by_key
 from app.services.queue import enqueue_job
 from app.services.mapping import enhance_column_mappings
 from app.services.transformation import generate_transformations
-from app.services.usage import check_and_increment_usage, is_usage_limits_enabled
+from app.services.usage import check_and_increment_usage, check_rows_limit
+from app.core.features import is_cloud_mode
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +91,15 @@ async def create_import_job(
         data = column_mapping_dict.get("data", [])
         invalid_data = column_mapping_dict.get("invalid_data", [])
         total_rows = len(data) + len(invalid_data)
+
+        # Check rows per import limit (cloud mode only)
+        if is_cloud_mode():
+            rows_exceeded, max_rows = check_rows_limit(db, current_user, total_rows)
+            if rows_exceeded:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Import exceeds maximum rows per import ({total_rows:,} rows, limit is {max_rows:,}). Upgrade your plan for higher limits."
+                )
 
         # Check usage limits and increment atomically
         limit_exceeded, current_count, limit = check_and_increment_usage(
@@ -202,6 +212,18 @@ async def process_import_by_key(
     user_data = request.user
     metadata = request.metadata
     total_rows = len(valid_data) + len(invalid_data)
+
+    # Get importer owner for limit checks
+    importer_owner = db.query(User).filter(User.id == importer.user_id).first()
+
+    # Check rows per import limit (cloud mode only)
+    if is_cloud_mode() and importer_owner:
+        rows_exceeded, max_rows = check_rows_limit(db, importer_owner, total_rows)
+        if rows_exceeded:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Import exceeds maximum rows per import ({total_rows:,} rows, limit is {max_rows:,}). Upgrade your plan for higher limits."
+            )
 
     # Check usage limits and increment atomically
     limit_exceeded, current_count, limit = check_and_increment_usage(
@@ -458,3 +480,64 @@ async def get_schema_by_key(
     importer.user_id = str(importer.user_id)
 
     return importer
+
+
+@key_router.get("/config")
+async def get_importer_config(
+    importer_key: uuid.UUID,
+    db: Session = Depends(get_db),
+):
+    """
+    Get configuration for an importer including billing/limit info.
+
+    This endpoint returns the importer config along with:
+    - Whether to show branding
+    - Current usage limits
+    - Tier information
+
+    Used by the embedded importer to configure itself.
+
+    Args:
+        importer_key: UUID of the importer to fetch config for
+        db: Database session dependency
+
+    Returns:
+        Configuration including branding settings, tier info, and usage limits
+    """
+    from app.core.features import (
+        is_cloud_mode,
+        get_tier_import_limit,
+        get_tier_max_rows,
+        should_show_branding,
+    )
+    from app.services.usage import get_usage_for_period
+
+    # Find the importer by key
+    importer = get_importer_by_key(db, importer_key)
+    user = db.query(User).filter(User.id == importer.user_id).first()
+
+    # Default config for non-cloud mode
+    if not is_cloud_mode():
+        return {
+            "importer_id": str(importer.id),
+            "show_branding": False,
+            "tier": None,
+            "limits": None,
+        }
+
+    tier = user.subscription_tier if user else "free"
+    usage = get_usage_for_period(db, user.id) if user else {}
+    import_limit = get_tier_import_limit(tier)
+
+    return {
+        "importer_id": str(importer.id),
+        "show_branding": should_show_branding(tier),
+        "tier": tier,
+        "limits": {
+            "imports_used": usage.get("import_count", 0),
+            "imports_limit": import_limit,
+            "imports_remaining": max(0, import_limit - usage.get("import_count", 0)) if import_limit else None,
+            "max_rows_per_import": get_tier_max_rows(tier),
+            "limit_reached": usage.get("limit_reached", False),
+        },
+    }

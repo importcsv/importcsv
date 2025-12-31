@@ -7,7 +7,13 @@ from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
 from app.models.usage import UsageRecord
-from app.core.features import get_free_tier_limit, is_usage_limits_enabled
+from app.models.user import User
+from app.core.features import (
+    get_free_tier_limit,
+    is_usage_limits_enabled,
+    get_tier_import_limit,
+    get_tier_max_rows,
+)
 
 
 def get_current_period() -> str:
@@ -116,6 +122,89 @@ def check_and_increment_usage(db: Session, user_id: UUID, rows: int = 0) -> tupl
     # Lock the row to prevent concurrent modifications
     record = db.query(UsageRecord).filter(
         UsageRecord.user_id == user_id,
+        UsageRecord.period == period
+    ).with_for_update().first()
+
+    # Check if limit already exceeded
+    if record.import_count >= limit:
+        db.commit()  # Release lock
+        return True, record.import_count, limit
+
+    # Increment within the same transaction (row is locked)
+    record.import_count += 1
+    record.row_count += rows
+    db.commit()
+
+    return False, record.import_count, limit
+
+
+def get_user_limits(db: Session, user_id: UUID) -> dict:
+    """Get the current limits for a user based on their tier."""
+    user = db.query(User).filter(User.id == user_id).first()
+    tier = user.subscription_tier if user else "free"
+
+    return {
+        "tier": tier,
+        "import_limit": get_tier_import_limit(tier),
+        "max_rows_per_import": get_tier_max_rows(tier),
+    }
+
+
+def check_usage_limit_for_user(db: Session, user: User) -> tuple[bool, int, int | None]:
+    """Check if user has reached their usage limit based on their tier.
+
+    Returns: (limit_reached, current_count, limit)
+    """
+    if not is_usage_limits_enabled():
+        return False, 0, None
+
+    record = get_or_create_usage_record(db, user.id)
+    limit = get_tier_import_limit(user.subscription_tier)
+
+    if limit is None:  # Unlimited (business tier)
+        return False, record.import_count, None
+
+    return record.import_count >= limit, record.import_count, limit
+
+
+def check_rows_limit(db: Session, user: User, rows: int) -> tuple[bool, int]:
+    """Check if import exceeds max rows per import for user's tier.
+
+    Returns: (limit_exceeded, max_allowed)
+    """
+    max_rows = get_tier_max_rows(user.subscription_tier)
+    return rows > max_rows, max_rows
+
+
+def check_and_increment_usage_for_user(
+    db: Session,
+    user: User,
+    rows: int = 0,
+) -> tuple[bool, int, int | None]:
+    """Atomically check limit and increment if allowed, using tier-based limits.
+
+    Returns: (limit_exceeded, new_count, limit)
+    """
+    period = get_current_period()
+
+    # Ensure record exists
+    get_or_create_usage_record(db, user.id, period)
+
+    if not is_usage_limits_enabled():
+        # Still track usage even when limits disabled
+        record = increment_usage(db, user.id, rows)
+        return False, record.import_count, None
+
+    tier = user.subscription_tier
+    limit = get_tier_import_limit(tier)
+
+    if limit is None:  # Unlimited tier
+        record = increment_usage(db, user.id, rows)
+        return False, record.import_count, None
+
+    # Lock the row to prevent concurrent modifications
+    record = db.query(UsageRecord).filter(
+        UsageRecord.user_id == user.id,
         UsageRecord.period == period
     ).with_for_update().first()
 

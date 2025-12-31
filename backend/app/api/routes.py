@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1 import auth, auth_oauth, importers, imports, usage, onboarding
+from app.api.v1 import auth, auth_oauth, importers, imports, usage, onboarding, billing, webhooks
 
 api_router = APIRouter()
 
@@ -25,3 +25,9 @@ api_router.include_router(
     prefix="/v1/users/me",
     tags=["Onboarding"]
 )
+
+# Billing routes (cloud mode only)
+api_router.include_router(billing.router, prefix="/v1/billing", tags=["Billing"])
+
+# Webhook routes
+api_router.include_router(webhooks.router, prefix="/v1/webhooks", tags=["Webhooks"])
