@@ -137,10 +137,40 @@ class BaseAppSettings(BaseSettings):
     STRIPE_PRICE_ID_PRO: Optional[str] = Field(
         default_factory=lambda: os.getenv("STRIPE_PRICE_ID_PRO")
     )
+    STRIPE_PRICE_ID_BUSINESS: Optional[str] = Field(
+        default_factory=lambda: os.getenv("STRIPE_PRICE_ID_BUSINESS")
+    )
 
-    # Usage limits
+    # Resend settings
+    RESEND_API_KEY: Optional[str] = Field(
+        default_factory=lambda: os.getenv("RESEND_API_KEY")
+    )
+    RESEND_FROM_EMAIL: str = Field(
+        default_factory=lambda: os.getenv("RESEND_FROM_EMAIL", "noreply@importcsv.dev")
+    )
+
+    # Usage limits (per month)
+    # Note: Business tier has unlimited imports (no BUSINESS_TIER_IMPORTS_PER_MONTH)
     FREE_TIER_IMPORTS_PER_MONTH: int = Field(
         default_factory=lambda: int(os.getenv("FREE_TIER_IMPORTS_PER_MONTH", "100"))
+    )
+    PRO_TIER_IMPORTS_PER_MONTH: int = Field(
+        default_factory=lambda: int(os.getenv("PRO_TIER_IMPORTS_PER_MONTH", "2000"))
+    )
+    # Max rows per import (all tiers have limits)
+    FREE_TIER_MAX_ROWS_PER_IMPORT: int = Field(
+        default_factory=lambda: int(os.getenv("FREE_TIER_MAX_ROWS_PER_IMPORT", "10000"))
+    )
+    PRO_TIER_MAX_ROWS_PER_IMPORT: int = Field(
+        default_factory=lambda: int(os.getenv("PRO_TIER_MAX_ROWS_PER_IMPORT", "100000"))
+    )
+    BUSINESS_TIER_MAX_ROWS_PER_IMPORT: int = Field(
+        default_factory=lambda: int(os.getenv("BUSINESS_TIER_MAX_ROWS_PER_IMPORT", "500000"))
+    )
+
+    # Grace period for failed payments (days)
+    PAYMENT_GRACE_PERIOD_DAYS: int = Field(
+        default_factory=lambda: int(os.getenv("PAYMENT_GRACE_PERIOD_DAYS", "7"))
     )
 
     @field_validator("SECRET_KEY")
@@ -157,6 +187,25 @@ class BaseAppSettings(BaseSettings):
         if not upload_path.exists():
             upload_path.mkdir(parents=True, exist_ok=True)
         return str(upload_path)
+
+    @model_validator(mode='after')
+    def validate_cloud_settings(self):
+        """Validate that required settings are present when cloud mode is enabled."""
+        if self.IMPORTCSV_CLOUD:
+            missing = []
+            if not self.STRIPE_SECRET_KEY:
+                missing.append("STRIPE_SECRET_KEY")
+            if not self.STRIPE_WEBHOOK_SECRET:
+                missing.append("STRIPE_WEBHOOK_SECRET")
+            if not self.STRIPE_PRICE_ID_PRO:
+                missing.append("STRIPE_PRICE_ID_PRO")
+            if not self.STRIPE_PRICE_ID_BUSINESS:
+                missing.append("STRIPE_PRICE_ID_BUSINESS")
+            if missing:
+                raise ValueError(
+                    f"IMPORTCSV_CLOUD=true requires these settings: {', '.join(missing)}"
+                )
+        return self
 
     class Config:
         env_file = ".env"

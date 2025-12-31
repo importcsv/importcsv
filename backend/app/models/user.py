@@ -23,6 +23,13 @@ class User(Base):
     # Profile
     profile_image = Column(String, nullable=True)
 
+    # Billing fields
+    stripe_customer_id = Column(String(255), unique=True, index=True, nullable=True)
+    subscription_id = Column(String(255), nullable=True)
+    subscription_tier = Column(String(20), default="free", nullable=False)
+    subscription_status = Column(String(20), default="active", nullable=False)
+    grace_period_ends_at = Column(DateTime(timezone=True), nullable=True)
+
     # Relationships - using simple string references
     importers = relationship("Importer", back_populates="user")
     import_jobs = relationship("ImportJob", back_populates="user")
