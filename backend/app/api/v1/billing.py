@@ -29,7 +29,11 @@ def _validate_redirect_url(url: str) -> str:
     parsed = urlparse(url)
     frontend_parsed = urlparse(settings.FRONTEND_URL)
 
-    if not parsed.scheme or not parsed.netloc:
+    # Explicitly whitelist http/https schemes only
+    if parsed.scheme not in ("http", "https"):
+        raise ValueError("URL must use http or https scheme")
+
+    if not parsed.netloc:
         raise ValueError("Invalid URL format")
 
     if parsed.netloc != frontend_parsed.netloc:

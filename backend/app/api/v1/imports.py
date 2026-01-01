@@ -22,7 +22,7 @@ from app.services.importer import get_importer_by_key
 from app.services.queue import enqueue_job
 from app.services.mapping import enhance_column_mappings
 from app.services.transformation import generate_transformations
-from app.services.usage import check_and_increment_usage, check_rows_limit
+from app.services.usage import check_and_increment_usage_for_user, check_rows_limit
 from app.core.features import is_cloud_mode
 
 logger = logging.getLogger(__name__)
@@ -101,9 +101,9 @@ async def create_import_job(
                     detail=f"Import exceeds maximum rows per import ({total_rows:,} rows, limit is {max_rows:,}). Upgrade your plan for higher limits."
                 )
 
-        # Check usage limits and increment atomically
-        limit_exceeded, current_count, limit = check_and_increment_usage(
-            db, current_user.id, rows=total_rows
+        # Check usage limits and increment atomically (tier-based)
+        limit_exceeded, current_count, limit = check_and_increment_usage_for_user(
+            db, current_user, rows=total_rows
         )
         if limit_exceeded:
             raise HTTPException(
@@ -225,10 +225,10 @@ async def process_import_by_key(
                 detail=f"Import exceeds maximum rows per import ({total_rows:,} rows, limit is {max_rows:,}). Upgrade your plan for higher limits."
             )
 
-    # Check usage limits and increment atomically
-    limit_exceeded, current_count, limit = check_and_increment_usage(
-        db, importer.user_id, rows=total_rows
-    )
+    # Check usage limits and increment atomically (tier-based)
+    limit_exceeded, current_count, limit = check_and_increment_usage_for_user(
+        db, importer_owner, rows=total_rows
+    ) if importer_owner else (False, 0, None)
     if limit_exceeded:
         raise HTTPException(
             status_code=402,  # Payment Required
@@ -525,8 +525,23 @@ async def get_importer_config(
             "limits": None,
         }
 
-    tier = user.subscription_tier if user else "free"
-    usage = get_usage_for_period(db, user.id) if user else {}
+    # Handle case where importer owner was deleted (orphaned importer)
+    if not user:
+        return {
+            "importer_id": str(importer.id),
+            "show_branding": True,  # Default to showing branding
+            "tier": "free",
+            "limits": {
+                "imports_used": 0,
+                "imports_limit": get_tier_import_limit("free"),
+                "imports_remaining": get_tier_import_limit("free"),
+                "max_rows_per_import": get_tier_max_rows("free"),
+                "limit_reached": False,
+            },
+        }
+
+    tier = user.subscription_tier
+    usage = get_usage_for_period(db, user.id)
     import_limit = get_tier_import_limit(tier)
 
     return {

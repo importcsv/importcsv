@@ -48,12 +48,16 @@ class BillingService:
         success_url: str,
         cancel_url: str,
     ) -> str:
-        """Create a Stripe Checkout session for subscription."""
+        """Create a Stripe Checkout session for subscription or upgrade existing."""
         customer_id = self.get_or_create_stripe_customer(user)
 
         price_id = self._get_price_id_for_tier(tier)
         if not price_id:
             raise ValueError(f"No price configured for tier: {tier}")
+
+        # If user has an active subscription, modify it instead of creating new
+        if user.subscription_id and user.subscription_status == "active":
+            return self._change_subscription(user, tier, price_id, success_url)
 
         session = stripe.checkout.Session.create(
             customer=customer_id,
@@ -67,6 +71,45 @@ class BillingService:
 
         logger.info(f"Created checkout session {session.id} for user {user.id}")
         return session.url
+
+    def _change_subscription(
+        self,
+        user: User,
+        tier: SubscriptionTier,
+        price_id: str,
+        success_url: str,
+    ) -> str:
+        """Change an existing subscription to a different tier (upgrade or downgrade)."""
+        # Validate tier change is meaningful
+        if user.subscription_tier == tier:
+            raise ValueError(f"Already subscribed to {tier} tier")
+
+        try:
+            # Get the current subscription
+            subscription = stripe.Subscription.retrieve(user.subscription_id)
+
+            # Update the subscription with the new price (replaces the old one)
+            stripe.Subscription.modify(
+                user.subscription_id,
+                items=[{
+                    "id": subscription["items"]["data"][0]["id"],
+                    "price": price_id,
+                }],
+                proration_behavior="create_prorations",
+                metadata={"tier": tier},
+            )
+        except stripe.error.StripeError as e:
+            logger.error(f"Stripe API error during subscription change for user {user.id}: {e}")
+            raise ValueError(f"Failed to change subscription: {e.user_message}")
+
+        # Update local user record
+        user.subscription_tier = tier
+        self.db.commit()
+
+        logger.info(f"Changed subscription for user {user.id} to {tier}")
+
+        # Return success URL directly since no checkout needed
+        return success_url
 
     def create_portal_session(self, user: User, return_url: str) -> str:
         """Create a Stripe Customer Portal session."""

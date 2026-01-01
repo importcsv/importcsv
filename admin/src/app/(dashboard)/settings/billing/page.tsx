@@ -4,7 +4,17 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CreditCard, ExternalLink, AlertTriangle, Check } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { CreditCard, ExternalLink, AlertTriangle, Check, ArrowDown } from "lucide-react";
 import { apiClient, billingApi } from "@/utils/apiClient";
 
 interface SubscriptionData {
@@ -28,6 +38,10 @@ export default function BillingPage() {
   const [error, setError] = useState<Error | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [upgrading, setUpgrading] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [redirectingToPortal, setRedirectingToPortal] = useState(false);
+  const [showDowngradeDialog, setShowDowngradeDialog] = useState(false);
+  const [pendingDowngrade, setPendingDowngrade] = useState<"pro" | null>(null);
 
   useEffect(() => {
     const fetchSubscription = async () => {
@@ -45,6 +59,7 @@ export default function BillingPage() {
 
   const handleUpgrade = async (tier: "pro" | "business") => {
     setUpgrading(true);
+    setActionError(null);
     try {
       const response = await apiClient.post("/billing/checkout", {
         tier,
@@ -54,11 +69,14 @@ export default function BillingPage() {
       window.location.href = response.data.checkout_url;
     } catch (err) {
       console.error("Checkout failed:", err);
+      setActionError("Failed to process plan change. Please try again.");
       setUpgrading(false);
     }
   };
 
   const handleManageBilling = async () => {
+    setRedirectingToPortal(true);
+    setActionError(null);
     try {
       const response = await apiClient.post("/billing/portal", {
         return_url: `${window.location.origin}/settings/billing`,
@@ -66,7 +84,38 @@ export default function BillingPage() {
       window.location.href = response.data.portal_url;
     } catch (err) {
       console.error("Portal failed:", err);
+      setActionError("Failed to open billing portal. Please try again.");
+      setRedirectingToPortal(false);
     }
+  };
+
+  const handleDowngradeRequest = (tier: "pro") => {
+    setPendingDowngrade(tier);
+    setShowDowngradeDialog(true);
+  };
+
+  const handleDowngradeConfirm = async () => {
+    if (!pendingDowngrade) return;
+
+    setShowDowngradeDialog(false);
+    setUpgrading(true);
+    setActionError(null);
+
+    try {
+      const response = await apiClient.post("/billing/checkout", {
+        tier: pendingDowngrade,
+        success_url: `${window.location.origin}/settings/billing?success=true`,
+        cancel_url: `${window.location.origin}/settings/billing?canceled=true`,
+      });
+      // For tier changes on existing subscriptions, the backend returns success_url directly
+      window.location.href = response.data.checkout_url;
+    } catch (err) {
+      console.error("Downgrade failed:", err);
+      setActionError("Failed to process downgrade. Please try again or contact support.");
+      setUpgrading(false);
+      setPendingDowngrade(null);
+    }
+    // On success, page redirects - no cleanup needed
   };
 
   if (isLoading) {
@@ -124,6 +173,14 @@ export default function BillingPage() {
         </Alert>
       )}
 
+      {/* Action Error */}
+      {actionError && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertDescription>{actionError}</AlertDescription>
+        </Alert>
+      )}
+
       {/* Current Plan */}
       <Card className="p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
@@ -139,9 +196,9 @@ export default function BillingPage() {
             </p>
           </div>
           {subscription.tier !== "free" && (
-            <Button variant="outline" onClick={handleManageBilling}>
+            <Button variant="outline" onClick={handleManageBilling} disabled={redirectingToPortal}>
               <CreditCard className="w-4 h-4 mr-2" />
-              Manage Billing
+              {redirectingToPortal ? "Redirecting..." : "Manage Billing"}
               <ExternalLink className="w-3 h-3 ml-2" />
             </Button>
           )}
@@ -248,20 +305,123 @@ export default function BillingPage() {
       )}
 
       {subscription.tier === "pro" && (
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold">Need more?</h3>
+        <div className="space-y-4">
+          <Card className="p-6">
+            <h3 className="text-lg font-semibold">Need more?</h3>
+            <p className="text-gray-500 mt-1">
+              Upgrade to Business for unlimited imports and higher row limits.
+            </p>
+            <Button
+              className="mt-4"
+              onClick={() => handleUpgrade("business")}
+              disabled={upgrading}
+            >
+              {upgrading ? "Redirecting..." : "Upgrade to Business - $149/mo"}
+            </Button>
+          </Card>
+
+          <Card className="p-6 border-gray-200">
+            <h3 className="text-lg font-semibold">Cancel Subscription</h3>
+            <p className="text-gray-500 mt-1">
+              Downgrade to the free tier with limited imports.
+            </p>
+            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Free Plan</p>
+                  <p className="text-sm text-gray-500">100 imports/month, 10,000 rows per import</p>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={handleManageBilling}
+                  disabled={redirectingToPortal}
+                >
+                  <ArrowDown className="w-4 h-4 mr-2" />
+                  {redirectingToPortal ? "Redirecting..." : "Cancel in Billing Portal"}
+                  <ExternalLink className="w-3 h-3 ml-2" />
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {subscription.tier === "business" && (
+        <Card className="p-6 border-gray-200">
+          <h3 className="text-lg font-semibold">Change Plan</h3>
           <p className="text-gray-500 mt-1">
-            Upgrade to Business for unlimited imports and higher row limits.
+            Need fewer features? You can downgrade or cancel your subscription.
           </p>
-          <Button
-            className="mt-4"
-            onClick={() => handleUpgrade("business")}
-            disabled={upgrading}
-          >
-            {upgrading ? "Redirecting..." : "Upgrade to Business - $149/mo"}
-          </Button>
+          <div className="mt-4 space-y-3">
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Pro Plan</p>
+                  <p className="text-sm text-gray-500">$49/month</p>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => handleDowngradeRequest("pro")}
+                  disabled={upgrading}
+                >
+                  <ArrowDown className="w-4 h-4 mr-2" />
+                  {upgrading ? "Processing..." : "Downgrade to Pro"}
+                </Button>
+              </div>
+              <ul className="mt-3 text-sm text-gray-600 space-y-1">
+                <li>2,000 imports/month (vs unlimited)</li>
+                <li>100,000 rows per import (vs 500,000)</li>
+              </ul>
+            </div>
+            <div className="p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Free Plan</p>
+                  <p className="text-sm text-gray-500">100 imports/month, 10,000 rows per import</p>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={handleManageBilling}
+                  disabled={redirectingToPortal}
+                >
+                  <ArrowDown className="w-4 h-4 mr-2" />
+                  {redirectingToPortal ? "Redirecting..." : "Cancel in Billing Portal"}
+                  <ExternalLink className="w-3 h-3 ml-2" />
+                </Button>
+              </div>
+            </div>
+          </div>
         </Card>
       )}
+
+      {/* Downgrade Confirmation Dialog */}
+      <AlertDialog open={showDowngradeDialog} onOpenChange={setShowDowngradeDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Downgrade to Pro</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>You are about to downgrade from Business to Pro. This will:</p>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>Reduce your import limit to 2,000/month (from unlimited)</li>
+                  <li>Reduce max rows per import to 100,000 (from 500,000)</li>
+                  <li>Take effect immediately</li>
+                  <li>Credit unused Business time to your next invoice</li>
+                </ul>
+                <p className="font-medium">Are you sure you want to continue?</p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setPendingDowngrade(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={handleDowngradeConfirm}>
+              Confirm Downgrade
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
