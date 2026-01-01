@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Import Limit Reached{% endblock %}
+
+{% block content %}
+<h1>You've reached your import limit</h1>
+
+<p>You've used all <strong>{{ limit | int }}</strong> imports included in your plan this month.</p>
+
+<p>To continue importing, you can:</p>
+<ul>
+    <li>Wait until your limit resets next month</li>
+    <li>Upgrade to a higher tier for more imports</li>
+</ul>
+
+<p><a href="{{ app_url }}/settings/billing">Upgrade your plan &rarr;</a></p>
+{% endblock %}

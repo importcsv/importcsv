@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Failed{% endblock %}
+
+{% block content %}
+<h1>We couldn't process your payment</h1>
+
+<p>Your recent payment failed. You have <strong>{{ days_remaining }} day{% if days_remaining != 1 %}s{% endif %}</strong> to update your payment method before your subscription is paused.</p>
+
+<p>During the grace period, you'll keep full access to your account.</p>
+
+<p><a href="{{ app_url }}/settings/billing">Update payment method &rarr;</a></p>
+
+<p>If you need help, just reply to this email.</p>
+{% endblock %}

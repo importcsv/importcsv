@@ -42,11 +42,7 @@ def check_grace_periods():
             elif days_left in [7, 4, 1]:
                 # Send reminder emails on specific days
                 logger.info(f"Sending day {days_left} grace period reminder to {user.email}")
-                email_service.send_grace_period_reminder(
-                    user.email,
-                    days_left,
-                    f"{settings.FRONTEND_URL}/settings/billing",
-                )
+                email_service.send_grace_period_reminder(user.email, days_left)
 
         logger.info(f"Processed {len(users_in_grace)} users in grace period")
 

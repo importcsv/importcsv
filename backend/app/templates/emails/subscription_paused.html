@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block title %}Subscription Paused{% endblock %}
+
+{% block content %}
+<h1>Your subscription has been paused</h1>
+
+<p>Your grace period has ended and we couldn't collect payment. Your account has been moved to the Free tier.</p>
+
+<p>You can still use ImportCSV with Free tier limits. To restore your full access, update your payment method.</p>
+
+<p><a href="{{ app_url }}/settings/billing">Reactivate your subscription &rarr;</a></p>
+
+<p>Your data is safe and waiting for you.</p>
+{% endblock %}

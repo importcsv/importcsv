@@ -15,6 +15,7 @@ from app.core.config import settings
 from app.db.base import get_db
 from app.models.user import User
 from app.api.v1.auth import create_access_token, set_auth_cookie
+from app.services.email import email_service
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +91,9 @@ def get_or_create_oauth_user(
         db.commit()
         db.refresh(user)
         logger.info(f"Created new OAuth user: {user.id}")
+
+        # Send welcome email to new OAuth users
+        email_service.send_welcome(user.email, user.full_name)
     else:
         # Update profile info if not set (batch updates for atomicity)
         updated = False

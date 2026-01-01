@@ -10,7 +10,7 @@ import stripe
 
 from app.db.base import get_db
 from app.core.config import settings
-from app.core.features import is_cloud_mode
+from app.core.features import is_cloud_mode, get_tier_import_limit, get_tier_max_rows
 from app.services.billing import BillingService
 from app.services.email import email_service
 from app.models.stripe_webhook import ProcessedStripeEvent
@@ -118,7 +118,12 @@ def handle_checkout_completed(billing: BillingService, session: dict) -> None:
     )
 
     if user:
-        email_service.send_upgrade_confirmation(user.email, tier)
+        email_service.send_upgrade_confirmation(
+            user.email,
+            tier_name=tier.title(),
+            import_limit=get_tier_import_limit(tier),
+            row_limit=get_tier_max_rows(tier),
+        )
 
 
 def handle_subscription_updated(billing: BillingService, subscription: dict) -> None:
@@ -169,11 +174,7 @@ def handle_payment_failed(billing: BillingService, invoice: dict) -> None:
 
     if user and user.grace_period_ends_at:
         days_left = (user.grace_period_ends_at - datetime.now(timezone.utc)).days
-        email_service.send_grace_period_reminder(
-            user.email,
-            days_left,
-            f"{settings.FRONTEND_URL}/settings/billing",
-        )
+        email_service.send_grace_period_reminder(user.email, days_left)
 
 
 def handle_payment_succeeded(billing: BillingService, invoice: dict) -> None:

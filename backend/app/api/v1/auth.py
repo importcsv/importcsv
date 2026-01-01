@@ -19,6 +19,7 @@ from app.db.base import get_db
 from app.models.user import User as UserModel
 from app.auth.jwt_auth import get_current_active_user
 from app.schemas.user import UserCreate, User
+from app.services.email import email_service
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -155,7 +156,10 @@ async def register(
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
-    
+
+    # Send welcome email
+    email_service.send_welcome(db_user.email, db_user.full_name)
+
     return db_user
 
 
@@ -174,6 +178,8 @@ async def sync_oauth_user(
     # Check if user exists
     user = db.query(UserModel).filter(UserModel.email == email).first()
     
+    is_new_user = user is None
+
     if not user:
         # Create new user from OAuth
         user = UserModel(
@@ -193,7 +199,11 @@ async def sync_oauth_user(
         if name and not user.full_name:
             user.full_name = name
             db.commit()
-    
+
+    # Send welcome email for new users only
+    if is_new_user:
+        email_service.send_welcome(user.email, user.full_name)
+
     # Create access token
     access_token = create_access_token(
         data={"sub": str(user.id), "email": user.email}

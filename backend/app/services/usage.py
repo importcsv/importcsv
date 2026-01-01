@@ -14,6 +14,7 @@ from app.core.features import (
     get_tier_import_limit,
     get_tier_max_rows,
 )
+from app.services.email import email_service
 
 
 def get_current_period() -> str:
@@ -183,6 +184,8 @@ def check_and_increment_usage_for_user(
 ) -> tuple[bool, int, int | None]:
     """Atomically check limit and increment if allowed, using tier-based limits.
 
+    Also sends usage warning/limit emails at appropriate thresholds.
+
     Returns: (limit_exceeded, new_count, limit)
     """
     period = get_current_period()
@@ -216,6 +219,64 @@ def check_and_increment_usage_for_user(
     # Increment within the same transaction (row is locked)
     record.import_count += 1
     record.row_count += rows
+
+    # Determine which emails to send and update flags atomically (while locked)
+    new_count = record.import_count
+    percentage = (new_count / limit) * 100
+
+    should_send_warning = percentage >= 80 and not record.warning_email_sent
+    should_send_limit = new_count >= limit and not record.limit_email_sent
+
+    if should_send_warning:
+        record.warning_email_sent = True
+    if should_send_limit:
+        record.limit_email_sent = True
+
+    # Commit all changes atomically (releases lock)
     db.commit()
 
-    return False, record.import_count, limit
+    # Send emails after commit (outside transaction, non-blocking for DB)
+    if should_send_warning:
+        email_service.send_usage_warning(user.email, new_count, limit)
+    if should_send_limit:
+        email_service.send_limit_reached(user.email, limit)
+
+    return False, new_count, limit
+
+
+def check_and_send_usage_emails(
+    db: Session,
+    user: User,
+    record: UsageRecord,
+    new_count: int,
+    limit: int | None
+) -> None:
+    """Check usage thresholds and send appropriate emails.
+
+    DEPRECATED: This function has a race condition and should not be called
+    directly. Email logic is now inlined in check_and_increment_usage_for_user()
+    to ensure flag updates happen atomically within the row lock.
+
+    Args:
+        db: Database session
+        user: User who performed the import
+        record: The usage record for current period
+        new_count: Updated usage count after increment
+        limit: User's import limit (None for unlimited)
+    """
+    if limit is None:
+        return  # No limit, no emails needed
+
+    percentage = (new_count / limit) * 100
+
+    # Send warning at 80% (once per period)
+    if percentage >= 80 and not record.warning_email_sent:
+        email_service.send_usage_warning(user.email, new_count, limit)
+        record.warning_email_sent = True
+        db.commit()
+
+    # Send limit reached at 100% (once per period)
+    if new_count >= limit and not record.limit_email_sent:
+        email_service.send_limit_reached(user.email, limit)
+        record.limit_email_sent = True
+        db.commit()

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Welcome to ImportCSV{% endblock %}
+
+{% block content %}
+<h1>Welcome to ImportCSV!</h1>
+
+{% if name %}
+<p>Hi {{ name }},</p>
+{% else %}
+<p>Hi there,</p>
+{% endif %}
+
+<p>Thanks for signing up! You're ready to start importing CSV data into your applications.</p>
+
+<p>Here's what you can do:</p>
+<ul>
+    <li>Create custom importers for your data</li>
+    <li>Validate and transform data on import</li>
+    <li>Embed importers directly in your app</li>
+</ul>
+
+<p>If you have any questions, just reply to this email.</p>
+{% endblock %}

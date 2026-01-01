@@ -1,10 +1,10 @@
 """Email service for transactional emails using Resend."""
 
-import html
 import logging
 from typing import Optional
 
 import resend
+from jinja2 import Environment, PackageLoader, select_autoescape
 
 from app.core.config import settings
 from app.core.features import is_cloud_mode
@@ -22,110 +22,112 @@ class EmailService:
         self.from_email = settings.RESEND_FROM_EMAIL
         self.enabled = is_cloud_mode() and bool(settings.RESEND_API_KEY)
 
+        # Initialize Jinja2 environment for email templates
+        self.jinja_env = Environment(
+            loader=PackageLoader("app", "templates/emails"),
+            autoescape=select_autoescape(["html", "xml"])
+        )
+
+    def _render(self, template_name: str, **context) -> str:
+        """Render an email template with the given context."""
+        template = self.jinja_env.get_template(template_name)
+        # Add common context variables
+        context.setdefault("app_url", settings.FRONTEND_URL)
+        return template.render(**context)
+
     def send_welcome(self, to_email: str, name: Optional[str] = None) -> bool:
         """Send welcome email to new user."""
-        # Escape user-provided name to prevent XSS
-        escaped_name = html.escape(name) if name else None
+        html_content = self._render("welcome.html", name=name)
         return self._send(
             to=to_email,
             subject="Welcome to ImportCSV!",
-            html=f"""
-            <h1>Welcome to ImportCSV{f', {escaped_name}' if escaped_name else ''}!</h1>
-            <p>Thanks for signing up. You're ready to start importing CSV data.</p>
-            <p>Get started:</p>
-            <ul>
-                <li>Create your first importer</li>
-                <li>Configure your data schema</li>
-                <li>Embed in your app or use the API</li>
-            </ul>
-            <p>Questions? Reply to this email.</p>
-            """,
+            html=html_content,
         )
 
-    def send_usage_warning(
-        self,
-        to_email: str,
-        current_usage: int,
-        limit: int,
-        percentage: int,
-    ) -> bool:
+    def send_usage_warning(self, to_email: str, current_usage: int, limit: int) -> bool:
         """Send usage warning email when approaching limit."""
+        percentage = (current_usage / limit) * 100 if limit > 0 else 0
+        html_content = self._render(
+            "usage_warning.html",
+            current_usage=current_usage,
+            limit=limit,
+            percentage=percentage
+        )
         return self._send(
             to=to_email,
-            subject=f"ImportCSV: You've used {percentage}% of your imports",
-            html=f"""
-            <h1>Approaching your import limit</h1>
-            <p>You've used <strong>{current_usage}</strong> of your <strong>{limit}</strong> monthly imports ({percentage}%).</p>
-            <p><a href="{settings.FRONTEND_URL}/settings/billing">Upgrade your plan</a> to get more imports.</p>
-            """,
+            subject="You're approaching your import limit",
+            html=html_content,
         )
 
     def send_limit_reached(self, to_email: str, limit: int) -> bool:
         """Send email when user hits their import limit."""
+        html_content = self._render("limit_reached.html", limit=limit)
         return self._send(
             to=to_email,
-            subject="ImportCSV: Monthly import limit reached",
-            html=f"""
-            <h1>You've reached your import limit</h1>
-            <p>You've used all <strong>{limit}</strong> imports for this month.</p>
-            <p><a href="{settings.FRONTEND_URL}/settings/billing">Upgrade to Pro</a> to continue importing.</p>
-            """,
+            subject="You've reached your import limit",
+            html=html_content,
         )
 
-    def send_grace_period_reminder(
-        self,
-        to_email: str,
-        days_left: int,
-        update_payment_url: str,
-    ) -> bool:
-        """Send grace period reminder email."""
-        subject = "Urgent: Update your payment method" if days_left <= 1 else f"ImportCSV: {days_left} days to update payment"
-
+    def send_grace_period_reminder(self, to_email: str, days_remaining: int) -> bool:
+        """Send grace period reminder when payment fails."""
+        html_content = self._render("grace_period_reminder.html", days_remaining=days_remaining)
         return self._send(
             to=to_email,
-            subject=subject,
-            html=f"""
-            <h1>Payment failed - action required</h1>
-            <p>We couldn't process your payment. You have <strong>{days_left} day{'s' if days_left != 1 else ''}</strong> to update your payment method.</p>
-            <p>After that, your account will be downgraded to the free tier.</p>
-            <p><a href="{update_payment_url}">Update payment method</a></p>
-            """,
+            subject="Action required: Update your payment method",
+            html=html_content,
         )
 
     def send_subscription_paused(self, to_email: str) -> bool:
-        """Send email when subscription is paused due to non-payment."""
+        """Send subscription paused email when grace period expires."""
+        html_content = self._render("subscription_paused.html")
         return self._send(
             to=to_email,
-            subject="ImportCSV: Your subscription has been paused",
-            html=f"""
-            <h1>Subscription paused</h1>
-            <p>Your subscription has been paused due to payment issues.</p>
-            <p>You've been moved to the free tier with limited imports.</p>
-            <p><a href="{settings.FRONTEND_URL}/settings/billing">Update payment and resubscribe</a></p>
-            """,
+            subject="Your subscription has been paused",
+            html=html_content,
         )
 
-    def send_upgrade_confirmation(self, to_email: str, tier: str) -> bool:
-        """Send confirmation email after upgrade."""
+    def send_upgrade_confirmation(
+        self,
+        to_email: str,
+        tier_name: str,
+        import_limit: Optional[int] = None,
+        row_limit: Optional[int] = None
+    ) -> bool:
+        """Send upgrade confirmation email."""
+        html_content = self._render(
+            "upgrade_confirmation.html",
+            tier_name=tier_name,
+            import_limit=import_limit,
+            row_limit=row_limit
+        )
         return self._send(
             to=to_email,
-            subject=f"Welcome to ImportCSV {tier.title()}!",
-            html=f"""
-            <h1>You're now on {tier.title()}!</h1>
-            <p>Thanks for upgrading. Here's what you now have access to:</p>
-            <ul>
-                <li>{'2,000' if tier == 'pro' else 'Unlimited'} imports per month</li>
-                <li>{'100,000' if tier == 'pro' else '500,000'} rows per import</li>
-                <li>Remove ImportCSV branding</li>
-                <li>Custom CSS styling</li>
-            </ul>
-            """,
+            subject=f"Welcome to {tier_name}!",
+            html=html_content,
         )
 
     def _send(self, to: str, subject: str, html: str) -> bool:
         """Send an email via Resend."""
         if not self.enabled:
-            logger.debug(f"Email disabled, would send to {to}: {subject}")
+            # Log to console for local development testing
+            # Extract text content from HTML for cleaner preview
+            import re
+            # Remove style tags and their content
+            text = re.sub(r'<style[^>]*>.*?</style>', '', html, flags=re.DOTALL)
+            # Remove HTML tags
+            text = re.sub(r'<[^>]+>', ' ', text)
+            # Clean up whitespace
+            text = re.sub(r'\s+', ' ', text).strip()
+            # Limit preview length
+            preview = text[:400] + "..." if len(text) > 400 else text
+
+            logger.info("")
+            logger.info("=" * 60)
+            logger.info(f"[EMAIL] To: {to}")
+            logger.info(f"[EMAIL] Subject: {subject}")
+            logger.info("-" * 60)
+            logger.info(f"[EMAIL] {preview}")
+            logger.info("=" * 60)
             return True
 
         try:
