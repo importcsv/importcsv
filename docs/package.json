@@ -16,7 +16,7 @@
     "fumadocs-mdx": "11.8.0",
     "fumadocs-ui": "15.7.1",
     "geist": "^1.4.2",
-    "next": "^15.5.7",
+    "next": "^15.5.9",
     "react": "^19.1.2",
     "react-dom": "^19.1.2",
     "tw-animate-css": "^1.3.7"
