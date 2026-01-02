@@ -5,6 +5,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
+from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -119,6 +120,10 @@ app.add_middleware(
     max_age=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
     https_only=settings.ENVIRONMENT == "production",
 )
+
+# Trust proxy headers (X-Forwarded-Proto, X-Forwarded-For) from load balancer
+# This must be added last so it runs first (middleware order is LIFO)
+app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["*"])
 
 # Include API routes
 app.include_router(api_router, prefix="/api")
