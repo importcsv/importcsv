@@ -79,3 +79,6 @@ htmlcov/
 __pycache__/
 .pytest_cache/
 .cursor/
+
+# Specs and plans
+specs/
