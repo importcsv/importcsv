@@ -2,28 +2,24 @@
 
 # @importcsv/react
 
-**The modern CSV importer for React applications**
+**CSV imports for React**
 
-[![Tests](https://github.com/importcsv/importcsv/actions/workflows/frontend-tests.yml/badge.svg)](https://github.com/importcsv/importcsv/actions/workflows/frontend-tests.yml)
-[![Coverage](https://codecov.io/gh/importcsv/importcsv/branch/main/graph/badge.svg?flag=frontend)](https://codecov.io/gh/importcsv/importcsv)
 [![npm version](https://img.shields.io/npm/v/@importcsv/react.svg)](https://www.npmjs.com/package/@importcsv/react)
-[![npm downloads](https://img.shields.io/npm/dm/@importcsv/react.svg)](https://www.npmjs.com/package/@importcsv/react)
 [![bundle size](https://img.shields.io/bundlephobia/minzip/@importcsv/react)](https://bundlephobia.com/package/@importcsv/react)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE)
 
-[Live Demo](https://demo.importcsv.com) • [Documentation](https://docs.importcsv.com)
+[Demo](https://demo.importcsv.com) • [Docs](https://docs.importcsv.com)
 
 </div>
 
-## Stop wrestling with CSV imports
+## What it does
 
-Every developer has been there. Users upload CSVs with columns in the wrong order, dates in different formats, and data that needs validation. You end up building the same import flow again and again.
+- **Column mapping** - Auto-matches columns, users fix the rest
+- **Validation** - Required, unique, email, regex, custom
+- **Large files** - Virtual scrolling handles 10k+ rows
+- **~125KB gzipped**
 
-**ImportCSV handles it all for you:**
-- 🎯 **Smart column mapping** - AI-powered field matching
-- ✨ **One-click error fixing** - Transform and validate data automatically
-- ⚡ **10,000+ rows?** No problem - virtual scrolling keeps it fast
-- 📦 **Tiny footprint** - ~100KB gzipped, including styles
+Optional with backend: AI column matching, AI error fixing, natural language transforms.
 
 ## Quick Start
 
@@ -32,8 +28,14 @@ npm install @importcsv/react
 ```
 
 ```tsx
-import { CSVImporter } from '@importcsv/react';
 import { useState } from 'react';
+import { CSVImporter } from '@importcsv/react';
+import { z } from 'zod';
+
+const schema = z.object({
+  name: z.string().min(1),
+  email: z.string().email(),
+});
 
 function App() {
   const [isOpen, setIsOpen] = useState(false);
@@ -43,113 +45,74 @@ function App() {
       <button onClick={() => setIsOpen(true)}>Import CSV</button>
 
       <CSVImporter
+        schema={schema}
         modalIsOpen={isOpen}
         modalOnCloseTriggered={() => setIsOpen(false)}
-        onComplete={(data) => console.log(data.rows)}
-        columns={[
-          { id: 'name', label: 'Name', validators: [{ type: 'required' }] },
-          { id: 'email', label: 'Email', type: 'email' }
-        ]}
+        onComplete={(rows) => console.log(rows)}
       />
     </>
   );
 }
 ```
 
-**That's it!** Your users get a polished import experience with column mapping, validation, and error handling.
+Zod handles validation automatically. No need to define validators separately.
 
 ## Features
 
-### 🚀 Core
-- CSV, TSV, XLS, XLSX support (Excel support optional)
+**File handling**
+- CSV, TSV, XLS, XLSX
 - Automatic encoding detection
 - Header row detection
-- Virtual scrolling for large files
 
-### 🎯 Smart Mapping
-- AI-powered column matching
-- Fuzzy string matching
-
-### ✨ Data Transformation
-- **"Fix All Errors" button** - AI analyzes and fixes validation errors
-- Natural language transformations ("convert dates to MM/DD/YYYY")
-- Built-in transformers (capitalize, normalize phone, parse dates)
-- Custom transformation functions
-
-### ✅ Validation
-- Required, unique, regex, min/max
+**Validation**
+- Required, unique, min/max, regex
 - Email, phone, date formats
 - Custom validators
-- Real-time error display
 
-### 🎨 Customization
-- Dark mode support
-- Custom CSS variables
+**Transforms**
+- trim, uppercase, lowercase, capitalize
+- normalize_phone, normalize_date
+- Custom functions
 
-### 📦 Framework Support
-- React 16, 17, 18, 19
-- Preact compatible
+**Frameworks**
+- React 16–19
+- Preact
 - Next.js (App & Pages Router)
-- Vanilla JavaScript
+
+**Theming**
+- 7 presets: default, minimal, modern, compact, dark, corporate, playful
+- Custom themes via `theme` prop
+- Dark mode support
 
 ## Examples
 
 ### Next.js App Router
+
 ```tsx
 'use client';
 import { CSVImporter } from '@importcsv/react';
 ```
 
-### Vanilla JavaScript
-```html
-<script src="https://unpkg.com/@importcsv/react@latest/build/bundled/index.umd.js"></script>
-<script>
-  const importer = CSVImporter.createCSVImporter({
-    domElement: document.getElementById('app'),
-    columns: [/* ... */],
-    onComplete: (data) => console.log(data)
-  });
+### Preact
 
-  importer.showModal();
-</script>
-```
-
-### With Validation & Transformation
 ```tsx
-columns={[
-  {
-    id: 'email',
-    label: 'Email',
-    type: 'email',
-    validators: [{ type: 'required' }, { type: 'unique' }],
-    transformations: [{ type: 'lowercase' }, { type: 'trim' }]
-  }
-]}
+import { CSVImporter } from '@importcsv/react/preact';
 ```
 
-## Why ImportCSV?
+## AI Features (Backend Required)
 
-| Feature | ImportCSV | Build Your Own | Other Libraries |
-|---------|-----------|----------------|-----------------|
-| Setup time | 5 minutes | Days/weeks | Hours |
-| AI-powered fixes | ✅ | ❌ | ❌ |
-| Virtual scrolling | ✅ | Maybe | Sometimes |
-| Framework agnostic | ✅ | Your choice | Usually not |
-| Bundle size | ~100KB | Varies | 200KB+ |
-| Theming | 5 presets + custom | DIY | Limited |
+With the [ImportCSV backend](https://github.com/importcsv/importcsv/tree/main/backend):
+
+- **AI column matching**
+- **AI error fixing** - Automatically fix validation errors
+- **Natural language transforms** - "Convert dates to MM/DD/YYYY"
 
 ## Resources
 
-- 📚 [Documentation](https://docs.importcsv.com) - Complete guides and API reference
-- 🐛 [Issues](https://github.com/importcsv/importcsv/issues) - Report bugs or request features
-- ⭐ [GitHub](https://github.com/importcsv/importcsv) - Star us if you like it!
+- [Documentation](https://docs.importcsv.com)
+- [Issues](https://github.com/importcsv/importcsv/issues)
+- [GitHub](https://github.com/importcsv/importcsv)
 
 ## License
 
-MIT © [ImportCSV](https://github.com/importcsv/importcsv)
-
----
-
-<div align="center">
-  <sub>Built with ❤️ for developers who have better things to do than parse CSVs</sub>
-</div>
+MIT
