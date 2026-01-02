@@ -166,5 +166,9 @@
     "tailwind-merge": "^3.2.0",
     "zustand": "^4.4.7"
   },
-  "type": "module"
+  "type": "module",
+  "overrides": {
+    "glob": "^11.0.0",
+    "js-yaml": "^4.1.1"
+  }
 }
