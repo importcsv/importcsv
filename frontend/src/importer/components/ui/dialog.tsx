@@ -91,7 +91,7 @@ const DialogContentComponent = forwardRef<HTMLDialogElement, DialogContentProps>
       <dialog
         ref={dialogRef}
         className={cn(
-          "fixed p-0 rounded-lg border bg-white shadow-lg",
+          "fixed inset-0 m-auto p-0 rounded-lg border bg-white shadow-lg",
           "w-full max-w-lg",
           "backdrop:bg-black/50",
           className
