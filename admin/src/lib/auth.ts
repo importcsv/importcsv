@@ -2,6 +2,7 @@
  * Authentication helpers for backend-driven auth.
  * Uses HTTP-only cookies for secure session management.
  */
+import { mutate } from "swr";
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
@@ -38,6 +39,10 @@ export const signIn = {
       const error = await response.json().catch(() => ({}));
       throw new Error(error.detail || "Invalid credentials");
     }
+
+    // Invalidate the SWR cache for /auth/me to force re-fetch with new cookie
+    // Don't await - just trigger the invalidation and let navigation happen
+    mutate("/auth/me", undefined, { revalidate: true });
   },
 };
 
