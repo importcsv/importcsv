@@ -226,29 +226,30 @@ export default function TransformPanel({
 
   if (!isOpen) return null;
 
+  // Note: This modal uses absolute positioning and centers within the nearest
+  // positioned ancestor (an element with position: relative/absolute/fixed).
+  // The CSVImporter root container has position: relative, so this modal
+  // will center within the importer bounds, not the viewport.
   return (
     <>
-      {/* Backdrop - covers entire importer */}
+      {/* Backdrop - covers importer container */}
       <div
-        className="absolute inset-0 bg-slate-900/50 dark:bg-slate-900/70 z-[100] transition-opacity duration-200"
+        className="absolute inset-0 bg-slate-900/50 dark:bg-slate-900/70 z-[100]"
         onClick={handleClose}
-        style={{
-          pointerEvents: isOpen ? 'auto' : 'none',
-          opacity: isOpen ? 1 : 0
-        }}
       />
 
-      {/* Modal - centered in importer */}
+      {/* Modal - centered within importer container */}
       <div
         ref={panelRef}
         tabIndex={-1}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
-        className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-slate-800 shadow-2xl z-[101] flex flex-col rounded-xl border border-slate-200 dark:border-slate-700 transition-all duration-200 ${
-          isOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'
-        }`}
+        className="absolute z-[101] flex flex-col rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-2xl"
         style={{
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
           width: 'min(480px, calc(100% - 48px))',
           maxHeight: 'calc(100% - 96px)',
         }}
