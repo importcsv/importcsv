@@ -80,7 +80,8 @@ export default defineConfig(({ mode }) => {
         'preact/hooks': resolve(__dirname, 'src/shims/react-hooks-shim.js'),
         'preact/compat': resolve(__dirname, 'src/shims/react-compat-shim.js'),
         'preact/jsx-runtime': 'react/jsx-runtime',
-        'preact/jsx-dev-runtime': 'react/jsx-dev-runtime',
+        // Map dev runtime to production runtime - React 19's jsxDEV calls getOwner() which doesn't exist in prod
+        'preact/jsx-dev-runtime': 'react/jsx-runtime',
         // Map preact to compat shim (not directly to react) to get toChildArray etc.
         'preact': resolve(__dirname, 'src/shims/react-compat-shim.js'),
       } : {
@@ -92,7 +93,8 @@ export default defineConfig(({ mode }) => {
       },
     },
     define: {
-      'process.env.NODE_ENV': JSON.stringify(mode || 'development'),
+      // Always use 'production' for library builds to avoid dev-only code paths
+      'process.env.NODE_ENV': JSON.stringify('production'),
       'process.env.NPM_PACKAGE_BUILD': JSON.stringify(process.env.NPM_PACKAGE_BUILD || 'false'),
     },
   };
