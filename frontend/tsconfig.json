@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "types": ["vitest/globals"],
     "rootDir": "src",
     "declaration": true,
     "declarationDir": "build",
