@@ -28,7 +28,7 @@ email_validator==2.2.0
 et_xmlfile==2.0.0
 executing==2.2.0
 fastapi==0.128.0
-filelock==3.18.0
+filelock==3.20.1
 frozenlist==1.5.0
 fsspec==2025.3.2
 greenlet==3.2.0
