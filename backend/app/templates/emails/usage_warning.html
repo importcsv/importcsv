@@ -3,11 +3,9 @@
 {% block title %}Usage Warning{% endblock %}
 
 {% block content %}
-<h1>You're approaching your import limit</h1>
+<p>Hey,</p>
 
-<p>You've used <strong>{{ current_usage | int }}</strong> of your <strong>{{ limit | int }}</strong> monthly imports ({{ percentage | int }}%).</p>
+<p>Quick heads up — you've used {{ current_usage | int }} of your {{ limit | int }} monthly imports ({{ percentage | int }}%).</p>
 
-<p>To continue importing without interruption, consider upgrading your plan.</p>
-
-<p><a href="{{ app_url }}/settings/billing">View your usage &amp; upgrade options &rarr;</a></p>
+<p><a href="{{ app_url }}/settings/billing">If you need more, you can upgrade anytime →</a></p>
 {% endblock %}

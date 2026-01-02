@@ -3,15 +3,11 @@
 {% block title %}Import Limit Reached{% endblock %}
 
 {% block content %}
-<h1>You've reached your import limit</h1>
+<p>Hey,</p>
 
-<p>You've used all <strong>{{ limit | int }}</strong> imports included in your plan this month.</p>
+<p>You've hit your {{ limit | int }} import limit for this month.</p>
 
-<p>To continue importing, you can:</p>
-<ul>
-    <li>Wait until your limit resets next month</li>
-    <li>Upgrade to a higher tier for more imports</li>
-</ul>
+<p><a href="{{ app_url }}/settings/billing">Your limit resets next month, or you can upgrade for more →</a></p>
 
-<p><a href="{{ app_url }}/settings/billing">Upgrade your plan &rarr;</a></p>
+<p>Questions? Just reply.</p>
 {% endblock %}

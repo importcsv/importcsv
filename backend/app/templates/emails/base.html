@@ -8,41 +8,29 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             line-height: 1.6;
-            color: #333;
+            color: #000;
             max-width: 600px;
             margin: 0 auto;
             padding: 20px;
-        }
-        .header {
-            margin-bottom: 24px;
+            background: #fff;
         }
         .content {
             margin-bottom: 24px;
         }
-        .footer {
-            font-size: 14px;
-            color: #666;
-            border-top: 1px solid #eee;
-            padding-top: 16px;
-            margin-top: 24px;
-        }
         a {
-            color: #0066cc;
+            color: #000;
+        }
+        p {
+            margin: 0 0 16px 0;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <strong>ImportCSV</strong>
-    </div>
     <div class="content">
         {% block content %}{% endblock %}
     </div>
-    <div class="footer">
-        {% block footer %}
-        <p>Abhishek</p>
-        <p>Founder, ImportCSV</p>
-        {% endblock %}
-    </div>
+    {% block signature %}
+    <p>Cheers,<br>Abhishek</p>
+    {% endblock %}
 </body>
 </html>

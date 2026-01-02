@@ -3,22 +3,15 @@
 {% block title %}Welcome to ImportCSV{% endblock %}
 
 {% block content %}
-<h1>Welcome to ImportCSV!</h1>
+<p>Hey,</p>
 
-{% if name %}
-<p>Hi {{ name }},</p>
-{% else %}
-<p>Hi there,</p>
-{% endif %}
+<p>My name is Abhishek — I'm the founder of ImportCSV.</p>
 
-<p>Thanks for signing up! You're ready to start importing CSV data into your applications.</p>
+<p>I built ImportCSV because CSV imports are a pain to build and maintain. A simple way to add data imports to your app that just works.</p>
 
-<p>Here's what you can do:</p>
-<ul>
-    <li>Create custom importers for your data</li>
-    <li>Validate and transform data on import</li>
-    <li>Embed importers directly in your app</li>
-</ul>
+<p><a href="{{ app_url }}/dashboard">Head to your dashboard to create your first importer →</a></p>
 
-<p>If you have any questions, just reply to this email.</p>
+<p>P.S. Why did you sign up? What are you building?</p>
+
+<p>Hit reply and let me know — I read and reply to every email.</p>
 {% endblock %}

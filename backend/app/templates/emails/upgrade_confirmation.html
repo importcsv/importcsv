@@ -3,24 +3,15 @@
 {% block title %}Upgrade Confirmed{% endblock %}
 
 {% block content %}
-<h1>Welcome to {{ tier_name | e }}!</h1>
+<p>Hey,</p>
 
-<p>Your upgrade is complete. Here's what's included in your new plan:</p>
+<p>You're all set on {{ tier_name }}!</p>
 
-<ul>
-    {% if import_limit %}
-    <li><strong>{{ import_limit | int }}</strong> imports per month</li>
-    {% else %}
-    <li><strong>Unlimited</strong> imports per month</li>
-    {% endif %}
-    {% if row_limit %}
-    <li>Up to <strong>{{ row_limit | int }}</strong> rows per import</li>
-    {% else %}
-    <li><strong>Unlimited</strong> rows per import</li>
-    {% endif %}
-</ul>
+<p>Your new limits (active now):</p>
+<p>{% if import_limit %}{{ import_limit | int }}{% else %}Unlimited{% endif %} imports per month<br>
+{% if row_limit %}{{ row_limit | int }}{% else %}Unlimited{% endif %} rows per import</p>
 
-<p>Your new limits are active immediately.</p>
+<p><a href="{{ app_url }}/dashboard">Back to your dashboard →</a></p>
 
-<p><a href="{{ app_url }}/dashboard">Go to your dashboard &rarr;</a></p>
+<p>Thanks for the support.</p>
 {% endblock %}
