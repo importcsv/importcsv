@@ -27,7 +27,7 @@ ecdsa==0.19.1
 email_validator==2.2.0
 et_xmlfile==2.0.0
 executing==2.2.0
-fastapi==0.115.12
+fastapi==0.128.0
 filelock==3.18.0
 frozenlist==1.5.0
 fsspec==2025.3.2
@@ -96,7 +96,7 @@ slowapi==0.1.9
 sniffio==1.3.1
 SQLAlchemy==2.0.40
 stack-data==0.6.3
-starlette==0.46.2
+starlette==0.50.0
 svix==1.64.1
 tiktoken==0.11.0
 tokenizers==0.21.1
