@@ -121,6 +121,11 @@ class BaseAppSettings(BaseSettings):
         default_factory=lambda: os.getenv("ENVIRONMENT", "development") == "production"
     )
     COOKIE_MAX_AGE: int = 30 * 24 * 60 * 60  # 30 days
+    # Cookie domain for cross-subdomain sharing (e.g., ".importcsv.com")
+    # Set via COOKIE_DOMAIN env var in production
+    COOKIE_DOMAIN: Optional[str] = Field(
+        default_factory=lambda: os.getenv("COOKIE_DOMAIN")
+    )
 
     # Cloud Mode settings
     IMPORTCSV_CLOUD: bool = Field(

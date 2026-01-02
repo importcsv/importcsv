@@ -64,6 +64,7 @@ def set_auth_cookie(response: Response, token: str) -> None:
         samesite="lax",
         max_age=settings.COOKIE_MAX_AGE,
         path="/",
+        domain=settings.COOKIE_DOMAIN,  # For cross-subdomain sharing
     )
 
 
@@ -72,6 +73,7 @@ def clear_auth_cookie(response: Response) -> None:
     response.delete_cookie(
         key="access_token",
         path="/",
+        domain=settings.COOKIE_DOMAIN,
     )
 
 
