@@ -1,6 +1,6 @@
 {
   "name": "importcsv-monorepo",
-  "version": "1.0.1",
+  "version": "0.4.1",
   "private": true,
   "description": "ImportCSV monorepo - Git hooks and tooling",
   "scripts": {
