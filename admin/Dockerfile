@@ -18,7 +18,7 @@ WORKDIR /app
 
 # Set environment variables for build time
 # Client-side URL must be accessible from browser
-ENV NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+ENV NEXT_PUBLIC_BACKEND_URL=https://api.importcsv.com
 
 # Copy package files
 COPY admin/package.json admin/package-lock.json ./
