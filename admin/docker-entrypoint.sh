@@ -21,7 +21,7 @@ copy_frontend() {
 # Build frontend from mounted source (ensures latest code)
 if [ -d "/frontend/src" ]; then
   echo "Building @importcsv/react from source..."
-  cd /frontend && npm run build:react 2>&1 | tail -3
+  cd /frontend && NODE_ENV=production npm run build:react 2>&1 | tail -3
   cd /app
 fi
 
@@ -45,7 +45,7 @@ if [ "$FRONTEND_WATCH" = "true" ]; then
       # Only rebuild if files actually changed
       if [ "$CURRENT_CHECKSUM" != "$LAST_CHECKSUM" ]; then
         echo "[watch] Source changed, rebuilding frontend..."
-        npm run build:react 2>&1 | tail -1
+        NODE_ENV=production npm run build:react 2>&1 | tail -1
         cd /app && copy_frontend
         # Touch a file to trigger Next.js hot reload
         touch /app/next.config.ts 2>/dev/null || touch /app/next.config.js 2>/dev/null || true

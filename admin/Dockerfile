@@ -10,7 +10,7 @@ RUN npm install --legacy-peer-deps
 
 # Copy frontend source and build
 COPY frontend/ ./
-RUN npm run build:react
+RUN NODE_ENV=production npm run build:react
 
 # Stage 2: Build the admin app
 FROM node:22 AS builder

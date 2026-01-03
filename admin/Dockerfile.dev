@@ -12,7 +12,7 @@ WORKDIR /frontend
 COPY frontend/package*.json ./
 RUN npm install --legacy-peer-deps
 COPY frontend/ ./
-RUN npm run build:react
+RUN NODE_ENV=production npm run build:react
 
 # Copy entrypoint script (updates frontend on every start, after volume mount)
 WORKDIR /app
