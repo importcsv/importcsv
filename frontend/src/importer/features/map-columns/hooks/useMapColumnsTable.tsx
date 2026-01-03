@@ -6,9 +6,9 @@ import { InputOption } from "../../../components/Input/types";
 import DropdownFields from "../components/DropDownFields";
 import { UploadColumn } from "../../../types";
 import { Column } from "../../../../types";
-import stringsSimilarity from "../../../utils/stringSimilarity";
 import { TemplateColumnMapping } from "../types";
 import { getMappingSuggestions } from "../../../services/mapping";
+import { findBestColumnMatches } from "../../../utils/columnMatching";
 
 
 export default function useMapColumnsTable(
@@ -29,54 +29,28 @@ export default function useMapColumnsTable(
     });
   }, []);
 
-  const checkSimilarity = (templateColumnName: string, uploadColumnName: string) => {
-    // Compare both names in lowercase for case-insensitive matching
-    const templateNameLower = templateColumnName.toLowerCase();
-    const uploadNameLower = uploadColumnName.toLowerCase();
-    
-    // Check for exact match first
-    if (templateNameLower === uploadNameLower) {
-      return true;
-    }
-    
-    // Then check for high similarity
-    return stringsSimilarity(templateNameLower, uploadNameLower) > 0.8;
-  };
-
-  const isSuggestedMapping = (templateColumn: Column, uploadColumnName: string) => {
-    return false;
-  };
-
   const [values, setValues] = useState<{ [key: number]: TemplateColumnMapping }>(() => {
-    const usedTemplateColumns = new Set<string>();
     const initialObject: { [key: number]: TemplateColumnMapping } = {};
 
-    // Create initial mappings using traditional string matching
+    // Use the new two-phase matching algorithm
+    const bestMatches = findBestColumnMatches(
+      uploadColumns.map(uc => ({ index: uc.index, name: uc.name })),
+      templateColumns.map(tc => ({ id: tc.id, label: tc.label }))
+    );
+
+    // Convert bestMatches (templateId -> sourceIndex) to our format (sourceIndex -> templateMapping)
+    const sourceToTemplate: Record<number, string> = {};
+    for (const [templateId, sourceIndex] of Object.entries(bestMatches)) {
+      sourceToTemplate[sourceIndex] = templateId;
+    }
+
+    // Create initial mappings for all upload columns
     const initialMappings = uploadColumns.reduce((acc, uc) => {
-      const matchedSuggestedTemplateColumn = templateColumns?.find((tc) => isSuggestedMapping(tc, uc.name));
-
-      if (matchedSuggestedTemplateColumn && matchedSuggestedTemplateColumn.id) {
-        usedTemplateColumns.add(matchedSuggestedTemplateColumn.id);
-        acc[uc.index] = {
-          id: matchedSuggestedTemplateColumn.id,
-          include: true,
-          selected: true
-        };
-        return acc;
-      }
-
-      const similarTemplateColumn = templateColumns?.find((tc) => {
-        // Use tc.label for similarity check, not tc.id
-        if (tc.id && !usedTemplateColumns.has(tc.id) && checkSimilarity(tc.label, uc.name)) {
-          usedTemplateColumns.add(tc.id);
-          return true;
-        }
-        return false;
-      });
+      const matchedTemplateId = sourceToTemplate[uc.index];
 
       acc[uc.index] = {
-        id: similarTemplateColumn?.id || "",
-        include: !!similarTemplateColumn?.id,
+        id: matchedTemplateId || "",
+        include: !!matchedTemplateId,
         selected: true,
       };
       return acc;

@@ -23,7 +23,7 @@ export default function BasicExample() {
     },
     {
       id: 'email',
-      label: 'Email Address',
+      label: 'Email',
       type: 'email',
       validators: [{ type: 'required' }]
     },

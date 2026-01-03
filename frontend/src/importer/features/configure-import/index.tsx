@@ -9,7 +9,7 @@ import MappingSkeleton from '../../components/MappingSkeleton';
 import { CheckCircle } from 'lucide-react';
 import { useTranslation } from '../../../i18n/useTranslation';
 import { Column, ColumnMapping, ColumnMappingDictionary } from '../../../types';
-import stringSimilarity from '../../utils/stringSimilarity';
+import { findBestColumnMatches } from '../../utils/columnMatching';
 import { getMappingSuggestions } from '../../services/mapping';
 import { designTokens } from '../../theme';
 import { cn } from '../../../utils/cn';
@@ -81,37 +81,38 @@ export default function ConfigureImport({
   // Use columns directly - no conversion needed
   const templateColumns = columns || [];
 
-  // Auto-map columns based on name similarity
+  // Auto-map columns based on name similarity (exact match priority, then fuzzy)
   useEffect(() => {
     // Start loading if we have backend URL and importer key (will fetch AI mappings)
     if (backendUrl && importerKey && columnHeaders.length > 0 && templateColumns.length > 0) {
       setIsLoadingMappings(true);
     }
 
+    // Use the two-phase matching algorithm (exact matches first, then fuzzy)
+    const sourceColumns = columnHeaders.map((header: string, index: number) => ({
+      index,
+      name: header,
+    }));
+
+    const templateColsForMatching = templateColumns.map((col) => ({
+      id: col.id,
+      label: col.label,
+    }));
+
+    const bestMatches = findBestColumnMatches(sourceColumns, templateColsForMatching);
+
+    // Convert bestMatches (templateId -> sourceIndex) to ColumnMappingDictionary (sourceIndex -> mapping)
     const autoMap: ColumnMappingDictionary = {};
-
-    columnHeaders.forEach((header: string, index: number) => {
-      let bestMatch = { column: null as any, score: 0 };
-
-      templateColumns.forEach((templateCol) => {
-        const score = stringSimilarity(
-          header.toLowerCase().trim(),
-          templateCol.label.toLowerCase().trim()
-        );
-
-        if (score > bestMatch.score && score > 0.6) {
-          bestMatch = { column: templateCol, score };
-        }
-      });
-
-      if (bestMatch.column) {
-        autoMap[index] = {
-          id: bestMatch.column.id || '',
-          label: bestMatch.column.label,
+    for (const [templateId, sourceIndex] of Object.entries(bestMatches)) {
+      const templateCol = templateColumns.find((col) => col.id === templateId);
+      if (templateCol) {
+        autoMap[sourceIndex] = {
+          id: templateId,
+          label: templateCol.label,
           include: true,
         };
       }
-    });
+    }
 
     setColumnMapping(autoMap);
 
