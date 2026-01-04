@@ -60,14 +60,30 @@
   }
 }
 
-/* Dark mode support */
+/* Dark mode support - data-theme attribute */
 [data-theme="dark"] .csv-importer-modal-content {
-  background: #1a1a1a;
-  color: #ffffff;
+  background: #121212;
+  color: #e5e5e5;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
 }
 
 [data-theme="dark"] .csv-importer-modal-overlay {
   background-color: rgba(0, 0, 0, 0.95);
+}
+
+/* Dark mode support - system preference (Tailwind dark: fallback) */
+@media (prefers-color-scheme: dark) {
+  .dark .csv-importer-modal-content,
+  :root.dark .csv-importer-modal-content {
+    background: #121212;
+    color: #e5e5e5;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+  }
+
+  .dark .csv-importer-modal-overlay,
+  :root.dark .csv-importer-modal-overlay {
+    background-color: rgba(0, 0, 0, 0.95);
+  }
 }
 
 /* Responsive breakpoints */

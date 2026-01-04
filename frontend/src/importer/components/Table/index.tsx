@@ -48,18 +48,18 @@ export default function Table({
     columnAlignments,
   };
 
-  if (!data || !data?.length) return <div className="text-center text-gray-500 py-8">{emptyState || null}</div>;
+  if (!data || !data?.length) return <div className="text-center text-gray-500 dark:text-[#6b6b6b] py-8">{emptyState || null}</div>;
 
   const tableStyle = cn(
     "w-full border-collapse",
-    background === "zebra" && "[&>div:nth-child(even)]:bg-gray-50",
+    background === "zebra" && "[&>div:nth-child(even)]:bg-gray-50 dark:[&>div:nth-child(even)]:bg-[#1e1e1e]",
     fixHeader && "relative"
   );
 
   const headingContent = heading ? (
-    <div className="px-4 py-2 font-semibold text-lg border-b">{heading}</div>
+    <div className="px-4 py-2 font-semibold text-lg border-b border-gray-200 dark:border-[#2a2a2a] text-gray-900 dark:text-white">{heading}</div>
   ) : (
-    <div className="sticky top-0 bg-gray-100 font-semibold border-b" role="rowgroup">
+    <div className="sticky top-0 bg-gray-100 dark:bg-[#1a1a1a] font-semibold border-b border-gray-200 dark:border-[#2a2a2a]" role="rowgroup">
       <Row datum={thead} isHeading={true} />
     </div>
   );
@@ -70,7 +70,7 @@ export default function Table({
       <>
         <div className={tableStyle} role="table">
           {headingContent}
-          <div className="divide-y divide-gray-200" role="rowgroup">
+          <div className="divide-y divide-gray-200 dark:divide-[#2a2a2a]" role="rowgroup">
             {data.map((d, i) => {
               const key = keyAsId && d?.[keyAsId] ? d[keyAsId] : i;
               const props = { datum: d, onClick: onRowClick };
@@ -79,7 +79,7 @@ export default function Table({
           </div>
         </div>
         {!data.length && (
-          <div className="text-center text-gray-500 py-8">
+          <div className="text-center text-gray-500 dark:text-[#6b6b6b] py-8">
             <p>Empty</p>
           </div>
         )}
@@ -93,8 +93,8 @@ const Row = ({ datum, onClick, isHeading }: RowProps) => {
 
   const className = cn(
     "flex",
-    onClick && "cursor-pointer hover:bg-gray-50",
-    isHeading && "font-semibold"
+    onClick && "cursor-pointer hover:bg-gray-50 dark:hover:bg-[#1e1e1e]",
+    isHeading && "font-semibold text-gray-700 dark:text-[#a1a1a1]"
   );
   return (
     <div className={className} role="row" onClick={() => onClick?.(datum)}>
@@ -113,9 +113,9 @@ const Row = ({ datum, onClick, isHeading }: RowProps) => {
           const wrappedContent = content && typeof content === "string" ? <span>{content}</span> : content;
 
           const cellClass = cn(
-            "px-4 py-2",
-            highlightColumns?.includes(k) && "bg-blue-50 font-medium",
-            !wrappedContent && "text-gray-400",
+            "px-4 py-2 text-gray-900 dark:text-[#e5e5e5]",
+            highlightColumns?.includes(k) && "bg-blue-50 dark:bg-blue-950/20 font-medium",
+            !wrappedContent && "text-gray-400 dark:text-[#6b6b6b]",
             typeof content !== "string" && "flex items-center"
           );
 
@@ -134,7 +134,7 @@ const Row = ({ datum, onClick, isHeading }: RowProps) => {
 const Cell = ({ children, cellClass, cellStyle, tooltip }: CellProps) => {
   return (
     <div
-      className={cn("flex-1", cellClass, !children && "text-gray-400")}
+      className={cn("flex-1", cellClass, !children && "text-gray-400 dark:text-[#6b6b6b]")}
       style={cellStyle}
       title={tooltip}
     >

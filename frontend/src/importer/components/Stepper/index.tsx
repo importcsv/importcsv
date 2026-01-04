@@ -26,7 +26,7 @@ export default function Stepper({ steps, current, hide, skipHeader }: StepperPro
                   "relative w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold transition-all duration-300",
                   isActive && "bg-blue-600 text-white shadow-md",
                   isDone && "bg-blue-600 text-white",
-                  !isActive && !isDone && "bg-slate-100 border-2 border-slate-300 text-slate-500"
+                  !isActive && !isDone && "bg-slate-100 dark:bg-[#3a3a3a] border-2 border-slate-300 dark:border-[#3a3a3a] text-slate-500 dark:text-[#6b6b6b]"
                 )}>
                   {/* Pulse ring for active step */}
                   {isActive && (
@@ -44,9 +44,9 @@ export default function Stepper({ steps, current, hide, skipHeader }: StepperPro
                 {/* Step label */}
                 <span className={cn(
                   "text-xs tracking-wide transition-all duration-300",
-                  isActive && "text-slate-900 font-semibold",
-                  isDone && "text-slate-700 font-medium",
-                  !isActive && !isDone && "text-slate-400"
+                  isActive && "text-slate-900 dark:text-white font-semibold",
+                  isDone && "text-slate-700 dark:text-[#a1a1a1] font-medium",
+                  !isActive && !isDone && "text-slate-400 dark:text-[#6b6b6b]"
                 )}>
                   {step.label}
                 </span>
@@ -54,7 +54,7 @@ export default function Stepper({ steps, current, hide, skipHeader }: StepperPro
 
               {/* Gradient connector line */}
               {index < activeSteps.length - 1 && (
-                <div className="mx-4 w-16 h-0.5 rounded-full overflow-hidden bg-slate-200">
+                <div className="mx-4 w-16 h-0.5 rounded-full overflow-hidden bg-slate-200 dark:bg-[#3a3a3a]">
                   <div
                     className={cn(
                       "h-full bg-gradient-to-r from-blue-600 to-blue-400 transition-all duration-500",

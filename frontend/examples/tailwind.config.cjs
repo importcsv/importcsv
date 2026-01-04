@@ -1,13 +1,12 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: 'class',
+  darkMode: ["class", '[data-theme="dark"]'],
   content: [
     './index.html',
     './*.{jsx,tsx}',
     './examples/**/*.{jsx,tsx}',
     '../src/**/*.{js,jsx,ts,tsx}',
   ],
-  // Don't use important selector for examples
   theme: {
     extend: {
       colors: {

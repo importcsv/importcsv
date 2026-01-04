@@ -10,6 +10,7 @@ interface ModalProps {
   className?: string;
   overlayClassName?: string;
   contentClassName?: string;
+  dataTheme?: 'dark' | 'light';
 }
 
 const Modal = ({
@@ -19,7 +20,8 @@ const Modal = ({
   closeOnOutsideClick = true,
   className = '',
   overlayClassName = '',
-  contentClassName = ''
+  contentClassName = '',
+  dataTheme
 }: ModalProps) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<Element | null>(null);
@@ -130,14 +132,16 @@ const Modal = ({
       onClick={handleBackdropClick}
       role="presentation"
       aria-hidden="true"
+      data-theme={dataTheme}
     >
       <div
         ref={contentRef}
-        className={`csv-importer-modal-content ${contentClassName} ${className}`}
+        className={`csv-importer-modal-content importcsv ${contentClassName} ${className}`}
         role="dialog"
         aria-modal="true"
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
+        data-theme={dataTheme}
       >
         {children}
       </div>

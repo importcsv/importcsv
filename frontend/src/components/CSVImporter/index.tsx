@@ -168,6 +168,7 @@ const CSVImporter = forwardRef(<TSchema = any,>(importerProps: CSVImporterProps<
       closeOnOutsideClick={modalCloseOnOutsideClick}
       className={domElementClass}
       contentClassName="csv-importer-modal-container"
+      dataTheme={darkMode ? 'dark' : 'light'}
     >
       <div {...elementProps}>
         <ImporterComponent />

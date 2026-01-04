@@ -53,7 +53,7 @@ const Root = forwardRef<HTMLDivElement, RootProps>(function Root(
   return (
     <div
       ref={localRef}
-      className={`${className} min-h-0 w-full overflow-auto bg-white h-full`}
+      className={`${className} min-h-0 w-full overflow-auto bg-white dark:bg-[#121212] h-full`}
       style={{ isolation: 'isolate' }}
     >
       {children}

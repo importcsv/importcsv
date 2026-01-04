@@ -1,265 +1,76 @@
-/* Dark mode styles for CSV Importer */
+/* Dark mode styles for CSV Importer
+ *
+ * NOTE: Primary dark mode styling is now handled via Tailwind `dark:` classes
+ * in the component files. This CSS file provides:
+ * 1. CSS variable definitions for backward compatibility
+ * 2. Fallback styles for elements not yet migrated
+ * 3. Third-party component overrides
+ */
 
-/* When data-theme="dark" is set on any parent */
+/* CSS Variables for dark mode (Linear-inspired palette) */
 [data-theme="dark"] {
   /* Background colors */
-  --csv-bg-primary: #1a1a1a;
-  --csv-bg-secondary: #2d2d2d;
-  --csv-bg-hover: #363636;
-  --csv-bg-input: #242424;
-  
+  --csv-bg-primary: #121212;
+  --csv-bg-secondary: #1a1a1a;
+  --csv-bg-elevated: #242424;
+  --csv-bg-hover: #1e1e1e;
+  --csv-bg-input: #1e1e1e;
+
   /* Text colors */
   --csv-text-primary: #ffffff;
-  --csv-text-secondary: #a0a0a0;
+  --csv-text-secondary: #a1a1a1;
   --csv-text-muted: #6b6b6b;
-  
+  --csv-text-body: #e5e5e5;
+
   /* Border colors */
-  --csv-border: #404040;
-  --csv-border-subtle: #333333;
-  
-  /* Apply dark background to main containers */
-  background-color: var(--csv-bg-primary) !important;
-  color: var(--csv-text-primary) !important;
+  --csv-border: #3a3a3a;
+  --csv-border-subtle: #2a2a2a;
+
+  /* Semantic colors */
+  --csv-warning-bg: #2a1f0a;
+  --csv-warning-border: #5c4813;
+  --csv-warning-text: #fbbf24;
+  --csv-error-bg: #2a0a0a;
+  --csv-error-border: #5c1313;
+  --csv-error-text: #f87171;
+  --csv-success-bg: #0a2a0a;
+  --csv-success-border: #135c13;
+  --csv-success-text: #4ade80;
 }
 
-/* Headers and titles - ensure no gray backgrounds */
-[data-theme="dark"] h1,
-[data-theme="dark"] h2,
-[data-theme="dark"] h3,
-[data-theme="dark"] h4 {
-  background-color: transparent !important;
-  color: var(--csv-text-primary) !important;
+/* Also support Tailwind's dark class for system preference */
+.dark,
+:root.dark {
+  --csv-bg-primary: #121212;
+  --csv-bg-secondary: #1a1a1a;
+  --csv-bg-elevated: #242424;
+  --csv-bg-hover: #1e1e1e;
+  --csv-bg-input: #1e1e1e;
+  --csv-text-primary: #ffffff;
+  --csv-text-secondary: #a1a1a1;
+  --csv-text-muted: #6b6b6b;
+  --csv-text-body: #e5e5e5;
+  --csv-border: #3a3a3a;
+  --csv-border-subtle: #2a2a2a;
 }
 
-[data-theme="dark"] .text-gray-900,
-[data-theme="dark"] .text-gray-800 {
-  color: var(--csv-text-primary) !important;
+/* Dropdown options (native elements need CSS overrides) */
+[data-theme="dark"] option,
+.dark option {
+  background-color: var(--csv-bg-secondary);
+  color: var(--csv-text-primary);
 }
 
-[data-theme="dark"] .text-gray-600,
-[data-theme="dark"] .text-gray-700 {
-  color: var(--csv-text-secondary) !important;
+/* Native dialog element */
+[data-theme="dark"] dialog,
+.dark dialog {
+  background-color: var(--csv-bg-primary);
+  color: var(--csv-text-primary);
 }
 
-[data-theme="dark"] .text-gray-500,
-[data-theme="dark"] .text-gray-400 {
-  color: var(--csv-text-muted) !important;
-}
-
-/* Backgrounds - be selective about which ones to override */
-[data-theme="dark"] .bg-white {
-  background-color: var(--csv-bg-secondary) !important;
-}
-
-/* Remove gray backgrounds from sections that shouldn't have them */
-[data-theme="dark"] .bg-gray-50,
-[data-theme="dark"] [class*="px-6"][class*="py-"] {
-  background-color: transparent !important;
-}
-
-/* Table specific backgrounds */
-[data-theme="dark"] table .bg-gray-50 {
-  background-color: var(--csv-bg-primary) !important;
-}
-
-[data-theme="dark"] .bg-gray-100 {
-  background-color: var(--csv-bg-secondary) !important;
-}
-
-/* Borders */
-[data-theme="dark"] .border-gray-200,
-[data-theme="dark"] .border-gray-300 {
-  border-color: var(--csv-border) !important;
-}
-
-/* Buttons */
-[data-theme="dark"] button {
-  /* Primary button - lighter blue for dark mode with border */
-  &.bg-blue-600 {
-    background-color: #3b82f6 !important;
-    color: white !important;
-    border: 1px solid #60a5fa !important;
-    
-    &:hover {
-      background-color: #2563eb !important;
-      border-color: #3b82f6 !important;
-    }
-  }
-  
-  /* Outline button - transparent background */
-  &[class*="border"][class*="border-gray"] {
-    background-color: transparent !important;
-    border-color: var(--csv-border) !important;
-    color: var(--csv-text-primary) !important;
-    
-    &:hover {
-      background-color: rgba(255, 255, 255, 0.05) !important;
-      border-color: var(--csv-text-secondary) !important;
-    }
-  }
-  
-  /* Secondary button */
-  &.bg-gray-100 {
-    background-color: var(--csv-bg-hover) !important;
-    color: var(--csv-text-primary) !important;
-    
-    &:hover {
-      background-color: #4d4d4d !important;
-    }
-  }
-}
-
-/* Input fields and selects */
-[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]),
-[data-theme="dark"] select,
-[data-theme="dark"] textarea {
-  background-color: var(--csv-bg-input) !important;
-  border-color: var(--csv-border-subtle) !important;
-  color: var(--csv-text-primary) !important;
-  
-  &::placeholder {
-    color: var(--csv-text-muted) !important;
-  }
-  
-  &:focus {
-    border-color: #3b82f6 !important;
-    background-color: var(--csv-bg-secondary) !important;
-    outline: none !important;
-  }
-}
-
-/* Dropdown options */
-[data-theme="dark"] option {
-  background-color: var(--csv-bg-secondary) !important;
-  color: var(--csv-text-primary) !important;
-}
-
-/* Table styles */
-[data-theme="dark"] table {
-  background-color: transparent !important;
-  
-  /* Table header */
-  thead {
-    background-color: transparent !important;
-    
-    th {
-      background-color: transparent !important;
-      color: var(--csv-text-primary) !important;
-      border-color: var(--csv-border) !important;
-    }
-  }
-  
-  /* Table rows */
-  tbody {
-    background-color: transparent !important;
-    
-    tr {
-      background-color: transparent !important;
-      border-color: var(--csv-border) !important;
-      
-      /* Remove hover effect for cleaner look */
-      &:hover {
-        background-color: transparent !important;
-      }
-      
-      td {
-        background-color: transparent !important;
-        border-color: var(--csv-border) !important;
-        color: var(--csv-text-primary) !important;
-      }
-    }
-  }
-}
-
-/* Table row number cells (first column) */
-[data-theme="dark"] table tbody tr td:first-child {
-  background-color: var(--csv-bg-secondary) !important;
-  border-right: 1px solid var(--csv-border) !important;
-}
-
-/* Modal/Dialog */
-[data-theme="dark"] dialog {
-  background-color: var(--csv-bg-primary) !important;
-  color: var(--csv-text-primary) !important;
-}
-
-/* Cards and panels */
-[data-theme="dark"] .rounded-lg,
-[data-theme="dark"] [class*="border"][class*="rounded"] {
-  &.bg-white {
-    background-color: var(--csv-bg-secondary) !important;
-  }
-}
-
-/* Stepper */
-[data-theme="dark"] .stepper-item {
-  color: var(--csv-text-secondary) !important;
-  
-  &.active {
-    color: var(--csv-text-primary) !important;
-  }
-}
-
-/* Filter tabs */
-[data-theme="dark"] button[class*="rounded-md"] {
-  &[class*="bg-white"][class*="shadow"] {
-    background-color: var(--csv-bg-hover) !important;
-    color: var(--csv-text-primary) !important;
-    border: 1px solid var(--csv-border) !important;
-  }
-}
-
-/* Validation cells/inputs in table */
-[data-theme="dark"] td input {
-  background-color: transparent !important;
-  border: none !important;
-  color: var(--csv-text-primary) !important;
-  padding: 8px 12px !important;
-  
-  &:focus {
-    outline: 2px solid #3b82f6 !important;
-    outline-offset: -2px !important;
-    background-color: rgba(59, 130, 246, 0.1) !important;
-  }
-  
-  &:hover:not(:focus) {
-    background-color: transparent !important;
-  }
-}
-
-/* Subtle hover effects for validation table cells */
-[data-theme="dark"] td:hover,
-[data-theme="dark"] td:hover input,
-[data-theme="dark"] .hover\:bg-gray-50:hover,
-[data-theme="dark"] .hover\:bg-gray-100:hover,
-[data-theme="dark"] [class*="hover:bg"]:hover {
-  background-color: rgba(255, 255, 255, 0.02) !important; /* Very subtle highlight */
-}
-
-/* Fix close button (X) visibility */
-[data-theme="dark"] .close-button,
-[data-theme="dark"] [aria-label="Close"] {
-  color: var(--csv-text-primary) !important;
-}
-
-/* Remove any unintended backgrounds from layout containers */
-[data-theme="dark"] [class*="flex"][class*="justify-between"],
-[data-theme="dark"] [class*="flex"][class*="items-center"] {
-  background-color: transparent !important;
-}
-
-/* Fix validation filter tab active state */
-[data-theme="dark"] .bg-blue-50 {
-  background-color: rgba(59, 130, 246, 0.1) !important;
-  border-color: #3b82f6 !important;
-}
-
-/* Fix blue info box in uploader - better contrast */
-[data-theme="dark"] .bg-blue-50 {
-  background-color: rgba(59, 130, 246, 0.15) !important;
-}
-
-[data-theme="dark"] .text-blue-700,
-[data-theme="dark"] .text-blue-600 {
-  color: #93c5fd !important; /* Light blue for better readability */
+/* Third-party select dropdowns that may not support dark: classes */
+[data-theme="dark"] select option,
+.dark select option {
+  background-color: var(--csv-bg-secondary);
+  color: var(--csv-text-primary);
 }

@@ -52,29 +52,29 @@ export default function VirtualTable({
     <div className="flex-1 overflow-hidden relative" ref={parentRef}>
       {/* Sticky Header */}
       {stickyHeader && (
-        <div 
-          className="bg-slate-50/80 border-b border-slate-200 sticky top-0 z-20 overflow-hidden"
+        <div
+          className="bg-slate-50/80 dark:bg-[#1a1a1a] border-b border-slate-200 dark:border-[#2a2a2a] sticky top-0 z-20 overflow-hidden"
           style={{ minWidth: tableWidth }}
         >
           <div className="flex">
             {stickyFirstColumn && (
-              <div 
-                className="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider bg-slate-50/80 border-r border-slate-200"
-                style={{ 
-                  position: 'sticky', 
-                  left: 0, 
-                  zIndex: 21, 
-                  minWidth: '60px', 
-                  width: '60px' 
+              <div
+                className="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 dark:text-[#a1a1a1] uppercase tracking-wider bg-slate-50/80 dark:bg-[#1a1a1a] border-r border-slate-200 dark:border-[#2a2a2a]"
+                style={{
+                  position: 'sticky',
+                  left: 0,
+                  zIndex: 21,
+                  minWidth: '60px',
+                  width: '60px'
                 }}
               >
                 #
               </div>
             )}
             {headers.map((header, idx) => (
-              <div 
-                key={idx} 
-                className="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 uppercase tracking-wider bg-slate-50/80"
+              <div
+                key={idx}
+                className="text-left px-6 py-3.5 text-xs font-semibold text-slate-500 dark:text-[#a1a1a1] uppercase tracking-wider bg-slate-50/80 dark:bg-[#1a1a1a]"
                 style={{ minWidth: '200px', flex: '0 0 200px' }}
               >
                 {header}
@@ -108,12 +108,13 @@ export default function VirtualTable({
             const actualRowIdx = virtualRow.index;
             const displayRowIndex = actualRowIdx + headerRowIndex + 1;
             const rowClassName = getRowClassName?.(row, actualRowIdx) || '';
+            const hasError = rowClassName.includes('bg-red-50') || rowClassName.includes('bg-red-950');
 
             return (
               <div
                 key={virtualRow.key}
                 className={cn(
-                  "flex border-b border-slate-100 hover:bg-blue-50/50 transition-colors",
+                  "flex border-b border-slate-100 dark:border-[#2a2a2a] hover:bg-blue-50/50 dark:hover:bg-[#1e1e1e] transition-colors",
                   rowClassName
                 )}
                 style={{
@@ -127,15 +128,17 @@ export default function VirtualTable({
               >
                 {/* Sticky Row Number */}
                 {stickyFirstColumn && (
-                  <div 
-                    className="px-6 py-3 text-sm text-slate-600 border-r border-slate-200 flex items-center"
-                    style={{ 
-                      position: 'sticky', 
-                      left: 0, 
-                      zIndex: 5, 
-                      backgroundColor: rowClassName.includes('bg-red-50') ? '#FEF2F2' : '#F8FAFC',
-                      minWidth: '60px', 
-                      width: '60px' 
+                  <div
+                    className={cn(
+                      "px-6 py-3 text-sm text-slate-600 dark:text-[#a1a1a1] border-r border-slate-200 dark:border-[#2a2a2a] flex items-center",
+                      hasError ? "bg-red-50 dark:bg-red-950/30" : "bg-slate-50 dark:bg-[#1a1a1a]"
+                    )}
+                    style={{
+                      position: 'sticky',
+                      left: 0,
+                      zIndex: 5,
+                      minWidth: '60px',
+                      width: '60px'
                     }}
                   >
                     <span>{displayRowIndex + 1}</span>
@@ -144,9 +147,8 @@ export default function VirtualTable({
 
                 {/* Data Cells */}
                 {includedColumns.map((colIdx, idx) => (
-
-                    <div 
-                      key={idx} 
+                    <div
+                      key={idx}
                       className="px-6 py-3"
                       style={{ minWidth: '200px', flex: '0 0 200px' }}
                     >
