@@ -24,6 +24,7 @@ from app.schemas.integration import (
 )
 from app.services import integration as integration_service
 from app.services import supabase as supabase_service
+from app.services.delivery import is_valid_supabase_url, is_safe_webhook_url
 
 router = APIRouter()
 
@@ -46,13 +47,30 @@ async def create_integration(
     current_user: User = Depends(get_current_active_user),
 ):
     """Create a new integration. Validates credentials before saving."""
-    # Validate Supabase credentials by testing the connection
+    # Validate credentials based on integration type
     if data.type == IntegrationType.SUPABASE:
+        # Validate URL format BEFORE making any requests (SSRF protection)
+        supabase_url = data.credentials.get("url", "")
+        if not is_valid_supabase_url(supabase_url):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid Supabase URL - must be https://*.supabase.co"
+            )
+        # Now safe to test the connection
         result = await supabase_service.test_connection(data.credentials)
         if not result["success"]:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail=f"Supabase connection failed: {result['message']}"
+            )
+
+    elif data.type == IntegrationType.WEBHOOK:
+        # Validate webhook URL (SSRF protection)
+        webhook_url = data.credentials.get("url", "")
+        if not is_safe_webhook_url(webhook_url):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid webhook URL - cannot target private/internal addresses"
             )
 
     return integration_service.create_integration(db, current_user.id, data)
@@ -79,18 +97,35 @@ async def update_integration(
     current_user: User = Depends(get_current_active_user),
 ):
     """Update an integration. Validates new credentials if provided."""
-    # If updating Supabase credentials, validate them first
+    # If updating credentials, validate them first
     if data.credentials:
         integration, _ = integration_service.get_integration(db, integration_id, current_user.id)
         if not integration:
             raise HTTPException(status_code=404, detail="Integration not found")
 
         if integration.type == IntegrationType.SUPABASE:
+            # Validate URL format BEFORE making any requests (SSRF protection)
+            supabase_url = data.credentials.get("url", "")
+            if not is_valid_supabase_url(supabase_url):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid Supabase URL - must be https://*.supabase.co"
+                )
+            # Now safe to test the connection
             result = await supabase_service.test_connection(data.credentials)
             if not result["success"]:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail=f"Supabase connection failed: {result['message']}"
+                )
+
+        elif integration.type == IntegrationType.WEBHOOK:
+            # Validate webhook URL (SSRF protection)
+            webhook_url = data.credentials.get("url", "")
+            if not is_safe_webhook_url(webhook_url):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid webhook URL - cannot target private/internal addresses"
                 )
 
     integration = integration_service.update_integration(db, integration_id, current_user.id, data)

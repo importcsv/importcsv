@@ -21,6 +21,7 @@ from app.models.import_job import ImportJob, ImportStatus
 from app.models.importer import Importer
 from app.services.queue import enqueue_job
 from app.services.webhook import WebhookService, WebhookEventType
+from app.services.delivery import deliver_to_destination
 
 logger = logging.getLogger(__name__)
 
@@ -272,6 +273,24 @@ class ImportService:
 
             # Send completion webhook
             await self._send_completion_webhook(db, import_job, importer, processed_df)
+
+            # Deliver to configured destination (Supabase/webhook integration)
+            if import_job.status == ImportStatus.COMPLETED and processed_df is not None and not processed_df.empty:
+                try:
+                    rows = processed_df.to_dict(orient="records")
+                    delivery_result = await deliver_to_destination(
+                        db=db,
+                        import_id=import_job.id,
+                        importer_id=importer.id,
+                        rows=rows,
+                    )
+                    if delivery_result.success:
+                        logger.info(f"Destination delivery completed: {delivery_result.rows_delivered} rows")
+                    elif delivery_result.error_code != "NO_DESTINATION":
+                        logger.error(f"Destination delivery failed: {delivery_result.error_message}")
+                except Exception as delivery_exc:
+                    # Log but don't fail the import if delivery fails
+                    logger.error(f"Error delivering to destination: {delivery_exc}", exc_info=True)
 
         except Exception as e:
             logger.error(

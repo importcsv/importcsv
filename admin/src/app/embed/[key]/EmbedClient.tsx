@@ -19,7 +19,7 @@ const CSVImporter = dynamic(
 interface EmbedClientProps {
   importerKey: string;
   params: EmbedQueryParams;
-  targetOrigin: string;
+  targetOrigin?: string; // Optional - only needed if parent wants postMessage data
 }
 
 export default function EmbedClient({
@@ -42,16 +42,20 @@ export default function EmbedClient({
       ? `#${params.primaryColor}`
       : "#0284c7";
 
-  // Notify parent when component is ready
+  // Notify parent when component is ready (only if targetOrigin provided)
   useEffect(() => {
-    sendEmbedMessage(
-      { source: EMBED_MESSAGE_SOURCE, type: "ready" },
-      targetOrigin
-    );
+    if (targetOrigin) {
+      sendEmbedMessage(
+        { source: EMBED_MESSAGE_SOURCE, type: "ready" },
+        targetOrigin
+      );
+    }
   }, [targetOrigin]);
 
-  // Handle errors and notify parent
+  // Handle errors and notify parent (only if targetOrigin provided)
   useEffect(() => {
+    if (!targetOrigin) return;
+
     const handleError = (event: ErrorEvent) => {
       sendEmbedMessage(
         {
@@ -69,6 +73,9 @@ export default function EmbedClient({
   // Handle import completion
   const handleComplete = useCallback(
     (data: ImportData) => {
+      // Only send postMessage if targetOrigin is configured
+      if (!targetOrigin) return;
+
       if (returnData) {
         sendEmbedMessage(
           {

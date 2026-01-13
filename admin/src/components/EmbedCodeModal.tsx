@@ -45,18 +45,27 @@ export default function EmbedCodeModal({
       ? `${window.location.origin}/embed/${importerKey}`
       : `/embed/${importerKey}`;
 
-  // Build query params
+  // Validation states (moved up so they can be used in iframeCode)
+  const isValidColor = /^[0-9a-fA-F]{6}$/.test(primaryColor);
+  const isValidParentOrigin = parentOrigin && isValidOrigin(parentOrigin);
+  const isPlaceholderOrigin = !parentOrigin;
+
+  // Build query params - origin is now optional for no-code (data goes to Supabase)
   const queryParams = new URLSearchParams();
-  queryParams.set("origin", parentOrigin || "YOUR_ORIGIN");
+  if (isValidParentOrigin) {
+    queryParams.set("origin", parentOrigin);
+  }
   if (darkMode) queryParams.set("theme", "dark");
   if (!returnData) queryParams.set("returnData", "false");
   if (hideHeader) queryParams.set("hideHeader", "true");
   if (primaryColor !== "0284c7") queryParams.set("primaryColor", primaryColor);
 
-  const embedUrl = `${baseUrl}?${queryParams.toString()}`;
+  const queryString = queryParams.toString();
+  const embedUrl = queryString ? `${baseUrl}?${queryString}` : baseUrl;
 
-  // Generate the iframe code with origin validation in the message handler
-  const iframeCode = `<iframe
+  // Generate the iframe code - simpler for no-code, with postMessage for advanced
+  const iframeCode = isValidParentOrigin
+    ? `<iframe
   src="${embedUrl}"
   width="100%"
   height="600"
@@ -86,14 +95,21 @@ export default function EmbedCodeModal({
         break;
     }
   });
-</script>`;
+</script>`
+    : `<iframe
+  src="${embedUrl}"
+  width="100%"
+  height="600"
+  frameborder="0"
+  allow="clipboard-write"
+></iframe>`;
 
   const handleCopy = async () => {
-    // Validate origin before allowing copy
-    if (!isValidParentOrigin) {
+    // Validate origin only if one was entered
+    if (parentOrigin && !isValidParentOrigin) {
       toast({
         title: "Invalid Origin",
-        description: "Please enter a valid website URL before copying.",
+        description: "Please enter a valid website URL or leave it empty for no-code embeds.",
         variant: "destructive",
       });
       return;
@@ -116,10 +132,6 @@ export default function EmbedCodeModal({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const isValidColor = /^[0-9a-fA-F]{6}$/.test(primaryColor);
-  const isValidParentOrigin = parentOrigin && isValidOrigin(parentOrigin);
-  const isPlaceholderOrigin = !parentOrigin;
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
@@ -136,10 +148,10 @@ export default function EmbedCodeModal({
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Configuration</h3>
 
-            {/* Parent Origin - Required */}
+            {/* Parent Origin - Optional for no-code */}
             <div className="space-y-2">
               <Label htmlFor="parent-origin">
-                Your Website URL <span className="text-red-500">*</span>
+                Your Website URL <span className="text-gray-400">(optional)</span>
               </Label>
               <Input
                 id="parent-origin"
@@ -157,14 +169,13 @@ export default function EmbedCodeModal({
                 </p>
               )}
               {isPlaceholderOrigin && (
-                <p className="text-xs text-amber-600 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  Required: Enter your website URL for security
+                <p className="text-xs text-gray-500">
+                  Leave empty for no-code embeds. Data goes directly to your configured destination (Supabase/webhook).
                 </p>
               )}
               {isValidParentOrigin && (
                 <p className="text-xs text-gray-500">
-                  Import data will only be sent to this origin.
+                  Import data will also be sent to your page via postMessage.
                 </p>
               )}
             </div>

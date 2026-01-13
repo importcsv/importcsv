@@ -7,8 +7,9 @@ interface EmbedPageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
+// Use BACKEND_URL for server-side calls (Docker internal), fallback to NEXT_PUBLIC for dev
 const BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
+  process.env.BACKEND_URL || process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
 
 /**
  * Validates that the key is a valid UUID format.
@@ -79,31 +80,12 @@ export default async function EmbedPage({
     notFound();
   }
 
-  // SECURITY: Require and validate origin parameter
+  // Origin parameter is optional for no-code embeds (data goes to Supabase/webhook)
+  // When provided, it's used for postMessage to send data back to parent
   const originParam =
-    typeof resolvedSearchParams.origin === "string"
+    typeof resolvedSearchParams.origin === "string" && isValidOrigin(resolvedSearchParams.origin)
       ? resolvedSearchParams.origin
       : null;
-
-  if (!originParam || !isValidOrigin(originParam)) {
-    // Return an error page instead of the importer
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center p-8">
-          <h1 className="text-xl font-semibold text-gray-900 mb-2">
-            Missing Origin Parameter
-          </h1>
-          <p className="text-gray-600">
-            The embed URL must include a valid &apos;origin&apos; parameter for
-            security.
-          </p>
-          <p className="text-gray-500 text-sm mt-4">
-            Example: /embed/[key]?origin=https://yourdomain.com
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   // Validate importer exists in the database
   const importer = await validateImporter(key);
@@ -138,7 +120,7 @@ export default async function EmbedPage({
     <EmbedClient
       importerKey={key}
       params={embedParams}
-      targetOrigin={originParam}
+      targetOrigin={originParam || undefined}
     />
   );
 }
