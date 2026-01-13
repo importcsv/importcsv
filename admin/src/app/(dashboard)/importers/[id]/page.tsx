@@ -43,7 +43,9 @@ import {
   Webhook,
   Code,
   Shield,
+  Globe,
 } from "lucide-react";
+import EmbedCodeModal from "@/components/EmbedCodeModal";
 
 // Use the ImporterField type from the AddColumnForm component
 type ImporterField = AddColumnImporterField;
@@ -84,6 +86,7 @@ export default function ImporterDetailPage() {
   // Dialog States
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showEmbedModal, setShowEmbedModal] = useState(false);
 
   const importerId = params.id as string;
 
@@ -614,7 +617,22 @@ export default function ImporterDetailPage() {
           defaultOpen={false}
         >
           <div className="space-y-6">
+            {/* No-Code Embed Option */}
             <div>
+              <Label className="text-base font-medium mb-2 block">No-Code Embed (iframe)</Label>
+              <p className="text-sm text-gray-500 mb-3">
+                Embed the importer directly on your website with an iframe. No coding required.
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => setShowEmbedModal(true)}
+              >
+                <Globe className="h-4 w-4 mr-2" />
+                Get Embed Code
+              </Button>
+            </div>
+
+            <div className="pt-6 border-t">
               <Label className="text-base font-medium mb-2 block">React Integration</Label>
               <div className="relative">
                 <Button
@@ -660,6 +678,15 @@ export default function ImporterDetailPage() {
             </div>
           </div>
         </CollapsibleSection>
+
+        {/* Embed Code Modal */}
+        {importer && (
+          <EmbedCodeModal
+            open={showEmbedModal}
+            onOpenChange={setShowEmbedModal}
+            importerKey={importer.key}
+          />
+        )}
       </div>
 
       {/* Sticky Save Bar */}
