@@ -35,3 +35,4 @@ class User(Base):
     import_jobs = relationship("ImportJob", back_populates="user")
     webhook_events = relationship("WebhookEvent", back_populates="user")
     usage_records = relationship("UsageRecord", back_populates="user")
+    integrations = relationship("Integration", back_populates="user")

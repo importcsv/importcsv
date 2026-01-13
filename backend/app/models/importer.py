@@ -57,3 +57,4 @@ class Importer(Base):
     # Relationships - using simple string references
     user = relationship("User", back_populates="importers")
     import_jobs = relationship("ImportJob", back_populates="importer")
+    destination = relationship("ImporterDestination", back_populates="importer", uselist=False)
