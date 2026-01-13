@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from uvicorn.middleware.proxy_headers import ProxyHeadersMiddleware
@@ -12,11 +12,96 @@ from slowapi.errors import RateLimitExceeded
 import uvicorn
 import os
 import logging
-from typing import Callable
+from typing import Callable, List
 from dotenv import load_dotenv
 
 from app.api.routes import api_router
 from app.core.config import settings
+
+
+# Split CORS middleware - different policies for public vs admin routes
+class SplitCORSMiddleware(BaseHTTPMiddleware):
+    """
+    Custom CORS middleware that applies different policies based on path.
+
+    - /api/v1/imports/key/* : Wildcard CORS (allow any origin, no credentials)
+    - All other paths: Configured CORS (specific origins, with credentials)
+    """
+
+    PUBLIC_PATH_PREFIX = "/api/v1/imports/key"
+
+    def __init__(
+        self,
+        app,
+        admin_origins: List[str],
+        admin_allow_credentials: bool = True,
+        allow_methods: List[str] = None,
+        allow_headers: List[str] = None,
+        expose_headers: List[str] = None,
+        max_age: int = 600,
+    ):
+        super().__init__(app)
+        self.admin_origins = set(admin_origins)
+        self.admin_allow_credentials = admin_allow_credentials
+        self.allow_methods = allow_methods or ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"]
+        self.allow_headers = allow_headers or ["*"]
+        self.expose_headers = expose_headers or []
+        self.max_age = max_age
+
+    def is_public_path(self, path: str) -> bool:
+        return path.startswith(self.PUBLIC_PATH_PREFIX)
+
+    async def dispatch(self, request: Request, call_next):
+        origin = request.headers.get("origin")
+        is_public = self.is_public_path(request.url.path)
+
+        # Handle preflight OPTIONS requests
+        if request.method == "OPTIONS":
+            return self._handle_preflight(request, origin, is_public)
+
+        # Process actual request
+        response = await call_next(request)
+
+        # Add CORS headers to response only for allowed origins
+        if origin:
+            if is_public:
+                # Public endpoints: allow any origin, no credentials
+                response.headers["Access-Control-Allow-Origin"] = "*"
+                if self.expose_headers:
+                    response.headers["Access-Control-Expose-Headers"] = ", ".join(self.expose_headers)
+            elif origin in self.admin_origins:
+                # Admin endpoints: specific origins with credentials
+                response.headers["Access-Control-Allow-Origin"] = origin
+                response.headers["Access-Control-Allow-Credentials"] = "true"
+                if self.expose_headers:
+                    response.headers["Access-Control-Expose-Headers"] = ", ".join(self.expose_headers)
+            # If origin not allowed, don't add any CORS headers - browser will block
+
+        return response
+
+    def _handle_preflight(self, request: Request, origin: str, is_public: bool):
+        """Handle CORS preflight (OPTIONS) requests."""
+        if is_public:
+            # Public endpoints: wildcard CORS, no credentials
+            return PlainTextResponse("", status_code=200, headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Methods": ", ".join(self.allow_methods),
+                "Access-Control-Allow-Headers": ", ".join(self.allow_headers),
+                "Access-Control-Max-Age": str(self.max_age),
+            })
+        elif origin and origin in self.admin_origins:
+            # Admin endpoints: specific origin with credentials
+            return PlainTextResponse("", status_code=200, headers={
+                "Access-Control-Allow-Origin": origin,
+                "Access-Control-Allow-Credentials": "true",
+                "Access-Control-Allow-Methods": ", ".join(self.allow_methods),
+                "Access-Control-Allow-Headers": ", ".join(self.allow_headers),
+                "Access-Control-Max-Age": str(self.max_age),
+            })
+        else:
+            # Disallowed origin: return 200 with no CORS headers
+            # Browser will enforce the block - we don't leak policy info
+            return PlainTextResponse("", status_code=200)
 
 
 # Security headers middleware
@@ -93,14 +178,14 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# Configure CORS
-logging.info(f"Configuring CORS with origins: {settings.CORS_ORIGINS}")
+# Configure split CORS - public endpoints get wildcard, admin gets specific origins
+logging.info(f"Configuring split CORS. Admin origins: {settings.CORS_ORIGINS}")
 
-# Add CORS middleware - settings are environment-specific through the settings classes
+# Add split CORS middleware - different policies for public vs admin routes
 app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS,
-    allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+    SplitCORSMiddleware,
+    admin_origins=settings.CORS_ORIGINS,
+    admin_allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
     allow_methods=settings.CORS_ALLOW_METHODS,
     allow_headers=settings.CORS_ALLOW_HEADERS,
     expose_headers=settings.CORS_EXPOSE_HEADERS,
@@ -125,7 +210,12 @@ app.add_middleware(
 # This must be added last so it runs first (middleware order is LIFO)
 app.add_middleware(ProxyHeadersMiddleware, trusted_hosts=["*"])
 
-# Include API routes
+# Mount public API sub-app with permissive CORS for embedded component
+# This handles /api/v1/imports/key/* endpoints that need wildcard CORS
+from app.api.public import public_app
+app.mount("/api/v1/imports/key", public_app)
+
+# Include API routes (admin endpoints with specific CORS)
 app.include_router(api_router, prefix="/api")
 
 

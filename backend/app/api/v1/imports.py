@@ -30,8 +30,8 @@ logger = logging.getLogger(__name__)
 # Router for user-authenticated endpoints
 router = APIRouter()
 
-# Router for key-authenticated endpoints
-key_router = APIRouter(prefix="/key")
+# Router for key-authenticated endpoints (no prefix - handled by mount path)
+key_router = APIRouter()
 
 
 @router.get("/", response_model=List[ImportJobSchema])

@@ -13,9 +13,6 @@ api_router.include_router(auth_oauth.router, prefix="/v1/auth", tags=["OAuth"])
 api_router.include_router(importers.router, prefix="/v1/importers", tags=["Importers"])
 api_router.include_router(imports.router, prefix="/v1/imports", tags=["Imports"])
 
-# Key-authenticated routes (no user authentication required)
-api_router.include_router(imports.key_router, prefix="/v1/imports", tags=["Key Imports"])
-
 # Usage tracking routes
 api_router.include_router(usage.router, prefix="/v1/usage", tags=["Usage"])
 
