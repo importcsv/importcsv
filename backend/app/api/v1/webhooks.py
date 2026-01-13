@@ -14,6 +14,7 @@ from app.core.features import is_cloud_mode, get_tier_import_limit, get_tier_max
 from app.services.billing import BillingService
 from app.services.email import email_service
 from app.models.stripe_webhook import ProcessedStripeEvent
+from app.models.user import User
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -110,6 +111,20 @@ def handle_checkout_completed(billing: BillingService, session: dict) -> None:
         logger.warning("Checkout completed but missing customer or subscription")
         return
 
+    # Check if user is currently on a trial
+    user = billing.db.query(User).filter(
+        User.stripe_customer_id == customer_id
+    ).first()
+
+    if user and user.subscription_status == "trialing" and user.trial_ends_at:
+        # User added CC during trial - just save subscription_id, don't change status
+        user.subscription_id = subscription_id
+        billing.db.commit()
+        logger.info(f"User {user.id} added payment method during trial")
+        # Do NOT send upgrade email - they're still trialing
+        return
+
+    # Normal checkout (no trial) - existing behavior
     user = billing.update_subscription_from_webhook(
         stripe_customer_id=customer_id,
         subscription_id=subscription_id,
@@ -178,13 +193,52 @@ def handle_payment_failed(billing: BillingService, invoice: dict) -> None:
 
 
 def handle_payment_succeeded(billing: BillingService, invoice: dict) -> None:
-    """Handle successful payment - clear grace period."""
+    """Handle successful payment - clear grace period and mark as paying customer."""
     customer_id = invoice.get("customer")
     subscription_id = invoice.get("subscription")
 
-    if subscription_id:
-        billing.update_subscription_from_webhook(
-            stripe_customer_id=customer_id,
-            subscription_id=subscription_id,
-            status="active",
-        )
+    if not subscription_id:
+        return
+
+    user = billing.db.query(User).filter(
+        User.stripe_customer_id == customer_id
+    ).first()
+
+    if not user:
+        logger.warning(f"No user found for customer {customer_id}")
+        return
+
+    # Mark as paying customer (first real payment)
+    was_trialing = user.subscription_status == "trialing"
+    if not user.has_been_paying_customer:
+        user.has_been_paying_customer = True
+
+    # Clear trial state
+    user.trial_ends_at = None
+    user.subscription_status = "active"
+
+    # Clear grace period if applicable
+    if user.grace_period_ends_at:
+        user.grace_period_ends_at = None
+
+    billing.db.commit()
+
+    # Send subscription started email if this was a trial conversion
+    if was_trialing:
+        if user.trial_started_at:
+            tier = user.subscription_tier
+            # Get amount from invoice (source of truth) instead of hardcoding
+            amount_cents = invoice.get("amount_paid", 0)
+            amount = f"${amount_cents / 100:.2f}" if amount_cents else None
+            if amount:
+                email_service.send_subscription_started(
+                    user.email,
+                    tier_name=tier.title(),
+                    amount=amount,
+                )
+            else:
+                logger.warning(f"No amount_paid in invoice for user {user.id}, skipping conversion email")
+        else:
+            logger.warning(f"User {user.id} was trialing but had no trial_started_at - skipping conversion email")
+
+    logger.info(f"Payment succeeded for user {user.id}, status now active")

@@ -106,6 +106,69 @@ class EmailService:
             html=html_content,
         )
 
+    def send_trial_started(
+        self,
+        to_email: str,
+        tier_name: str,
+        trial_days: int,
+    ) -> bool:
+        """Send trial started welcome email."""
+        html_content = self._render(
+            "trial_started.html",
+            tier_name=tier_name,
+            trial_days=trial_days,
+        )
+        return self._send(
+            to=to_email,
+            subject=f"Welcome to your {tier_name} trial!",
+            html=html_content,
+        )
+
+    def send_trial_ending_soon(
+        self,
+        to_email: str,
+        tier_name: str,
+        days_remaining: int,
+    ) -> bool:
+        """Send trial ending soon warning email."""
+        html_content = self._render(
+            "trial_ending_soon.html",
+            tier_name=tier_name,
+            days_remaining=days_remaining,
+        )
+        return self._send(
+            to=to_email,
+            subject=f"Your {tier_name} trial ends in {days_remaining} days",
+            html=html_content,
+        )
+
+    def send_trial_ended(self, to_email: str) -> bool:
+        """Send trial ended email."""
+        html_content = self._render("trial_ended.html")
+        return self._send(
+            to=to_email,
+            subject="Your trial has ended",
+            html=html_content,
+        )
+
+    def send_subscription_started(
+        self,
+        to_email: str,
+        tier_name: str,
+        amount: str,
+    ) -> bool:
+        """Send subscription started email (trial converted)."""
+        html_content = self._render(
+            "subscription_started.html",
+            tier_name=tier_name,
+            amount=amount,
+        )
+        return self._send(
+            to=to_email,
+            subject=f"Welcome to {tier_name}!",
+            html=html_content,
+        )
+
     def _send(self, to: str, subject: str, html: str) -> bool:
         """Send an email via Resend."""
         if not self.enabled:
