@@ -14,8 +14,12 @@ from app.schemas.integration import (
     IntegrationUpdate,
     IntegrationResponse,
     IntegrationWithSecretResponse,
+    SupabaseTablesResponse,
+    SupabaseTableSchemaResponse,
+    SupabaseColumnSchema,
 )
 from app.services import integration as integration_service
+from app.services import supabase as supabase_service
 
 router = APIRouter()
 
@@ -93,3 +97,67 @@ async def get_integration_secret(
     if integration.type != IntegrationType.WEBHOOK:
         raise HTTPException(status_code=400, detail="Webhook secret only available for webhook integrations")
     return integration
+
+
+@router.get("/{integration_id}/supabase/tables", response_model=SupabaseTablesResponse)
+async def get_supabase_tables(
+    integration_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    List all tables in the Supabase database.
+
+    Only valid for Supabase integrations. Returns a list of table names
+    from the public schema, excluding system tables.
+    """
+    integration, credentials = integration_service.get_integration(
+        db, integration_id, current_user.id, include_credentials=True
+    )
+    if not integration:
+        raise HTTPException(status_code=404, detail="Integration not found")
+    if integration.type != IntegrationType.SUPABASE:
+        raise HTTPException(status_code=400, detail="This endpoint is only available for Supabase integrations")
+
+    try:
+        tables = await supabase_service.list_tables(credentials)
+        return SupabaseTablesResponse(tables=tables)
+    except supabase_service.SupabaseAuthError as e:
+        raise HTTPException(status_code=401, detail=f"Supabase authentication failed: {e}")
+    except supabase_service.SupabaseConnectionError as e:
+        raise HTTPException(status_code=502, detail=f"Failed to connect to Supabase: {e}")
+    except supabase_service.SupabaseError as e:
+        raise HTTPException(status_code=500, detail=f"Supabase error: {e}")
+
+
+@router.get("/{integration_id}/supabase/tables/{table_name}/schema", response_model=SupabaseTableSchemaResponse)
+async def get_supabase_table_schema(
+    integration_id: UUID,
+    table_name: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Get the schema (columns) for a specific table in Supabase.
+
+    Only valid for Supabase integrations. Returns column definitions
+    including name, data type, nullability, and default values.
+    """
+    integration, credentials = integration_service.get_integration(
+        db, integration_id, current_user.id, include_credentials=True
+    )
+    if not integration:
+        raise HTTPException(status_code=404, detail="Integration not found")
+    if integration.type != IntegrationType.SUPABASE:
+        raise HTTPException(status_code=400, detail="This endpoint is only available for Supabase integrations")
+
+    try:
+        columns_data = await supabase_service.get_table_schema(credentials, table_name)
+        columns = [SupabaseColumnSchema(**col) for col in columns_data]
+        return SupabaseTableSchemaResponse(table_name=table_name, columns=columns)
+    except supabase_service.SupabaseAuthError as e:
+        raise HTTPException(status_code=401, detail=f"Supabase authentication failed: {e}")
+    except supabase_service.SupabaseConnectionError as e:
+        raise HTTPException(status_code=502, detail=f"Failed to connect to Supabase: {e}")
+    except supabase_service.SupabaseError as e:
+        raise HTTPException(status_code=500, detail=f"Supabase error: {e}")

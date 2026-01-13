@@ -67,3 +67,22 @@ class IntegrationTestResult(BaseModel):
     success: bool
     message: str
     details: Optional[Dict[str, Any]] = None
+
+
+class SupabaseTablesResponse(BaseModel):
+    """Schema for Supabase tables list response."""
+    tables: list[str]
+
+
+class SupabaseColumnSchema(BaseModel):
+    """Schema for a single column definition."""
+    column_name: str
+    data_type: str
+    is_nullable: bool
+    column_default: Optional[str] = None
+
+
+class SupabaseTableSchemaResponse(BaseModel):
+    """Schema for Supabase table schema response."""
+    table_name: str
+    columns: list[SupabaseColumnSchema]
