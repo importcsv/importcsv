@@ -8,10 +8,12 @@ from sqlalchemy.orm import Session
 from app.auth.jwt_auth import get_current_active_user
 from app.db.base import get_db
 from app.models.user import User
+from app.models.integration import IntegrationType
 from app.schemas.integration import (
     IntegrationCreate,
     IntegrationUpdate,
     IntegrationResponse,
+    IntegrationWithSecretResponse,
 )
 from app.services import integration as integration_service
 
@@ -76,3 +78,18 @@ async def delete_integration(
     deleted = integration_service.delete_integration(db, integration_id, current_user.id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Integration not found")
+
+
+@router.get("/{integration_id}/secret", response_model=IntegrationWithSecretResponse)
+async def get_integration_secret(
+    integration_id: UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """Get integration with webhook secret. Only valid for webhook integrations."""
+    integration, _ = integration_service.get_integration(db, integration_id, current_user.id)
+    if not integration:
+        raise HTTPException(status_code=404, detail="Integration not found")
+    if integration.type != IntegrationType.WEBHOOK:
+        raise HTTPException(status_code=400, detail="Webhook secret only available for webhook integrations")
+    return integration

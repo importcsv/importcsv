@@ -7,6 +7,7 @@ import logging
 import time
 from dataclasses import dataclass
 from typing import Dict, List, Any, Optional
+from urllib.parse import urlparse
 
 import httpx
 
@@ -126,7 +127,9 @@ async def deliver_to_webhook(
                     content=payload_json,
                 )
                 response.raise_for_status()
-                logger.info(f"Webhook delivered successfully to {credentials['url']}")
+                # Log only the hostname, not the full URL (may contain tokens)
+                parsed_url = urlparse(credentials["url"])
+                logger.info(f"Webhook delivered successfully to {parsed_url.netloc}")
                 return DeliveryResult(success=True, rows_delivered=len(rows))
 
             except (httpx.HTTPStatusError, httpx.TimeoutException) as e:

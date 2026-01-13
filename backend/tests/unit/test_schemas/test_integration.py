@@ -39,17 +39,10 @@ def test_integration_create_missing_url():
 
 
 @pytest.mark.unit
-def test_integration_response_hides_credentials():
-    """Test that response schema doesn't expose credentials."""
-    # IntegrationResponse should not have credentials field
-    import uuid
-    from datetime import datetime
-
-    response = IntegrationResponse(
-        id=uuid.uuid4(),
-        name="My Supabase",
-        type=IntegrationType.SUPABASE,
-        created_at=datetime.now(),
-    )
-    assert not hasattr(response, 'credentials')
-    assert not hasattr(response, 'encrypted_credentials')
+def test_integration_response_hides_credentials_and_secret():
+    """Test that response schema doesn't expose credentials or webhook secret."""
+    # Verify at the schema level that sensitive fields are not present
+    field_names = set(IntegrationResponse.model_fields.keys())
+    assert 'credentials' not in field_names
+    assert 'encrypted_credentials' not in field_names
+    assert 'webhook_secret' not in field_names

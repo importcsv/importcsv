@@ -44,7 +44,18 @@ class IntegrationResponse(BaseModel):
     id: UUID
     name: str
     type: IntegrationType
-    webhook_secret: Optional[str] = None  # Only shown for webhook type
+    created_at: datetime
+    updated_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class IntegrationWithSecretResponse(BaseModel):
+    """Schema for integration response that includes webhook secret."""
+    id: UUID
+    name: str
+    type: IntegrationType
+    webhook_secret: Optional[str] = None
     created_at: datetime
     updated_at: Optional[datetime] = None
 
