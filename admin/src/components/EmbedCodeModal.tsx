@@ -12,8 +12,9 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { Copy, Check, ExternalLink } from "lucide-react";
+import { Copy, Check, ExternalLink, AlertCircle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { isValidOrigin } from "@/types/embed";
 
 interface EmbedCodeModalProps {
   open: boolean;
@@ -31,8 +32,12 @@ export default function EmbedCodeModal({
   const [returnData, setReturnData] = useState(true);
   const [hideHeader, setHideHeader] = useState(false);
   const [primaryColor, setPrimaryColor] = useState("0284c7");
-  const [parentOrigin, setParentOrigin] = useState("https://yourdomain.com");
+  const [parentOrigin, setParentOrigin] = useState("");
   const [copied, setCopied] = useState(false);
+
+  // Get the embed origin for the generated code
+  const embedOrigin =
+    typeof window !== "undefined" ? window.location.origin : "";
 
   // Get the base URL for the embed page
   const baseUrl =
@@ -42,7 +47,7 @@ export default function EmbedCodeModal({
 
   // Build query params
   const queryParams = new URLSearchParams();
-  queryParams.set("origin", parentOrigin);
+  queryParams.set("origin", parentOrigin || "YOUR_ORIGIN");
   if (darkMode) queryParams.set("theme", "dark");
   if (!returnData) queryParams.set("returnData", "false");
   if (hideHeader) queryParams.set("hideHeader", "true");
@@ -50,6 +55,7 @@ export default function EmbedCodeModal({
 
   const embedUrl = `${baseUrl}?${queryParams.toString()}`;
 
+  // Generate the iframe code with origin validation in the message handler
   const iframeCode = `<iframe
   src="${embedUrl}"
   width="100%"
@@ -61,6 +67,9 @@ export default function EmbedCodeModal({
 <script>
   // Listen for messages from the importer
   window.addEventListener('message', function(event) {
+    // SECURITY: Verify the message origin matches your ImportCSV embed
+    if (event.origin !== '${embedOrigin}') return;
+
     // Verify the message is from ImportCSV
     if (event.data?.source !== 'importcsv-embed') return;
 
@@ -79,17 +88,37 @@ export default function EmbedCodeModal({
   });
 </script>`;
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(iframeCode);
-    setCopied(true);
-    toast({
-      title: "Copied!",
-      description: "Embed code copied to clipboard.",
-    });
+  const handleCopy = async () => {
+    // Validate origin before allowing copy
+    if (!isValidParentOrigin) {
+      toast({
+        title: "Invalid Origin",
+        description: "Please enter a valid website URL before copying.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(iframeCode);
+      setCopied(true);
+      toast({
+        title: "Copied!",
+        description: "Embed code copied to clipboard.",
+      });
+    } catch {
+      toast({
+        title: "Copy failed",
+        description: "Please select and copy the code manually.",
+        variant: "destructive",
+      });
+    }
     setTimeout(() => setCopied(false), 2000);
   };
 
   const isValidColor = /^[0-9a-fA-F]{6}$/.test(primaryColor);
+  const isValidParentOrigin = parentOrigin && isValidOrigin(parentOrigin);
+  const isPlaceholderOrigin = !parentOrigin;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -117,11 +146,27 @@ export default function EmbedCodeModal({
                 value={parentOrigin}
                 onChange={(e) => setParentOrigin(e.target.value)}
                 placeholder="https://yourdomain.com"
+                className={
+                  parentOrigin && !isValidParentOrigin ? "border-red-500" : ""
+                }
               />
-              <p className="text-xs text-gray-500">
-                Required for security. Import data will only be sent to this
-                origin.
-              </p>
+              {parentOrigin && !isValidParentOrigin && (
+                <p className="text-xs text-red-500 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  Enter a valid origin URL (e.g., https://yourdomain.com)
+                </p>
+              )}
+              {isPlaceholderOrigin && (
+                <p className="text-xs text-amber-600 flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3" />
+                  Required: Enter your website URL for security
+                </p>
+              )}
+              {isValidParentOrigin && (
+                <p className="text-xs text-gray-500">
+                  Import data will only be sent to this origin.
+                </p>
+              )}
             </div>
 
             {/* Theme Toggle */}
@@ -154,12 +199,12 @@ export default function EmbedCodeModal({
               />
             </div>
 
-            {/* Hide Header Toggle */}
+            {/* Compact Layout Toggle */}
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="hide-header">Hide Header</Label>
+                <Label htmlFor="hide-header">Compact Layout</Label>
                 <p className="text-xs text-gray-500">
-                  Remove padding around the importer
+                  Remove extra padding around the importer
                 </p>
               </div>
               <Switch
@@ -202,7 +247,12 @@ export default function EmbedCodeModal({
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-medium">Embed Code</h3>
-              <Button variant="outline" size="sm" onClick={handleCopy}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopy}
+                disabled={!isValidParentOrigin}
+              >
                 {copied ? (
                   <>
                     <Check className="h-4 w-4 mr-1" />
@@ -223,15 +273,22 @@ export default function EmbedCodeModal({
 
           {/* Preview Link */}
           <div className="pt-4 border-t">
-            <a
-              href={embedUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-800 flex items-center text-sm"
-            >
-              <ExternalLink className="h-4 w-4 mr-1" />
-              Open embed page in new tab
-            </a>
+            {isValidParentOrigin ? (
+              <a
+                href={embedUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 flex items-center text-sm"
+              >
+                <ExternalLink className="h-4 w-4 mr-1" />
+                Open embed page in new tab
+              </a>
+            ) : (
+              <p className="text-sm text-gray-400 flex items-center">
+                <ExternalLink className="h-4 w-4 mr-1" />
+                Enter a valid origin to preview
+              </p>
+            )}
           </div>
         </div>
       </DialogContent>

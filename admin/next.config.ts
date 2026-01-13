@@ -47,22 +47,11 @@ const nextConfig: NextConfig = {
           },
         ],
       },
-      {
-        // Embed routes can be framed, but we rely on origin validation
-        // in the page component for postMessage security.
-        // We allow any origin to frame the embed page since the actual
-        // security is enforced via the required 'origin' query parameter
-        // which controls where postMessage data is sent.
-        source: "/embed/:path*",
-        headers: [
-          {
-            key: "X-Frame-Options",
-            value: "ALLOWALL",
-          },
-          // Note: frame-ancestors is not set here to allow embedding
-          // The origin parameter validation provides the security layer
-        ],
-      },
+      // Embed routes: No X-Frame-Options or frame-ancestors headers
+      // This allows any origin to frame the embed page. Security is enforced
+      // via the required 'origin' query parameter which controls where
+      // postMessage data is sent (not who can frame the page).
+      // Omitting headers is intentional - ALLOWALL is non-standard.
     ];
   },
 };
