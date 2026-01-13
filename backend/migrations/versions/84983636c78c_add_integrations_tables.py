@@ -1,7 +1,7 @@
 """add_integrations_tables
 
 Revision ID: 84983636c78c
-Revises: 8274f580efc9
+Revises: a976ddf5dacf
 Create Date: 2026-01-13 10:53:26.004699
 
 """
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = '84983636c78c'
-down_revision: Union[str, None] = '8274f580efc9'
+down_revision: Union[str, None] = 'a976ddf5dacf'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 

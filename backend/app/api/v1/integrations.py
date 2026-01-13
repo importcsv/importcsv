@@ -45,7 +45,16 @@ async def create_integration(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Create a new integration."""
+    """Create a new integration. Validates credentials before saving."""
+    # Validate Supabase credentials by testing the connection
+    if data.type == IntegrationType.SUPABASE:
+        result = await supabase_service.test_connection(data.credentials)
+        if not result["success"]:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Supabase connection failed: {result['message']}"
+            )
+
     return integration_service.create_integration(db, current_user.id, data)
 
 
@@ -69,7 +78,21 @@ async def update_integration(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
-    """Update an integration."""
+    """Update an integration. Validates new credentials if provided."""
+    # If updating Supabase credentials, validate them first
+    if data.credentials:
+        integration, _ = integration_service.get_integration(db, integration_id, current_user.id)
+        if not integration:
+            raise HTTPException(status_code=404, detail="Integration not found")
+
+        if integration.type == IntegrationType.SUPABASE:
+            result = await supabase_service.test_connection(data.credentials)
+            if not result["success"]:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Supabase connection failed: {result['message']}"
+                )
+
     integration = integration_service.update_integration(db, integration_id, current_user.id, data)
     if not integration:
         raise HTTPException(status_code=404, detail="Integration not found")

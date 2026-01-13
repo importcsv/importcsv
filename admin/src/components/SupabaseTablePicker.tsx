@@ -184,14 +184,16 @@ export function SupabaseTablePicker({
                   Select a table...
                 </div>
               </SelectItem>
-              {tables.map((table) => (
-                <SelectItem key={table} value={table}>
-                  <div className="flex items-center gap-2">
-                    <Table2 className="w-4 h-4 text-green-600" />
-                    {table}
-                  </div>
-                </SelectItem>
-              ))}
+              {tables
+                .filter((table) => table) // Filter out empty table names
+                .map((table) => (
+                  <SelectItem key={table} value={table}>
+                    <div className="flex items-center gap-2">
+                      <Table2 className="w-4 h-4 text-green-600" />
+                      {table}
+                    </div>
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
         )}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
-import { CreditCard, Settings } from "lucide-react";
+import { CreditCard, Settings, Database } from "lucide-react";
 import Link from "next/link";
 import { usageApi } from "@/utils/apiClient";
 
@@ -20,7 +20,7 @@ export default function SettingsPage() {
 
   const showBilling = features?.billing_enabled;
 
-  // If no billing, show a simple message
+  // If no billing, still show integrations
   if (features && !showBilling) {
     return (
       <div className="p-8">
@@ -29,13 +29,17 @@ export default function SettingsPage() {
           <p className="text-gray-500 mt-1">Manage your account settings</p>
         </div>
 
-        <Card className="p-12 text-center max-w-lg">
-          <Settings className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-          <h3 className="text-lg font-medium">Self-Hosted Mode</h3>
-          <p className="text-gray-500 mt-1">
-            No additional settings required for self-hosted installations.
-          </p>
-        </Card>
+        <div className="grid md:grid-cols-2 gap-4 max-w-2xl">
+          <Link href="/settings/integrations">
+            <Card className="p-6 hover:border-blue-300 transition-colors cursor-pointer">
+              <Database className="w-8 h-8 text-green-500 mb-3" />
+              <h3 className="text-lg font-medium">Integrations</h3>
+              <p className="text-gray-500 text-sm mt-1">
+                Connect to Supabase or webhooks
+              </p>
+            </Card>
+          </Link>
+        </div>
       </div>
     );
   }
@@ -48,6 +52,15 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid md:grid-cols-2 gap-4 max-w-2xl">
+        <Link href="/settings/integrations">
+          <Card className="p-6 hover:border-blue-300 transition-colors cursor-pointer">
+            <Database className="w-8 h-8 text-green-500 mb-3" />
+            <h3 className="text-lg font-medium">Integrations</h3>
+            <p className="text-gray-500 text-sm mt-1">
+              Connect to Supabase or webhooks
+            </p>
+          </Card>
+        </Link>
         {showBilling && (
           <Link href="/settings/billing">
             <Card className="p-6 hover:border-blue-300 transition-colors cursor-pointer">

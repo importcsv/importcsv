@@ -3,25 +3,20 @@
 import React, { useState } from 'react';
 import { ImporterField } from '@/components/AddColumnForm';
 import ImporterColumnsManager from '@/components/ImporterColumnsManager';
-import WebhookSettings from '@/components/WebhookSettings';
+import { DestinationSelector, DestinationConfig } from '@/components/DestinationSelector';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { importersApi } from '@/utils/apiClient';
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
 } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, Plus, Trash2 } from 'lucide-react';
-
-// Using ImporterField from AddColumnForm component
+import { ChevronLeft } from 'lucide-react';
 
 export default function NewImporterPage() {
   const router = useRouter();
@@ -30,20 +25,80 @@ export default function NewImporterPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
-  
-  // Webhook settings
-  const [webhookUrl, setWebhookUrl] = useState('');
-  const [webhookEnabled, setWebhookEnabled] = useState(false);
-  const [webhookValidationError, setWebhookValidationError] = useState<string | null>(null);
+
+  // Destination settings
+  const [destination, setDestination] = useState<DestinationConfig>({
+    integrationId: null,
+    integrationType: null,
+    tableName: null,
+    columnMapping: {},
+    supabaseColumns: [],
+  });
 
   // Handle importer name change
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setImporterName(e.target.value);
   };
 
-  // Remove field handler
-  const removeField = (nameToRemove: string) => {
-    setFields(prev => prev.filter(field => field.name !== nameToRemove));
+  // Columns that are typically auto-generated and shouldn't be imported
+  const AUTO_GENERATED_COLUMNS = ["id", "created_at", "updated_at", "deleted_at"];
+
+  // Handle destination change
+  const handleDestinationChange = (newDestination: DestinationConfig) => {
+    setDestination(newDestination);
+  };
+
+  // Import columns from Supabase table schema
+  const handleImportSchema = (columns: typeof destination.supabaseColumns) => {
+    const importedFields: ImporterField[] = columns
+      .filter(col => {
+        // Skip internal columns (starting with _)
+        if (col.column_name.startsWith('_')) return false;
+        // Skip auto-generated columns
+        if (AUTO_GENERATED_COLUMNS.includes(col.column_name.toLowerCase())) return false;
+        return true;
+      })
+      .map((col, index) => ({
+        name: col.column_name,
+        display_name: col.column_name
+          .replace(/_/g, ' ')
+          .replace(/\b\w/g, l => l.toUpperCase()),
+        type: mapSupabaseType(col.data_type, col.column_name),
+        validators: [],
+        transformations: [],
+      }));
+
+    setFields(importedFields);
+    setFormError(null);
+  };
+
+  // Map Supabase data types to importer field types
+  // Valid types: text, number, date, email, phone, boolean, select, custom_regex
+  const mapSupabaseType = (dataType: string, columnName: string): string => {
+    const lowerType = dataType.toLowerCase();
+    const lowerName = columnName.toLowerCase();
+
+    // Check column name for common patterns
+    if (lowerName.includes('email')) {
+      return 'email';
+    }
+    if (lowerName.includes('phone') || lowerName.includes('mobile') || lowerName.includes('tel')) {
+      return 'phone';
+    }
+
+    // Map based on data type
+    if (lowerType.includes('int') || lowerType.includes('numeric') || lowerType.includes('decimal') || lowerType.includes('float') || lowerType.includes('double') || lowerType.includes('real')) {
+      return 'number';
+    }
+    if (lowerType.includes('bool')) {
+      return 'boolean';
+    }
+    if (lowerType.includes('date') || lowerType.includes('timestamp') || lowerType.includes('time')) {
+      return 'date';
+    }
+
+    // Default to text
+    return 'text';
   };
 
   // Save importer
@@ -53,37 +108,43 @@ export default function NewImporterPage() {
       setFormError('Importer name is required');
       return;
     }
-    
+
     if (fields.length === 0) {
       setFormError('At least one column is required');
       return;
     }
-    
-    // Validate webhook URL if webhook is enabled
-    if (webhookEnabled && !webhookUrl.trim()) {
-      setWebhookValidationError('Webhook URL is required when webhook is enabled');
+
+    // Validate Supabase destination has a table selected
+    if (destination.integrationType === 'supabase' && !destination.tableName) {
+      setFormError('Please select a destination table for Supabase integration');
       return;
     }
-    
+
     setIsLoading(true);
     setError(null);
     setFormError(null);
-    setWebhookValidationError(null);
-    
+
     try {
-      // Use the API client to create a new importer
+      // Create the importer
       const data = await importersApi.createImporter({
         name: importerName,
         fields: fields,
-        webhook_url: webhookUrl,
-        webhook_enabled: webhookEnabled
       });
-      
+
+      // If destination is configured, set it
+      if (destination.integrationId) {
+        await importersApi.setDestination(data.id, {
+          integration_id: destination.integrationId,
+          table_name: destination.tableName || undefined,
+          column_mapping: destination.columnMapping,
+        });
+      }
+
       // Navigate to the new importer's detail page
       router.push(`/importers/${data.id}`);
     } catch (err: any) {
       console.error('Error creating importer:', err);
-      
+
       // Extract error message from API response if available
       let errorMessage = 'Failed to create importer. Please try again.';
       if (err.response && err.response.data && err.response.data.detail) {
@@ -91,7 +152,7 @@ export default function NewImporterPage() {
       } else if (err.message) {
         errorMessage = err.message;
       }
-      
+
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -132,25 +193,12 @@ export default function NewImporterPage() {
           </CardContent>
         </Card>
         
-        {/* Webhook Settings */}
-        <WebhookSettings
-          webhookEnabled={webhookEnabled}
-          webhookUrl={webhookUrl}
-          onWebhookEnabledChange={(enabled) => {
-            setWebhookEnabled(enabled);
-            // Clear validation error when user toggles webhook
-            if (!enabled) {
-              setWebhookValidationError(null);
-            }
-          }}
-          onWebhookUrlChange={(url) => {
-            setWebhookUrl(url);
-            // Clear validation error when user starts typing
-            if (webhookValidationError) {
-              setWebhookValidationError(null);
-            }
-          }}
-          validationError={webhookValidationError}
+        {/* Destination Selector */}
+        <DestinationSelector
+          value={destination}
+          onChange={handleDestinationChange}
+          onImportSchema={handleImportSchema}
+          hasExistingColumns={fields.length > 0}
         />
         
         {/* Columns */}

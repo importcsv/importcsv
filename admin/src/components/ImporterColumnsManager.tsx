@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { ImporterField } from './AddColumnForm';
 import ColumnManager from './ColumnManager';
 
@@ -15,6 +15,11 @@ export default function ImporterColumnsManager({
   onColumnsChange
 }: ImporterColumnsManagerProps) {
   const [columns, setColumns] = useState<ImporterField[]>(initialColumns);
+
+  // Sync internal state when initialColumns prop changes (e.g., from schema import)
+  useEffect(() => {
+    setColumns(initialColumns);
+  }, [initialColumns]);
 
   // Add a new column
   const handleAddColumn = (field: ImporterField) => {

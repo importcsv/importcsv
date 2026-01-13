@@ -33,6 +33,27 @@ apiClient.interceptors.response.use(
 );
 
 /**
+ * Destination types
+ */
+export interface DestinationCreate {
+  integration_id: string;
+  table_name?: string;
+  column_mapping?: Record<string, string>;
+}
+
+export interface DestinationResponse {
+  id: string;
+  importer_id: string;
+  integration_id: string;
+  table_name: string | null;
+  column_mapping: Record<string, string>;
+  created_at: string;
+  updated_at: string | null;
+  integration_name: string | null;
+  integration_type: "supabase" | "webhook" | null;
+}
+
+/**
  * Importers API
  */
 export const importersApi = {
@@ -59,6 +80,21 @@ export const importersApi = {
   deleteImporter: async (importerId: string) => {
     const response = await apiClient.delete(`/importers/${importerId}`);
     return response.data;
+  },
+
+  // Destination management
+  getDestination: async (importerId: string): Promise<DestinationResponse | null> => {
+    const response = await apiClient.get(`/importers/${importerId}/destination`);
+    return response.data;
+  },
+
+  setDestination: async (importerId: string, data: DestinationCreate): Promise<DestinationResponse> => {
+    const response = await apiClient.put(`/importers/${importerId}/destination`, data);
+    return response.data;
+  },
+
+  deleteDestination: async (importerId: string): Promise<void> => {
+    await apiClient.delete(`/importers/${importerId}/destination`);
   },
 };
 

@@ -1,22 +1,24 @@
-import uuid
 import logging
-from fastapi import APIRouter, Depends, HTTPException, status, Request
-from sqlalchemy.orm import Session
-from typing import List
+import uuid
 
-from app.db.base import get_db
+from fastapi import APIRouter, Depends, HTTPException, Request, status
+from sqlalchemy.orm import Session
+
 from app.auth.jwt_auth import get_current_active_user
+from app.db.base import get_db
+from app.models.importer_destination import ImporterDestination
+from app.models.integration import Integration
 from app.models.user import User
-from app.schemas.importer import (
-    ImporterCreate, ImporterUpdate, Importer as ImporterSchema
-)
+from app.schemas.importer import Importer as ImporterSchema
+from app.schemas.importer import ImporterCreate, ImporterUpdate
+from app.schemas.integration import DestinationCreate, DestinationResponse
 from app.services import importer as importer_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-@router.get("/", response_model=List[ImporterSchema])
+@router.get("/", response_model=list[ImporterSchema])
 async def read_importers(
     request: Request,
     db: Session = Depends(get_db),
@@ -43,7 +45,7 @@ async def read_importers(
         logger.info(f"Retrieved {len(importers)} importers for user {current_user.id}")
         return importers
     except Exception as e:
-        logger.error(f"Error retrieving importers: {str(e)}")
+        logger.error(f"Error retrieving importers: {e!s}")
         raise
 
 @router.post("/", response_model=ImporterSchema)
@@ -106,4 +108,127 @@ async def delete_importer(
     )
     if not importer:
         raise HTTPException(status_code=404, detail="Importer not found")
-    return None
+
+
+# Destination endpoints
+
+@router.get("/{importer_id}/destination", response_model=DestinationResponse | None)
+async def get_destination(
+    importer_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Get the destination configuration for an importer
+    """
+    # First verify user owns the importer
+    importer = importer_service.get_importer(db, str(current_user.id), importer_id)
+    if not importer:
+        raise HTTPException(status_code=404, detail="Importer not found")
+
+    destination = db.query(ImporterDestination).filter(
+        ImporterDestination.importer_id == importer_id
+    ).first()
+
+    if not destination:
+        return None
+
+    # Get integration details
+    integration = db.query(Integration).filter(
+        Integration.id == destination.integration_id
+    ).first()
+
+    return DestinationResponse(
+        id=destination.id,
+        importer_id=destination.importer_id,
+        integration_id=destination.integration_id,
+        table_name=destination.table_name,
+        column_mapping=destination.column_mapping or {},
+        created_at=destination.created_at,
+        updated_at=destination.updated_at,
+        integration_name=integration.name if integration else None,
+        integration_type=integration.type if integration else None,
+    )
+
+
+@router.put("/{importer_id}/destination", response_model=DestinationResponse)
+async def set_destination(
+    importer_id: uuid.UUID,
+    destination_in: DestinationCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Set or update the destination configuration for an importer
+    """
+    # Verify user owns the importer
+    importer = importer_service.get_importer(db, str(current_user.id), importer_id)
+    if not importer:
+        raise HTTPException(status_code=404, detail="Importer not found")
+
+    # Verify user owns the integration
+    integration = db.query(Integration).filter(
+        Integration.id == destination_in.integration_id,
+        Integration.user_id == current_user.id,
+    ).first()
+    if not integration:
+        raise HTTPException(status_code=404, detail="Integration not found")
+
+    # Check if destination already exists
+    destination = db.query(ImporterDestination).filter(
+        ImporterDestination.importer_id == importer_id
+    ).first()
+
+    if destination:
+        # Update existing
+        destination.integration_id = destination_in.integration_id
+        destination.table_name = destination_in.table_name
+        destination.column_mapping = destination_in.column_mapping
+    else:
+        # Create new
+        destination = ImporterDestination(
+            importer_id=importer_id,
+            integration_id=destination_in.integration_id,
+            table_name=destination_in.table_name,
+            column_mapping=destination_in.column_mapping,
+        )
+        db.add(destination)
+
+    db.commit()
+    db.refresh(destination)
+
+    return DestinationResponse(
+        id=destination.id,
+        importer_id=destination.importer_id,
+        integration_id=destination.integration_id,
+        table_name=destination.table_name,
+        column_mapping=destination.column_mapping or {},
+        created_at=destination.created_at,
+        updated_at=destination.updated_at,
+        integration_name=integration.name,
+        integration_type=integration.type,
+    )
+
+
+@router.delete("/{importer_id}/destination", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_destination(
+    importer_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Remove the destination configuration for an importer
+    """
+    # Verify user owns the importer
+    importer = importer_service.get_importer(db, str(current_user.id), importer_id)
+    if not importer:
+        raise HTTPException(status_code=404, detail="Importer not found")
+
+    destination = db.query(ImporterDestination).filter(
+        ImporterDestination.importer_id == importer_id
+    ).first()
+
+    if destination:
+        db.delete(destination)
+        db.commit()
+
