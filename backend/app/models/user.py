@@ -30,6 +30,12 @@ class User(Base):
     subscription_status = Column(String(20), default="active", nullable=False)
     grace_period_ends_at = Column(DateTime(timezone=True), nullable=True)
 
+    # Trial fields
+    trial_started_at = Column(DateTime(timezone=True), nullable=True)
+    trial_ends_at = Column(DateTime(timezone=True), nullable=True)
+    has_been_paying_customer = Column(Boolean, default=False, nullable=False)
+    trial_warning_sent_at = Column(DateTime(timezone=True), nullable=True)
+
     # Relationships - using simple string references
     importers = relationship("Importer", back_populates="user")
     import_jobs = relationship("ImportJob", back_populates="user")

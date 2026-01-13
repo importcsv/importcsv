@@ -178,6 +178,14 @@ class BaseAppSettings(BaseSettings):
         default_factory=lambda: int(os.getenv("PAYMENT_GRACE_PERIOD_DAYS", "7"))
     )
 
+    # Trial settings
+    TRIAL_DURATION_DAYS: int = Field(
+        default_factory=lambda: int(os.getenv("TRIAL_DURATION_DAYS", "14"))
+    )
+    TRIAL_WARNING_DAYS: int = Field(
+        default_factory=lambda: int(os.getenv("TRIAL_WARNING_DAYS", "3"))
+    )
+
     @field_validator("SECRET_KEY")
     @classmethod
     def secret_key_must_be_secure(cls, v):
