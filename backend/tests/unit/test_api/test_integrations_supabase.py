@@ -154,3 +154,37 @@ async def test_get_supabase_tables_auth_error():
             )
 
         assert exc_info.value.status_code == 401
+
+
+@pytest.mark.unit
+def test_table_name_pattern_validation():
+    """Test that table name pattern rejects invalid PostgreSQL identifiers."""
+    import re
+    from app.api.v1.integrations import TABLE_NAME_PATTERN
+
+    # Valid table names
+    valid_names = [
+        "users",
+        "my_table",
+        "_private",
+        "Table123",
+        "a",
+        "_",
+        "a" * 63,  # Max length
+    ]
+    for name in valid_names:
+        assert re.match(TABLE_NAME_PATTERN, name), f"'{name}' should be valid"
+
+    # Invalid table names
+    invalid_names = [
+        "123start",           # Starts with number
+        "table-name",         # Contains hyphen
+        "table.name",         # Contains dot
+        "table name",         # Contains space
+        "table;DROP TABLE",   # SQL injection attempt
+        "",                   # Empty
+        "a" * 64,             # Too long (64 chars)
+        "table\nname",        # Contains newline
+    ]
+    for name in invalid_names:
+        assert not re.match(TABLE_NAME_PATTERN, name), f"'{name}' should be invalid"

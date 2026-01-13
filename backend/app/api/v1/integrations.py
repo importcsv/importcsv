@@ -2,8 +2,12 @@
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Path, status
 from sqlalchemy.orm import Session
+
+# PostgreSQL identifier pattern: starts with letter or underscore, followed by alphanumeric/underscore
+# Max 63 chars (PostgreSQL limit)
+TABLE_NAME_PATTERN = r"^[a-zA-Z_][a-zA-Z0-9_]{0,62}$"
 
 from app.auth.jwt_auth import get_current_active_user
 from app.db.base import get_db
@@ -133,7 +137,7 @@ async def get_supabase_tables(
 @router.get("/{integration_id}/supabase/tables/{table_name}/schema", response_model=SupabaseTableSchemaResponse)
 async def get_supabase_table_schema(
     integration_id: UUID,
-    table_name: str,
+    table_name: str = Path(..., pattern=TABLE_NAME_PATTERN, description="PostgreSQL table name"),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ):
