@@ -12,5 +12,6 @@ import app.models.webhook
 import app.models.usage
 import app.models.integration
 import app.models.importer_destination
+import app.models.delivery_log
 
 # Add any new model imports here
