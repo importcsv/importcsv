@@ -22,6 +22,12 @@ interface SubscriptionData {
   status: string;
   is_in_grace_period: boolean;
   grace_period_ends_at: string | null;
+  // Trial fields
+  is_trialing: boolean;
+  trial_ends_at: string | null;
+  trial_days_remaining: number | null;
+  has_payment_method: boolean;
+  is_eligible_for_trial: boolean;
   usage: {
     imports: number;
     import_limit: number | null;
@@ -61,6 +67,18 @@ export default function BillingPage() {
     setUpgrading(true);
     setActionError(null);
     try {
+      // Case 1: New user eligible for trial - start trial
+      // Case 2: Trialing user WITHOUT payment method - use trial endpoint for tier switch
+      if (data?.is_eligible_for_trial || (data?.is_trialing && !data?.has_payment_method)) {
+        await apiClient.post("/billing/start-trial", { tier });
+        // Refresh subscription data to show updated trial status
+        const updatedData = await billingApi.getSubscription();
+        setData(updatedData);
+        setUpgrading(false);
+        return;
+      }
+
+      // Case 3: Paid user OR trialing user with CC - redirect to Stripe checkout
       const response = await apiClient.post("/billing/checkout", {
         tier,
         success_url: `${window.location.origin}/settings/billing?success=true`,
@@ -118,6 +136,38 @@ export default function BillingPage() {
     // On success, page redirects - no cleanup needed
   };
 
+  const handleCancelTrial = async () => {
+    setUpgrading(true);
+    setActionError(null);
+    try {
+      await apiClient.post("/billing/cancel-trial");
+      const updatedData = await billingApi.getSubscription();
+      setData(updatedData);
+    } catch (err) {
+      console.error("Cancel trial failed:", err);
+      setActionError("Failed to cancel trial. Please try again.");
+    } finally {
+      setUpgrading(false);
+    }
+  };
+
+  const handleAddPaymentMethod = async () => {
+    setUpgrading(true);
+    setActionError(null);
+    try {
+      const response = await apiClient.post("/billing/checkout", {
+        tier: data?.tier || "pro",
+        success_url: `${window.location.origin}/settings/billing?success=true`,
+        cancel_url: `${window.location.origin}/settings/billing?canceled=true`,
+      });
+      window.location.href = response.data.checkout_url;
+    } catch (err) {
+      console.error("Failed to redirect to checkout:", err);
+      setActionError("Failed to open checkout. Please try again.");
+      setUpgrading(false);
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="p-8">
@@ -173,6 +223,51 @@ export default function BillingPage() {
         </Alert>
       )}
 
+      {/* Trial Status Banner */}
+      {subscription.is_trialing && (
+        <Alert className="mb-6 border-blue-200 bg-blue-50">
+          <Check className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800">
+            <strong>You&apos;re on a free trial!</strong>{" "}
+            {subscription.trial_days_remaining !== null && subscription.trial_days_remaining > 0 ? (
+              <>
+                {subscription.trial_days_remaining} days remaining.{" "}
+                {!subscription.has_payment_method && (
+                  <>
+                    Add a payment method to continue after your trial.
+                    <Button
+                      variant="link"
+                      className="text-blue-800 underline p-0 h-auto ml-2"
+                      onClick={handleAddPaymentMethod}
+                      disabled={upgrading}
+                    >
+                      {upgrading ? "Redirecting..." : "Add payment method"}
+                    </Button>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <strong>Your trial ends today!</strong>{" "}
+                {!subscription.has_payment_method && (
+                  <>
+                    Add a payment method now to keep your access.
+                    <Button
+                      variant="link"
+                      className="text-blue-800 underline p-0 h-auto ml-2"
+                      onClick={handleAddPaymentMethod}
+                      disabled={upgrading}
+                    >
+                      {upgrading ? "Redirecting..." : "Add payment method"}
+                    </Button>
+                  </>
+                )}
+              </>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Action Error */}
       {actionError && (
         <Alert variant="destructive" className="mb-6">
@@ -188,7 +283,10 @@ export default function BillingPage() {
             <h2 className="text-lg font-semibold">Current Plan</h2>
             <p className="text-2xl font-bold capitalize mt-1">
               {subscription.tier}
-              {subscription.tier !== "free" && (
+              {subscription.is_trialing && (
+                <span className="text-sm font-normal text-blue-600 ml-2">(Trial)</span>
+              )}
+              {subscription.tier !== "free" && !subscription.is_trialing && (
                 <span className="text-sm font-normal text-gray-500 ml-2">
                   ${subscription.tier === "pro" ? "49" : "149"}/month
                 </span>
@@ -265,8 +363,11 @@ export default function BillingPage() {
               onClick={() => handleUpgrade("pro")}
               disabled={upgrading}
             >
-              {upgrading ? "Redirecting..." : "Upgrade to Pro"}
+              {upgrading ? "Processing..." : subscription.is_eligible_for_trial ? "Start Free Trial" : "Upgrade to Pro"}
             </Button>
+            {subscription.is_eligible_for_trial && (
+              <p className="text-xs text-center text-gray-500 mt-2">14-day free trial, no credit card required</p>
+            )}
           </Card>
 
           <Card className="p-6 border-purple-200">
@@ -298,8 +399,11 @@ export default function BillingPage() {
               onClick={() => handleUpgrade("business")}
               disabled={upgrading}
             >
-              {upgrading ? "Redirecting..." : "Upgrade to Business"}
+              {upgrading ? "Processing..." : subscription.is_eligible_for_trial ? "Start Free Trial" : "Upgrade to Business"}
             </Button>
+            {subscription.is_eligible_for_trial && (
+              <p className="text-xs text-center text-gray-500 mt-2">14-day free trial, no credit card required</p>
+            )}
           </Card>
         </div>
       )}
@@ -309,19 +413,22 @@ export default function BillingPage() {
           <Card className="p-6">
             <h3 className="text-lg font-semibold">Need more?</h3>
             <p className="text-gray-500 mt-1">
-              Upgrade to Business for unlimited imports and higher row limits.
+              {subscription.is_trialing
+                ? "Try Business tier with unlimited imports and higher row limits."
+                : "Upgrade to Business for unlimited imports and higher row limits."
+              }
             </p>
             <Button
               className="mt-4"
               onClick={() => handleUpgrade("business")}
               disabled={upgrading}
             >
-              {upgrading ? "Redirecting..." : "Upgrade to Business - $149/mo"}
+              {upgrading ? "Processing..." : subscription.is_trialing ? "Switch to Business Trial" : "Upgrade to Business - $149/mo"}
             </Button>
           </Card>
 
           <Card className="p-6 border-gray-200">
-            <h3 className="text-lg font-semibold">Cancel Subscription</h3>
+            <h3 className="text-lg font-semibold">{subscription.is_trialing ? "Cancel Trial" : "Cancel Subscription"}</h3>
             <p className="text-gray-500 mt-1">
               Downgrade to the free tier with limited imports.
             </p>
@@ -331,15 +438,26 @@ export default function BillingPage() {
                   <p className="font-medium">Free Plan</p>
                   <p className="text-sm text-gray-500">100 imports/month, 10,000 rows per import</p>
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={handleManageBilling}
-                  disabled={redirectingToPortal}
-                >
-                  <ArrowDown className="w-4 h-4 mr-2" />
-                  {redirectingToPortal ? "Redirecting..." : "Cancel in Billing Portal"}
-                  <ExternalLink className="w-3 h-3 ml-2" />
-                </Button>
+                {subscription.is_trialing ? (
+                  <Button
+                    variant="outline"
+                    onClick={handleCancelTrial}
+                    disabled={upgrading}
+                  >
+                    <ArrowDown className="w-4 h-4 mr-2" />
+                    {upgrading ? "Canceling..." : "Cancel Trial"}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    onClick={handleManageBilling}
+                    disabled={redirectingToPortal}
+                  >
+                    <ArrowDown className="w-4 h-4 mr-2" />
+                    {redirectingToPortal ? "Redirecting..." : "Cancel in Billing Portal"}
+                    <ExternalLink className="w-3 h-3 ml-2" />
+                  </Button>
+                )}
               </div>
             </div>
           </Card>
@@ -350,23 +468,37 @@ export default function BillingPage() {
         <Card className="p-6 border-gray-200">
           <h3 className="text-lg font-semibold">Change Plan</h3>
           <p className="text-gray-500 mt-1">
-            Need fewer features? You can downgrade or cancel your subscription.
+            {subscription.is_trialing
+              ? "Want to try a different plan or cancel your trial?"
+              : "Need fewer features? You can downgrade or cancel your subscription."
+            }
           </p>
           <div className="mt-4 space-y-3">
             <div className="p-4 bg-gray-50 rounded-lg">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">Pro Plan</p>
-                  <p className="text-sm text-gray-500">$49/month</p>
+                  <p className="text-sm text-gray-500">{subscription.is_trialing ? "Switch your trial" : "$49/month"}</p>
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => handleDowngradeRequest("pro")}
-                  disabled={upgrading}
-                >
-                  <ArrowDown className="w-4 h-4 mr-2" />
-                  {upgrading ? "Processing..." : "Downgrade to Pro"}
-                </Button>
+                {subscription.is_trialing ? (
+                  <Button
+                    variant="outline"
+                    onClick={() => handleUpgrade("pro")}
+                    disabled={upgrading}
+                  >
+                    <ArrowDown className="w-4 h-4 mr-2" />
+                    {upgrading ? "Processing..." : "Switch to Pro Trial"}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    onClick={() => handleDowngradeRequest("pro")}
+                    disabled={upgrading}
+                  >
+                    <ArrowDown className="w-4 h-4 mr-2" />
+                    {upgrading ? "Processing..." : "Downgrade to Pro"}
+                  </Button>
+                )}
               </div>
               <ul className="mt-3 text-sm text-gray-600 space-y-1">
                 <li>2,000 imports/month (vs unlimited)</li>
@@ -379,15 +511,26 @@ export default function BillingPage() {
                   <p className="font-medium">Free Plan</p>
                   <p className="text-sm text-gray-500">100 imports/month, 10,000 rows per import</p>
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={handleManageBilling}
-                  disabled={redirectingToPortal}
-                >
-                  <ArrowDown className="w-4 h-4 mr-2" />
-                  {redirectingToPortal ? "Redirecting..." : "Cancel in Billing Portal"}
-                  <ExternalLink className="w-3 h-3 ml-2" />
-                </Button>
+                {subscription.is_trialing ? (
+                  <Button
+                    variant="outline"
+                    onClick={handleCancelTrial}
+                    disabled={upgrading}
+                  >
+                    <ArrowDown className="w-4 h-4 mr-2" />
+                    {upgrading ? "Canceling..." : "Cancel Trial"}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    onClick={handleManageBilling}
+                    disabled={redirectingToPortal}
+                  >
+                    <ArrowDown className="w-4 h-4 mr-2" />
+                    {redirectingToPortal ? "Redirecting..." : "Cancel in Billing Portal"}
+                    <ExternalLink className="w-3 h-3 ml-2" />
+                  </Button>
+                )}
               </div>
             </div>
           </div>
