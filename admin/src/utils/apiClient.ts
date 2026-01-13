@@ -98,6 +98,92 @@ export const usageApi = {
 };
 
 /**
+ * Integrations API
+ */
+export interface IntegrationCredentials {
+  url: string;
+  service_key?: string;
+  headers?: Record<string, string>;
+}
+
+export interface IntegrationCreate {
+  name: string;
+  type: "supabase" | "webhook";
+  credentials: IntegrationCredentials;
+}
+
+export interface IntegrationUpdate {
+  name?: string;
+  credentials?: IntegrationCredentials;
+}
+
+export interface Integration {
+  id: string;
+  name: string;
+  type: "supabase" | "webhook";
+  created_at: string;
+  updated_at: string | null;
+}
+
+export interface IntegrationWithSecret extends Integration {
+  webhook_secret: string | null;
+}
+
+export interface SupabaseColumnSchema {
+  column_name: string;
+  data_type: string;
+  is_nullable: boolean;
+  column_default: string | null;
+}
+
+export interface SupabaseTableSchema {
+  table_name: string;
+  columns: SupabaseColumnSchema[];
+}
+
+export const integrationsApi = {
+  getIntegrations: async (): Promise<Integration[]> => {
+    const response = await apiClient.get("/integrations/");
+    return response.data;
+  },
+
+  getIntegration: async (integrationId: string): Promise<Integration> => {
+    const response = await apiClient.get(`/integrations/${integrationId}`);
+    return response.data;
+  },
+
+  createIntegration: async (data: IntegrationCreate): Promise<Integration> => {
+    const response = await apiClient.post("/integrations/", data);
+    return response.data;
+  },
+
+  updateIntegration: async (integrationId: string, data: IntegrationUpdate): Promise<Integration> => {
+    const response = await apiClient.patch(`/integrations/${integrationId}`, data);
+    return response.data;
+  },
+
+  deleteIntegration: async (integrationId: string): Promise<void> => {
+    await apiClient.delete(`/integrations/${integrationId}`);
+  },
+
+  getWebhookSecret: async (integrationId: string): Promise<IntegrationWithSecret> => {
+    const response = await apiClient.get(`/integrations/${integrationId}/secret`);
+    return response.data;
+  },
+
+  // Supabase introspection
+  getSupabaseTables: async (integrationId: string): Promise<{ tables: string[] }> => {
+    const response = await apiClient.get(`/integrations/${integrationId}/supabase/tables`);
+    return response.data;
+  },
+
+  getSupabaseTableSchema: async (integrationId: string, tableName: string): Promise<SupabaseTableSchema> => {
+    const response = await apiClient.get(`/integrations/${integrationId}/supabase/tables/${tableName}/schema`);
+    return response.data;
+  },
+};
+
+/**
  * Billing API (cloud mode only)
  */
 export const billingApi = {
