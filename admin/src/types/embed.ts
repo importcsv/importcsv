@@ -88,13 +88,49 @@ export interface EmbedQueryParams {
   hideHeader?: 'true' | 'false';
   /** Primary color for the importer (hex without #) */
   primaryColor?: string;
+  /** Origin URL allowed to receive postMessage (required for security) */
+  origin?: string;
+}
+
+/** Source identifier for embed messages */
+export const EMBED_MESSAGE_SOURCE = "importcsv-embed" as const;
+
+/**
+ * Validates that a string is a valid origin URL.
+ * Must be a valid URL with protocol (http/https) and no path.
+ */
+export function isValidOrigin(origin: string): boolean {
+  try {
+    const url = new URL(origin);
+    // Must be http or https
+    if (url.protocol !== "http:" && url.protocol !== "https:") {
+      return false;
+    }
+    // Origin should not have a path (other than /)
+    if (url.pathname !== "/" && url.pathname !== "") {
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /**
- * Helper to send postMessage to parent window
+ * Helper to send postMessage to parent window.
+ * Requires a valid target origin to prevent data exfiltration.
+ *
+ * @param message - The message to send
+ * @param targetOrigin - The origin allowed to receive the message (must be validated)
  */
-export function sendEmbedMessage(message: EmbedMessage): void {
-  if (typeof window !== 'undefined' && window.parent !== window) {
-    window.parent.postMessage(message, '*');
+export function sendEmbedMessage(
+  message: EmbedMessage,
+  targetOrigin: string
+): void {
+  if (typeof window !== "undefined" && window.parent !== window) {
+    // Only send if we have a valid target origin
+    if (targetOrigin && isValidOrigin(targetOrigin)) {
+      window.parent.postMessage(message, targetOrigin);
+    }
   }
 }
