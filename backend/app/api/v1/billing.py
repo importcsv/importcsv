@@ -62,6 +62,17 @@ class PortalRequest(BaseModel):
         return _validate_redirect_url(v)
 
 
+class StartTrialRequest(BaseModel):
+    tier: SubscriptionTier
+
+    @field_validator("tier")
+    @classmethod
+    def validate_tier(cls, v: str) -> str:
+        if v == "free":
+            raise ValueError("Cannot trial free tier")
+        return v
+
+
 def require_cloud_mode():
     """Dependency that requires cloud mode to be enabled."""
     if not is_cloud_mode():
@@ -150,3 +161,49 @@ async def create_portal(
     except Exception as e:
         logger.error(f"Portal creation failed: {e}")
         raise HTTPException(status_code=500, detail="Failed to create portal session")
+
+
+@router.post("/start-trial")
+async def start_trial(
+    request: StartTrialRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    _: None = Depends(require_cloud_mode),
+):
+    """Start a free trial or upgrade tier during trial."""
+    billing = BillingService(db)
+
+    try:
+        result = billing.start_trial(user=current_user, tier=request.tier)
+
+        # Send welcome email for new trials
+        if result.get("is_new_trial"):
+            try:
+                from app.services.email import email_service
+                email_service.send_trial_started(
+                    to_email=current_user.email,
+                    tier_name=request.tier.title(),
+                    trial_days=settings.TRIAL_DURATION_DAYS,
+                )
+            except Exception as email_error:
+                # Log but don't fail the request if email fails
+                logger.warning(f"Failed to send trial started email: {email_error}")
+
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.post("/cancel-trial")
+async def cancel_trial(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+    _: None = Depends(require_cloud_mode),
+):
+    """Cancel an active trial."""
+    billing = BillingService(db)
+
+    try:
+        return billing.cancel_trial(current_user)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
