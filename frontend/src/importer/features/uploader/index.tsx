@@ -55,15 +55,23 @@ export default function Uploader({
         {/* Grid Container */}
         <div
           className={cn(
-            "grid gap-8 w-full items-start",
-            columns && columns.length > 0 ? "grid-cols-[320px_1fr]" : "grid-cols-1"
+            "grid w-full items-start",
+            "gap-4 sm:gap-8",
+            columns && columns.length > 0
+              ? "grid-cols-1 sm:grid-cols-[min(320px,40%)_1fr]"
+              : "grid-cols-1"
           )}>
-          {/* Schema Section (Left Side) - Enhanced */}
+          {/* Upload Section (Primary Action - First in DOM for mobile) */}
+          <div className="min-w-0">
+            {uploaderWrapper}
+          </div>
+
+          {/* Schema Section (Visually first on desktop via sm:order-first) */}
           {columns && columns.length > 0 && (
-            <div className="p-6 h-fit sticky top-4 bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-[#3a3a3a] rounded-xl shadow-sm dark:shadow-none">
+            <div className="p-4 sm:p-6 h-fit sm:sticky sm:top-4 bg-white dark:bg-[#1a1a1a] border border-slate-200 dark:border-[#3a3a3a] rounded-xl shadow-sm dark:shadow-none sm:order-first">
               {/* Required Columns */}
               {requiredColumns.length > 0 && (
-                <div className="mb-6">
+                <div className="mb-4 sm:mb-6">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="w-2 h-2 rounded-full bg-blue-500" />
                     <span className="text-xs font-semibold text-slate-500 dark:text-[#a1a1a1] uppercase tracking-wider">
@@ -85,7 +93,7 @@ export default function Uploader({
 
               {/* Optional Columns */}
               {optionalColumns.length > 0 && (
-                <div className="mb-6">
+                <div className="mb-4 sm:mb-6">
                   <div className="flex items-center gap-2 mb-3">
                     <span className="w-2 h-2 rounded-full bg-slate-300 dark:bg-[#3a3a3a]" />
                     <span className="text-xs font-semibold text-slate-500 dark:text-[#a1a1a1] uppercase tracking-wider">
@@ -107,7 +115,7 @@ export default function Uploader({
 
               {/* Template Download - Enhanced */}
               {showDownloadTemplateButton && (
-                <div className="pt-5 border-t border-slate-200 dark:border-[#3a3a3a]">
+                <div className="pt-4 sm:pt-5 border-t border-slate-200 dark:border-[#3a3a3a]">
                   <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-50 dark:bg-[#2a1f0a] border border-amber-200 dark:border-[#5c4813] mb-4">
                     <AlertCircle className="h-4 w-4 text-amber-600 dark:text-[#fbbf24] flex-shrink-0 mt-0.5" />
                     <p className="text-sm text-amber-800 dark:text-[#fbbf24] leading-relaxed">
@@ -126,11 +134,6 @@ export default function Uploader({
               )}
             </div>
           )}
-
-          {/* Upload Section (Right Side or Full Width) */}
-          <div className="">
-            {uploaderWrapper}
-          </div>
         </div>
       </div>
     </StepLayout>
