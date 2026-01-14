@@ -1,9 +1,10 @@
+import asyncio
 import logging
 import uuid
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
 from app.auth.jwt_auth import get_current_active_user
@@ -20,11 +21,48 @@ from app.services import schema_inference
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
+# Constants for schema inference limits
+MAX_SAMPLE_ROWS = 50
+MAX_COLUMNS = 100
+MAX_COLUMN_NAME_LENGTH = 255
+MAX_CELL_VALUE_LENGTH = 1000
+SCHEMA_INFERENCE_TIMEOUT = 30.0
+
 
 class InferSchemaRequest(BaseModel):
     """Request body for schema inference."""
 
-    data: list[dict[str, Any]]
+    data: list[dict[str, Any]] = Field(
+        ...,
+        min_length=1,
+        max_length=MAX_SAMPLE_ROWS,
+        description=f"Sample CSV data (1-{MAX_SAMPLE_ROWS} rows)",
+    )
+
+    @field_validator("data")
+    @classmethod
+    def validate_data(cls, v: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Validate data to prevent abuse."""
+        if not v:
+            raise ValueError("At least one data row is required")
+
+        # Check first row for column count
+        if v[0] and len(v[0]) > MAX_COLUMNS:
+            raise ValueError(f"Maximum {MAX_COLUMNS} columns allowed")
+
+        # Validate column names and cell values
+        for row in v:
+            for key, value in row.items():
+                if len(str(key)) > MAX_COLUMN_NAME_LENGTH:
+                    raise ValueError(
+                        f"Column names must be under {MAX_COLUMN_NAME_LENGTH} characters"
+                    )
+                if value is not None and len(str(value)) > MAX_CELL_VALUE_LENGTH:
+                    raise ValueError(
+                        f"Cell values must be under {MAX_CELL_VALUE_LENGTH} characters"
+                    )
+
+        return v
 
 
 class InferSchemaResponse(BaseModel):
@@ -39,8 +77,24 @@ async def infer_schema(
     _current_user: User = Depends(get_current_active_user),
 ):
     """Infer column schema from CSV sample data using AI."""
-    columns = await schema_inference.infer_schema_from_csv(request.data)
-    return InferSchemaResponse(columns=columns)
+    try:
+        columns = await asyncio.wait_for(
+            schema_inference.infer_schema_from_csv(request.data),
+            timeout=SCHEMA_INFERENCE_TIMEOUT,
+        )
+        return InferSchemaResponse(columns=columns)
+    except TimeoutError:
+        logger.warning("Schema inference timed out")
+        raise HTTPException(
+            status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+            detail="Schema inference timed out. Please try with fewer columns or rows.",
+        ) from None
+    except (ValueError, RuntimeError) as e:
+        logger.error(f"Schema inference failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to infer schema. Please try again or define columns manually.",
+        ) from None
 
 
 @router.get("/", response_model=list[ImporterSchema])

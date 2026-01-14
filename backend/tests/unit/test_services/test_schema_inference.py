@@ -77,3 +77,59 @@ def test_extract_sample_columns():
     assert columns[0]["name"] == "email"
     assert len(columns[0]["samples"]) == 2
     assert columns[0]["samples"][0] == "a@b.com"
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_infer_schema_empty_data():
+    """infer_schema_from_csv should return empty list for empty input."""
+    from app.services.schema_inference import infer_schema_from_csv
+
+    result = await infer_schema_from_csv([])
+    assert result == []
+
+
+@pytest.mark.unit
+def test_extract_sample_columns_empty():
+    """extract_sample_columns should handle empty input."""
+    from app.services.schema_inference import extract_sample_columns
+
+    assert extract_sample_columns([]) == []
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_infer_schema_baml_failure_fallback():
+    """Should return text fallback when BAML fails."""
+    from app.services.schema_inference import infer_schema_from_csv
+
+    csv_data = [{"email": "test@example.com", "name": "Test"}]
+
+    with patch(
+        "app.services.schema_inference.b.InferSchema", side_effect=RuntimeError("API Error")
+    ):
+        result = await infer_schema_from_csv(csv_data)
+
+    assert len(result) == 2
+    assert all(col["type"] == "text" for col in result)
+    # Verify display_name is generated from column name
+    assert result[0]["display_name"] == "Email"
+    assert result[1]["display_name"] == "Name"
+
+
+@pytest.mark.unit
+def test_extract_sample_columns_with_none_values():
+    """extract_sample_columns should handle None values in rows."""
+    from app.services.schema_inference import extract_sample_columns
+
+    csv_data = [
+        {"email": "a@b.com", "name": None},
+        {"email": None, "name": "Test"},
+    ]
+
+    columns = extract_sample_columns(csv_data, max_samples=10)
+
+    assert len(columns) == 2
+    # None values should be skipped
+    assert columns[0]["samples"] == ["a@b.com"]
+    assert columns[1]["samples"] == ["Test"]
