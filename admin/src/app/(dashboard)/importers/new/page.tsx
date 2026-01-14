@@ -85,7 +85,7 @@ export default function NewImporterPage() {
     const schemaColumns: SchemaColumn[] = columns.map(col => ({
       name: col.name,
       display_name: col.display_name,
-      type: col.type,
+      type: col.type.toLowerCase(), // LLM returns PascalCase, UI expects lowercase
       options: col.options,
       required: false,
     }));
