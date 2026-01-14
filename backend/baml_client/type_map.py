@@ -19,11 +19,20 @@ type_map = {
     "types.ColumnMapping": types.ColumnMapping,
     "stream_types.ColumnMapping": stream_types.ColumnMapping,
 
+    "types.InferredColumn": types.InferredColumn,
+    "stream_types.InferredColumn": stream_types.InferredColumn,
+
+    "types.InferredSchema": types.InferredSchema,
+    "stream_types.InferredSchema": stream_types.InferredSchema,
+
     "types.MappingResult": types.MappingResult,
     "stream_types.MappingResult": stream_types.MappingResult,
 
     "types.RowData": types.RowData,
     "stream_types.RowData": stream_types.RowData,
+
+    "types.SampleColumn": types.SampleColumn,
+    "stream_types.SampleColumn": stream_types.SampleColumn,
 
     "types.TemplateColumn": types.TemplateColumn,
     "stream_types.TemplateColumn": stream_types.TemplateColumn,
@@ -43,5 +52,7 @@ type_map = {
     "types.ValidationRule": types.ValidationRule,
     "stream_types.ValidationRule": stream_types.ValidationRule,
 
+
+    "types.ColumnType": types.ColumnType,
 
 }

@@ -37,11 +37,20 @@ def get_checks(checks: typing.Dict[CheckName, Check]) -> typing.List[Check]:
 def all_succeeded(checks: typing.Dict[CheckName, Check]) -> bool:
     return all(check.status == "succeeded" for check in get_checks(checks))
 # #########################################################################
-# Generated enums (0)
+# Generated enums (1)
 # #########################################################################
 
+class ColumnType(str, Enum):
+    Text = "Text"
+    Email = "Email"
+    Phone = "Phone"
+    Date = "Date"
+    Number = "Number"
+    Boolean = "Boolean"
+    Select = "Select"
+
 # #########################################################################
-# Generated classes (9)
+# Generated classes (12)
 # #########################################################################
 
 class ColumnMapping(BaseModel):
@@ -49,12 +58,27 @@ class ColumnMapping(BaseModel):
     template_key: str
     confidence: float
 
+class InferredColumn(BaseModel):
+    name: str
+    display_name: str
+    type: ColumnType
+    confidence: float
+    suggested_options: typing.Optional[typing.List[str]] = None
+    reasoning: str
+
+class InferredSchema(BaseModel):
+    columns: typing.List["InferredColumn"]
+
 class MappingResult(BaseModel):
     mappings: typing.List["ColumnMapping"]
 
 class RowData(BaseModel):
     row_index: int
     data: typing.Dict[str, str]
+
+class SampleColumn(BaseModel):
+    name: str
+    samples: typing.List[str]
 
 class TemplateColumn(BaseModel):
     key: str

@@ -23,7 +23,7 @@ class StreamState(BaseModel, typing.Generic[StreamStateValueT]):
     value: StreamStateValueT
     state: typing_extensions.Literal["Pending", "Incomplete", "Complete"]
 # #########################################################################
-# Generated classes (9)
+# Generated classes (12)
 # #########################################################################
 
 class ColumnMapping(BaseModel):
@@ -31,12 +31,27 @@ class ColumnMapping(BaseModel):
     template_key: typing.Optional[str] = None
     confidence: typing.Optional[float] = None
 
+class InferredColumn(BaseModel):
+    name: typing.Optional[str] = None
+    display_name: typing.Optional[str] = None
+    type: typing.Optional[types.ColumnType] = None
+    confidence: typing.Optional[float] = None
+    suggested_options: typing.Optional[typing.List[str]] = None
+    reasoning: typing.Optional[str] = None
+
+class InferredSchema(BaseModel):
+    columns: typing.List["InferredColumn"]
+
 class MappingResult(BaseModel):
     mappings: typing.List["ColumnMapping"]
 
 class RowData(BaseModel):
     row_index: typing.Optional[int] = None
     data: typing.Dict[str, str]
+
+class SampleColumn(BaseModel):
+    name: typing.Optional[str] = None
+    samples: typing.List[str]
 
 class TemplateColumn(BaseModel):
     key: typing.Optional[str] = None

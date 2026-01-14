@@ -54,6 +54,20 @@ export interface DestinationResponse {
 }
 
 /**
+ * Schema inference types
+ */
+export interface InferredColumn {
+  name: string;
+  display_name: string;
+  type: string;
+  options?: string[];
+}
+
+export interface InferSchemaResponse {
+  columns: InferredColumn[];
+}
+
+/**
  * Importers API
  */
 export const importersApi = {
@@ -95,6 +109,12 @@ export const importersApi = {
 
   deleteDestination: async (importerId: string): Promise<void> => {
     await apiClient.delete(`/importers/${importerId}/destination`);
+  },
+
+  // Schema inference
+  inferSchema: async (data: Record<string, string>[]): Promise<InferSchemaResponse> => {
+    const response = await apiClient.post<InferSchemaResponse>("/importers/infer-schema", { data });
+    return response.data;
   },
 };
 

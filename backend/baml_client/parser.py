@@ -36,6 +36,12 @@ class LlmResponseParser:
         result = self.__options.merge_options(baml_options).parse_response(function_name="IdentifyRelevantColumns", llm_response=llm_response, mode="request")
         return typing.cast(typing.List[str], result)
 
+    def InferSchema(
+        self, llm_response: str, baml_options: BamlCallOptions = {},
+    ) -> types.InferredSchema:
+        result = self.__options.merge_options(baml_options).parse_response(function_name="InferSchema", llm_response=llm_response, mode="request")
+        return typing.cast(types.InferredSchema, result)
+
     def MapColumns(
         self, llm_response: str, baml_options: BamlCallOptions = {},
     ) -> types.MappingResult:
@@ -67,6 +73,12 @@ class LlmStreamParser:
     ) -> typing.List[str]:
         result = self.__options.merge_options(baml_options).parse_response(function_name="IdentifyRelevantColumns", llm_response=llm_response, mode="stream")
         return typing.cast(typing.List[str], result)
+
+    def InferSchema(
+        self, llm_response: str, baml_options: BamlCallOptions = {},
+    ) -> stream_types.InferredSchema:
+        result = self.__options.merge_options(baml_options).parse_response(function_name="InferSchema", llm_response=llm_response, mode="stream")
+        return typing.cast(stream_types.InferredSchema, result)
 
     def MapColumns(
         self, llm_response: str, baml_options: BamlCallOptions = {},
