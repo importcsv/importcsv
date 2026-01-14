@@ -21,6 +21,12 @@ function isValidUUID(str: string): boolean {
 }
 
 /**
+ * Reserved query params that are NOT passed to context.
+ * These are used for embed configuration only.
+ */
+const RESERVED_PARAMS = ['theme', 'primaryColor', 'returnData', 'hideHeader', 'origin'];
+
+/**
  * Validates that the importer exists by calling the backend API.
  * Returns the importer data if valid, null otherwise.
  */
@@ -116,11 +122,20 @@ export default async function EmbedPage({
         : undefined,
   };
 
+  // Extract context from remaining query params (exclude reserved ones)
+  const context: Record<string, string> = {};
+  for (const [key, value] of Object.entries(resolvedSearchParams)) {
+    if (!RESERVED_PARAMS.includes(key) && typeof value === 'string') {
+      context[key] = value;
+    }
+  }
+
   return (
     <EmbedClient
       importerKey={key}
       params={embedParams}
       targetOrigin={originParam || undefined}
+      context={context}
     />
   );
 }

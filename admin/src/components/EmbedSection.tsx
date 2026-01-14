@@ -37,8 +37,7 @@ export default function YourComponent() {
       onComplete={(data) => {
         console.log('Import complete:', data);
       }}
-      user={{ userId: "YOUR_USER_ID" }}
-      metadata={{ source: "YOUR_APP" }}
+      context={{ userId: "YOUR_USER_ID", source: "YOUR_APP" }}
     />
   );
 }`;
@@ -55,8 +54,7 @@ export default function YourComponent() {
     onComplete: function(data) {
       console.log('Import complete:', data);
     },
-    user: { userId: 'YOUR_USER_ID' },
-    metadata: { source: 'YOUR_APP' }
+    context: { userId: 'YOUR_USER_ID', source: 'YOUR_APP' }
   });
 </script>`;
 
@@ -139,6 +137,9 @@ export default function YourComponent() {
               </p>
             </div>
             <EmbedCodeBlock code={iframeCode} language="html" />
+            <p className="text-xs text-muted-foreground">
+              Tip: Add query params (e.g. <code className="bg-muted px-1 py-0.5 rounded">?user_id=123</code>) to include them in webhook payloads.
+            </p>
           </div>
         </TabsContent>
       </Tabs>

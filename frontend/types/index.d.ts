@@ -105,8 +105,7 @@ export interface CSVImporterProps {
     importerKey?: string;
     onComplete?: (data: any) => void;
     backendUrl?: string;
-    user?: Record<string, any>;
-    metadata?: Record<string, any>;
+    context?: Record<string, any>;
     theme?: ThemeConfig | 'default' | 'minimal' | 'modern' | 'compact' | 'dark';
     darkMode?: boolean;
     primaryColor?: string;

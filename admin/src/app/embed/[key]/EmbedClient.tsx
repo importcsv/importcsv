@@ -20,12 +20,14 @@ interface EmbedClientProps {
   importerKey: string;
   params: EmbedQueryParams;
   targetOrigin?: string; // Optional - only needed if parent wants postMessage data
+  context?: Record<string, string>;
 }
 
 export default function EmbedClient({
   importerKey,
   params,
   targetOrigin,
+  context,
 }: EmbedClientProps) {
   const backendUrl =
     process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000";
@@ -121,6 +123,7 @@ export default function EmbedClient({
         importerKey={importerKey}
         backendUrl={backendUrl}
         onComplete={handleComplete}
+        context={context}
       />
     </div>
   );

@@ -209,8 +209,7 @@ async def process_import_by_key(
     # Extract data from the request
     valid_data = request.validData
     invalid_data = request.invalidData
-    user_data = request.user
-    metadata = request.metadata
+    context = request.context
     total_rows = len(valid_data) + len(invalid_data)
 
     # Get importer owner for limit checks
@@ -246,6 +245,7 @@ async def process_import_by_key(
         row_count=total_rows,
         processed_rows=0,
         error_count=len(invalid_data),
+        file_metadata={"context": context or {}},
     )
     db.add(import_job)
     db.commit()
@@ -255,8 +255,7 @@ async def process_import_by_key(
     if importer.webhook_enabled and importer.webhook_url:
         # Queue the webhook to be sent asynchronously
         webhook_payload = {
-            "user": user_data or {},
-            "metadata": metadata or {},
+            "context": context or {},
             "source": "api",
         }
 

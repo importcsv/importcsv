@@ -91,8 +91,7 @@ export type CSVImporterProps<TSchema = any> = {
   
   // Optional configuration
   backendUrl?: string;         // API endpoint (default from config)
-  user?: Record<string, any>;  // User context for backend
-  metadata?: Record<string, any>; // Additional data
+  context?: Record<string, any>;  // Custom context passed to webhooks
   
   // UI customization
   theme?: ThemeConfig | 'default' | 'minimal' | 'modern' | 'compact' | 'dark'; // New theme system

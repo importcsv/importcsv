@@ -90,8 +90,7 @@ class ImportByKeyRequest(BaseModel):
     validData: List[Dict[str, Any]]
     invalidData: List[Dict[str, Any]] = []
     columnMapping: Dict[str, Any] = {}
-    user: Dict[str, Any] = {}
-    metadata: Dict[str, Any] = {}
+    context: Dict[str, Any] = {}
     importer_key: uuid.UUID
 
 

@@ -80,8 +80,7 @@ import { CSVImporter } from '@importcsv/react';
 | Prop | Type | Description |
 |------|------|-------------|
 | `backendUrl` | `string` | API endpoint URL (defaults to config) |
-| `user` | `Record<string, any>` | User context for backend webhooks |
-| `metadata` | `Record<string, any>` | Additional metadata for import |
+| `context` | `Record<string, any>` | Custom context passed to backend webhooks |
 
 #### Localization Props:
 
@@ -286,8 +285,7 @@ const MyComponent = () => {
       importerKey="usr_employees_import"
       onComplete={handleComplete}
       backendUrl="https://api.example.com"
-      user={{ id: 'user123', name: 'John Doe' }}
-      metadata={{ source: 'web-app', version: '1.0' }}
+      context={{ userId: 'user123', userName: 'John Doe', source: 'web-app', version: '1.0' }}
     />
   );
 };

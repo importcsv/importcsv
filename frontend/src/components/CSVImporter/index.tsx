@@ -36,8 +36,7 @@ const CSVImporter = forwardRef(<TSchema = any,>(importerProps: CSVImporterProps<
     customTranslations,
     importerKey,
     backendUrl,
-    user,
-    metadata,
+    context,
     demoData,
     schema,
     columns: propColumns,
@@ -152,8 +151,7 @@ const CSVImporter = forwardRef(<TSchema = any,>(importerProps: CSVImporterProps<
         customTranslations={customTranslations}
         importerKey={importerKey}
         backendUrl={backendUrl}
-        user={user}
-        metadata={metadata}
+        context={context}
         demoData={demoData}
         columns={derivedColumns}
         schema={schema}

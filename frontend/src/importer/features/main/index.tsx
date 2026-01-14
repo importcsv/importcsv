@@ -52,8 +52,7 @@ export default function Main(props: CSVImporterProps) {
     columns: propColumns, // HelloCSV-style columns for standalone mode
     schema, // Zod schema for standalone mode
     backendUrl,
-    user,
-    metadata,
+    context,
     demoData
   } = props;
   const skipHeader = skipHeaderRowSelection ?? false;
@@ -374,8 +373,7 @@ export default function Main(props: CSVImporterProps) {
     const payload = {
       ...transformedData,
       columnMapping: columnMappingForBackend,
-      user: user || {},
-      metadata: metadata || {},
+      context: context || {},
       importer_key: importerKey || "",
     };
 

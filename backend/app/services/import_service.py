@@ -348,6 +348,9 @@ class ImportService:
                 "row_count": import_job.row_count,
                 "processed_rows": import_job.processed_rows,
                 "error_count": import_job.error_count,
+                # Include context from the import job's file_metadata if available
+                # Context is stored in file_metadata during job creation
+                "context": import_job.file_metadata.get("context", {}) if import_job.file_metadata else {},
             }
 
             # Include full data in the webhook payload for completed imports
