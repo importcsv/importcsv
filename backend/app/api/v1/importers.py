@@ -17,6 +17,8 @@ from app.schemas.importer import ImporterCreate, ImporterUpdate
 from app.schemas.integration import DestinationCreate, DestinationResponse
 from app.services import importer as importer_service
 from app.services import schema_inference
+from app.services.events import events
+from app.services.events.types import EventType
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -133,7 +135,18 @@ async def create_importer(
     """
     Create new importer
     """
-    return importer_service.create_importer(db, str(current_user.id), importer_in)
+    importer = importer_service.create_importer(db, str(current_user.id), importer_in)
+
+    # Emit event for internal notifications
+    events.emit(
+        EventType.IMPORTER_CREATED,
+        {
+            "email": current_user.email,
+            "importer_name": importer.name,
+        },
+    )
+
+    return importer
 
 
 @router.get("/{importer_id}", response_model=ImporterSchema)

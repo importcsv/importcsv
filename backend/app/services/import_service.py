@@ -22,6 +22,8 @@ from app.models.importer import Importer
 from app.services.queue import enqueue_job
 from app.services.webhook import WebhookService, WebhookEventType
 from app.services.delivery import deliver_to_destination
+from app.services.events import events
+from app.services.events.types import EventType
 
 logger = logging.getLogger(__name__)
 
@@ -196,7 +198,7 @@ class ImportService:
             job_uuid = uuid.UUID(import_job_id)
             import_job = (
                 db.query(ImportJob)
-                .options(joinedload(ImportJob.importer))
+                .options(joinedload(ImportJob.importer), joinedload(ImportJob.user))
                 .filter(ImportJob.id == job_uuid)
                 .first()
             )
@@ -258,6 +260,35 @@ class ImportService:
                 db.commit()
                 logger.info(f"Job {import_job.id} processing completed successfully.")
 
+                # Emit internal events
+                if import_job.user:
+                    # Check if this is user's first import
+                    import_count = (
+                        db.query(ImportJob)
+                        .filter(
+                            ImportJob.user_id == import_job.user_id,
+                            ImportJob.status == ImportStatus.COMPLETED,
+                        )
+                        .count()
+                    )
+                    if import_count == 1:
+                        events.emit(
+                            EventType.USER_FIRST_IMPORT,
+                            {
+                                "email": import_job.user.email,
+                                "importer_name": importer.name,
+                            },
+                        )
+
+                    events.emit(
+                        EventType.IMPORT_COMPLETED,
+                        {
+                            "email": import_job.user.email,
+                            "importer_name": importer.name,
+                            "row_count": import_job.processed_rows or 0,
+                        },
+                    )
+
             except Exception as process_exc:
                 logger.error(
                     f"Error processing pre-validated data for job {import_job_id}: {process_exc}",
@@ -269,6 +300,18 @@ class ImportService:
                 )
                 import_job.processed_rows = 0
                 db.commit()
+
+                # Emit failure event
+                if import_job.user:
+                    events.emit(
+                        EventType.IMPORT_FAILED,
+                        {
+                            "email": import_job.user.email,
+                            "importer_name": importer.name if importer else "Unknown",
+                            "error": str(process_exc)[:100],
+                        },
+                    )
+
                 processed_df = None  # Ensure it's None on error
 
             # Send completion webhook

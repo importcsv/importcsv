@@ -13,6 +13,8 @@ from app.core.config import settings
 from app.core.features import is_cloud_mode, get_tier_import_limit, get_tier_max_rows
 from app.services.billing import BillingService
 from app.services.email import email_service
+from app.services.events import events
+from app.services.events.types import EventType
 from app.models.stripe_webhook import ProcessedStripeEvent
 from app.models.user import User
 
@@ -139,6 +141,14 @@ def handle_checkout_completed(billing: BillingService, session: dict) -> None:
             import_limit=get_tier_import_limit(tier),
             row_limit=get_tier_max_rows(tier),
         )
+        # Emit internal event
+        events.emit(
+            EventType.SUBSCRIPTION_STARTED,
+            {
+                "email": user.email,
+                "plan": tier,
+            },
+        )
 
 
 def handle_subscription_updated(billing: BillingService, subscription: dict) -> None:
@@ -179,6 +189,14 @@ def handle_subscription_deleted(billing: BillingService, subscription: dict) -> 
 
     if user:
         email_service.send_subscription_paused(user.email)
+        # Emit internal event
+        events.emit(
+            EventType.SUBSCRIPTION_CANCELLED,
+            {
+                "email": user.email,
+                "plan": user.subscription_tier or "unknown",
+            },
+        )
 
 
 def handle_payment_failed(billing: BillingService, invoice: dict) -> None:
@@ -190,6 +208,15 @@ def handle_payment_failed(billing: BillingService, invoice: dict) -> None:
     if user and user.grace_period_ends_at:
         days_left = (user.grace_period_ends_at - datetime.now(timezone.utc)).days
         email_service.send_grace_period_reminder(user.email, days_left)
+
+    # Emit internal event (even if user not found, for monitoring)
+    if user:
+        events.emit(
+            EventType.SUBSCRIPTION_PAYMENT_FAILED,
+            {
+                "email": user.email,
+            },
+        )
 
 
 def handle_payment_succeeded(billing: BillingService, invoice: dict) -> None:

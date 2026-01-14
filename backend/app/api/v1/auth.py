@@ -20,6 +20,8 @@ from app.models.user import User as UserModel
 from app.auth.jwt_auth import get_current_active_user
 from app.schemas.user import UserCreate, User
 from app.services.email import email_service
+from app.services.events import events
+from app.services.events.types import EventType
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -162,6 +164,9 @@ async def register(
     # Send welcome email
     email_service.send_welcome(db_user.email, db_user.full_name)
 
+    # Emit signup event for internal notifications
+    events.emit(EventType.USER_SIGNUP, {"email": db_user.email})
+
     return db_user
 
 
@@ -205,6 +210,8 @@ async def sync_oauth_user(
     # Send welcome email for new users only
     if is_new_user:
         email_service.send_welcome(user.email, user.full_name)
+        # Emit signup event for internal notifications
+        events.emit(EventType.USER_SIGNUP, {"email": user.email})
 
     # Create access token
     access_token = create_access_token(
