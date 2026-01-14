@@ -29,7 +29,7 @@ except ImportError:
 redis_conn = Redis.from_url(settings.REDIS_URL)
 
 # Define queues to listen to
-QUEUES = [settings.RQ_IMPORT_QUEUE, "default"]
+QUEUES = [settings.RQ_IMPORT_QUEUE, "events", "default"]
 
 
 def start_worker():
