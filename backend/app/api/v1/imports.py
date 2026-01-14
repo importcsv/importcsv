@@ -11,6 +11,7 @@ from app.auth.jwt_auth import get_current_active_user
 from app.db.base import get_db
 from app.models.user import User
 from app.models.import_job import ImportJob as ImportJobModel, ImportStatus
+from app.models.integration import IntegrationType
 from app.models.webhook import WebhookEventType
 from app.schemas.import_job import (
     ImportJob as ImportJobSchema,
@@ -23,6 +24,12 @@ from app.services.queue import enqueue_job
 from app.services.mapping import enhance_column_mappings
 from app.services.transformation import generate_transformations
 from app.services.usage import check_and_increment_usage_for_user, check_rows_limit
+from app.services.context_validation import (
+    get_required_context_keys,
+    validate_required_context_keys,
+)
+from app.services import supabase as supabase_service
+from app.core.encryption import decrypt_credentials
 from app.core.features import is_cloud_mode
 
 logger = logging.getLogger(__name__)
@@ -233,6 +240,49 @@ async def process_import_by_key(
             status_code=402,  # Payment Required
             detail=f"Monthly import limit reached ({current_count}/{limit}). Please upgrade to continue importing."
         )
+
+    # Validate required context keys if destination has context_mapping
+    destination = importer.destination
+    if (
+        destination
+        and destination.context_mapping
+        and destination.integration
+        and destination.integration.type == IntegrationType.SUPABASE
+    ):
+        try:
+            credentials = decrypt_credentials(destination.integration.encrypted_credentials)
+            column_schema = await supabase_service.get_table_schema(
+                credentials,
+                destination.table_name,
+            )
+
+            required_keys = get_required_context_keys(
+                destination.context_mapping,
+                column_schema,
+            )
+
+            missing_keys = validate_required_context_keys(required_keys, context)
+
+            if missing_keys:
+                raise HTTPException(
+                    status_code=400,
+                    detail=(
+                        f"Missing required context keys: {', '.join(missing_keys)}. "
+                        f"This destination requires: {', '.join(required_keys)}"
+                    ),
+                )
+        except supabase_service.SupabaseAuthError as e:
+            # Permanent error - credentials are invalid, fail fast
+            logger.error("Supabase auth failed during context validation: %s", e)
+            raise HTTPException(
+                status_code=500,
+                detail="Failed to validate context: Supabase authentication failed. "
+                       "Please check the integration credentials.",
+            ) from e
+        except supabase_service.SupabaseConnectionError as e:
+            # Transient error - log warning and allow import to proceed
+            # Delivery will fail later with a more specific error if context is truly required
+            logger.warning("Transient error validating context keys: %s", e)
 
     # Create import job
     import_job = ImportJobModel(

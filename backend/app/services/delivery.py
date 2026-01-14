@@ -135,6 +135,8 @@ async def deliver_to_supabase(
     table: str,
     mapping: Dict[str, str],
     rows: List[Dict[str, Any]],
+    context_mapping: Optional[Dict[str, str]] = None,
+    context: Optional[Dict[str, Any]] = None,
 ) -> DeliveryResult:
     """Deliver rows to Supabase with chunking and retries."""
     # Validate Supabase URL to prevent SSRF
@@ -158,12 +160,19 @@ async def deliver_to_supabase(
     # - If mapping is empty, pass through all columns as-is
     # - If mapping has entries, only include mapped columns with their new names
     if not mapping:
-        mapped_rows = rows
+        mapped_rows = [dict(row) for row in rows]  # Copy to avoid mutating originals
     else:
         mapped_rows = [
             {mapping[k]: v for k, v in row.items() if k in mapping}
             for row in rows
         ]
+
+    # Inject context values into each row
+    if context_mapping and context:
+        for row in mapped_rows:
+            for column_name, context_key in context_mapping.items():
+                if context_key in context and context[context_key] is not None:
+                    row[column_name] = context[context_key]
 
     # Chunk rows
     chunks = [mapped_rows[i:i + SUPABASE_CHUNK_SIZE]
@@ -298,6 +307,7 @@ async def deliver_to_destination(
     import_id: UUID,
     importer_id: UUID,
     rows: List[Dict[str, Any]],
+    context: Optional[Dict[str, Any]] = None,
 ) -> DeliveryResult:
     """
     Orchestrate delivery to the configured destination for an importer.
@@ -351,6 +361,8 @@ async def deliver_to_destination(
             table=destination.table_name,
             mapping=destination.column_mapping or {},
             rows=rows,
+            context_mapping=destination.context_mapping or {},
+            context=context,
         )
 
     elif integration.type == IntegrationType.WEBHOOK:

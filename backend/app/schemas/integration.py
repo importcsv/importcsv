@@ -89,12 +89,20 @@ class SupabaseTableSchemaResponse(BaseModel):
     columns: list[SupabaseColumnSchema]
 
 
+class CategorizedColumnsResponse(BaseModel):
+    """Schema for categorized columns response."""
+    hidden: list[SupabaseColumnSchema]
+    context: list[SupabaseColumnSchema]
+    mapped: list[SupabaseColumnSchema]
+
+
 # Destination schemas
 class DestinationCreate(BaseModel):
     """Schema for creating/updating an importer destination."""
     integration_id: UUID
     table_name: str | None = None  # Required for Supabase
     column_mapping: dict[str, str] = Field(default_factory=dict)
+    context_mapping: dict[str, str] = Field(default_factory=dict)
 
 
 class DestinationResponse(BaseModel):
@@ -104,6 +112,7 @@ class DestinationResponse(BaseModel):
     integration_id: UUID
     table_name: str | None = None
     column_mapping: dict[str, str]
+    context_mapping: dict[str, str] = Field(default_factory=dict)
     created_at: datetime
     updated_at: datetime | None = None
 

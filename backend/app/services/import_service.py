@@ -321,11 +321,14 @@ class ImportService:
             if import_job.status == ImportStatus.COMPLETED and processed_df is not None and not processed_df.empty:
                 try:
                     rows = processed_df.to_dict(orient="records")
+                    # Extract context from file_metadata for destination injection
+                    context = import_job.file_metadata.get("context", {}) if import_job.file_metadata else {}
                     delivery_result = await deliver_to_destination(
                         db=db,
                         import_id=import_job.id,
                         importer_id=importer.id,
                         rows=rows,
+                        context=context,
                     )
                     if delivery_result.success:
                         logger.info(f"Destination delivery completed: {delivery_result.rows_delivered} rows")
