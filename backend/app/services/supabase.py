@@ -10,6 +10,13 @@ logger = logging.getLogger(__name__)
 # Tables to filter out (system/migration tables)
 FILTERED_TABLE_PREFIXES = ("_", "schema_migrations", "alembic_version")
 
+# Column categorization constants
+AUTO_GENERATED_COLUMNS = {"id", "created_at", "updated_at", "deleted_at"}
+CONTEXT_PATTERNS = {
+    "user_id", "org_id", "tenant_id", "owner_id", "account_id",
+    "workspace_id", "team_id", "project_id", "created_by", "updated_by",
+}
+
 # HTTP status codes
 HTTP_UNAUTHORIZED = 401
 
@@ -250,3 +257,38 @@ async def test_connection(credentials: dict[str, Any]) -> dict[str, Any]:
             "error": "unknown_error",
             "message": str(e),
         }
+
+
+def categorize_columns(
+    columns: list[dict[str, Any]],
+) -> dict[str, list[dict[str, Any]]]:
+    """
+    Categorize table columns into hidden, context, and mapped.
+
+    Hidden columns: Auto-generated columns like id, created_at, updated_at
+    Context columns: Foreign key-like columns that should be filled from context
+    Mapped columns: User data columns that should be mapped from CSV
+
+    Args:
+        columns: List of column schema dicts with column_name, data_type, is_nullable
+
+    Returns:
+        Dict with keys 'hidden', 'context', 'mapped', each containing list of columns
+    """
+    result: dict[str, list[dict[str, Any]]] = {"hidden": [], "context": [], "mapped": []}
+
+    for col in columns:
+        col_name = col["column_name"].lower()
+        col_type = col.get("data_type", "").lower()
+
+        if col_name in AUTO_GENERATED_COLUMNS:
+            result["hidden"].append(col)
+        elif col_name in CONTEXT_PATTERNS:
+            result["context"].append(col)
+        elif col_name.endswith("_id") and col_type == "uuid" and col_name != "id":
+            # Generic UUID foreign key pattern (e.g., project_id, some_custom_id)
+            result["context"].append(col)
+        else:
+            result["mapped"].append(col)
+
+    return result

@@ -21,6 +21,7 @@ from app.schemas.integration import (
     SupabaseTablesResponse,
     SupabaseTableSchemaResponse,
     SupabaseColumnSchema,
+    CategorizedColumnsResponse,
 )
 from app.services import integration as integration_service
 from app.services import supabase as supabase_service
@@ -223,3 +224,59 @@ async def get_supabase_table_schema(
         raise HTTPException(status_code=502, detail=f"Failed to connect to Supabase: {e}")
     except supabase_service.SupabaseError as e:
         raise HTTPException(status_code=500, detail=f"Supabase error: {e}")
+
+
+@router.get(
+    "/{integration_id}/supabase/tables/{table_name}/categorized-columns",
+    response_model=CategorizedColumnsResponse,
+)
+async def get_categorized_columns(
+    integration_id: UUID,
+    table_name: str = Path(..., pattern=TABLE_NAME_PATTERN, description="PostgreSQL table name"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+):
+    """
+    Get table columns categorized into hidden, context, and mapped.
+
+    Hidden columns: Auto-generated columns (id, created_at, etc.)
+    Context columns: Foreign key-like columns filled from context
+    Mapped columns: User data columns to be mapped from CSV
+
+    Only valid for Supabase integrations.
+    """
+    integration, credentials = integration_service.get_integration(
+        db, integration_id, current_user.id, include_credentials=True
+    )
+    if not integration:
+        raise HTTPException(status_code=404, detail="Integration not found")
+    if integration.type != IntegrationType.SUPABASE:
+        raise HTTPException(
+            status_code=400,
+            detail="This endpoint is only available for Supabase integrations",
+        )
+
+    try:
+        columns_data = await supabase_service.get_table_schema(credentials, table_name)
+        categorized = supabase_service.categorize_columns(columns_data)
+
+        return CategorizedColumnsResponse(
+            hidden=[SupabaseColumnSchema(**col) for col in categorized["hidden"]],
+            context=[SupabaseColumnSchema(**col) for col in categorized["context"]],
+            mapped=[SupabaseColumnSchema(**col) for col in categorized["mapped"]],
+        )
+    except supabase_service.SupabaseAuthError as e:
+        raise HTTPException(
+            status_code=401,
+            detail=f"Supabase authentication failed: {e}",
+        ) from e
+    except supabase_service.SupabaseConnectionError as e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Failed to connect to Supabase: {e}",
+        ) from e
+    except supabase_service.SupabaseError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Supabase error: {e}",
+        ) from e

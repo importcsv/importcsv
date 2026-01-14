@@ -39,6 +39,7 @@ export interface DestinationCreate {
   integration_id: string;
   table_name?: string;
   column_mapping?: Record<string, string>;
+  context_mapping?: Record<string, string>;
 }
 
 export interface DestinationResponse {
@@ -47,10 +48,17 @@ export interface DestinationResponse {
   integration_id: string;
   table_name: string | null;
   column_mapping: Record<string, string>;
+  context_mapping: Record<string, string>;
   created_at: string;
   updated_at: string | null;
   integration_name: string | null;
   integration_type: "supabase" | "webhook" | null;
+}
+
+export interface CategorizedColumns {
+  hidden: SupabaseColumnSchema[];
+  context: SupabaseColumnSchema[];
+  mapped: SupabaseColumnSchema[];
 }
 
 /**
@@ -235,6 +243,11 @@ export const integrationsApi = {
 
   getSupabaseTableSchema: async (integrationId: string, tableName: string): Promise<SupabaseTableSchema> => {
     const response = await apiClient.get(`/integrations/${integrationId}/supabase/tables/${tableName}/schema`);
+    return response.data;
+  },
+
+  getCategorizedColumns: async (integrationId: string, tableName: string): Promise<CategorizedColumns> => {
+    const response = await apiClient.get(`/integrations/${integrationId}/supabase/tables/${tableName}/categorized-columns`);
     return response.data;
   },
 };

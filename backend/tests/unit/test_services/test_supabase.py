@@ -2,7 +2,7 @@
 """Tests for Supabase service - table introspection."""
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
-from app.services.supabase import list_tables, get_table_schema
+from app.services.supabase import list_tables, get_table_schema, categorize_columns
 
 
 @pytest.mark.asyncio
@@ -147,3 +147,83 @@ async def test_list_tables_auth_error():
 
         with pytest.raises(SupabaseAuthError):
             await list_tables(credentials)
+
+
+def test_categorize_columns_detects_fk_by_naming():
+    """Test column categorization based on naming conventions."""
+    columns = [
+        {"column_name": "id", "data_type": "uuid", "is_nullable": False},
+        {"column_name": "email", "data_type": "text", "is_nullable": False},
+        {"column_name": "name", "data_type": "text", "is_nullable": True},
+        {"column_name": "org_id", "data_type": "uuid", "is_nullable": False},
+        {"column_name": "user_id", "data_type": "uuid", "is_nullable": False},
+        {"column_name": "created_at", "data_type": "timestamp", "is_nullable": False},
+    ]
+
+    result = categorize_columns(columns)
+
+    hidden_names = [c["column_name"] for c in result["hidden"]]
+    context_names = [c["column_name"] for c in result["context"]]
+    mapped_names = [c["column_name"] for c in result["mapped"]]
+
+    assert "id" in hidden_names
+    assert "created_at" in hidden_names
+    assert "org_id" in context_names
+    assert "user_id" in context_names
+    assert "email" in mapped_names
+    assert "name" in mapped_names
+
+
+def test_categorize_columns_detects_custom_fk_patterns():
+    """Test detection of additional FK patterns like tenant_id, owner_id."""
+    columns = [
+        {"column_name": "tenant_id", "data_type": "uuid", "is_nullable": False},
+        {"column_name": "owner_id", "data_type": "uuid", "is_nullable": True},
+        {"column_name": "workspace_id", "data_type": "uuid", "is_nullable": False},
+        {"column_name": "created_by", "data_type": "uuid", "is_nullable": True},
+        {"column_name": "title", "data_type": "text", "is_nullable": False},
+    ]
+
+    result = categorize_columns(columns)
+
+    context_names = [c["column_name"] for c in result["context"]]
+    mapped_names = [c["column_name"] for c in result["mapped"]]
+
+    assert "tenant_id" in context_names
+    assert "owner_id" in context_names
+    assert "workspace_id" in context_names
+    assert "created_by" in context_names
+    assert "title" in mapped_names
+
+
+def test_categorize_columns_handles_updated_at():
+    """Test that updated_at is classified as hidden."""
+    columns = [
+        {"column_name": "id", "data_type": "uuid", "is_nullable": False},
+        {"column_name": "updated_at", "data_type": "timestamp", "is_nullable": True},
+        {"column_name": "deleted_at", "data_type": "timestamp", "is_nullable": True},
+    ]
+
+    result = categorize_columns(columns)
+
+    hidden_names = [c["column_name"] for c in result["hidden"]]
+
+    assert "id" in hidden_names
+    assert "updated_at" in hidden_names
+    assert "deleted_at" in hidden_names
+
+
+def test_categorize_columns_generic_uuid_id_columns():
+    """Test that generic _id columns with uuid type are detected as context."""
+    columns = [
+        {"column_name": "project_id", "data_type": "uuid", "is_nullable": False},
+        {"column_name": "some_id", "data_type": "text", "is_nullable": False},  # text, not uuid
+    ]
+
+    result = categorize_columns(columns)
+
+    context_names = [c["column_name"] for c in result["context"]]
+    mapped_names = [c["column_name"] for c in result["mapped"]]
+
+    assert "project_id" in context_names  # uuid type -> context
+    assert "some_id" in mapped_names  # text type -> mapped

@@ -16,6 +16,7 @@ class ImporterDestination(Base):
     integration_id = Column(UUID, ForeignKey("integrations.id", ondelete="CASCADE"), nullable=False, index=True)
     table_name = Column(String(255), nullable=True)  # For Supabase
     column_mapping = Column(JSON, nullable=False, default=dict)
+    context_mapping = Column(JSON, nullable=False, default=dict)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())

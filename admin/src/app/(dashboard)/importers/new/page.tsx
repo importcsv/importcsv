@@ -42,7 +42,10 @@ export default function NewImporterPage() {
     integrationType: null,
     tableName: null,
     columnMapping: {},
+    contextMapping: {},
     supabaseColumns: [],
+    contextColumns: [],
+    mappedColumns: [],
   });
 
   // Handle importer name change
@@ -162,6 +165,7 @@ export default function NewImporterPage() {
           integration_id: destination.integrationId,
           table_name: destination.tableName || undefined,
           column_mapping: destination.columnMapping,
+          context_mapping: destination.contextMapping,
         });
       }
 
