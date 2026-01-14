@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.models.user import User
 from app.models.importer import Importer
+from app.models.integration import Integration, IntegrationType
 
 
 # ============================================================================
@@ -467,3 +468,190 @@ def test_expired_token(client: TestClient, test_user: User):
     response = client.get("/api/v1/importers/", headers=headers)
 
     assert response.status_code == 401
+
+
+# ============================================================================
+# Destination Endpoint Tests
+# ============================================================================
+
+@pytest.fixture
+def sample_integration(db_session: Session, test_user: User) -> Integration:
+    """Create a sample Supabase integration in the database."""
+    integration = Integration(
+        id=uuid.uuid4(),
+        user_id=test_user.id,
+        name="Test Supabase",
+        type=IntegrationType.SUPABASE,
+        encrypted_credentials='{"url": "https://test.supabase.co", "service_key": "test-key"}',
+    )
+    db_session.add(integration)
+    db_session.commit()
+    db_session.refresh(integration)
+    return integration
+
+
+@pytest.mark.integration
+def test_set_destination_with_context_mapping(
+    client: TestClient,
+    auth_headers: dict,
+    sample_importer: Importer,
+    sample_integration: Integration,
+):
+    """Test that context_mapping is persisted when setting a destination."""
+    response = client.put(
+        f"/api/v1/importers/{sample_importer.id}/destination",
+        json={
+            "integration_id": str(sample_integration.id),
+            "table_name": "contacts",
+            "column_mapping": {"email": "email_address"},
+            "context_mapping": {"user_id": "user_id", "org_id": "organization_id"},
+        },
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["context_mapping"] == {"user_id": "user_id", "org_id": "organization_id"}
+    assert data["column_mapping"] == {"email": "email_address"}
+    assert data["table_name"] == "contacts"
+
+
+@pytest.mark.integration
+def test_get_destination_returns_context_mapping(
+    client: TestClient,
+    auth_headers: dict,
+    sample_importer: Importer,
+    sample_integration: Integration,
+):
+    """Test that GET returns persisted context_mapping."""
+    # First create a destination with context_mapping
+    client.put(
+        f"/api/v1/importers/{sample_importer.id}/destination",
+        json={
+            "integration_id": str(sample_integration.id),
+            "table_name": "users",
+            "column_mapping": {},
+            "context_mapping": {"tenant_id": "tenant_id"},
+        },
+        headers=auth_headers,
+    )
+
+    # Now GET and verify
+    response = client.get(
+        f"/api/v1/importers/{sample_importer.id}/destination",
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["context_mapping"] == {"tenant_id": "tenant_id"}
+
+
+@pytest.mark.integration
+def test_update_destination_context_mapping(
+    client: TestClient,
+    auth_headers: dict,
+    sample_importer: Importer,
+    sample_integration: Integration,
+):
+    """Test that context_mapping can be updated on an existing destination."""
+    # Create initial destination
+    client.put(
+        f"/api/v1/importers/{sample_importer.id}/destination",
+        json={
+            "integration_id": str(sample_integration.id),
+            "table_name": "contacts",
+            "column_mapping": {},
+            "context_mapping": {"user_id": "user_id"},
+        },
+        headers=auth_headers,
+    )
+
+    # Update with new context_mapping
+    response = client.put(
+        f"/api/v1/importers/{sample_importer.id}/destination",
+        json={
+            "integration_id": str(sample_integration.id),
+            "table_name": "contacts",
+            "column_mapping": {},
+            "context_mapping": {"user_id": "uid", "org_id": "org"},
+        },
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["context_mapping"] == {"user_id": "uid", "org_id": "org"}
+
+
+@pytest.mark.integration
+def test_destination_context_mapping_defaults_to_empty(
+    client: TestClient,
+    auth_headers: dict,
+    sample_importer: Importer,
+    sample_integration: Integration,
+):
+    """Test that context_mapping defaults to empty dict if not provided."""
+    response = client.put(
+        f"/api/v1/importers/{sample_importer.id}/destination",
+        json={
+            "integration_id": str(sample_integration.id),
+            "table_name": "contacts",
+        },
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["context_mapping"] == {}
+
+
+@pytest.mark.integration
+def test_get_destination_not_found(
+    client: TestClient,
+    auth_headers: dict,
+    sample_importer: Importer,
+):
+    """Test that GET returns null when no destination is configured."""
+    response = client.get(
+        f"/api/v1/importers/{sample_importer.id}/destination",
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json() is None
+
+
+@pytest.mark.integration
+def test_delete_destination(
+    client: TestClient,
+    auth_headers: dict,
+    sample_importer: Importer,
+    sample_integration: Integration,
+):
+    """Test destination deletion."""
+    # Create destination
+    client.put(
+        f"/api/v1/importers/{sample_importer.id}/destination",
+        json={
+            "integration_id": str(sample_integration.id),
+            "table_name": "contacts",
+            "context_mapping": {"user_id": "user_id"},
+        },
+        headers=auth_headers,
+    )
+
+    # Delete it
+    response = client.delete(
+        f"/api/v1/importers/{sample_importer.id}/destination",
+        headers=auth_headers,
+    )
+    assert response.status_code == 204
+
+    # Verify deletion
+    get_response = client.get(
+        f"/api/v1/importers/{sample_importer.id}/destination",
+        headers=auth_headers,
+    )
+    assert get_response.status_code == 200
+    assert get_response.json() is None

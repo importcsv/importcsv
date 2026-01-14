@@ -227,6 +227,7 @@ async def get_destination(
         integration_id=destination.integration_id,
         table_name=destination.table_name,
         column_mapping=destination.column_mapping or {},
+        context_mapping=destination.context_mapping or {},
         created_at=destination.created_at,
         updated_at=destination.updated_at,
         integration_name=integration.name if integration else None,
@@ -271,6 +272,7 @@ async def set_destination(
         destination.integration_id = destination_in.integration_id
         destination.table_name = destination_in.table_name
         destination.column_mapping = destination_in.column_mapping
+        destination.context_mapping = destination_in.context_mapping
     else:
         # Create new
         destination = ImporterDestination(
@@ -278,6 +280,7 @@ async def set_destination(
             integration_id=destination_in.integration_id,
             table_name=destination_in.table_name,
             column_mapping=destination_in.column_mapping,
+            context_mapping=destination_in.context_mapping,
         )
         db.add(destination)
 
@@ -290,6 +293,7 @@ async def set_destination(
         integration_id=destination.integration_id,
         table_name=destination.table_name,
         column_mapping=destination.column_mapping or {},
+        context_mapping=destination.context_mapping or {},
         created_at=destination.created_at,
         updated_at=destination.updated_at,
         integration_name=integration.name,
