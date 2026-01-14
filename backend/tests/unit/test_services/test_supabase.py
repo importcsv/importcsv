@@ -1,25 +1,30 @@
 # backend/tests/unit/test_services/test_supabase.py
-"""Tests for Supabase service - table introspection."""
+"""Tests for Supabase service - table introspection via OpenAPI schema."""
 import pytest
 from unittest.mock import AsyncMock, patch, MagicMock
 from app.services.supabase import list_tables, get_table_schema
 
 
+def _make_openapi_response(tables: list[str], definitions: dict | None = None):
+    """Helper to create mock OpenAPI schema response."""
+    paths = {f"/{table}": {} for table in tables}
+    return {
+        "paths": paths,
+        "definitions": definitions or {},
+    }
+
+
 @pytest.mark.asyncio
 async def test_list_tables_success():
-    """Test listing tables from Supabase."""
+    """Test listing tables from Supabase via OpenAPI schema."""
     credentials = {"url": "https://test.supabase.co", "service_key": "test-key"}
 
     mock_response = MagicMock()
     mock_response.status_code = 200
-    mock_response.json.return_value = [
-        {"table_name": "users", "table_schema": "public"},
-        {"table_name": "orders", "table_schema": "public"},
-        {"table_name": "products", "table_schema": "public"},
-    ]
+    mock_response.json.return_value = _make_openapi_response(["users", "orders", "products"])
     mock_response.raise_for_status = MagicMock()
 
-    with patch("httpx.AsyncClient") as mock_client:
+    with patch("app.services.supabase.httpx.AsyncClient") as mock_client:
         mock_instance = AsyncMock()
         mock_instance.get = AsyncMock(return_value=mock_response)
         mock_client.return_value.__aenter__.return_value = mock_instance
@@ -39,14 +44,13 @@ async def test_list_tables_filters_system_tables():
 
     mock_response = MagicMock()
     mock_response.status_code = 200
-    mock_response.json.return_value = [
-        {"table_name": "users", "table_schema": "public"},
-        {"table_name": "schema_migrations", "table_schema": "public"},
-        {"table_name": "_prisma_migrations", "table_schema": "public"},
-    ]
+    # Include system tables that should be filtered
+    mock_response.json.return_value = _make_openapi_response([
+        "users", "schema_migrations", "_prisma_migrations"
+    ])
     mock_response.raise_for_status = MagicMock()
 
-    with patch("httpx.AsyncClient") as mock_client:
+    with patch("app.services.supabase.httpx.AsyncClient") as mock_client:
         mock_instance = AsyncMock()
         mock_instance.get = AsyncMock(return_value=mock_response)
         mock_client.return_value.__aenter__.return_value = mock_instance
@@ -61,34 +65,39 @@ async def test_list_tables_filters_system_tables():
 
 @pytest.mark.asyncio
 async def test_get_table_schema_success():
-    """Test getting table schema from Supabase."""
+    """Test getting table schema from Supabase via OpenAPI definitions."""
     credentials = {"url": "https://test.supabase.co", "service_key": "test-key"}
+
+    # OpenAPI schema format for table definitions
+    definitions = {
+        "users": {
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Note: This is a Primary Key.<pk/> uuid",
+                },
+                "email": {
+                    "type": "string",
+                    "format": "",
+                    "description": "character varying",
+                },
+                "created_at": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "timestamp with time zone",
+                },
+            },
+            "required": ["id", "email"],  # created_at is nullable
+        }
+    }
 
     mock_response = MagicMock()
     mock_response.status_code = 200
-    mock_response.json.return_value = [
-        {
-            "column_name": "id",
-            "data_type": "uuid",
-            "is_nullable": "NO",
-            "column_default": "gen_random_uuid()",
-        },
-        {
-            "column_name": "email",
-            "data_type": "character varying",
-            "is_nullable": "NO",
-            "column_default": None,
-        },
-        {
-            "column_name": "created_at",
-            "data_type": "timestamp with time zone",
-            "is_nullable": "YES",
-            "column_default": "now()",
-        },
-    ]
+    mock_response.json.return_value = _make_openapi_response(["users"], definitions)
     mock_response.raise_for_status = MagicMock()
 
-    with patch("httpx.AsyncClient") as mock_client:
+    with patch("app.services.supabase.httpx.AsyncClient") as mock_client:
         mock_instance = AsyncMock()
         mock_instance.get = AsyncMock(return_value=mock_response)
         mock_client.return_value.__aenter__.return_value = mock_instance
@@ -96,13 +105,13 @@ async def test_get_table_schema_success():
         columns = await get_table_schema(credentials, "users")
 
         assert len(columns) == 3
-        assert columns[0]["column_name"] == "id"
-        assert columns[0]["data_type"] == "uuid"
-        assert columns[0]["is_nullable"] is False
-        assert columns[1]["column_name"] == "email"
-        assert columns[1]["data_type"] == "character varying"
-        assert columns[2]["column_name"] == "created_at"
-        assert columns[2]["is_nullable"] is True
+        # Find columns by name (order may vary)
+        col_by_name = {c["column_name"]: c for c in columns}
+
+        assert col_by_name["id"]["data_type"] == "uuid"
+        assert col_by_name["id"]["is_nullable"] is False
+        assert col_by_name["email"]["is_nullable"] is False
+        assert col_by_name["created_at"]["is_nullable"] is True
 
 
 @pytest.mark.asyncio
@@ -112,7 +121,7 @@ async def test_list_tables_connection_error():
 
     import httpx
 
-    with patch("httpx.AsyncClient") as mock_client:
+    with patch("app.services.supabase.httpx.AsyncClient") as mock_client:
         mock_instance = AsyncMock()
         mock_instance.get = AsyncMock(side_effect=httpx.ConnectError("Connection failed"))
         mock_client.return_value.__aenter__.return_value = mock_instance
@@ -138,7 +147,7 @@ async def test_list_tables_auth_error():
         side_effect=httpx.HTTPStatusError("401 Unauthorized", request=MagicMock(), response=mock_response)
     )
 
-    with patch("httpx.AsyncClient") as mock_client:
+    with patch("app.services.supabase.httpx.AsyncClient") as mock_client:
         mock_instance = AsyncMock()
         mock_instance.get = AsyncMock(return_value=mock_response)
         mock_client.return_value.__aenter__.return_value = mock_instance

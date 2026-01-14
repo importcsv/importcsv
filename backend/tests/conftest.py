@@ -63,6 +63,9 @@ os.environ["SECRET_KEY"] = "test-secret-key-at-least-32-characters-long-for-test
 os.environ["WEBHOOK_SECRET"] = "test-webhook-secret"
 os.environ["NEXTAUTH_SECRET"] = "test-nextauth-secret"
 os.environ["ENVIRONMENT"] = "development"
+# Disable external services during tests
+os.environ.pop("REDIS_URL", None)  # Disables event queue (prevents real Slack notifications)
+os.environ.pop("SLACK_WEBHOOK_URL", None)  # Extra safety
 
 # Patch engine creation to use SQLite-compatible options
 from unittest.mock import patch as mock_patch
