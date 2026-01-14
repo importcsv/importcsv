@@ -20,23 +20,35 @@ from .globals import DO_NOT_USE_DIRECTLY_UNLESS_YOU_KNOW_WHAT_YOURE_DOING_RUNTIM
 class TypeBuilder(type_builder.TypeBuilder):
     def __init__(self):
         super().__init__(classes=set(
-          ["ColumnMapping","MappingResult","RowData","TemplateColumn","Transformation","TransformationResult","UploadColumn","ValidationError","ValidationRule",]
+          ["ColumnMapping","InferredColumn","InferredSchema","MappingResult","RowData","SampleColumn","TemplateColumn","Transformation","TransformationResult","UploadColumn","ValidationError","ValidationRule",]
         ), enums=set(
-          []
+          ["ColumnType",]
         ), runtime=DO_NOT_USE_DIRECTLY_UNLESS_YOU_KNOW_WHAT_YOURE_DOING_RUNTIME)
 
     # #########################################################################
-    # Generated enums 0
+    # Generated enums 1
     # #########################################################################
+
+    @property
+    def ColumnType(self) -> "ColumnTypeViewer":
+        return ColumnTypeViewer(self)
 
 
     # #########################################################################
-    # Generated classes 9
+    # Generated classes 12
     # #########################################################################
 
     @property
     def ColumnMapping(self) -> "ColumnMappingViewer":
         return ColumnMappingViewer(self)
+
+    @property
+    def InferredColumn(self) -> "InferredColumnViewer":
+        return InferredColumnViewer(self)
+
+    @property
+    def InferredSchema(self) -> "InferredSchemaViewer":
+        return InferredSchemaViewer(self)
 
     @property
     def MappingResult(self) -> "MappingResultViewer":
@@ -45,6 +57,10 @@ class TypeBuilder(type_builder.TypeBuilder):
     @property
     def RowData(self) -> "RowDataViewer":
         return RowDataViewer(self)
+
+    @property
+    def SampleColumn(self) -> "SampleColumnViewer":
+        return SampleColumnViewer(self)
 
     @property
     def TemplateColumn(self) -> "TemplateColumnViewer":
@@ -73,12 +89,74 @@ class TypeBuilder(type_builder.TypeBuilder):
 
 
 # #########################################################################
-# Generated enums 0
+# Generated enums 1
 # #########################################################################
 
+class ColumnTypeAst:
+    def __init__(self, tb: type_builder.TypeBuilder):
+        _tb = tb._tb # type: ignore (we know how to use this private attribute)
+        self._bldr = _tb.enum("ColumnType")
+        self._values: typing.Set[str] = set([  "Text",  "Email",  "Phone",  "Date",  "Number",  "Boolean",  "Select",  ])
+        self._vals = ColumnTypeValues(self._bldr, self._values)
+
+    def type(self) -> baml_py.FieldType:
+        return self._bldr.field()
+
+    @property
+    def values(self) -> "ColumnTypeValues":
+        return self._vals
+
+
+class ColumnTypeViewer(ColumnTypeAst):
+    def __init__(self, tb: type_builder.TypeBuilder):
+        super().__init__(tb)
+
+    
+    def list_values(self) -> typing.List[typing.Tuple[str, type_builder.EnumValueViewer]]:
+        return [(name, type_builder.EnumValueViewer(self._bldr.value(name))) for name in self._values]
+    
+
+class ColumnTypeValues:
+    def __init__(self, enum_bldr: baml_py.EnumBuilder, values: typing.Set[str]):
+        self.__bldr = enum_bldr
+        self.__values = values # type: ignore (we know how to use this private attribute) # noqa: F821
+
+    
+    
+    @property
+    def Text(self) -> type_builder.EnumValueViewer:
+        return type_builder.EnumValueViewer(self.__bldr.value("Text"))
+    
+    @property
+    def Email(self) -> type_builder.EnumValueViewer:
+        return type_builder.EnumValueViewer(self.__bldr.value("Email"))
+    
+    @property
+    def Phone(self) -> type_builder.EnumValueViewer:
+        return type_builder.EnumValueViewer(self.__bldr.value("Phone"))
+    
+    @property
+    def Date(self) -> type_builder.EnumValueViewer:
+        return type_builder.EnumValueViewer(self.__bldr.value("Date"))
+    
+    @property
+    def Number(self) -> type_builder.EnumValueViewer:
+        return type_builder.EnumValueViewer(self.__bldr.value("Number"))
+    
+    @property
+    def Boolean(self) -> type_builder.EnumValueViewer:
+        return type_builder.EnumValueViewer(self.__bldr.value("Boolean"))
+    
+    @property
+    def Select(self) -> type_builder.EnumValueViewer:
+        return type_builder.EnumValueViewer(self.__bldr.value("Select"))
+    
+    
+
+
 
 # #########################################################################
-# Generated classes 9
+# Generated classes 12
 # #########################################################################
 
 class ColumnMappingAst:
@@ -124,6 +202,104 @@ class ColumnMappingProperties:
     @property
     def confidence(self) -> type_builder.ClassPropertyViewer:
         return type_builder.ClassPropertyViewer(self.__bldr.property("confidence"))
+    
+    
+
+
+class InferredColumnAst:
+    def __init__(self, tb: type_builder.TypeBuilder):
+        _tb = tb._tb # type: ignore (we know how to use this private attribute)
+        self._bldr = _tb.class_("InferredColumn")
+        self._properties: typing.Set[str] = set([  "name",  "display_name",  "type",  "confidence",  "suggested_options",  "reasoning",  ])
+        self._props = InferredColumnProperties(self._bldr, self._properties)
+
+    def type(self) -> baml_py.FieldType:
+        return self._bldr.field()
+
+    @property
+    def props(self) -> "InferredColumnProperties":
+        return self._props
+
+
+class InferredColumnViewer(InferredColumnAst):
+    def __init__(self, tb: type_builder.TypeBuilder):
+        super().__init__(tb)
+
+    
+    def list_properties(self) -> typing.List[typing.Tuple[str, type_builder.ClassPropertyViewer]]:
+        return [(name, type_builder.ClassPropertyViewer(self._bldr.property(name))) for name in self._properties]
+    
+
+
+class InferredColumnProperties:
+    def __init__(self, bldr: baml_py.ClassBuilder, properties: typing.Set[str]):
+        self.__bldr = bldr
+        self.__properties = properties # type: ignore (we know how to use this private attribute) # noqa: F821
+
+    
+    
+    @property
+    def name(self) -> type_builder.ClassPropertyViewer:
+        return type_builder.ClassPropertyViewer(self.__bldr.property("name"))
+    
+    @property
+    def display_name(self) -> type_builder.ClassPropertyViewer:
+        return type_builder.ClassPropertyViewer(self.__bldr.property("display_name"))
+    
+    @property
+    def type(self) -> type_builder.ClassPropertyViewer:
+        return type_builder.ClassPropertyViewer(self.__bldr.property("type"))
+    
+    @property
+    def confidence(self) -> type_builder.ClassPropertyViewer:
+        return type_builder.ClassPropertyViewer(self.__bldr.property("confidence"))
+    
+    @property
+    def suggested_options(self) -> type_builder.ClassPropertyViewer:
+        return type_builder.ClassPropertyViewer(self.__bldr.property("suggested_options"))
+    
+    @property
+    def reasoning(self) -> type_builder.ClassPropertyViewer:
+        return type_builder.ClassPropertyViewer(self.__bldr.property("reasoning"))
+    
+    
+
+
+class InferredSchemaAst:
+    def __init__(self, tb: type_builder.TypeBuilder):
+        _tb = tb._tb # type: ignore (we know how to use this private attribute)
+        self._bldr = _tb.class_("InferredSchema")
+        self._properties: typing.Set[str] = set([  "columns",  ])
+        self._props = InferredSchemaProperties(self._bldr, self._properties)
+
+    def type(self) -> baml_py.FieldType:
+        return self._bldr.field()
+
+    @property
+    def props(self) -> "InferredSchemaProperties":
+        return self._props
+
+
+class InferredSchemaViewer(InferredSchemaAst):
+    def __init__(self, tb: type_builder.TypeBuilder):
+        super().__init__(tb)
+
+    
+    def list_properties(self) -> typing.List[typing.Tuple[str, type_builder.ClassPropertyViewer]]:
+        return [(name, type_builder.ClassPropertyViewer(self._bldr.property(name))) for name in self._properties]
+    
+
+
+class InferredSchemaProperties:
+    def __init__(self, bldr: baml_py.ClassBuilder, properties: typing.Set[str]):
+        self.__bldr = bldr
+        self.__properties = properties # type: ignore (we know how to use this private attribute) # noqa: F821
+
+    
+    
+    @property
+    def columns(self) -> type_builder.ClassPropertyViewer:
+        return type_builder.ClassPropertyViewer(self.__bldr.property("columns"))
     
     
 
@@ -206,6 +382,49 @@ class RowDataProperties:
     @property
     def data(self) -> type_builder.ClassPropertyViewer:
         return type_builder.ClassPropertyViewer(self.__bldr.property("data"))
+    
+    
+
+
+class SampleColumnAst:
+    def __init__(self, tb: type_builder.TypeBuilder):
+        _tb = tb._tb # type: ignore (we know how to use this private attribute)
+        self._bldr = _tb.class_("SampleColumn")
+        self._properties: typing.Set[str] = set([  "name",  "samples",  ])
+        self._props = SampleColumnProperties(self._bldr, self._properties)
+
+    def type(self) -> baml_py.FieldType:
+        return self._bldr.field()
+
+    @property
+    def props(self) -> "SampleColumnProperties":
+        return self._props
+
+
+class SampleColumnViewer(SampleColumnAst):
+    def __init__(self, tb: type_builder.TypeBuilder):
+        super().__init__(tb)
+
+    
+    def list_properties(self) -> typing.List[typing.Tuple[str, type_builder.ClassPropertyViewer]]:
+        return [(name, type_builder.ClassPropertyViewer(self._bldr.property(name))) for name in self._properties]
+    
+
+
+class SampleColumnProperties:
+    def __init__(self, bldr: baml_py.ClassBuilder, properties: typing.Set[str]):
+        self.__bldr = bldr
+        self.__properties = properties # type: ignore (we know how to use this private attribute) # noqa: F821
+
+    
+    
+    @property
+    def name(self) -> type_builder.ClassPropertyViewer:
+        return type_builder.ClassPropertyViewer(self.__bldr.property("name"))
+    
+    @property
+    def samples(self) -> type_builder.ClassPropertyViewer:
+        return type_builder.ClassPropertyViewer(self.__bldr.property("samples"))
     
     
 
