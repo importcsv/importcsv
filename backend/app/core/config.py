@@ -186,6 +186,11 @@ class BaseAppSettings(BaseSettings):
         default_factory=lambda: int(os.getenv("TRIAL_WARNING_DAYS", "3"))
     )
 
+    # Internal events (optional, disabled by default)
+    SLACK_WEBHOOK_URL: Optional[str] = Field(
+        default_factory=lambda: os.getenv("SLACK_WEBHOOK_URL")
+    )
+
     @field_validator("SECRET_KEY")
     @classmethod
     def secret_key_must_be_secure(cls, v):
