@@ -36,19 +36,24 @@ apiClient.interceptors.response.use(
  * Destination types
  */
 export interface DestinationCreate {
-  integration_id: string;
+  destination_type?: "supabase" | "webhook";
+  integration_id?: string;
   table_name?: string;
   column_mapping?: Record<string, string>;
   context_mapping?: Record<string, string>;
+  webhook_url?: string;
 }
 
 export interface DestinationResponse {
   id: string;
   importer_id: string;
-  integration_id: string;
+  destination_type: "supabase" | "webhook";
+  integration_id: string | null;
   table_name: string | null;
   column_mapping: Record<string, string>;
   context_mapping: Record<string, string>;
+  webhook_url: string | null;
+  signing_secret: string | null;
   created_at: string;
   updated_at: string | null;
   integration_name: string | null;
@@ -122,6 +127,19 @@ export const importersApi = {
   // Schema inference
   inferSchema: async (data: Record<string, string>[]): Promise<InferSchemaResponse> => {
     const response = await apiClient.post<InferSchemaResponse>("/importers/infer-schema", { data });
+    return response.data;
+  },
+
+  // Webhook testing and delivery logs
+  testWebhook: async (importerId: string) => {
+    const response = await apiClient.post(`/importers/${importerId}/destination/test`);
+    return response.data;
+  },
+
+  getDeliveries: async (importerId: string, limit: number = 10) => {
+    const response = await apiClient.get(`/importers/${importerId}/destination/deliveries`, {
+      params: { limit },
+    });
     return response.data;
   },
 };
@@ -248,6 +266,23 @@ export const integrationsApi = {
 
   getCategorizedColumns: async (integrationId: string, tableName: string): Promise<CategorizedColumns> => {
     const response = await apiClient.get(`/integrations/${integrationId}/supabase/tables/${tableName}/categorized-columns`);
+    return response.data;
+  },
+};
+
+/**
+ * Webhooks API
+ */
+export interface WebhookTestResult {
+  success: boolean;
+  status_code: number | null;
+  duration_ms: number;
+  error: string | null;
+}
+
+export const webhooksApi = {
+  testUrl: async (url: string): Promise<WebhookTestResult> => {
+    const response = await apiClient.post<WebhookTestResult>("/webhooks/test", { url });
     return response.data;
   },
 };

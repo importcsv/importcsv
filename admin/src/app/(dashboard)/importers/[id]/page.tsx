@@ -10,6 +10,7 @@ import { SchemaSection } from '@/components/SchemaSection';
 import { EmbedSection } from '@/components/EmbedSection';
 import { AdvancedSettings } from '@/components/AdvancedSettings';
 import { ImporterField } from '@/components/AddColumnForm';
+import { ChangeDestinationModal } from '@/components/ChangeDestinationModal';
 
 interface Importer {
   id: string;
@@ -27,11 +28,20 @@ interface Importer {
   updated_at?: string;
 }
 
+interface DestinationData {
+  type: 'webhook' | 'supabase' | 'frontend' | null;
+  webhookUrl?: string;
+  signingSecret?: string;
+  integrationId?: string;
+  integrationName?: string;
+  tableName?: string;
+  columnMapping?: Record<string, string>;
+  contextMapping?: Record<string, string>;
+}
+
 interface ImporterFormData {
   name: string;
   fields: ImporterField[];
-  webhookEnabled: boolean;
-  webhookUrl: string;
   includeUnmatchedColumns: boolean;
   filterInvalidRows: boolean;
   disableOnInvalidRows: boolean;
@@ -47,14 +57,15 @@ export default function ImporterDetailPage() {
   const [importer, setImporter] = useState<Importer | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [webhookError, setWebhookError] = useState<string | null>(null);
+
+  // Destination state
+  const [destination, setDestination] = useState<DestinationData | null>(null);
+  const [showDestinationModal, setShowDestinationModal] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState<ImporterFormData>({
     name: '',
     fields: [],
-    webhookEnabled: false,
-    webhookUrl: '',
     includeUnmatchedColumns: false,
     filterInvalidRows: false,
     disableOnInvalidRows: false,
@@ -62,12 +73,7 @@ export default function ImporterDetailPage() {
   });
 
   // Validate data before save
-  const validateData = useCallback((data: ImporterFormData): boolean => {
-    if (data.webhookEnabled && !data.webhookUrl.trim()) {
-      setWebhookError('Webhook URL is required when webhook is enabled');
-      return false;
-    }
-    setWebhookError(null);
+  const validateData = useCallback((): boolean => {
     return true;
   }, []);
 
@@ -80,8 +86,6 @@ export default function ImporterDetailPage() {
     await importersApi.updateImporter(importerId, {
       name: data.name,
       fields: data.fields,
-      webhook_enabled: data.webhookEnabled,
-      webhook_url: data.webhookUrl,
       include_unmatched_columns: data.includeUnmatchedColumns,
       filter_invalid_rows: data.filterInvalidRows,
       disable_on_invalid_rows: data.disableOnInvalidRows,
@@ -97,6 +101,30 @@ export default function ImporterDetailPage() {
     enabled: importer !== null,
   });
 
+  // Fetch destination data
+  const fetchDestination = useCallback(async () => {
+    try {
+      const destData = await importersApi.getDestination(importerId);
+      if (destData) {
+        setDestination({
+          type: destData.destination_type,
+          webhookUrl: destData.webhook_url || undefined,
+          signingSecret: destData.signing_secret || undefined,
+          integrationId: destData.integration_id || undefined,
+          integrationName: destData.integration_name || undefined,
+          tableName: destData.table_name || undefined,
+          columnMapping: destData.column_mapping,
+          contextMapping: destData.context_mapping,
+        });
+      } else {
+        setDestination({ type: 'frontend' });
+      }
+    } catch (err) {
+      console.error('Failed to fetch destination:', err);
+      setDestination({ type: 'frontend' });
+    }
+  }, [importerId]);
+
   // Fetch importer data
   useEffect(() => {
     const fetchImporter = async () => {
@@ -109,13 +137,13 @@ export default function ImporterDetailPage() {
         setFormData({
           name: data.name,
           fields: data.fields,
-          webhookEnabled: data.webhook_enabled,
-          webhookUrl: data.webhook_url || '',
           includeUnmatchedColumns: data.include_unmatched_columns,
           filterInvalidRows: data.filter_invalid_rows,
           disableOnInvalidRows: data.disable_on_invalid_rows,
           darkMode: data.dark_mode || false,
         });
+        // Fetch destination after importer is loaded
+        await fetchDestination();
       } catch (err: unknown) {
         let errorMessage = 'Failed to load importer';
         if (err && typeof err === 'object' && 'response' in err) {
@@ -133,7 +161,7 @@ export default function ImporterDetailPage() {
     };
 
     fetchImporter();
-  }, [importerId]);
+  }, [importerId, fetchDestination]);
 
   // Delete handler
   const handleDelete = async () => {
@@ -150,9 +178,6 @@ export default function ImporterDetailPage() {
     value: ImporterFormData[K]
   ) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
-    if (key === 'webhookUrl' || key === 'webhookEnabled') {
-      setWebhookError(null);
-    }
   };
 
   // Loading state
@@ -204,13 +229,11 @@ export default function ImporterDetailPage() {
 
         {/* Advanced Settings */}
         <AdvancedSettings
+          importerId={importerId}
           name={formData.name}
           onNameChange={(name) => updateField('name', name)}
-          webhookEnabled={formData.webhookEnabled}
-          onWebhookEnabledChange={(enabled) => updateField('webhookEnabled', enabled)}
-          webhookUrl={formData.webhookUrl}
-          onWebhookUrlChange={(url) => updateField('webhookUrl', url)}
-          webhookError={webhookError}
+          destination={destination}
+          onChangeDestination={() => setShowDestinationModal(true)}
           includeUnmatchedColumns={formData.includeUnmatchedColumns}
           onIncludeUnmatchedColumnsChange={(v) => updateField('includeUnmatchedColumns', v)}
           filterInvalidRows={formData.filterInvalidRows}
@@ -221,6 +244,16 @@ export default function ImporterDetailPage() {
           onDarkModeChange={(v) => updateField('darkMode', v)}
         />
       </div>
+
+      {/* Change Destination Modal */}
+      <ChangeDestinationModal
+        open={showDestinationModal}
+        onClose={() => setShowDestinationModal(false)}
+        importerId={importerId}
+        importerFields={formData.fields}
+        currentDestination={destination}
+        onSaved={fetchDestination}
+      />
     </div>
   );
 }

@@ -36,13 +36,9 @@ import {
   Pencil,
   Trash2,
   Database,
-  Webhook,
-  Copy,
-  Check,
   Loader2,
-  Key,
 } from "lucide-react";
-import { integrationsApi, Integration, IntegrationWithSecret } from "@/utils/apiClient";
+import { integrationsApi, Integration } from "@/utils/apiClient";
 import { IntegrationForm } from "@/components/IntegrationForm";
 
 export default function IntegrationsPage() {
@@ -58,11 +54,6 @@ export default function IntegrationsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingIntegration, setDeletingIntegration] = useState<Integration | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  // Webhook secret state
-  const [webhookSecrets, setWebhookSecrets] = useState<Record<string, string>>({});
-  const [loadingSecrets, setLoadingSecrets] = useState<Record<string, boolean>>({});
-  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchIntegrations();
@@ -127,39 +118,6 @@ export default function IntegrationsPage() {
     }
   };
 
-  const handleShowSecret = async (integration: Integration) => {
-    if (webhookSecrets[integration.id]) {
-      // Already loaded, toggle visibility by removing
-      setWebhookSecrets((prev) => {
-        const newSecrets = { ...prev };
-        delete newSecrets[integration.id];
-        return newSecrets;
-      });
-      return;
-    }
-
-    setLoadingSecrets((prev) => ({ ...prev, [integration.id]: true }));
-    try {
-      const data = await integrationsApi.getWebhookSecret(integration.id);
-      if (data.webhook_secret) {
-        setWebhookSecrets((prev) => ({
-          ...prev,
-          [integration.id]: data.webhook_secret!,
-        }));
-      }
-    } catch (err) {
-      console.error("Failed to fetch webhook secret:", err);
-    } finally {
-      setLoadingSecrets((prev) => ({ ...prev, [integration.id]: false }));
-    }
-  };
-
-  const copyToClipboard = async (text: string, id: string) => {
-    await navigator.clipboard.writeText(text);
-    setCopiedId(id);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {
       month: "short",
@@ -172,10 +130,8 @@ export default function IntegrationsPage() {
     switch (type) {
       case "supabase":
         return <Database className="w-4 h-4 text-green-600" />;
-      case "webhook":
-        return <Webhook className="w-4 h-4 text-blue-600" />;
       default:
-        return null;
+        return <Database className="w-4 h-4 text-gray-600" />;
     }
   };
 
@@ -185,12 +141,6 @@ export default function IntegrationsPage() {
         return (
           <Badge variant="secondary" className="bg-green-100 text-green-800">
             Supabase
-          </Badge>
-        );
-      case "webhook":
-        return (
-          <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-            Webhook
           </Badge>
         );
       default:
@@ -238,7 +188,7 @@ export default function IntegrationsPage() {
           <Database className="w-12 h-12 mx-auto text-gray-400 mb-4" />
           <h3 className="text-lg font-medium">No integrations yet</h3>
           <p className="text-gray-500 mt-1 mb-4">
-            Add an integration to automatically send imported data to Supabase or a webhook.
+            Add a database integration to automatically send imported data to your database.
           </p>
           <Button onClick={handleAdd}>
             <Plus className="w-4 h-4 mr-2" />
@@ -281,16 +231,6 @@ export default function IntegrationsPage() {
                           <Pencil className="w-4 h-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
-                        {integration.type === "webhook" && (
-                          <DropdownMenuItem
-                            onClick={() => handleShowSecret(integration)}
-                          >
-                            <Key className="w-4 h-4 mr-2" />
-                            {webhookSecrets[integration.id]
-                              ? "Hide Secret"
-                              : "Show Secret"}
-                          </DropdownMenuItem>
-                        )}
                         <DropdownMenuItem
                           onClick={() => handleDeleteClick(integration)}
                           className="text-red-600"
@@ -305,45 +245,6 @@ export default function IntegrationsPage() {
               ))}
             </TableBody>
           </Table>
-
-          {/* Webhook secrets display */}
-          {Object.keys(webhookSecrets).length > 0 && (
-            <div className="border-t p-4 space-y-3">
-              <h4 className="text-sm font-medium text-gray-700">Webhook Secrets</h4>
-              {integrations
-                .filter((i) => webhookSecrets[i.id])
-                .map((integration) => (
-                  <div
-                    key={integration.id}
-                    className="flex items-center justify-between bg-gray-50 rounded-md p-3"
-                  >
-                    <div>
-                      <p className="text-sm font-medium">{integration.name}</p>
-                      <code className="text-xs font-mono text-gray-600 break-all">
-                        {webhookSecrets[integration.id]}
-                      </code>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() =>
-                        copyToClipboard(webhookSecrets[integration.id], integration.id)
-                      }
-                    >
-                      {copiedId === integration.id ? (
-                        <Check className="w-4 h-4 text-green-600" />
-                      ) : (
-                        <Copy className="w-4 h-4" />
-                      )}
-                    </Button>
-                  </div>
-                ))}
-              <p className="text-xs text-gray-500">
-                Use this secret to verify webhook signatures. The signature is sent in
-                the <code className="bg-gray-100 px-1 rounded">X-ImportCSV-Signature</code> header.
-              </p>
-            </div>
-          )}
         </Card>
       )}
 

@@ -4,16 +4,23 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import CollapsibleSection from './CollapsibleSection';
+import { DestinationCard } from './DestinationCard';
 import { Settings } from 'lucide-react';
 
+interface DestinationData {
+  type: 'webhook' | 'supabase' | null;
+  webhookUrl?: string;
+  signingSecret?: string;
+  integrationName?: string;
+  tableName?: string;
+}
+
 interface AdvancedSettingsProps {
+  importerId: string;
   name: string;
   onNameChange: (name: string) => void;
-  webhookEnabled: boolean;
-  onWebhookEnabledChange: (enabled: boolean) => void;
-  webhookUrl: string;
-  onWebhookUrlChange: (url: string) => void;
-  webhookError?: string | null;
+  destination: DestinationData | null;
+  onChangeDestination: () => void;
   includeUnmatchedColumns: boolean;
   onIncludeUnmatchedColumnsChange: (include: boolean) => void;
   filterInvalidRows: boolean;
@@ -25,13 +32,11 @@ interface AdvancedSettingsProps {
 }
 
 export function AdvancedSettings({
+  importerId,
   name,
   onNameChange,
-  webhookEnabled,
-  onWebhookEnabledChange,
-  webhookUrl,
-  onWebhookUrlChange,
-  webhookError,
+  destination,
+  onChangeDestination,
   includeUnmatchedColumns,
   onIncludeUnmatchedColumnsChange,
   filterInvalidRows,
@@ -66,42 +71,20 @@ export function AdvancedSettings({
           </div>
         </div>
 
-        {/* Webhook */}
+        {/* Destination */}
         <div className="space-y-4 pt-6 border-t">
           <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            Webhook
+            Destination
           </h3>
-
-          <div className="flex items-center justify-between">
-            <Label htmlFor="webhook-enabled">Enable Webhook</Label>
-            <Switch
-              id="webhook-enabled"
-              checked={webhookEnabled}
-              onCheckedChange={onWebhookEnabledChange}
-            />
-          </div>
-
-          {webhookEnabled && (
-            <div className="space-y-2">
-              <Label htmlFor="webhook-url">
-                Webhook URL
-                <span className="text-red-500 ml-1">*</span>
-              </Label>
-              <Input
-                id="webhook-url"
-                value={webhookUrl}
-                onChange={(e) => onWebhookUrlChange(e.target.value)}
-                placeholder="https://api.example.com/webhook"
-                className={webhookError ? 'border-red-500' : ''}
-              />
-              {webhookError && (
-                <p className="text-sm text-red-500">{webhookError}</p>
-              )}
-              <p className="text-sm text-muted-foreground">
-                Data will be sent here after import completes
-              </p>
-            </div>
-          )}
+          <DestinationCard
+            importerId={importerId}
+            destinationType={destination?.type ?? null}
+            webhookUrl={destination?.webhookUrl}
+            signingSecret={destination?.signingSecret}
+            integrationName={destination?.integrationName}
+            tableName={destination?.tableName}
+            onChangeClick={onChangeDestination}
+          />
         </div>
 
         {/* Processing Rules */}

@@ -5,13 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -20,14 +13,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Database, Webhook, Eye, EyeOff } from "lucide-react";
+import { Loader2, Database, Eye, EyeOff } from "lucide-react";
 import {
   integrationsApi,
   IntegrationCreate,
   Integration,
 } from "@/utils/apiClient";
 
-type IntegrationType = "supabase" | "webhook";
+type IntegrationType = "supabase";
 
 interface IntegrationFormProps {
   open: boolean;
@@ -43,12 +36,9 @@ export function IntegrationForm({
   editingIntegration,
 }: IntegrationFormProps) {
   const [name, setName] = useState(editingIntegration?.name || "");
-  const [type, setType] = useState<IntegrationType>(
-    (editingIntegration?.type as IntegrationType) || "supabase"
-  );
+  const [type] = useState<IntegrationType>("supabase");
   const [supabaseUrl, setSupabaseUrl] = useState("");
   const [serviceKey, setServiceKey] = useState("");
-  const [webhookUrl, setWebhookUrl] = useState("");
   const [showServiceKey, setShowServiceKey] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,10 +47,8 @@ export function IntegrationForm({
 
   const resetForm = () => {
     setName("");
-    setType("supabase");
     setSupabaseUrl("");
     setServiceKey("");
-    setWebhookUrl("");
     setShowServiceKey(false);
     setError(null);
   };
@@ -82,20 +70,13 @@ export function IntegrationForm({
       return;
     }
 
-    if (type === "supabase") {
-      if (!supabaseUrl.trim()) {
-        setError("Supabase URL is required");
-        return;
-      }
-      if (!isEditing && !serviceKey.trim()) {
-        setError("Service key is required");
-        return;
-      }
-    } else if (type === "webhook") {
-      if (!webhookUrl.trim()) {
-        setError("Webhook URL is required");
-        return;
-      }
+    if (!supabaseUrl.trim()) {
+      setError("Supabase URL is required");
+      return;
+    }
+    if (!isEditing && !serviceKey.trim()) {
+      setError("Service key is required");
+      return;
     }
 
     setIsLoading(true);
@@ -110,13 +91,11 @@ export function IntegrationForm({
         };
 
         // Only include credentials if user entered new values
-        if (type === "supabase" && supabaseUrl) {
+        if (supabaseUrl) {
           updateData.credentials = { url: supabaseUrl.trim() };
           if (serviceKey) {
             updateData.credentials.service_key = serviceKey.trim();
           }
-        } else if (type === "webhook" && webhookUrl) {
-          updateData.credentials = { url: webhookUrl.trim() };
         }
 
         integration = await integrationsApi.updateIntegration(
@@ -125,10 +104,7 @@ export function IntegrationForm({
         );
       } else {
         // Create new integration
-        const credentials =
-          type === "supabase"
-            ? { url: supabaseUrl.trim(), service_key: serviceKey.trim() }
-            : { url: webhookUrl.trim() };
+        const credentials = { url: supabaseUrl.trim(), service_key: serviceKey.trim() };
 
         const createData: IntegrationCreate = {
           name: name.trim(),
@@ -164,7 +140,7 @@ export function IntegrationForm({
             <DialogDescription>
               {isEditing
                 ? "Update your integration settings. Leave credential fields empty to keep existing values."
-                : "Connect to Supabase or a webhook endpoint to automatically send imported data."}
+                : "Connect to a database to automatically send imported data."}
             </DialogDescription>
           </DialogHeader>
 
@@ -186,32 +162,16 @@ export function IntegrationForm({
               />
             </div>
 
-            {/* Type (disabled when editing) */}
+            {/* Type display (always Supabase for now) */}
             <div className="space-y-2">
-              <Label htmlFor="type">Type</Label>
-              <Select
-                value={type}
-                onValueChange={(value: IntegrationType) => setType(value)}
-                disabled={isEditing}
-              >
-                <SelectTrigger id="type">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="supabase">
-                    <div className="flex items-center gap-2">
-                      <Database className="w-4 h-4 text-green-600" />
-                      Supabase
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="webhook">
-                    <div className="flex items-center gap-2">
-                      <Webhook className="w-4 h-4 text-blue-600" />
-                      Webhook
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <Label>Type</Label>
+              <div className="flex items-center gap-2 p-2 border rounded-md bg-gray-50">
+                <Database className="w-4 h-4 text-green-600" />
+                <span className="text-sm">Supabase</span>
+              </div>
+              <p className="text-xs text-gray-500">
+                More database integrations coming soon (Postgres, MySQL, etc.)
+              </p>
             </div>
 
             {/* Supabase fields */}
@@ -258,22 +218,6 @@ export function IntegrationForm({
                   </p>
                 </div>
               </>
-            )}
-
-            {/* Webhook fields */}
-            {type === "webhook" && (
-              <div className="space-y-2">
-                <Label htmlFor="webhookUrl">Webhook URL</Label>
-                <Input
-                  id="webhookUrl"
-                  value={webhookUrl}
-                  onChange={(e) => setWebhookUrl(e.target.value)}
-                  placeholder="https://your-api.com/webhook"
-                />
-                <p className="text-xs text-gray-500">
-                  We&apos;ll POST imported data to this endpoint with HMAC signature
-                </p>
-              </div>
             )}
           </div>
 

@@ -32,10 +32,11 @@ import {
   integrationsApi,
   Integration,
   SupabaseColumnSchema,
-  CategorizedColumns,
 } from "@/utils/apiClient";
 import { SupabaseTablePicker } from "@/components/SupabaseTablePicker";
 import { ContextColumnsSection, ContextColumnConfig } from "@/components/ContextColumnsSection";
+import { WebhookDestinationConfig } from "@/components/WebhookDestinationConfig";
+import { isCloudMode } from "@/lib/features";
 
 // Columns that are typically auto-generated and shouldn't be imported
 const AUTO_GENERATED_COLUMNS = ["id", "created_at", "updated_at", "deleted_at"];
@@ -53,6 +54,9 @@ export interface DestinationConfig {
   supabaseColumns: SupabaseColumnSchema[];
   contextColumns: ContextColumnConfig[];
   mappedColumns: SupabaseColumnSchema[];
+  // Webhook fields
+  webhookUrl?: string;
+  signingSecret?: string | null;
 }
 
 interface DestinationSelectorProps {
@@ -70,7 +74,9 @@ export function DestinationSelector({
 }: DestinationSelectorProps) {
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingSecret, setIsLoadingSecret] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const cloudMode = isCloudMode();
 
   useEffect(() => {
     fetchIntegrations();
@@ -90,7 +96,7 @@ export function DestinationSelector({
     }
   };
 
-  const handleIntegrationChange = (integrationId: string) => {
+  const handleIntegrationChange = async (integrationId: string) => {
     if (integrationId === "__none__") {
       onChange({
         integrationId: null,
@@ -101,13 +107,15 @@ export function DestinationSelector({
         supabaseColumns: [],
         contextColumns: [],
         mappedColumns: [],
+        webhookUrl: undefined,
+        signingSecret: undefined,
       });
       return;
     }
 
     const integration = integrations.find((i) => i.id === integrationId);
     if (integration) {
-      onChange({
+      const baseConfig: DestinationConfig = {
         integrationId: integration.id,
         integrationType: integration.type,
         tableName: null,
@@ -116,9 +124,34 @@ export function DestinationSelector({
         supabaseColumns: [],
         contextColumns: [],
         mappedColumns: [],
-      });
+        webhookUrl: undefined,
+        signingSecret: undefined,
+      };
+
+      // For webhook integrations, fetch the signing secret
+      if (integration.type === "webhook" && cloudMode) {
+        setIsLoadingSecret(true);
+        try {
+          const secretData = await integrationsApi.getWebhookSecret(integration.id);
+          baseConfig.signingSecret = secretData.webhook_secret;
+        } catch (err) {
+          console.error("Failed to fetch webhook secret:", err);
+          // Continue without the secret - it's optional for display
+        } finally {
+          setIsLoadingSecret(false);
+        }
+      }
+
+      onChange(baseConfig);
     }
   };
+
+  const handleWebhookUrlChange = useCallback((url: string) => {
+    onChange({
+      ...value,
+      webhookUrl: url,
+    });
+  }, [value, onChange]);
 
   const handleTableSelect = useCallback(async (
     tableName: string | null,
@@ -353,16 +386,22 @@ export function DestinationSelector({
           </div>
         )}
 
-        {/* Webhook info */}
-        {selectedIntegration?.type === "webhook" && (
+        {/* Webhook configuration */}
+        {selectedIntegration?.type === "webhook" && value.integrationId && (
           <div className="pt-2 border-t">
-            <Alert>
-              <Webhook className="h-4 w-4" />
-              <AlertDescription>
-                Imported data will be POSTed to your webhook endpoint with an
-                HMAC signature for verification.
-              </AlertDescription>
-            </Alert>
+            {isLoadingSecret ? (
+              <div className="flex items-center gap-2 text-gray-500 text-sm py-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Loading webhook configuration...
+              </div>
+            ) : (
+              <WebhookDestinationConfig
+                webhookUrl={value.webhookUrl || ""}
+                signingSecret={value.signingSecret || null}
+                isCloudMode={cloudMode}
+                onChange={handleWebhookUrlChange}
+              />
+            )}
           </div>
         )}
 
