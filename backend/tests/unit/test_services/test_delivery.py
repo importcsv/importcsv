@@ -1,12 +1,16 @@
 # backend/tests/unit/test_services/test_delivery.py
 import uuid
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import httpx
 import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+
 from app.services.delivery import (
+    SUPABASE_CHUNK_SIZE,
+    build_webhook_payload,
     deliver_to_supabase,
     deliver_to_webhook,
-    DeliveryResult,
-    SUPABASE_CHUNK_SIZE,
+    deliver_to_webhook_destination,
 )
 
 
@@ -214,3 +218,171 @@ async def test_deliver_to_supabase_without_context_mapping():
         posted_data = call_kwargs["json"]
 
         assert posted_data[0] == {"email_address": "alice@example.com"}
+
+
+class TestBuildWebhookPayload:
+    """Test webhook payload building."""
+
+    def test_builds_complete_payload(self):
+        """Should build payload with all required fields."""
+        rows = [{"email": "test@example.com", "name": "Test"}]
+        context = {"user_id": "user_123", "org_id": "org_456"}
+        import_id = uuid.uuid4()
+        importer_id = uuid.uuid4()
+
+        payload = build_webhook_payload(
+            rows=rows,
+            context=context,
+            import_id=import_id,
+            importer_id=importer_id,
+        )
+
+        assert payload["rows"] == rows
+        assert payload["context"] == context
+        assert payload["import_id"] == str(import_id)
+        assert payload["importer_id"] == str(importer_id)
+        assert payload["row_count"] == 1
+        assert "timestamp" in payload
+
+    def test_builds_payload_with_empty_context(self):
+        """Should build payload with empty context when None is passed."""
+        rows = [{"email": "test@example.com"}]
+        import_id = uuid.uuid4()
+        importer_id = uuid.uuid4()
+
+        payload = build_webhook_payload(
+            rows=rows,
+            context=None,
+            import_id=import_id,
+            importer_id=importer_id,
+        )
+
+        assert payload["context"] == {}
+        assert payload["row_count"] == 1
+
+
+class TestDeliverToWebhookDestination:
+    """Test webhook destination delivery."""
+
+    @pytest.mark.asyncio
+    async def test_uses_svix_when_available(self):
+        """Should use Svix when svix_endpoint_id is set."""
+        with patch("app.services.delivery.svix_client") as mock_svix:
+            mock_svix.is_svix_available.return_value = True
+            mock_svix.send_message.return_value = True
+
+            result = await deliver_to_webhook_destination(
+                webhook_url="https://example.com/hook",
+                svix_app_id="app_123",
+                svix_endpoint_id="ep_123",
+                rows=[{"email": "test@example.com"}],
+                context={},
+                import_id=uuid.uuid4(),
+                importer_id=uuid.uuid4(),
+            )
+
+            assert result.success is True
+            mock_svix.send_message.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_falls_back_to_direct_post(self):
+        """Should use direct POST when Svix not available."""
+        with patch("app.services.delivery.svix_client") as mock_svix:
+            mock_svix.is_svix_available.return_value = False
+
+            with patch("app.services.delivery.httpx.AsyncClient") as mock_client:
+                mock_response = MagicMock()
+                mock_response.raise_for_status = MagicMock()
+
+                mock_instance = AsyncMock()
+                mock_instance.post = AsyncMock(return_value=mock_response)
+                mock_instance.__aenter__ = AsyncMock(return_value=mock_instance)
+                mock_instance.__aexit__ = AsyncMock(return_value=None)
+                mock_client.return_value = mock_instance
+
+                result = await deliver_to_webhook_destination(
+                    webhook_url="https://example.com/hook",
+                    svix_app_id=None,
+                    svix_endpoint_id=None,
+                    rows=[{"email": "test@example.com"}],
+                    context={},
+                    import_id=uuid.uuid4(),
+                    importer_id=uuid.uuid4(),
+                )
+
+                assert result.success is True
+
+    @pytest.mark.asyncio
+    async def test_falls_back_to_direct_post_when_svix_fails(self):
+        """Should fall back to direct POST when Svix delivery fails."""
+        with patch("app.services.delivery.svix_client") as mock_svix:
+            mock_svix.is_svix_available.return_value = True
+            mock_svix.send_message.return_value = False  # Svix fails
+
+            with patch("app.services.delivery.httpx.AsyncClient") as mock_client:
+                mock_response = MagicMock()
+                mock_response.raise_for_status = MagicMock()
+
+                mock_instance = AsyncMock()
+                mock_instance.post = AsyncMock(return_value=mock_response)
+                mock_instance.__aenter__ = AsyncMock(return_value=mock_instance)
+                mock_instance.__aexit__ = AsyncMock(return_value=None)
+                mock_client.return_value = mock_instance
+
+                result = await deliver_to_webhook_destination(
+                    webhook_url="https://example.com/hook",
+                    svix_app_id="app_123",
+                    svix_endpoint_id="ep_123",
+                    rows=[{"email": "test@example.com"}],
+                    context={},
+                    import_id=uuid.uuid4(),
+                    importer_id=uuid.uuid4(),
+                )
+
+                assert result.success is True
+                # Verify both Svix and direct POST were called
+                mock_svix.send_message.assert_called_once()
+                mock_instance.post.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_rejects_invalid_webhook_url(self):
+        """Should reject invalid webhook URLs."""
+        result = await deliver_to_webhook_destination(
+            webhook_url="http://localhost/hook",  # Invalid: not HTTPS
+            svix_app_id=None,
+            svix_endpoint_id=None,
+            rows=[{"email": "test@example.com"}],
+            context={},
+            import_id=uuid.uuid4(),
+            importer_id=uuid.uuid4(),
+        )
+
+        assert result.success is False
+        assert result.error_code == "INVALID_URL"
+
+    @pytest.mark.asyncio
+    async def test_returns_failure_after_retries_exhausted(self):
+        """Should return failure after all retries are exhausted."""
+        with patch("app.services.delivery.svix_client") as mock_svix:
+            mock_svix.is_svix_available.return_value = False
+
+            with patch("app.services.delivery.httpx.AsyncClient") as mock_client:
+                mock_instance = AsyncMock()
+                mock_instance.post = AsyncMock(side_effect=httpx.TimeoutException("timeout"))
+                mock_instance.__aenter__ = AsyncMock(return_value=mock_instance)
+                mock_instance.__aexit__ = AsyncMock(return_value=None)
+                mock_client.return_value = mock_instance
+
+                with patch("app.services.delivery.asyncio.sleep", new_callable=AsyncMock):
+                    result = await deliver_to_webhook_destination(
+                        webhook_url="https://example.com/hook",
+                        svix_app_id=None,
+                        svix_endpoint_id=None,
+                        rows=[{"email": "test@example.com"}],
+                        context={},
+                        import_id=uuid.uuid4(),
+                        importer_id=uuid.uuid4(),
+                    )
+
+                    assert result.success is False
+                    assert result.error_code == "DELIVERY_FAILED"

@@ -235,13 +235,21 @@ class WebhookService:
                 webhook_logger.error(f"Importer for job {import_job_id} not found, cannot send webhook")
                 return webhook_event
 
-            # Check if webhook is configured
-            if not importer.webhook_url or not importer.webhook_enabled:
-                webhook_logger.info(f"Webhook not enabled or URL not set for importer {importer.id}")
+            # Check if webhook is configured via destination
+            if (
+                not importer.destination
+                or importer.destination.destination_type != "webhook"
+            ):
+                webhook_logger.info(f"Webhook destination not configured for importer {importer.id}")
+                return webhook_event
+
+            webhook_url = importer.destination.config.get("webhook_url")
+            if not webhook_url:
+                webhook_logger.info(f"Webhook URL not set in destination config for importer {importer.id}")
                 return webhook_event
 
             # Log the webhook details
-            webhook_logger.info(f"Sending webhook for importer {importer.id} to {importer.webhook_url}")
+            webhook_logger.info(f"Sending webhook for importer {importer.id} to {webhook_url}")
 
             # Prepare any additional metadata for the webhook
             payload['webhook_id'] = str(webhook_event.id)
@@ -249,7 +257,7 @@ class WebhookService:
 
             # Send the webhook directly
             success = await self.send_webhook(
-                url=importer.webhook_url,
+                url=webhook_url,
                 payload=payload,
                 secret=self.webhook_secret
             )
@@ -260,9 +268,9 @@ class WebhookService:
 
             if success:
                 webhook_event.delivered = True
-                webhook_logger.info(f"Webhook {webhook_event.id} sent successfully to {importer.webhook_url}")
+                webhook_logger.info(f"Webhook {webhook_event.id} sent successfully to {webhook_url}")
             else:
-                webhook_logger.warning(f"Webhook {webhook_event.id} delivery failed to {importer.webhook_url}")
+                webhook_logger.warning(f"Webhook {webhook_event.id} delivery failed to {webhook_url}")
 
             # Save the updated delivery status
             db.add(webhook_event)

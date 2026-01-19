@@ -193,22 +193,6 @@ def test_create_importer_invalid_data(client: TestClient, auth_headers: dict):
     assert response.status_code == 422  # Validation error
 
 
-@pytest.mark.integration
-def test_create_importer_webhook_url_normalization(client: TestClient, auth_headers: dict):
-    """Test that webhook URLs are normalized during creation."""
-    importer_data = {
-        "name": "Test",
-        "fields": [{"name": "email", "type": "email", "required": True}],
-        "webhook_url": "example.com/hook"  # Missing protocol
-    }
-
-    response = client.post("/api/v1/importers/", json=importer_data, headers=auth_headers)
-
-    assert response.status_code == 200
-    data = response.json()
-    assert data["webhook_url"] == "https://example.com/hook"
-
-
 # ============================================================================
 # GET /api/v1/importers/{importer_id} - Get Importer
 # ============================================================================
@@ -655,3 +639,137 @@ def test_delete_destination(
     )
     assert get_response.status_code == 200
     assert get_response.json() is None
+
+
+# ============================================================================
+# Webhook Destination Tests
+# ============================================================================
+
+
+@pytest.mark.integration
+def test_set_webhook_destination(
+    client: TestClient,
+    auth_headers: dict,
+    sample_importer: Importer,
+):
+    """Test setting a webhook destination."""
+    response = client.put(
+        f"/api/v1/importers/{sample_importer.id}/destination",
+        json={
+            "destination_type": "webhook",
+            "webhook_url": "https://example.com/webhook",
+        },
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["destination_type"] == "webhook"
+    assert data["webhook_url"] == "https://example.com/webhook"
+    assert data["integration_id"] is None
+    # signing_secret will be None in tests since Svix is not configured
+
+
+@pytest.mark.integration
+def test_get_webhook_destination(
+    client: TestClient,
+    auth_headers: dict,
+    sample_importer: Importer,
+):
+    """Test retrieving a webhook destination."""
+    # First create webhook destination
+    client.put(
+        f"/api/v1/importers/{sample_importer.id}/destination",
+        json={
+            "destination_type": "webhook",
+            "webhook_url": "https://example.com/webhook",
+        },
+        headers=auth_headers,
+    )
+
+    # Now retrieve it
+    response = client.get(
+        f"/api/v1/importers/{sample_importer.id}/destination",
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["destination_type"] == "webhook"
+    assert data["webhook_url"] == "https://example.com/webhook"
+
+
+@pytest.mark.integration
+def test_webhook_destination_requires_https(
+    client: TestClient,
+    auth_headers: dict,
+    sample_importer: Importer,
+):
+    """Test that webhook URL must use HTTPS."""
+    response = client.put(
+        f"/api/v1/importers/{sample_importer.id}/destination",
+        json={
+            "destination_type": "webhook",
+            "webhook_url": "http://example.com/webhook",
+        },
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 422
+    assert "Webhook URL must use HTTPS" in response.text
+
+
+@pytest.mark.integration
+def test_webhook_destination_requires_url(
+    client: TestClient,
+    auth_headers: dict,
+    sample_importer: Importer,
+):
+    """Test that webhook destination requires webhook_url."""
+    response = client.put(
+        f"/api/v1/importers/{sample_importer.id}/destination",
+        json={
+            "destination_type": "webhook",
+        },
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 422
+    assert "Webhook destination requires webhook_url" in response.text
+
+
+@pytest.mark.integration
+def test_switch_supabase_to_webhook_destination(
+    client: TestClient,
+    auth_headers: dict,
+    sample_importer: Importer,
+    sample_integration: Integration,
+):
+    """Test switching from Supabase to webhook destination."""
+    # First set Supabase destination
+    response = client.put(
+        f"/api/v1/importers/{sample_importer.id}/destination",
+        json={
+            "integration_id": str(sample_integration.id),
+            "table_name": "contacts",
+        },
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+    assert response.json()["destination_type"] == "supabase"
+
+    # Switch to webhook
+    response = client.put(
+        f"/api/v1/importers/{sample_importer.id}/destination",
+        json={
+            "destination_type": "webhook",
+            "webhook_url": "https://example.com/webhook",
+        },
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["destination_type"] == "webhook"
+    assert data["webhook_url"] == "https://example.com/webhook"
+    assert data["integration_id"] is None

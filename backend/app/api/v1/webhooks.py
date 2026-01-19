@@ -1,25 +1,110 @@
 """Webhook handlers for external services."""
 
 import logging
-from datetime import datetime, timezone
+import time
+from datetime import UTC, datetime
 
-from fastapi import APIRouter, Request, HTTPException, Depends
+import httpx
+import stripe
+from fastapi import APIRouter, Depends, HTTPException, Request
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-import stripe
-
-from app.db.base import get_db
+from app.auth.jwt_auth import get_current_active_user
 from app.core.config import settings
-from app.core.features import is_cloud_mode, get_tier_import_limit, get_tier_max_rows
+from app.core.features import get_tier_import_limit, get_tier_max_rows, is_cloud_mode
+from app.db.base import get_db
+from app.models.stripe_webhook import ProcessedStripeEvent
+from app.models.user import User
 from app.services.billing import BillingService
+from app.services.delivery import is_safe_webhook_url
 from app.services.email import email_service
 from app.services.events import events
 from app.services.events.types import EventType
-from app.models.stripe_webhook import ProcessedStripeEvent
-from app.models.user import User
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
+
+# HTTP status code constants
+HTTP_SUCCESS_MIN = 200
+HTTP_SUCCESS_MAX = 300
+
+
+class TestWebhookRequest(BaseModel):
+    """Request body for testing a webhook URL."""
+
+    url: str
+
+
+class TestWebhookResponse(BaseModel):
+    """Response from testing a webhook URL."""
+
+    success: bool
+    status_code: int | None = None
+    duration_ms: int
+    error: str | None = None
+
+
+@router.post("/test", response_model=TestWebhookResponse)
+async def check_webhook_url(
+    request: TestWebhookRequest,
+    current_user: User = Depends(get_current_active_user),  # noqa: ARG001
+) -> TestWebhookResponse:
+    """
+    Test a webhook URL before saving.
+
+    Sends a generic test payload to verify the URL is reachable and returns 2xx.
+    """
+    # Validate URL
+    if not is_safe_webhook_url(request.url):
+        return TestWebhookResponse(
+            success=False,
+            duration_ms=0,
+            error="URL must use HTTPS and cannot target internal/private addresses",
+        )
+
+    # Generic test payload
+    payload = {
+        "event": "test",
+        "message": "Test webhook from ImportCSV",
+        "data": [{"sample_field": "sample_value"}],
+        "row_count": 1,
+        "timestamp": datetime.now(UTC).isoformat(),
+    }
+
+    start_time = time.time()
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.post(
+                request.url,
+                json=payload,
+                headers={"Content-Type": "application/json"},
+            )
+        duration_ms = int((time.time() - start_time) * 1000)
+
+        is_success = HTTP_SUCCESS_MIN <= response.status_code < HTTP_SUCCESS_MAX
+        return TestWebhookResponse(
+            success=is_success,
+            status_code=response.status_code,
+            duration_ms=duration_ms,
+            error=None if is_success else f"HTTP {response.status_code}",
+        )
+
+    except httpx.TimeoutException:
+        duration_ms = int((time.time() - start_time) * 1000)
+        return TestWebhookResponse(
+            success=False,
+            duration_ms=duration_ms,
+            error="Connection timed out",
+        )
+
+    except httpx.RequestError as e:
+        duration_ms = int((time.time() - start_time) * 1000)
+        return TestWebhookResponse(
+            success=False,
+            duration_ms=duration_ms,
+            error=str(e),
+        )
 
 
 def _is_event_processed(db: Session, event_id: str) -> bool:

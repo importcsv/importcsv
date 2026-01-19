@@ -191,6 +191,11 @@ class BaseAppSettings(BaseSettings):
         default_factory=lambda: os.getenv("SLACK_WEBHOOK_URL")
     )
 
+    # Svix settings (for webhook delivery in cloud mode)
+    SVIX_API_KEY: Optional[str] = Field(
+        default_factory=lambda: os.getenv("SVIX_API_KEY")
+    )
+
     @field_validator("SECRET_KEY")
     @classmethod
     def secret_key_must_be_secure(cls, v):
@@ -219,6 +224,12 @@ class BaseAppSettings(BaseSettings):
                 missing.append("STRIPE_PRICE_ID_PRO")
             if not self.STRIPE_PRICE_ID_BUSINESS:
                 missing.append("STRIPE_PRICE_ID_BUSINESS")
+            # Svix is optional - webhook destinations will fall back to direct POST
+            if not self.SVIX_API_KEY:
+                logging.warning(
+                    "SVIX_API_KEY not set - webhook destinations will use "
+                    "direct POST without signing/retries"
+                )
             if missing:
                 raise ValueError(
                     f"IMPORTCSV_CLOUD=true requires these settings: {', '.join(missing)}"

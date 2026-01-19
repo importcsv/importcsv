@@ -12,15 +12,6 @@ from app.schemas.importer import ImporterCreate, ImporterUpdate
 
 logger = logging.getLogger(__name__)
 
-def _validate_webhook_url(url: Optional[str]) -> Optional[str]:
-    """Validate and normalize webhook URL"""
-    if not url:
-        return url
-
-    if not (url.startswith('http://') or url.startswith('https://')):
-        return f"https://{url}"
-    return url
-
 
 def _process_fields(fields: List[Any]) -> List[Dict[str, Any]]:
     """Process fields to ensure they are dictionaries"""
@@ -66,19 +57,15 @@ def create_importer(db: Session, user_id: str, importer_in: ImporterCreate) -> I
         # Process fields to ensure they are dictionaries
         fields_json = _process_fields(importer_in.fields)
 
-        # Validate webhook URL
-        webhook_url = _validate_webhook_url(importer_in.webhook_url)
-
         importer = Importer(
             name=importer_in.name,
             description=importer_in.description,
             fields=fields_json,
             user_id=user_id,
-            webhook_url=webhook_url,
-            webhook_enabled=importer_in.webhook_enabled,
             include_unmatched_columns=importer_in.include_unmatched_columns,
             filter_invalid_rows=importer_in.filter_invalid_rows,
-            disable_on_invalid_rows=importer_in.disable_on_invalid_rows
+            disable_on_invalid_rows=importer_in.disable_on_invalid_rows,
+            dark_mode=importer_in.dark_mode,
         )
 
         # Add and commit in the transaction
@@ -131,10 +118,6 @@ def update_importer(db: Session, user_id: str, importer_id, importer_in: Importe
         # Process fields if present
         if "fields" in update_data and update_data["fields"]:
             update_data["fields"] = _process_fields(update_data["fields"])
-
-        # Validate webhook URL if present
-        if 'webhook_url' in update_data:
-            update_data['webhook_url'] = _validate_webhook_url(update_data['webhook_url'])
 
         # Update fields
         for field, value in update_data.items():

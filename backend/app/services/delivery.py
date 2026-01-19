@@ -9,6 +9,7 @@ import re
 import socket
 import time
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Dict, List, Any, Optional
 from uuid import UUID
 from urllib.parse import urlparse
@@ -19,6 +20,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.core.encryption import decrypt_credentials
 from app.models.importer_destination import ImporterDestination
 from app.models.integration import IntegrationType
+from app.services import svix_client
 
 logger = logging.getLogger(__name__)
 
@@ -128,6 +130,91 @@ def is_safe_webhook_url(url: str) -> bool:
     except Exception as e:
         logger.warning(f"Error validating webhook URL: {e}")
         return False
+
+
+def build_webhook_payload(
+    rows: List[Dict[str, Any]],
+    context: Optional[Dict[str, Any]],
+    import_id: UUID,
+    importer_id: UUID,
+) -> Dict[str, Any]:
+    """Build the webhook payload with full metadata."""
+    return {
+        "rows": rows,
+        "context": context or {},
+        "import_id": str(import_id),
+        "importer_id": str(importer_id),
+        "row_count": len(rows),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+
+
+async def deliver_to_webhook_destination(
+    webhook_url: str,
+    svix_app_id: Optional[str],
+    svix_endpoint_id: Optional[str],
+    rows: List[Dict[str, Any]],
+    context: Optional[Dict[str, Any]],
+    import_id: UUID,
+    importer_id: UUID,
+) -> DeliveryResult:
+    """Deliver data to a webhook destination.
+
+    Uses Svix for delivery in cloud mode (with signing, retries, logs).
+    Falls back to direct POST in self-hosted mode.
+    """
+    # Validate URL
+    if not is_safe_webhook_url(webhook_url):
+        return DeliveryResult(
+            success=False,
+            error_code="INVALID_URL",
+            error_message="Invalid webhook URL - cannot target private/internal addresses",
+        )
+
+    # Build payload
+    payload = build_webhook_payload(rows, context, import_id, importer_id)
+
+    # Try Svix first if available and configured
+    if svix_client.is_svix_available() and svix_app_id and svix_endpoint_id:
+        logger.info(f"Delivering via Svix to endpoint {svix_endpoint_id}")
+
+        success = svix_client.send_message(
+            app_id=svix_app_id,
+            event_type="import.completed",
+            payload=payload,
+        )
+
+        if success:
+            return DeliveryResult(success=True, rows_delivered=len(rows))
+        else:
+            # Svix failed, fall through to direct POST
+            logger.warning("Svix delivery failed, falling back to direct POST")
+
+    # Direct POST (self-hosted mode or Svix fallback)
+    logger.info(f"Delivering via direct POST to {urlparse(webhook_url).netloc}")
+
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        for attempt in range(MAX_RETRIES):
+            try:
+                response = await client.post(
+                    webhook_url,
+                    json=payload,
+                    headers={"Content-Type": "application/json"},
+                )
+                response.raise_for_status()
+                logger.info("Webhook delivered successfully via direct POST")
+                return DeliveryResult(success=True, rows_delivered=len(rows))
+
+            except (httpx.HTTPStatusError, httpx.TimeoutException) as e:
+                logger.warning(f"Direct POST attempt {attempt + 1} failed: {e}")
+                if attempt < MAX_RETRIES - 1:
+                    await asyncio.sleep(RETRY_DELAYS[attempt])
+
+    return DeliveryResult(
+        success=False,
+        error_code="DELIVERY_FAILED",
+        error_message=f"Webhook delivery failed after {MAX_RETRIES} attempts",
+    )
 
 
 async def deliver_to_supabase(
@@ -294,9 +381,10 @@ async def deliver_to_webhook(
 
 
 def get_importer_destination(db: Session, importer_id: UUID) -> Optional[ImporterDestination]:
-    """Get importer destination with integration loaded."""
+    """Get importer destination with integration and user loaded."""
     return db.query(ImporterDestination).options(
-        joinedload(ImporterDestination.integration)
+        joinedload(ImporterDestination.integration),
+        joinedload(ImporterDestination.importer).joinedload("user"),
     ).filter(
         ImporterDestination.importer_id == importer_id
     ).first()
@@ -312,8 +400,10 @@ async def deliver_to_destination(
     """
     Orchestrate delivery to the configured destination for an importer.
 
-    Looks up the destination, decrypts credentials, and routes to the
-    appropriate delivery function (Supabase or webhook).
+    Looks up the destination and routes to the appropriate delivery function
+    based on destination_type:
+    - "webhook": Uses deliver_to_webhook_destination (Svix or direct POST)
+    - "supabase": Uses deliver_to_supabase via integration credentials
     """
     # Get destination configuration
     destination = get_importer_destination(db, importer_id)
@@ -326,6 +416,48 @@ async def deliver_to_destination(
             error_message="No destination configured for this importer",
         )
 
+    # Route based on destination_type
+    destination_type = destination.destination_type or "supabase"
+
+    if destination_type == "webhook":
+        # Webhook destination: extract config and deliver via Svix/direct POST
+        config = destination.config or {}
+        webhook_url = config.get("webhook_url")
+
+        if not webhook_url:
+            return DeliveryResult(
+                success=False,
+                error_code="NO_WEBHOOK_URL",
+                error_message="No webhook URL configured for webhook destination",
+            )
+
+        # Get user's svix_app_id from importer relationship
+        svix_app_id = None
+        if destination.importer and destination.importer.user:
+            svix_app_id = destination.importer.user.svix_app_id
+
+        svix_endpoint_id = config.get("svix_endpoint_id")
+
+        logger.info(f"Delivering {len(rows)} rows to webhook destination")
+        result = await deliver_to_webhook_destination(
+            webhook_url=webhook_url,
+            svix_app_id=svix_app_id,
+            svix_endpoint_id=svix_endpoint_id,
+            rows=rows,
+            context=context,
+            import_id=import_id,
+            importer_id=importer_id,
+        )
+
+        # Log result
+        if result.success:
+            logger.info(f"Successfully delivered {result.rows_delivered} rows to webhook")
+        else:
+            logger.error(f"Webhook delivery failed: {result.error_message}")
+
+        return result
+
+    # Supabase destination (legacy path via integration)
     integration = destination.integration
     if not integration:
         logger.error(f"Destination {destination.id} has no integration")
@@ -346,7 +478,7 @@ async def deliver_to_destination(
             error_message="Failed to decrypt integration credentials",
         )
 
-    # Route to appropriate delivery function
+    # Route to appropriate delivery function based on integration type
     if integration.type == IntegrationType.SUPABASE:
         if not destination.table_name:
             return DeliveryResult(

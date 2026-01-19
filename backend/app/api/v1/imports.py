@@ -301,30 +301,32 @@ async def process_import_by_key(
     db.commit()
     db.refresh(import_job)
 
-    # Queue import.started webhook if configured
-    if importer.webhook_enabled and importer.webhook_url:
-        # Queue the webhook to be sent asynchronously
-        webhook_payload = {
-            "context": context or {},
-            "source": "api",
-        }
+    # Queue import.started webhook if configured via destination
+    if importer.destination and importer.destination.destination_type == "webhook":
+        webhook_url = importer.destination.config.get("webhook_url")
+        if webhook_url:
+            # Queue the webhook to be sent asynchronously
+            webhook_payload = {
+                "context": context or {},
+                "source": "api",
+            }
 
-        webhook_job_id = enqueue_job(
-            "app.workers.webhook_worker.send_webhook",
-            import_job_id=str(import_job.id),
-            event_type=WebhookEventType.IMPORT_STARTED.value,
-            payload_data=webhook_payload,
-        )
+            webhook_job_id = enqueue_job(
+                "app.workers.webhook_worker.send_webhook",
+                import_job_id=str(import_job.id),
+                event_type=WebhookEventType.IMPORT_STARTED.value,
+                payload_data=webhook_payload,
+            )
 
-        if webhook_job_id:
-            logger.info(
-                "Queued import.started webhook for job %s (webhook job: %s)",
-                import_job.id, webhook_job_id
-            )
-        else:
-            logger.warning(
-                "Failed to queue import.started webhook for job %s", import_job.id
-            )
+            if webhook_job_id:
+                logger.info(
+                    "Queued import.started webhook for job %s (webhook job: %s)",
+                    import_job.id, webhook_job_id
+                )
+            else:
+                logger.warning(
+                    "Failed to queue import.started webhook for job %s", import_job.id
+                )
 
     # Enqueue processing job in Redis Queue using the worker function in import_service
     job_id = enqueue_job(

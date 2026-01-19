@@ -36,6 +36,9 @@ class User(Base):
     has_been_paying_customer = Column(Boolean, default=False, nullable=False)
     trial_warning_sent_at = Column(DateTime(timezone=True), nullable=True)
 
+    # Svix integration (for webhook delivery in cloud mode)
+    svix_app_id = Column(String(255), nullable=True, index=True)
+
     # Relationships - using simple string references
     importers = relationship("Importer", back_populates="user")
     import_jobs = relationship("ImportJob", back_populates="user")

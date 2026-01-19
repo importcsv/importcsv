@@ -424,27 +424,32 @@ class ImportService:
                     f"No data to include in webhook for job {import_job.id} (status: {import_job.status.value})"
                 )
 
-            # Only send webhook if configured
-            if importer.webhook_enabled and importer.webhook_url:
-                # Create webhook event and send webhook
-                # The create_webhook_event method already sends the webhook
-                webhook_event = await self.webhook_service.create_webhook_event(
-                    db=db,
-                    user_id=import_job.user_id,
-                    import_job_id=import_job.id,
-                    event_type=event_type,
-                    payload=payload,
-                )
+            # Only send webhook if configured via destination
+            if (
+                importer.destination
+                and importer.destination.destination_type == "webhook"
+            ):
+                webhook_url = importer.destination.config.get("webhook_url")
+                if webhook_url:
+                    # Create webhook event and send webhook
+                    # The create_webhook_event method already sends the webhook
+                    webhook_event = await self.webhook_service.create_webhook_event(
+                        db=db,
+                        user_id=import_job.user_id,
+                        import_job_id=import_job.id,
+                        event_type=event_type,
+                        payload=payload,
+                    )
 
-                # Log webhook status based on the event's delivered status
-                if webhook_event and webhook_event.delivered:
-                    logger.info(
-                        f"Webhook successfully sent to {importer.webhook_url} for job {import_job.id}"
-                    )
-                elif webhook_event:
-                    logger.warning(
-                        f"Webhook delivery failed to {importer.webhook_url} for job {import_job.id}"
-                    )
+                    # Log webhook status based on the event's delivered status
+                    if webhook_event and webhook_event.delivered:
+                        logger.info(
+                            f"Webhook successfully sent to {webhook_url} for job {import_job.id}"
+                        )
+                    elif webhook_event:
+                        logger.warning(
+                            f"Webhook delivery failed to {webhook_url} for job {import_job.id}"
+                        )
 
         except Exception as e:
             logger.error(

@@ -115,16 +115,6 @@ class ImporterBase(BaseModel):
     name: str = Field(..., min_length=1, description="Name of the importer")
     description: Optional[str] = Field(None, description="Description of the importer")
     fields: List[ImporterField] = Field(..., min_length=1, description="Fields to import")
-    webhook_url: Optional[str] = Field(
-        None, description="URL where imported data is sent"
-    )
-    webhook_enabled: bool = Field(True, description="Whether to use webhook")
-    include_data_in_webhook: Optional[bool] = Field(
-        None, description="Include processed data in webhook"
-    )
-    webhook_data_sample_size: Optional[int] = Field(
-        None, description="Number of rows to include in webhook sample"
-    )
     include_unmatched_columns: bool = Field(
         False, description="Include all unmatched columns in import"
     )
@@ -137,15 +127,6 @@ class ImporterBase(BaseModel):
     dark_mode: bool = Field(
         False, description="Enable dark mode for the importer UI"
     )
-
-    @field_validator("webhook_url")
-    def validate_webhook_url(cls, v, info):
-        webhook_enabled = (
-            info.data.get("webhook_enabled", False) if hasattr(info, "data") else False
-        )
-        if webhook_enabled and not v:
-            raise ValueError("webhook_url is required when webhook_enabled is True")
-        return v
 
     class Config:
         from_attributes = True
@@ -161,16 +142,6 @@ class ImporterUpdate(BaseModel):
     name: Optional[str] = Field(None, description="Name of the importer")
     description: Optional[str] = Field(None, description="Description of the importer")
     fields: Optional[List[ImporterField]] = Field(None, description="Fields to import")
-    webhook_url: Optional[str] = Field(
-        None, description="URL where imported data is sent"
-    )
-    webhook_enabled: Optional[bool] = Field(None, description="Whether to use webhook")
-    include_data_in_webhook: Optional[bool] = Field(
-        None, description="Include processed data in webhook"
-    )
-    webhook_data_sample_size: Optional[int] = Field(
-        None, description="Number of rows to include in webhook sample"
-    )
     include_unmatched_columns: Optional[bool] = Field(
         None, description="Include all unmatched columns in import"
     )

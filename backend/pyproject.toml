@@ -5,6 +5,9 @@ description = "ImportCSV Backend API Server"
 license = {text = "AGPL-3.0"}
 readme = "README.md"
 requires-python = ">=3.11"
+dependencies = [
+    "svix>=1.84.1",
+]
 
 [tool.ruff]
 line-length = 100

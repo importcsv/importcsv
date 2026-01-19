@@ -55,10 +55,18 @@ def send_webhook(
             logger.error("Importer for job %s not found", import_job_id)
             return {"status": "error", "message": f"Importer not found for job {import_job_id}"}
         
-        # Check if webhook is enabled
-        if not importer.webhook_enabled or not importer.webhook_url:
-            logger.info("Webhook not enabled for importer %s", importer.id)
-            return {"status": "skipped", "message": "Webhook not enabled"}
+        # Check if webhook is enabled via destination
+        if (
+            not importer.destination
+            or importer.destination.destination_type != "webhook"
+        ):
+            logger.info("Webhook destination not configured for importer %s", importer.id)
+            return {"status": "skipped", "message": "Webhook destination not configured"}
+
+        webhook_url = importer.destination.config.get("webhook_url")
+        if not webhook_url:
+            logger.info("Webhook URL not set for importer %s", importer.id)
+            return {"status": "skipped", "message": "Webhook URL not set"}
         
         # Build the webhook payload
         payload = {

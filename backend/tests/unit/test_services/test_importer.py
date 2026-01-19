@@ -16,7 +16,6 @@ from app.services.importer import (
     delete_importer,
     batch_delete_importers,
     get_importer_by_key,
-    _validate_webhook_url,
     _process_fields,
 )
 from app.schemas.importer import ImporterCreate, ImporterUpdate
@@ -27,43 +26,6 @@ from app.models.user import User
 # ============================================================================
 # Helper Function Tests
 # ============================================================================
-
-@pytest.mark.unit
-def test_validate_webhook_url_with_https():
-    """Test webhook URL validation with https:// prefix."""
-    url = "https://example.com/webhook"
-    result = _validate_webhook_url(url)
-    assert result == url
-
-
-@pytest.mark.unit
-def test_validate_webhook_url_with_http():
-    """Test webhook URL validation with http:// prefix."""
-    url = "http://example.com/webhook"
-    result = _validate_webhook_url(url)
-    assert result == url
-
-
-@pytest.mark.unit
-def test_validate_webhook_url_without_protocol():
-    """Test webhook URL validation adds https:// when missing."""
-    url = "example.com/webhook"
-    result = _validate_webhook_url(url)
-    assert result == "https://example.com/webhook"
-
-
-@pytest.mark.unit
-def test_validate_webhook_url_none():
-    """Test webhook URL validation with None."""
-    result = _validate_webhook_url(None)
-    assert result is None
-
-
-@pytest.mark.unit
-def test_validate_webhook_url_empty():
-    """Test webhook URL validation with empty string."""
-    result = _validate_webhook_url("")
-    assert result == ""
 
 
 @pytest.mark.unit
@@ -185,21 +147,6 @@ def test_create_importer_success(db_session: Session, test_user: User, sample_im
     assert importer.name == sample_importer_data["name"]
     assert importer.user_id == test_user.id
     assert len(importer.fields) == 3
-    assert importer.webhook_url == sample_importer_data["webhook_url"]
-
-
-@pytest.mark.unit
-def test_create_importer_webhook_url_normalization(db_session: Session, test_user: User):
-    """Test that webhook URLs are normalized during creation."""
-    importer_data = {
-        "name": "Test",
-        "fields": [{"name": "email", "type": "email", "required": True}],
-        "webhook_url": "example.com/hook",  # Missing protocol
-    }
-    importer_in = ImporterCreate(**importer_data)
-    importer = create_importer(db_session, str(test_user.id), importer_in)
-
-    assert importer.webhook_url == "https://example.com/hook"
 
 
 @pytest.mark.unit
