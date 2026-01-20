@@ -1,0 +1,8 @@
+{
+  "title": "Integrations",
+  "pages": [
+    "index",
+    "supabase",
+    "webhooks"
+  ]
+}
