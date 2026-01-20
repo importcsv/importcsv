@@ -86,6 +86,10 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         } catch (error) {
           setIsNavigating(false);
           throw error;
+        } finally {
+          // Reset navigation state after a delay to handle cases where
+          // navigation doesn't unmount the component (same layout, failed nav, etc.)
+          setTimeout(() => setIsNavigating(false), 1000);
         }
       } else {
         onClick?.(e);
@@ -95,7 +99,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     const isDisabled = disabled || isNavigating;
 
     // asChild not supported with href (would break navigation logic)
-    if (asChild && href) {
+    if (process.env.NODE_ENV === "development" && asChild && href) {
       console.warn("Button: asChild prop is ignored when href is provided");
     }
 
