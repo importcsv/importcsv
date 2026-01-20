@@ -1,0 +1,37 @@
+---
+title: Supabase
+description: Send imported data directly to your Supabase tables
+---
+
+# Supabase
+
+Connect your importer to Supabase to write imported rows directly to your database tables.
+
+## What you'll need
+
+- A Supabase project with a table ready to receive data
+- Your project URL (e.g., `https://xyz.supabase.co`)
+- A service role key (found in Project Settings → API)
+
+<Callout type="info">
+Use the **service role key**, not the anon key. The service role key bypasses Row Level Security, which is required for server-side inserts.
+</Callout>
+
+## Setup
+
+{/* TODO: Add screen recording */}
+
+1. Open your importer in the ImportCSV dashboard
+2. Go to **Destination** and select **Supabase**
+3. Enter your project URL and service role key
+4. Select the table you want to import data into
+5. Map your CSV columns to table columns (exact matches are mapped automatically)
+6. Save your importer
+
+That's it—imported data will now flow directly to your Supabase table.
+
+## Column mapping
+
+ImportCSV automatically maps columns when names match exactly. For columns that don't match, you can manually select which CSV column maps to which table column.
+
+**Context columns** let you inject values that aren't in the CSV, like `user_id` or `organization_id`. These are passed from your app when initializing the importer.

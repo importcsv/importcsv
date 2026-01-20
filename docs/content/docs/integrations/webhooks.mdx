@@ -1,0 +1,54 @@
+---
+title: Webhooks
+description: Get notified when imports complete
+---
+
+# Webhooks
+
+Webhooks notify your server when imports start, complete, or fail—useful for triggering downstream workflows.
+
+## What you'll need
+
+- An HTTPS endpoint that accepts POST requests
+
+## Setup
+
+{/* TODO: Add screen recording */}
+
+1. Open your importer in the ImportCSV dashboard
+2. Go to **Destination** and select **Webhook**
+3. Enter your endpoint URL
+4. Copy the signing secret (you'll need this to verify requests)
+5. Click **Test** to verify your endpoint works
+6. Save your importer
+
+## Payload format
+
+Your endpoint will receive a JSON payload like this:
+
+```json
+{
+  "event": "import.completed",
+  "import_id": "abc123",
+  "status": "success",
+  "timestamp": "2024-01-15T10:30:00Z",
+  "row_count": 150,
+  "processed_rows": 150,
+  "error_count": 0
+}
+```
+
+Events: `import.started`, `import.completed`, `import.failed`
+
+## Verifying signatures
+
+Each request includes an `X-ImportCSV-Signature` header. Verify it to ensure the request came from ImportCSV:
+
+```typescript
+import crypto from 'crypto';
+
+function verifySignature(payload: string, signature: string, secret: string): boolean {
+  const expected = crypto.createHmac('sha256', secret).update(payload).digest('hex');
+  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+}
+```
