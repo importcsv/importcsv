@@ -24,12 +24,14 @@ interface SupabaseTablePickerProps {
   integrationId: string;
   selectedTable: string | null;
   onTableSelect: (tableName: string | null, columns: SupabaseColumnSchema[]) => void;
+  hideSchema?: boolean;
 }
 
 export function SupabaseTablePicker({
   integrationId,
   selectedTable,
   onTableSelect,
+  hideSchema = false,
 }: SupabaseTablePickerProps) {
   const [tables, setTables] = useState<string[]>([]);
   const [schema, setSchema] = useState<SupabaseTableSchema | null>(null);
@@ -207,7 +209,7 @@ export function SupabaseTablePicker({
       </div>
 
       {/* Schema preview */}
-      {selectedTable && (
+      {selectedTable && !hideSchema && (
         <div className="space-y-2">
           <Label>Table Schema</Label>
           {isLoadingSchema ? (
