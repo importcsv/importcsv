@@ -21,7 +21,7 @@ WORKDIR /app
 ENV NEXT_PUBLIC_BACKEND_URL=https://api.importcsv.com
 # HelpScout support widget (cloud only)
 ENV NEXT_PUBLIC_HELPSCOUT_BEACON_ID=fee8d008-7eda-451a-9cd9-123afea2133b
-
+ENV NEXT_PUBLIC_IMPORTCSV_CLOUD=true
 # Copy package files
 COPY admin/package.json admin/package-lock.json ./
 
