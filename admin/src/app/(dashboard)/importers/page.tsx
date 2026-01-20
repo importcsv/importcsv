@@ -721,7 +721,7 @@ Oliver,Lee,oliver@example.com,38,2021-05-20`
           {/* Create Importer Button */}
           <Button
             className="font-medium"
-            onClick={() => router.push('/importers/new')}
+            href="/importers/new"
           >
             Create Importer
           </Button>
@@ -741,7 +741,7 @@ Oliver,Lee,oliver@example.com,38,2021-05-20`
             description="Create your first importer to start accepting CSV uploads from your users."
             action={{
               label: "Create Importer",
-              onClick: () => router.push("/importers/new")
+              href: "/importers/new"
             }}
             tip="Importers define the schema for your CSV uploads — column names, validation rules, and more."
           />

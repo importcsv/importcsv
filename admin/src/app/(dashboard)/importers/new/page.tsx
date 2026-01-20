@@ -369,62 +369,70 @@ export default function NewImporterPage() {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="upload" className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Upload a sample CSV file and we&apos;ll automatically detect column types using AI.
-              </p>
-              <CsvUploader
-                onSchemaInferred={handleSchemaInferred}
-                onError={(err) => setFormError(err)}
-              />
-              {inferredColumns.length > 0 && (
-                <div className="mt-6">
-                  <h3 className="text-sm font-medium mb-3">Detected Schema</h3>
-                  <SchemaEditor
-                    columns={inferredColumns}
-                    onChange={setInferredColumns}
-                  />
-                </div>
-              )}
-            </TabsContent>
+            {/* Lazy load tab content - only render active tab */}
+            {activeTab === 'upload' && (
+              <TabsContent value="upload" className="space-y-4" forceMount>
+                <p className="text-sm text-muted-foreground">
+                  Upload a sample CSV file and we&apos;ll automatically detect column types using AI.
+                </p>
+                <CsvUploader
+                  onSchemaInferred={handleSchemaInferred}
+                  onError={(err) => setFormError(err)}
+                />
+                {inferredColumns.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="text-sm font-medium mb-3">Detected Schema</h3>
+                    <SchemaEditor
+                      columns={inferredColumns}
+                      onChange={setInferredColumns}
+                    />
+                  </div>
+                )}
+              </TabsContent>
+            )}
 
-            <TabsContent value="database" className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Connect to a database and import the schema from an existing table.
-                This is only for defining columns - you&apos;ll choose the destination in the next step.
-              </p>
-              <DestinationSelector
-                value={destination}
-                onChange={handleDestinationChange}
-                onImportSchema={handleImportSchemaFromDatabase}
-                hasExistingColumns={fields.length > 0}
-                schemaSource="database"
-              />
-              {fields.length > 0 && (
-                <div className="mt-6">
-                  <ImporterColumnsManager
-                    initialColumns={fields}
-                    onColumnsChange={(updatedColumns) => {
-                      setFields(updatedColumns);
-                      setFormError(null);
-                    }}
-                  />
-                </div>
-              )}
-            </TabsContent>
+            {activeTab === 'database' && (
+              <TabsContent value="database" className="space-y-4" forceMount>
+                <p className="text-sm text-muted-foreground">
+                  Connect to a database and import the schema from an existing table.
+                  This is only for defining columns - you&apos;ll choose the destination in the next step.
+                </p>
+                <DestinationSelector
+                  value={destination}
+                  onChange={handleDestinationChange}
+                  onImportSchema={handleImportSchemaFromDatabase}
+                  hasExistingColumns={fields.length > 0}
+                  schemaSource="database"
+                  integrations={integrations}
+                />
+                {fields.length > 0 && (
+                  <div className="mt-6">
+                    <ImporterColumnsManager
+                      initialColumns={fields}
+                      onColumnsChange={(updatedColumns) => {
+                        setFields(updatedColumns);
+                        setFormError(null);
+                      }}
+                    />
+                  </div>
+                )}
+              </TabsContent>
+            )}
 
-            <TabsContent value="manual" className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Manually define your import columns one by one.
-              </p>
-              <ImporterColumnsManager
-                initialColumns={fields}
-                onColumnsChange={(updatedColumns) => {
-                  setFields(updatedColumns);
-                  setFormError(null);
-                }}
-              />
-            </TabsContent>
+            {activeTab === 'manual' && (
+              <TabsContent value="manual" className="space-y-4" forceMount>
+                <p className="text-sm text-muted-foreground">
+                  Manually define your import columns one by one.
+                </p>
+                <ImporterColumnsManager
+                  initialColumns={fields}
+                  onColumnsChange={(updatedColumns) => {
+                    setFields(updatedColumns);
+                    setFormError(null);
+                  }}
+                />
+              </TabsContent>
+            )}
           </Tabs>
         </CardContent>
       </Card>
@@ -495,6 +503,7 @@ export default function NewImporterPage() {
               hasExistingColumns={getActiveFields().length > 0}
               importerFields={getActiveFields()}
               schemaSource={activeTab === 'database' ? 'database' : activeTab === 'upload' ? 'csv' : 'manual'}
+              integrations={integrations}
             />
           </CardContent>
         </Card>
@@ -549,7 +558,7 @@ export default function NewImporterPage() {
           <div className="flex space-x-4">
             <Button
               variant="outline"
-              onClick={() => router.push('/importers')}
+              href="/importers"
             >
               Cancel
             </Button>

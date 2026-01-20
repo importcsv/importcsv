@@ -91,7 +91,8 @@ export function ImporterDetailHeader({
 
           <Button
             variant="outline"
-            onClick={() => router.push(`/importers/${importerId}/preview`)}
+            href={`/importers/${importerId}/preview`}
+            loadingText="Loading preview..."
           >
             Preview
             <ExternalLink className="ml-2 h-4 w-4" />

@@ -70,6 +70,8 @@ interface DestinationSelectorProps {
   hasExistingColumns?: boolean;
   importerFields?: ImporterField[];
   schemaSource?: "csv" | "manual" | "database";
+  /** Pre-fetched integrations - if provided, skips internal fetch */
+  integrations?: Integration[];
 }
 
 export function DestinationSelector({
@@ -79,23 +81,32 @@ export function DestinationSelector({
   hasExistingColumns = false,
   importerFields = [],
   schemaSource,
+  integrations: externalIntegrations,
 }: DestinationSelectorProps) {
-  const [integrations, setIntegrations] = useState<Integration[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [internalIntegrations, setInternalIntegrations] = useState<Integration[]>([]);
+  const [isLoading, setIsLoading] = useState(!externalIntegrations);
   const [isLoadingSecret, setIsLoadingSecret] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const cloudMode = isCloudMode();
 
+  // Use external integrations if provided, otherwise use internal state
+  const integrations = externalIntegrations ?? internalIntegrations;
+
   useEffect(() => {
+    // Skip fetch if integrations provided externally
+    if (externalIntegrations) {
+      setIsLoading(false);
+      return;
+    }
     fetchIntegrations();
-  }, []);
+  }, [externalIntegrations]);
 
   const fetchIntegrations = async () => {
     setIsLoading(true);
     setError(null);
     try {
       const data = await integrationsApi.getIntegrations();
-      setIntegrations(data);
+      setInternalIntegrations(data);
     } catch (err) {
       console.error("Failed to fetch integrations:", err);
       setError("Failed to load integrations");
@@ -394,6 +405,7 @@ export function DestinationSelector({
             {shouldShowMappingUI && value.mappedColumns.length > 0 && (
               <div className="pt-4 border-t">
                 <ColumnMappingEditor
+                  key={`${value.tableName}-${importerFields.map(f => f.name).join(',')}`}
                   importerFields={importerFields}
                   tableColumns={value.mappedColumns}
                   initialMapping={value.columnMapping}

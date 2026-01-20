@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { useRouter } from "next/navigation";
 import { usageApi, importsApi, billingApi } from "@/utils/apiClient";
 import { features } from "@/lib/features";
 import {
@@ -46,8 +45,6 @@ export default function DashboardPage() {
   const [recentImports, setRecentImports] = useState<ImportData[]>([]);
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  const router = useRouter();
 
   // Auth is handled by the layout - just load data on mount
   useEffect(() => {
@@ -220,7 +217,7 @@ export default function DashboardPage() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => router.push("/imports")}
+            href="/imports"
           >
             View all <ArrowRight className="w-4 h-4 ml-1" />
           </Button>

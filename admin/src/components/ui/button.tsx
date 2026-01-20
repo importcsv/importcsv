@@ -1,8 +1,12 @@
-import * as React from "react"
-import { Slot } from "@radix-ui/react-slot"
-import { cva, type VariantProps } from "class-variance-authority"
+"use client";
 
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
+import { cva, type VariantProps } from "class-variance-authority";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+
+import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive",
@@ -33,27 +37,102 @@ const buttonVariants = cva(
       size: "default",
     },
   }
-)
+);
 
-function Button({
-  className,
-  variant,
-  size,
-  asChild = false,
-  ...props
-}: React.ComponentProps<"button"> &
-  VariantProps<typeof buttonVariants> & {
-    asChild?: boolean
-  }) {
-  const Comp = asChild ? Slot : "button"
-
-  return (
-    <Comp
-      data-slot="button"
-      className={cn(buttonVariants({ variant, size, className }))}
-      {...props}
-    />
-  )
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+  href?: string;
+  loadingText?: string;
 }
 
-export { Button, buttonVariants }
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      className,
+      variant,
+      size,
+      asChild = false,
+      href,
+      loadingText = "Loading...",
+      onClick,
+      disabled,
+      children,
+      ...props
+    },
+    ref
+  ) => {
+    const [isNavigating, setIsNavigating] = React.useState(false);
+    const router = useRouter();
+
+    const handleClick = async (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (href) {
+        e.preventDefault();
+        setIsNavigating(true);
+
+        try {
+          if (onClick) {
+            await onClick(e);
+          }
+
+          // Internal routes start with /
+          const isInternal = href.startsWith("/");
+          if (isInternal) {
+            router.push(href);
+          } else {
+            window.location.href = href;
+          }
+        } catch (error) {
+          setIsNavigating(false);
+          throw error;
+        }
+      } else {
+        onClick?.(e);
+      }
+    };
+
+    const isDisabled = disabled || isNavigating;
+
+    // asChild not supported with href (would break navigation logic)
+    if (asChild && href) {
+      console.warn("Button: asChild prop is ignored when href is provided");
+    }
+
+    if (asChild && !href) {
+      return (
+        <Slot
+          data-slot="button"
+          className={cn(buttonVariants({ variant, size, className }))}
+          ref={ref as React.Ref<HTMLElement>}
+          {...props}
+        >
+          {children}
+        </Slot>
+      );
+    }
+
+    return (
+      <button
+        data-slot="button"
+        className={cn(buttonVariants({ variant, size, className }))}
+        ref={ref}
+        disabled={isDisabled}
+        onClick={handleClick}
+        {...props}
+      >
+        {isNavigating ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            {loadingText}
+          </>
+        ) : (
+          children
+        )}
+      </button>
+    );
+  }
+);
+Button.displayName = "Button";
+
+export { Button, buttonVariants };
