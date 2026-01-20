@@ -8,11 +8,14 @@ import { DestinationCard } from './DestinationCard';
 import { Settings } from 'lucide-react';
 
 interface DestinationData {
-  type: 'webhook' | 'supabase' | null;
+  type: 'webhook' | 'supabase' | 'frontend' | null;
   webhookUrl?: string;
   signingSecret?: string;
+  integrationId?: string;
   integrationName?: string;
   tableName?: string;
+  columnMapping?: Record<string, string>;
+  contextMapping?: Record<string, string>;
 }
 
 interface AdvancedSettingsProps {

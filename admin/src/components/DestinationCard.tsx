@@ -17,7 +17,7 @@ interface Delivery {
 
 interface DestinationCardProps {
   importerId: string;
-  destinationType: "webhook" | "supabase" | null;
+  destinationType: "webhook" | "supabase" | "frontend" | null;
   webhookUrl?: string;
   signingSecret?: string;
   integrationName?: string;

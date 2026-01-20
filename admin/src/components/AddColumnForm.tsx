@@ -18,6 +18,8 @@ export interface ImporterField {
   validators?: Validator[];          // Array of validation rules
   transformations?: Transformation[]; // Array of transformation rules
   options?: string[];                // Options for select fields
+  validation_format?: string;        // For select (comma-separated) or custom_regex (pattern)
+  template?: string;                 // For boolean type (e.g., "true/false", "yes/no", "1/0")
 }
 
 interface AddColumnFormProps {
@@ -128,7 +130,7 @@ export default function AddColumnForm({
         hasErrors = true;
       } else {
         // Convert validation_format to options array
-        newField.options = newField.validation_format.split(',').map(o => o.trim());
+        newField.options = newField.validation_format.split(',').map((o: string) => o.trim());
       }
     }
     
@@ -280,7 +282,7 @@ export default function AddColumnForm({
                 <div className="mt-2 p-3 bg-muted/50 rounded-md border border-border/50">
                   <p className="text-xs font-medium text-muted-foreground mb-2">Preview:</p>
                   <div className="flex flex-wrap gap-1.5">
-                    {newField.validation_format.split(',').map((option, index) => (
+                    {newField.validation_format.split(',').map((option: string, index: number) => (
                       <span
                         key={index}
                         className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs font-medium"

@@ -73,7 +73,7 @@ export default function ImporterDetailPage() {
   });
 
   // Validate data before save
-  const validateData = useCallback((): boolean => {
+  const validateData = useCallback((_data: ImporterFormData): boolean => {
     return true;
   }, []);
 

@@ -23,7 +23,7 @@ interface ValidationBuilderProps {
 export default function ValidationBuilder({ validators = [], onChange, fieldType }: ValidationBuilderProps) {
 
   // Get available validator types based on field type
-  const getAvailableValidators = () => {
+  const getAvailableValidators = (): Validator['type'][] => {
     const common: Validator['type'][] = ['required', 'unique', 'regex'];
     const numeric: Validator['type'][] = ['min', 'max'];
     const text: Validator['type'][] = ['min_length', 'max_length'];
@@ -36,11 +36,11 @@ export default function ValidationBuilder({ validators = [], onChange, fieldType
       case 'phone':
         return [...common, ...text];
       case 'date':
-        return ['required', 'unique'];
+        return ['required', 'unique'] as Validator['type'][];
       case 'boolean':
-        return ['required'];
+        return ['required'] as Validator['type'][];
       case 'select':
-        return ['required', 'unique'];
+        return ['required', 'unique'] as Validator['type'][];
       default:
         return [...common, ...text];
     }
