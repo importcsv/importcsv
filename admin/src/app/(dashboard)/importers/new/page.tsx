@@ -60,6 +60,7 @@ export default function NewImporterPage() {
     supabaseColumns: [],
     contextColumns: [],
     mappedColumns: [],
+    ignoredColumns: [],
   });
 
   // UI state
@@ -205,6 +206,31 @@ export default function NewImporterPage() {
         setFormError('Please select a destination table');
         return false;
       }
+
+      // Check if mapping is required and valid
+      const activeFields = getActiveFields();
+      const needsMapping = activeTab !== 'database' ||
+        !activeFields.every(f =>
+          destination.supabaseColumns.some(c =>
+            c.column_name.toLowerCase() === f.name.toLowerCase()
+          )
+        );
+
+      if (needsMapping && activeFields.length > 0) {
+        // Verify all fields are mapped or explicitly ignored
+        const mappedFields = Object.keys(destination.columnMapping);
+        const ignoredFields = destination.ignoredColumns || [];
+        const unmappedFields = activeFields.filter(
+          f => !mappedFields.includes(f.name) && !ignoredFields.includes(f.name)
+        );
+
+        if (unmappedFields.length > 0) {
+          setFormError(
+            `Please map or ignore all columns: ${unmappedFields.map(f => f.display_name).join(', ')}`
+          );
+          return false;
+        }
+      }
     }
 
     return true;
@@ -245,6 +271,7 @@ export default function NewImporterPage() {
         supabaseColumns: [],
         contextColumns: [],
         mappedColumns: [],
+        ignoredColumns: [],
       });
     }
   };
@@ -371,6 +398,7 @@ export default function NewImporterPage() {
                 onChange={handleDestinationChange}
                 onImportSchema={handleImportSchemaFromDatabase}
                 hasExistingColumns={fields.length > 0}
+                schemaSource="database"
               />
               {fields.length > 0 && (
                 <div className="mt-6">
@@ -465,6 +493,8 @@ export default function NewImporterPage() {
               value={destination}
               onChange={handleDestinationChange}
               hasExistingColumns={getActiveFields().length > 0}
+              importerFields={getActiveFields()}
+              schemaSource={activeTab === 'database' ? 'database' : activeTab === 'upload' ? 'csv' : 'manual'}
             />
           </CardContent>
         </Card>

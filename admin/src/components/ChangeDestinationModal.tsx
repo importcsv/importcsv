@@ -58,6 +58,7 @@ export function ChangeDestinationModal({
     supabaseColumns: [],
     contextColumns: [],
     mappedColumns: [],
+    ignoredColumns: [],
   });
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -78,6 +79,7 @@ export function ChangeDestinationModal({
         supabaseColumns: [],
         contextColumns: [],
         mappedColumns: [],
+        ignoredColumns: [],
       });
       setError(null);
     }
@@ -174,6 +176,8 @@ export function ChangeDestinationModal({
                 value={config}
                 onChange={setConfig}
                 hasExistingColumns={importerFields.length > 0}
+                importerFields={importerFields}
+                schemaSource="manual"
               />
             )}
           </div>
