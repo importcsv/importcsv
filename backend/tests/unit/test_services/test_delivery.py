@@ -11,6 +11,7 @@ from app.services.delivery import (
     deliver_to_supabase,
     deliver_to_webhook,
     deliver_to_webhook_destination,
+    is_safe_webhook_url,
 )
 
 
@@ -386,3 +387,121 @@ class TestDeliverToWebhookDestination:
 
                     assert result.success is False
                     assert result.error_code == "DELIVERY_FAILED"
+
+
+class TestIsSafeWebhookUrl:
+    """Test SSRF protection for webhook URLs."""
+
+    def test_accepts_valid_https_url(self):
+        """Should accept valid HTTPS URLs."""
+        with patch("app.services.delivery.socket.getaddrinfo") as mock_dns:
+            # Return a public IP
+            mock_dns.return_value = [(2, 1, 6, "", ("93.184.216.34", 0))]
+            assert is_safe_webhook_url("https://example.com/webhook") is True
+
+    def test_rejects_http_url(self):
+        """Should reject non-HTTPS URLs."""
+        assert is_safe_webhook_url("http://example.com/webhook") is False
+
+    def test_rejects_localhost(self):
+        """Should reject localhost variations."""
+        assert is_safe_webhook_url("https://localhost/webhook") is False
+        assert is_safe_webhook_url("https://127.0.0.1/webhook") is False
+        assert is_safe_webhook_url("https://0.0.0.0/webhook") is False
+
+    def test_rejects_ipv6_loopback(self):
+        """Should reject IPv6 loopback."""
+        assert is_safe_webhook_url("https://[::1]/webhook") is False
+
+    def test_rejects_private_ipv4_ranges(self):
+        """Should reject private IPv4 ranges (10.x, 172.16-31.x, 192.168.x)."""
+        with patch("app.services.delivery.socket.getaddrinfo") as mock_dns:
+            # 10.0.0.0/8
+            mock_dns.return_value = [(2, 1, 6, "", ("10.0.0.1", 0))]
+            assert is_safe_webhook_url("https://internal.example.com/webhook") is False
+
+            # 172.16.0.0/12
+            mock_dns.return_value = [(2, 1, 6, "", ("172.16.0.1", 0))]
+            assert is_safe_webhook_url("https://internal.example.com/webhook") is False
+
+            # 192.168.0.0/16
+            mock_dns.return_value = [(2, 1, 6, "", ("192.168.1.1", 0))]
+            assert is_safe_webhook_url("https://internal.example.com/webhook") is False
+
+    def test_rejects_link_local_and_metadata(self):
+        """Should reject link-local addresses (AWS metadata endpoint)."""
+        with patch("app.services.delivery.socket.getaddrinfo") as mock_dns:
+            # AWS metadata endpoint 169.254.169.254
+            mock_dns.return_value = [(2, 1, 6, "", ("169.254.169.254", 0))]
+            assert is_safe_webhook_url("https://metadata.example.com/webhook") is False
+
+            # Other link-local
+            mock_dns.return_value = [(2, 1, 6, "", ("169.254.1.1", 0))]
+            assert is_safe_webhook_url("https://link-local.example.com/webhook") is False
+
+    def test_rejects_ipv6_private_ranges(self):
+        """Should reject IPv6 private/reserved ranges."""
+        with patch("app.services.delivery.socket.getaddrinfo") as mock_dns:
+            # fc00::/7 (unique local addresses)
+            mock_dns.return_value = [(10, 1, 6, "", ("fc00::1", 0, 0, 0))]
+            assert is_safe_webhook_url("https://ipv6-private.example.com/webhook") is False
+
+            # fe80::/10 (link-local)
+            mock_dns.return_value = [(10, 1, 6, "", ("fe80::1", 0, 0, 0))]
+            assert is_safe_webhook_url("https://ipv6-linklocal.example.com/webhook") is False
+
+    def test_rejects_ipv4_mapped_ipv6(self):
+        """Should reject IPv4-mapped IPv6 addresses (bypass attempt)."""
+        with patch("app.services.delivery.socket.getaddrinfo") as mock_dns:
+            # ::ffff:127.0.0.1 (IPv4-mapped loopback)
+            mock_dns.return_value = [(10, 1, 6, "", ("::ffff:127.0.0.1", 0, 0, 0))]
+            assert is_safe_webhook_url("https://mapped.example.com/webhook") is False
+
+            # ::ffff:10.0.0.1 (IPv4-mapped private)
+            mock_dns.return_value = [(10, 1, 6, "", ("::ffff:10.0.0.1", 0, 0, 0))]
+            assert is_safe_webhook_url("https://mapped-private.example.com/webhook") is False
+
+    def test_rejects_when_any_resolved_ip_is_private(self):
+        """Should reject if ANY resolved IP is private (multi-record bypass)."""
+        with patch("app.services.delivery.socket.getaddrinfo") as mock_dns:
+            # Multiple A records - one public, one private
+            mock_dns.return_value = [
+                (2, 1, 6, "", ("93.184.216.34", 0)),  # Public
+                (2, 1, 6, "", ("10.0.0.1", 0)),       # Private - should block
+            ]
+            assert is_safe_webhook_url("https://multi-record.example.com/webhook") is False
+
+    def test_rejects_dns_resolution_failure(self):
+        """Should reject when DNS resolution fails."""
+        with patch("app.services.delivery.socket.getaddrinfo") as mock_dns:
+            import socket
+            mock_dns.side_effect = socket.gaierror("DNS lookup failed")
+            assert is_safe_webhook_url("https://nonexistent.example.com/webhook") is False
+
+    def test_rejects_empty_or_malformed_urls(self):
+        """Should reject empty or malformed URLs."""
+        assert is_safe_webhook_url("") is False
+        assert is_safe_webhook_url("not-a-url") is False
+        assert is_safe_webhook_url("ftp://example.com/webhook") is False
+
+    def test_rejects_url_with_credentials(self):
+        """Should handle URLs with embedded credentials safely."""
+        with patch("app.services.delivery.socket.getaddrinfo") as mock_dns:
+            mock_dns.return_value = [(2, 1, 6, "", ("93.184.216.34", 0))]
+            # URL with credentials - should still work (urlparse handles it)
+            result = is_safe_webhook_url("https://user:pass@example.com/webhook")
+            # The function should parse hostname correctly
+            assert result is True
+
+    def test_accepts_public_ipv4(self):
+        """Should accept public IPv4 addresses."""
+        with patch("app.services.delivery.socket.getaddrinfo") as mock_dns:
+            mock_dns.return_value = [(2, 1, 6, "", ("8.8.8.8", 0))]
+            assert is_safe_webhook_url("https://dns.google/webhook") is True
+
+    def test_accepts_public_ipv6(self):
+        """Should accept public IPv6 addresses."""
+        with patch("app.services.delivery.socket.getaddrinfo") as mock_dns:
+            # Google's public IPv6
+            mock_dns.return_value = [(10, 1, 6, "", ("2607:f8b0:4004:800::200e", 0, 0, 0))]
+            assert is_safe_webhook_url("https://ipv6.google.com/webhook") is True

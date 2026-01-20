@@ -84,9 +84,7 @@ export function ChangeDestinationModal({
   }, [open, currentDestination]);
 
   const supabaseIntegrations = integrations?.filter((i) => i.type === "supabase") || [];
-  const webhookIntegrations = integrations?.filter((i) => i.type === "webhook") || [];
   const hasSupabaseIntegration = supabaseIntegrations.length > 0;
-  const hasWebhookIntegration = webhookIntegrations.length > 0;
 
   const canSave =
     (destinationType === "webhook" && webhookUrl && webhookUrl.startsWith("https://")) ||
@@ -147,7 +145,7 @@ export function ChangeDestinationModal({
                 description="POST data to your endpoint"
                 icon="🔗"
                 selected={destinationType === "webhook"}
-                disabled={!hasWebhookIntegration && !true} // Webhooks don't require integration
+                disabled={false}
                 onSelect={() => setDestinationType("webhook")}
               />
               <DestinationTypeCard

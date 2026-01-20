@@ -100,10 +100,12 @@ async def check_webhook_url(
 
     except httpx.RequestError as e:
         duration_ms = int((time.time() - start_time) * 1000)
+        # Sanitize error message to avoid leaking internal network details
+        error_type = type(e).__name__
         return TestWebhookResponse(
             success=False,
             duration_ms=duration_ms,
-            error=str(e),
+            error=f"Connection failed: {error_type}",
         )
 
 

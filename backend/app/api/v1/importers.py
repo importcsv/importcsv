@@ -2,6 +2,7 @@ import asyncio
 import logging
 import time
 import uuid
+from datetime import UTC, datetime
 from typing import Any
 
 import httpx
@@ -388,6 +389,12 @@ async def delete_destination(
     )
 
     if destination:
+        # Clean up Svix endpoint if this was a webhook destination
+        if destination.destination_type == "webhook" and destination.config:
+            svix_endpoint_id = destination.config.get("svix_endpoint_id")
+            if svix_endpoint_id and current_user.svix_app_id:
+                svix_client.delete_endpoint(current_user.svix_app_id, svix_endpoint_id)
+
         db.delete(destination)
         db.commit()
 
@@ -437,7 +444,7 @@ async def send_test_webhook(
         elif field_type == "boolean":
             sample_row[field_name] = True
         elif field_type == "date":
-            sample_row[field_name] = "2025-01-18"
+            sample_row[field_name] = datetime.now(UTC).strftime("%Y-%m-%d")
         else:
             sample_row[field_name] = f"Sample {field_name}"
 
@@ -480,6 +487,9 @@ async def send_test_webhook(
         }
     except httpx.RequestError as e:
         duration_ms = int((time.time() - start_time) * 1000)
+        # Sanitize error message to avoid leaking internal network details
+        error_type = type(e).__name__
+        sanitized_error = f"Connection failed: {error_type}"
 
         delivery = WebhookDelivery(
             destination_id=destination.id,
@@ -488,7 +498,7 @@ async def send_test_webhook(
             status_code=None,
             duration_ms=duration_ms,
             success=WebhookDeliveryStatus.FAILED,
-            error_message=str(e),
+            error_message=str(e),  # Keep full error in internal logs
         )
         db.add(delivery)
         db.commit()
@@ -497,7 +507,7 @@ async def send_test_webhook(
             "success": False,
             "status_code": None,
             "duration_ms": duration_ms,
-            "error": str(e),
+            "error": sanitized_error,  # Return sanitized error to client
         }
 
 
