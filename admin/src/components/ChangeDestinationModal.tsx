@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -88,9 +88,25 @@ export function ChangeDestinationModal({
   const supabaseIntegrations = integrations?.filter((i) => i.type === "supabase") || [];
   const hasSupabaseIntegration = supabaseIntegrations.length > 0;
 
+  // Validate that all importer fields are either mapped or ignored
+  const isMappingValid = useMemo(() => {
+    if (destinationType !== "supabase" || !config.tableName || importerFields.length === 0) {
+      return true; // No mapping validation needed
+    }
+    // Check if showing mapping UI (when mappedColumns exist)
+    if (config.mappedColumns.length === 0) {
+      return true; // No mapping UI shown, skip validation
+    }
+    // Every field must be mapped or ignored
+    return importerFields.every(
+      (field) =>
+        config.columnMapping[field.name] || config.ignoredColumns.includes(field.name)
+    );
+  }, [destinationType, config, importerFields]);
+
   const canSave =
     (destinationType === "webhook" && webhookUrl && webhookUrl.startsWith("https://")) ||
-    (destinationType === "supabase" && config.integrationId && config.tableName);
+    (destinationType === "supabase" && config.integrationId && config.tableName && isMappingValid);
 
   const handleSave = async () => {
     setIsSaving(true);
