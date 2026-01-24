@@ -318,23 +318,24 @@ export default function DashboardPage() {
           ) : (
             <div className="space-y-0">
               {recentImports.map((imp) => (
-                <div
+                <a
                   key={imp.id}
-                  className="flex items-center justify-between py-3 border-b border-zinc-100 last:border-0"
+                  href={imp.importer_id ? `/importers/${imp.importer_id}` : undefined}
+                  className={`flex items-center justify-between py-3 border-b border-zinc-100 last:border-0 ${
+                    imp.importer_id ? "cursor-pointer hover:bg-zinc-50 -mx-5 px-5" : ""
+                  }`}
                 >
                   <div className="flex items-center gap-3">
                     {getStatusIcon(imp.status)}
                     <div>
                       <p className="text-sm font-medium text-zinc-900">
-                        {imp.file_name}
+                        {imp.importer_name || "Unknown"}
                       </p>
                       <p className="text-xs text-zinc-400">
-                        {imp.importer_name && <>{imp.importer_name} · </>}
                         {imp.row_count?.toLocaleString()} rows
-                        {imp.error_count && imp.error_count > 0 && (
+                        {imp.error_count > 0 && (
                           <span className="text-red-500">
-                            {" "}
-                            · {imp.error_count} errors
+                            {" "}· {imp.error_count} errors
                           </span>
                         )}
                       </p>
@@ -343,7 +344,7 @@ export default function DashboardPage() {
                   <span className="text-xs text-zinc-400">
                     {formatDate(imp.created_at)}
                   </span>
-                </div>
+                </a>
               ))}
             </div>
           )}
