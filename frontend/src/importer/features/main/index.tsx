@@ -347,10 +347,40 @@ export default function Main(props: CSVImporterProps) {
 
     // Standalone mode: directly call onComplete with data
     if (isStandaloneMode) {
-      // Extract just the data portion from mapped rows
-      const cleanData = mappedRows.map(row => row.data);
+      // Restructure rows: predefined fields at top level, dynamic under _custom_fields
+      const restructuredData = mappedRows.map(row => {
+        const predefinedData: Record<string, unknown> = {};
+        const customFieldsData: Record<string, unknown> = {};
+        const unmatchedData: Record<string, unknown> = {};
 
-      onComplete && onComplete(cleanData as any);
+        // Process mapped data
+        for (const [key, value] of Object.entries(row.data)) {
+          if (dynamicColumnIds.has(key)) {
+            // Dynamic columns go under _custom_fields
+            customFieldsData[key] = value;
+          } else {
+            // Predefined columns stay at top level
+            predefinedData[key] = value;
+          }
+        }
+
+        // Process unmatched data (already collected in row.unmapped_data)
+        for (const [key, value] of Object.entries(row.unmapped_data)) {
+          unmatchedData[key] = value;
+        }
+
+        return {
+          ...predefinedData,
+          ...(Object.keys(customFieldsData).length > 0
+            ? { _custom_fields: customFieldsData }
+            : {}),
+          ...(Object.keys(unmatchedData).length > 0
+            ? { _unmatched: unmatchedData }
+            : {}),
+        };
+      });
+
+      onComplete && onComplete(restructuredData as any);
       setIsSubmitting(false);
       goNext();
       return;

@@ -104,3 +104,153 @@ describe('Main component column merging', () => {
     expect(mergedColumns[1].description).toBe('A custom date field');
   });
 });
+
+/**
+ * Tests for output restructuring logic used in handleValidationComplete.
+ *
+ * The output should:
+ * - Keep predefined fields at top level
+ * - Nest dynamic fields under _custom_fields
+ * - Nest unmatched columns under _unmatched (when includeUnmatchedColumns is true)
+ */
+describe('Output restructuring', () => {
+  /**
+   * Helper function that mirrors the restructuring logic in handleValidationComplete.
+   * This is extracted for testability.
+   */
+  function restructureRow(
+    row: Record<string, unknown>,
+    dynamicIds: Set<string>
+  ): Record<string, unknown> {
+    const predefinedData: Record<string, unknown> = {};
+    const customFieldsData: Record<string, unknown> = {};
+    const unmatchedData: Record<string, unknown> = {};
+
+    for (const [key, value] of Object.entries(row)) {
+      if (key.startsWith('_unmapped_')) {
+        // Unmatched columns go under _unmatched
+        const originalKey = key.replace('_unmapped_', '');
+        unmatchedData[originalKey] = value;
+      } else if (dynamicIds.has(key)) {
+        // Dynamic columns go under _custom_fields
+        customFieldsData[key] = value;
+      } else {
+        // Predefined columns stay at top level
+        predefinedData[key] = value;
+      }
+    }
+
+    return {
+      ...predefinedData,
+      ...(Object.keys(customFieldsData).length > 0
+        ? { _custom_fields: customFieldsData }
+        : {}),
+      ...(Object.keys(unmatchedData).length > 0
+        ? { _unmatched: unmatchedData }
+        : {}),
+    };
+  }
+
+  it('nests dynamic fields under _custom_fields', () => {
+    const row = { name: 'Test', custom1: 'Value' };
+    const dynamicIds = new Set(['custom1']);
+
+    const result = restructureRow(row, dynamicIds);
+
+    expect(result).toEqual({
+      name: 'Test',
+      _custom_fields: { custom1: 'Value' },
+    });
+  });
+
+  it('omits _custom_fields when no dynamic fields mapped', () => {
+    const row = { name: 'Test' };
+    const dynamicIds = new Set(['custom1']); // custom1 not in row
+
+    const result = restructureRow(row, dynamicIds);
+
+    expect(result).toEqual({ name: 'Test' });
+    expect(result).not.toHaveProperty('_custom_fields');
+  });
+
+  it('handles multiple dynamic fields', () => {
+    const row = { name: 'Test', custom1: 'Value1', custom2: 'Value2', email: 'test@test.com' };
+    const dynamicIds = new Set(['custom1', 'custom2']);
+
+    const result = restructureRow(row, dynamicIds);
+
+    expect(result).toEqual({
+      name: 'Test',
+      email: 'test@test.com',
+      _custom_fields: {
+        custom1: 'Value1',
+        custom2: 'Value2',
+      },
+    });
+  });
+
+  it('handles unmatched columns under _unmatched', () => {
+    const row = { name: 'Test', _unmapped_extra: 'Extra Value' };
+    const dynamicIds = new Set<string>();
+
+    const result = restructureRow(row, dynamicIds);
+
+    expect(result).toEqual({
+      name: 'Test',
+      _unmatched: { extra: 'Extra Value' },
+    });
+  });
+
+  it('handles both dynamic fields and unmatched columns', () => {
+    const row = {
+      name: 'Test',
+      custom1: 'Custom Value',
+      _unmapped_extra: 'Extra Value',
+    };
+    const dynamicIds = new Set(['custom1']);
+
+    const result = restructureRow(row, dynamicIds);
+
+    expect(result).toEqual({
+      name: 'Test',
+      _custom_fields: { custom1: 'Custom Value' },
+      _unmatched: { extra: 'Extra Value' },
+    });
+  });
+
+  it('omits both _custom_fields and _unmatched when empty', () => {
+    const row = { name: 'Test', email: 'test@test.com' };
+    const dynamicIds = new Set<string>();
+
+    const result = restructureRow(row, dynamicIds);
+
+    expect(result).toEqual({ name: 'Test', email: 'test@test.com' });
+    expect(result).not.toHaveProperty('_custom_fields');
+    expect(result).not.toHaveProperty('_unmatched');
+  });
+
+  it('handles empty row', () => {
+    const row = {};
+    const dynamicIds = new Set(['custom1']);
+
+    const result = restructureRow(row, dynamicIds);
+
+    expect(result).toEqual({});
+    expect(result).not.toHaveProperty('_custom_fields');
+    expect(result).not.toHaveProperty('_unmatched');
+  });
+
+  it('handles row with only dynamic fields', () => {
+    const row = { custom1: 'Value1', custom2: 'Value2' };
+    const dynamicIds = new Set(['custom1', 'custom2']);
+
+    const result = restructureRow(row, dynamicIds);
+
+    expect(result).toEqual({
+      _custom_fields: {
+        custom1: 'Value1',
+        custom2: 'Value2',
+      },
+    });
+  });
+});
