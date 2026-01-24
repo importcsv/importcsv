@@ -296,48 +296,105 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Recent imports */}
-      <div className="bg-white border border-zinc-200 rounded-lg p-5">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-medium text-zinc-900">Recent Imports</h2>
-          <Button
-            variant="ghost"
-            size="sm"
-            href="/imports"
-            className="text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100"
-          >
-            View all <ArrowRight className="w-4 h-4 ml-1" />
-          </Button>
-        </div>
-        {recentImports.length === 0 ? (
-          <p className="text-zinc-400 text-center py-8 text-sm">No imports yet.</p>
-        ) : (
-          <div className="space-y-0">
-            {recentImports.map((imp) => (
-              <div
-                key={imp.id}
-                className="flex items-center justify-between py-3 border-b border-zinc-100 last:border-0"
-              >
-                <div className="flex items-center gap-3">
-                  {getStatusIcon(imp.status)}
-                  <div>
-                    <p className="text-sm font-medium text-zinc-900">{imp.file_name}</p>
-                    <p className="text-xs text-zinc-400">
-                      {imp.importer_name && <>{imp.importer_name} · </>}
-                      {imp.row_count?.toLocaleString()} rows
-                      {imp.error_count && imp.error_count > 0 && (
-                        <span className="text-red-500"> · {imp.error_count} errors</span>
-                      )}
-                    </p>
-                  </div>
-                </div>
-                <span className="text-xs text-zinc-400">
-                  {formatDate(imp.created_at)}
-                </span>
-              </div>
-            ))}
+      {/* Two column grid for Recent Imports and Your Importers */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Imports */}
+        <div className="bg-white border border-zinc-200 rounded-lg p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-medium text-zinc-900">Recent Imports</h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              href="/imports"
+              className="text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 text-xs"
+            >
+              View all <ArrowRight className="w-3 h-3 ml-1" />
+            </Button>
           </div>
-        )}
+          {recentImports.length === 0 ? (
+            <p className="text-zinc-400 text-center py-8 text-sm">No imports yet.</p>
+          ) : (
+            <div className="space-y-0">
+              {recentImports.map((imp) => (
+                <div
+                  key={imp.id}
+                  className="flex items-center justify-between py-3 border-b border-zinc-100 last:border-0"
+                >
+                  <div className="flex items-center gap-3">
+                    {getStatusIcon(imp.status)}
+                    <div>
+                      <p className="text-sm font-medium text-zinc-900">
+                        {imp.file_name}
+                      </p>
+                      <p className="text-xs text-zinc-400">
+                        {imp.importer_name && <>{imp.importer_name} · </>}
+                        {imp.row_count?.toLocaleString()} rows
+                        {imp.error_count && imp.error_count > 0 && (
+                          <span className="text-red-500">
+                            {" "}
+                            · {imp.error_count} errors
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-xs text-zinc-400">
+                    {formatDate(imp.created_at)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Your Importers */}
+        <div className="bg-white border border-zinc-200 rounded-lg p-5">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-medium text-zinc-900">Your Importers</h2>
+            <Button
+              variant="ghost"
+              size="sm"
+              href="/importers"
+              className="text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 text-xs"
+            >
+              Manage <ArrowRight className="w-3 h-3 ml-1" />
+            </Button>
+          </div>
+          {importerActivity.length === 0 ? (
+            <p className="text-zinc-400 text-center py-8 text-sm">
+              No importers yet.
+            </p>
+          ) : (
+            <div className="space-y-0">
+              {importerActivity.slice(0, 5).map((activity) => (
+                <div
+                  key={activity.id}
+                  className="flex items-center justify-between py-3 border-b border-zinc-100 last:border-0"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-zinc-100 rounded-lg">
+                      <FileSpreadsheet className="w-4 h-4 text-zinc-500" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-zinc-900">
+                        {activity.name}
+                      </p>
+                      <p className="text-xs text-zinc-400">
+                        {activity.importCount} imports ·{" "}
+                        {activity.rowCount.toLocaleString()} rows
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-xs text-zinc-400">
+                    {activity.lastImportAt
+                      ? formatDate(activity.lastImportAt)
+                      : "Never"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
