@@ -53,7 +53,8 @@ export default function Main(props: CSVImporterProps) {
     schema, // Zod schema for standalone mode
     backendUrl,
     context,
-    demoData
+    demoData,
+    dynamicColumns
   } = props;
   const skipHeader = skipHeaderRowSelection ?? false;
   const isDemoMode = !!demoData;
@@ -102,6 +103,9 @@ export default function Main(props: CSVImporterProps) {
 
   // Store columns directly - either from props or fetched from backend
   const [importColumns, setImportColumns] = useState<Column[]>([]);
+
+  // Track which column IDs are dynamic (for restructuring output in Task 4)
+  const [dynamicColumnIds, setDynamicColumnIds] = useState<Set<string>>(new Set());
   
   // Initialize states based on props
   const [includeUnmatchedColumns, setIncludeUnmatchedColumns] = useState<boolean>(
@@ -148,8 +152,11 @@ export default function Main(props: CSVImporterProps) {
           return;
         }
         
-        // Use columns directly
-        setImportColumns(propColumns);
+        // Merge propColumns with dynamicColumns
+        const mergedColumns = [...propColumns, ...(dynamicColumns || [])];
+        const dynamicIds = new Set((dynamicColumns || []).map(c => c.id));
+        setImportColumns(mergedColumns);
+        setDynamicColumnIds(dynamicIds);
         return;
       }
       
@@ -248,15 +255,19 @@ export default function Main(props: CSVImporterProps) {
           
           return column;
         });
-        
-        setImportColumns(backendColumns);
+
+        // Merge backendColumns with dynamicColumns
+        const mergedColumns = [...backendColumns, ...(dynamicColumns || [])];
+        const dynamicIds = new Set((dynamicColumns || []).map(c => c.id));
+        setImportColumns(mergedColumns);
+        setDynamicColumnIds(dynamicIds);
       } catch (error) {
         setInitializationError(`Failed to fetch schema: ${error instanceof Error ? error.message : String(error)}`);
       }
     };
 
     fetchSchema();
-  }, [importerKey, apiUrl, isStandaloneMode, propColumns]);
+  }, [importerKey, apiUrl, isStandaloneMode, propColumns, dynamicColumns]);
 
   useEffect(() => {
     // TODO (client-sdk): Have the importer continue where left off if closed
