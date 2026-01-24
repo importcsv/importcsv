@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { PostHogProvider } from "@/components/PostHogProvider";
-import { HelpScoutWidget } from "@/components/HelpScoutWidget";
+import { CrispWidget } from "@/components/CrispWidget";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,7 +29,7 @@ export default function RootLayout({
         <PostHogProvider>
           {children}
           <Toaster />
-          <HelpScoutWidget />
+          <CrispWidget />
         </PostHogProvider>
       </body>
     </html>
