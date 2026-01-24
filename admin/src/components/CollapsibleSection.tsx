@@ -36,7 +36,7 @@ export default function CollapsibleSection({
             <div className="flex items-center gap-2">
               <h3 className="text-lg font-semibold">{title}</h3>
               {hasChanges && (
-                <span className="px-2 py-0.5 text-xs bg-blue-100 text-indigo-700 rounded-full">
+                <span className="px-2 py-0.5 text-xs bg-indigo-100 text-indigo-700 rounded-full">
                   Modified
                 </span>
               )}

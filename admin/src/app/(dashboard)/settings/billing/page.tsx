@@ -225,7 +225,7 @@ export default function BillingPage() {
 
       {/* Trial Status Banner */}
       {subscription.is_trialing && (
-        <Alert className="mb-6 border-blue-200 bg-blue-50">
+        <Alert className="mb-6 border-indigo-200 bg-indigo-50">
           <Check className="h-4 w-4 text-indigo-600" />
           <AlertDescription className="text-indigo-700">
             <strong>You&apos;re on a free trial!</strong>{" "}
@@ -335,7 +335,7 @@ export default function BillingPage() {
       {/* Upgrade Options */}
       {subscription.tier === "free" && (
         <div className="grid md:grid-cols-2 gap-4">
-          <Card className="p-6 border-blue-200">
+          <Card className="p-6 border-indigo-200">
             <h3 className="text-lg font-semibold">Pro</h3>
             <p className="text-3xl font-bold mt-2">
               $49<span className="text-sm font-normal text-zinc-500">/mo</span>

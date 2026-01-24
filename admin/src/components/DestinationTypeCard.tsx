@@ -28,7 +28,7 @@ export function DestinationTypeCard({
       className={cn(
         "relative p-6 rounded-lg border-2 text-left transition-all",
         selected
-          ? "border-blue-500 bg-blue-50"
+          ? "border-indigo-500 bg-indigo-50"
           : disabled
             ? "border-zinc-200 bg-zinc-50 cursor-not-allowed opacity-60"
             : "border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"

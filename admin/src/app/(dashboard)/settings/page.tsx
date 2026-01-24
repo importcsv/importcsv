@@ -31,7 +31,7 @@ export default function SettingsPage() {
 
         <div className="grid md:grid-cols-2 gap-4 max-w-2xl">
           <Link href="/settings/integrations">
-            <Card className="p-6 hover:border-blue-300 transition-colors cursor-pointer">
+            <Card className="p-6 hover:border-indigo-300 transition-colors cursor-pointer">
               <Database className="w-8 h-8 text-green-500 mb-3" />
               <h3 className="text-lg font-medium">Integrations</h3>
               <p className="text-zinc-500 text-sm mt-1">
@@ -53,7 +53,7 @@ export default function SettingsPage() {
 
       <div className="grid md:grid-cols-2 gap-4 max-w-2xl">
         <Link href="/settings/integrations">
-          <Card className="p-6 hover:border-blue-300 transition-colors cursor-pointer">
+          <Card className="p-6 hover:border-indigo-300 transition-colors cursor-pointer">
             <Database className="w-8 h-8 text-green-500 mb-3" />
             <h3 className="text-lg font-medium">Integrations</h3>
             <p className="text-zinc-500 text-sm mt-1">
@@ -63,7 +63,7 @@ export default function SettingsPage() {
         </Link>
         {showBilling && (
           <Link href="/settings/billing">
-            <Card className="p-6 hover:border-blue-300 transition-colors cursor-pointer">
+            <Card className="p-6 hover:border-indigo-300 transition-colors cursor-pointer">
               <CreditCard className="w-8 h-8 text-blue-500 mb-3" />
               <h3 className="text-lg font-medium">Billing</h3>
               <p className="text-zinc-500 text-sm mt-1">
