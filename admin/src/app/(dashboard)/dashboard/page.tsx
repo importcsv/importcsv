@@ -283,21 +283,30 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Usage bar (cloud mode) */}
+      {/* Usage bar */}
       {features.usageLimits && usage?.import_limit && (
         <div className="bg-white border border-zinc-200 rounded-lg p-5 mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h2 className="text-lg font-medium text-zinc-900">Usage</h2>
-              <p className="text-sm text-zinc-500">
-                {usage.import_count} / {usage.import_limit} free imports
-              </p>
-            </div>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-sm font-medium text-zinc-900">Monthly Usage</h2>
             {subscription?.plan_tier === "free" && (
-              <Button onClick={handleUpgrade} className="bg-indigo-500 hover:bg-indigo-600">
+              <Button
+                onClick={handleUpgrade}
+                size="sm"
+                className="bg-indigo-500 hover:bg-indigo-600"
+              >
                 <Sparkles className="w-4 h-4 mr-2" />
-                Upgrade to Pro
+                Upgrade
               </Button>
+            )}
+          </div>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm text-zinc-600">
+              <span className="font-semibold text-zinc-900">{usage.import_count}</span>
+              {" / "}
+              {usage.import_limit} imports
+            </p>
+            {resetDate && (
+              <p className="text-xs text-zinc-400">Resets {resetDate}</p>
             )}
           </div>
           <Progress value={usagePercent} className="h-2" />
