@@ -37,11 +37,67 @@ type SubscriptionData = {
   plan_tier: string;
 };
 
+type ImporterActivity = {
+  id: string;
+  name: string;
+  importCount: number;
+  rowCount: number;
+  lastImportAt: string | null;
+};
+
 // Allowed domains for checkout redirects (security: prevent open redirect)
 const ALLOWED_CHECKOUT_HOSTS = [
   "checkout.stripe.com",
   "billing.stripe.com",
 ];
+
+const getResetDate = (period: string): string => {
+  if (!period) return "";
+  const [year, month] = period.split("-").map(Number);
+  const nextMonth = month === 12 ? 1 : month + 1;
+  const nextYear = month === 12 ? year + 1 : year;
+  const resetDate = new Date(nextYear, nextMonth - 1, 1);
+  return resetDate.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+};
+
+const calculateImporterActivity = (
+  imports: ImportData[],
+  importersList: Array<{ id: string; name: string }>
+): ImporterActivity[] => {
+  const activityMap = new Map<string, ImporterActivity>();
+
+  // Initialize with all importers
+  importersList.forEach((imp) => {
+    activityMap.set(imp.id, {
+      id: imp.id,
+      name: imp.name,
+      importCount: 0,
+      rowCount: 0,
+      lastImportAt: null,
+    });
+  });
+
+  // Aggregate import data
+  imports.forEach((imp) => {
+    if (!imp.importer_id) return;
+    const activity = activityMap.get(imp.importer_id);
+    if (activity) {
+      activity.importCount += 1;
+      activity.rowCount += imp.row_count || 0;
+      if (!activity.lastImportAt || imp.created_at > activity.lastImportAt) {
+        activity.lastImportAt = imp.created_at;
+      }
+    }
+  });
+
+  // Sort by import count descending
+  return Array.from(activityMap.values()).sort(
+    (a, b) => b.importCount - a.importCount
+  );
+};
 
 export default function DashboardPage() {
   const [usage, setUsage] = useState<UsageData | null>(null);
