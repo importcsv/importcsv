@@ -20,15 +20,20 @@ export function CrispWidget() {
     }
 
     // Skip in development unless explicitly enabled
-    // if (process.env.NODE_ENV !== "production") {
-    //   if (process.env.NODE_ENV === "development") {
-    //     console.log("Crisp: Skipping initialization in development");
-    //   }
-    //   return;
-    // }
+    if (process.env.NODE_ENV !== "production") {
+      if (process.env.NODE_ENV === "development") {
+        console.log("Crisp: Skipping initialization in development");
+      }
+      return;
+    }
 
     // Initialize Crisp
     if (typeof window !== "undefined") {
+      // Prevent duplicate initialization (React 18 Strict Mode)
+      if (document.querySelector('script[src="https://client.crisp.chat/l.js"]')) {
+        return;
+      }
+
       try {
         window.$crisp = [];
         window.CRISP_WEBSITE_ID = websiteId;
