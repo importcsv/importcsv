@@ -20,7 +20,8 @@ WORKDIR /app
 # Client-side URL must be accessible from browser
 ENV NEXT_PUBLIC_BACKEND_URL=https://api.importcsv.com
 # HelpScout support widget (cloud only)
-ENV NEXT_PUBLIC_HELPSCOUT_BEACON_ID=fee8d008-7eda-451a-9cd9-123afea2133b
+ENV NEXT_PUBLIC_CRISP_WEBSITE_ID=414e970e-7407-43c4-ba2a-2f178843a8eb
+ENV NEXT_PUBLIC_POSTHOG_KEY=phc_LkCjHOTsu2RZoYxnyPWEbycR8nFJlGZgtnl4bDQIws6
 ENV NEXT_PUBLIC_IMPORTCSV_CLOUD=true
 # Copy package files
 COPY admin/package.json admin/package-lock.json ./
