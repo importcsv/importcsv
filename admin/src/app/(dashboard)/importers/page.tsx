@@ -426,7 +426,7 @@ Oliver,Lee,oliver@example.com,38,2021-05-20`
             {fields.length > 0 ? (
               <div className="rounded-md border overflow-hidden">
                 <table className="w-full text-left">
-                  <thead className="bg-gray-50 text-gray-700">
+                  <thead className="bg-zinc-50 text-zinc-700">
                     <tr>
                       <th className="px-4 py-3 text-base font-medium">Column Name</th>
                       <th className="px-4 py-3 text-base font-medium">Format</th>
@@ -440,14 +440,14 @@ Oliver,Lee,oliver@example.com,38,2021-05-20`
                       <tr key={field.name} className="bg-white">
                         <td className="px-4 py-3 text-base font-medium">
                           {field.display_name || field.name}
-                          <div className="text-sm text-gray-500">{field.name}</div>
+                          <div className="text-sm text-zinc-500">{field.name}</div>
                         </td>
                         <td className="px-4 py-3 text-base">{field.type}</td>
                         <td className="px-4 py-3 text-base">
                           {field.required ? (
                             <span className="text-red-600 font-medium">Yes</span>
                           ) : (
-                            <span className="text-gray-500">No</span>
+                            <span className="text-zinc-500">No</span>
                           )}
                         </td>
                         <td className="px-4 py-3 text-base">{field.description || '-'}</td>
@@ -456,7 +456,7 @@ Oliver,Lee,oliver@example.com,38,2021-05-20`
                             variant="ghost"
                             size="sm"
                             onClick={() => removeFieldHandler(field.name)}
-                            className="text-gray-500 hover:text-red-600"
+                            className="text-zinc-500 hover:text-red-600"
                           >
                             Remove
                           </Button>
@@ -467,7 +467,7 @@ Oliver,Lee,oliver@example.com,38,2021-05-20`
                 </table>
               </div>
             ) : (
-              <div className="text-center py-6 text-gray-500 bg-gray-50 rounded-md border border-dashed">
+              <div className="text-center py-6 text-zinc-500 bg-zinc-50 rounded-md border border-dashed">
                 <p className="text-base">No columns defined yet</p>
                 <p className="text-sm mt-1">Add columns to define your importer structure</p>
               </div>
@@ -522,7 +522,7 @@ Oliver,Lee,oliver@example.com,38,2021-05-20`
                     required
                     className="text-base py-5"
                   />
-                  <p className="text-sm text-gray-500">Input the column name exactly as in your CSV or Excel file.</p>
+                  <p className="text-sm text-zinc-500">Input the column name exactly as in your CSV or Excel file.</p>
                 </div>
 
                 {/* Display Name */}
@@ -535,7 +535,7 @@ Oliver,Lee,oliver@example.com,38,2021-05-20`
                     value={newField.display_name}
                     onChange={handleFieldInputChange}
                   />
-                  <p className="text-sm text-gray-500">Optional display name. Users will see this name when using the Importer. If you leave this blank, we will use the column name.</p>
+                  <p className="text-sm text-zinc-500">Optional display name. Users will see this name when using the Importer. If you leave this blank, we will use the column name.</p>
                 </div>
 
                 {/* Description */}
@@ -548,7 +548,7 @@ Oliver,Lee,oliver@example.com,38,2021-05-20`
                     value={newField.description || ''}
                     onChange={handleFieldInputChange}
                   />
-                  <p className="text-sm text-gray-500">Users will see this description when using the Importer.</p>
+                  <p className="text-sm text-zinc-500">Users will see this description when using the Importer.</p>
                 </div>
 
                 {/* Example */}
@@ -561,7 +561,7 @@ Oliver,Lee,oliver@example.com,38,2021-05-20`
                     value={newField.example || ''}
                     onChange={handleFieldInputChange}
                   />
-                  <p className="text-sm text-gray-500">An example of content for this column.</p>
+                  <p className="text-sm text-zinc-500">An example of content for this column.</p>
                 </div>
 
                 {/* Validation Type */}
@@ -584,7 +584,7 @@ Oliver,Lee,oliver@example.com,38,2021-05-20`
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-zinc-500">
                     {COLUMN_TYPES.find(t => t.value === newField.type)?.description || 'Select a validation format'}
                   </p>
                 </div>
@@ -620,7 +620,7 @@ Oliver,Lee,oliver@example.com,38,2021-05-20`
                       value={newField.validation_format || ''}
                       onChange={handleFieldInputChange}
                     />
-                    <p className="text-sm text-gray-500">Comma separated list of options</p>
+                    <p className="text-sm text-zinc-500">Comma separated list of options</p>
                   </div>
                 )}
 
@@ -634,7 +634,7 @@ Oliver,Lee,oliver@example.com,38,2021-05-20`
                       value={newField.validation_format || ''}
                       onChange={handleFieldInputChange}
                     />
-                    <p className="text-sm text-gray-500">Enter a valid regular expression pattern</p>
+                    <p className="text-sm text-zinc-500">Enter a valid regular expression pattern</p>
                   </div>
                 )}
 
@@ -648,7 +648,7 @@ Oliver,Lee,oliver@example.com,38,2021-05-20`
                     value={newField.validation_error_message || ''}
                     onChange={handleFieldInputChange}
                   />
-                  <p className="text-sm text-gray-500">Enter a custom error to show users when their data doesn't meet the validation format. If you leave this blank, we will show a standard error message such as 'Not a valid number'.</p>
+                  <p className="text-sm text-zinc-500">Enter a custom error to show users when their data doesn't meet the validation format. If you leave this blank, we will show a standard error message such as 'Not a valid number'.</p>
                 </div>
 
                 {/* Toggle Options */}
@@ -661,7 +661,7 @@ Oliver,Lee,oliver@example.com,38,2021-05-20`
                     />
                     <Label htmlFor="must_match">Must be matched</Label>
                   </div>
-                  <p className="text-sm text-gray-500 pl-7">Require that users must match this column to a column in their imported data.</p>
+                  <p className="text-sm text-zinc-500 pl-7">Require that users must match this column to a column in their imported data.</p>
 
                   <div className="flex items-center space-x-2">
                     <Switch
@@ -713,9 +713,9 @@ Oliver,Lee,oliver@example.com,38,2021-05-20`
 
   // --- Main Render ---
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Importers</h1>
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Importers</h1>
 
         <div className="flex gap-2">
           {/* Create Importer Button */}
@@ -729,8 +729,8 @@ Oliver,Lee,oliver@example.com,38,2021-05-20`
       </div>
 
       {/* Loading and Error States */}
-      {isLoading && <p className="text-gray-500">Loading importers...</p>}
-      {error && <p className="text-red-500">Error: {error}</p>}
+      {isLoading && <p className="text-zinc-500 text-sm">Loading importers...</p>}
+      {error && <p className="text-red-500 text-sm">Error: {error}</p>}
 
       {/* Importers Table */}
       {!isLoading && !error && (
@@ -748,48 +748,50 @@ Oliver,Lee,oliver@example.com,38,2021-05-20`
         ) : (
         <AlertDialog>
           <AlertDialogTrigger className="hidden" />
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="text-base">Name</TableHead>
-                <TableHead className="text-right text-base">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {importers.map((importer) => (
-                <TableRow key={importer.id}>
-                  <TableCell className="py-4">
-                    <a
-                      href={`/importers/${importer.id}`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        router.push(`/importers/${importer.id}`);
-                      }}
-                      className="text-blue-600 hover:text-blue-800 hover:underline font-medium text-lg"
-                    >
-                      {importer.name}
-                    </a>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end space-x-3">
-
-                    {/* Delete Button Trigger */}
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className='border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 font-medium'
-                        onClick={() => setImporterToDelete(importer.id)}
-                      >
-                        Delete
-                      </Button>
-                    </AlertDialogTrigger>
-                    </div>
-                  </TableCell>
+          <div className="bg-white border border-zinc-200 rounded-lg overflow-hidden">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-b border-zinc-200 bg-zinc-50/50">
+                  <TableHead className="text-sm font-medium text-zinc-500">Name</TableHead>
+                  <TableHead className="text-right text-sm font-medium text-zinc-500">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {importers.map((importer) => (
+                  <TableRow key={importer.id} className="border-b border-zinc-100 hover:bg-zinc-50/50">
+                    <TableCell className="py-4">
+                      <a
+                        href={`/importers/${importer.id}`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          router.push(`/importers/${importer.id}`);
+                        }}
+                        className="text-indigo-600 hover:text-indigo-700 font-medium text-sm"
+                      >
+                        {importer.name}
+                      </a>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end space-x-3">
+
+                      {/* Delete Button Trigger */}
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className='border-red-200 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 text-xs font-medium'
+                          onClick={() => setImporterToDelete(importer.id)}
+                        >
+                          Delete
+                        </Button>
+                      </AlertDialogTrigger>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
 
           {/* Delete Confirmation Dialog Content */}
           <AlertDialogContent>

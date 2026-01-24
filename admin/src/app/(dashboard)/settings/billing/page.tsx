@@ -171,7 +171,7 @@ export default function BillingPage() {
   if (isLoading) {
     return (
       <div className="p-8">
-        <p className="text-gray-500">Loading billing information...</p>
+        <p className="text-zinc-500">Loading billing information...</p>
       </div>
     );
   }
@@ -201,7 +201,7 @@ export default function BillingPage() {
     <div className="p-8 max-w-4xl">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Billing</h1>
-        <p className="text-gray-500 mt-1">Manage your subscription and usage</p>
+        <p className="text-zinc-500 mt-1">Manage your subscription and usage</p>
       </div>
 
       {/* Grace Period Warning */}
@@ -226,8 +226,8 @@ export default function BillingPage() {
       {/* Trial Status Banner */}
       {subscription.is_trialing && (
         <Alert className="mb-6 border-blue-200 bg-blue-50">
-          <Check className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-800">
+          <Check className="h-4 w-4 text-indigo-600" />
+          <AlertDescription className="text-indigo-700">
             <strong>You&apos;re on a free trial!</strong>{" "}
             {subscription.trial_days_remaining !== null && subscription.trial_days_remaining > 0 ? (
               <>
@@ -237,7 +237,7 @@ export default function BillingPage() {
                     Add a payment method to continue after your trial.
                     <Button
                       variant="link"
-                      className="text-blue-800 underline p-0 h-auto ml-2"
+                      className="text-indigo-700 underline p-0 h-auto ml-2"
                       onClick={handleAddPaymentMethod}
                       disabled={upgrading}
                     >
@@ -254,7 +254,7 @@ export default function BillingPage() {
                     Add a payment method now to keep your access.
                     <Button
                       variant="link"
-                      className="text-blue-800 underline p-0 h-auto ml-2"
+                      className="text-indigo-700 underline p-0 h-auto ml-2"
                       onClick={handleAddPaymentMethod}
                       disabled={upgrading}
                     >
@@ -284,10 +284,10 @@ export default function BillingPage() {
             <p className="text-2xl font-bold capitalize mt-1">
               {subscription.tier}
               {subscription.is_trialing && (
-                <span className="text-sm font-normal text-blue-600 ml-2">(Trial)</span>
+                <span className="text-sm font-normal text-indigo-600 ml-2">(Trial)</span>
               )}
               {subscription.tier !== "free" && !subscription.is_trialing && (
-                <span className="text-sm font-normal text-gray-500 ml-2">
+                <span className="text-sm font-normal text-zinc-500 ml-2">
                   ${subscription.tier === "pro" ? "49" : "149"}/month
                 </span>
               )}
@@ -312,14 +312,14 @@ export default function BillingPage() {
                 {subscription.usage.import_limit.toLocaleString()}
               </span>
             </div>
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-2 bg-zinc-200 rounded-full overflow-hidden">
               <div
                 className={`h-full transition-all ${
                   usagePercent >= 90
                     ? "bg-red-500"
                     : usagePercent >= 70
                     ? "bg-yellow-500"
-                    : "bg-blue-500"
+                    : "bg-indigo-500"
                 }`}
                 style={{ width: `${Math.min(usagePercent, 100)}%` }}
               />
@@ -327,7 +327,7 @@ export default function BillingPage() {
           </div>
         )}
 
-        <div className="mt-4 text-sm text-gray-500">
+        <div className="mt-4 text-sm text-zinc-500">
           Max {subscription.limits.max_rows_per_import.toLocaleString()} rows per import
         </div>
       </Card>
@@ -338,7 +338,7 @@ export default function BillingPage() {
           <Card className="p-6 border-blue-200">
             <h3 className="text-lg font-semibold">Pro</h3>
             <p className="text-3xl font-bold mt-2">
-              $49<span className="text-sm font-normal text-gray-500">/mo</span>
+              $49<span className="text-sm font-normal text-zinc-500">/mo</span>
             </p>
             <ul className="mt-4 space-y-2 text-sm">
               <li className="flex items-center gap-2">
@@ -366,14 +366,14 @@ export default function BillingPage() {
               {upgrading ? "Processing..." : subscription.is_eligible_for_trial ? "Start Free Trial" : "Upgrade to Pro"}
             </Button>
             {subscription.is_eligible_for_trial && (
-              <p className="text-xs text-center text-gray-500 mt-2">14-day free trial, no credit card required</p>
+              <p className="text-xs text-center text-zinc-500 mt-2">14-day free trial, no credit card required</p>
             )}
           </Card>
 
           <Card className="p-6 border-purple-200">
             <h3 className="text-lg font-semibold">Business</h3>
             <p className="text-3xl font-bold mt-2">
-              $149<span className="text-sm font-normal text-gray-500">/mo</span>
+              $149<span className="text-sm font-normal text-zinc-500">/mo</span>
             </p>
             <ul className="mt-4 space-y-2 text-sm">
               <li className="flex items-center gap-2">
@@ -402,7 +402,7 @@ export default function BillingPage() {
               {upgrading ? "Processing..." : subscription.is_eligible_for_trial ? "Start Free Trial" : "Upgrade to Business"}
             </Button>
             {subscription.is_eligible_for_trial && (
-              <p className="text-xs text-center text-gray-500 mt-2">14-day free trial, no credit card required</p>
+              <p className="text-xs text-center text-zinc-500 mt-2">14-day free trial, no credit card required</p>
             )}
           </Card>
         </div>
@@ -412,7 +412,7 @@ export default function BillingPage() {
         <div className="space-y-4">
           <Card className="p-6">
             <h3 className="text-lg font-semibold">Need more?</h3>
-            <p className="text-gray-500 mt-1">
+            <p className="text-zinc-500 mt-1">
               {subscription.is_trialing
                 ? "Try Business tier with unlimited imports and higher row limits."
                 : "Upgrade to Business for unlimited imports and higher row limits."
@@ -427,16 +427,16 @@ export default function BillingPage() {
             </Button>
           </Card>
 
-          <Card className="p-6 border-gray-200">
+          <Card className="p-6 border-zinc-200">
             <h3 className="text-lg font-semibold">{subscription.is_trialing ? "Cancel Trial" : "Cancel Subscription"}</h3>
-            <p className="text-gray-500 mt-1">
+            <p className="text-zinc-500 mt-1">
               Downgrade to the free tier with limited imports.
             </p>
-            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+            <div className="mt-4 p-4 bg-zinc-50 rounded-lg">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">Free Plan</p>
-                  <p className="text-sm text-gray-500">100 imports/month, 10,000 rows per import</p>
+                  <p className="text-sm text-zinc-500">100 imports/month, 10,000 rows per import</p>
                 </div>
                 {subscription.is_trialing ? (
                   <Button
@@ -465,20 +465,20 @@ export default function BillingPage() {
       )}
 
       {subscription.tier === "business" && (
-        <Card className="p-6 border-gray-200">
+        <Card className="p-6 border-zinc-200">
           <h3 className="text-lg font-semibold">Change Plan</h3>
-          <p className="text-gray-500 mt-1">
+          <p className="text-zinc-500 mt-1">
             {subscription.is_trialing
               ? "Want to try a different plan or cancel your trial?"
               : "Need fewer features? You can downgrade or cancel your subscription."
             }
           </p>
           <div className="mt-4 space-y-3">
-            <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="p-4 bg-zinc-50 rounded-lg">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">Pro Plan</p>
-                  <p className="text-sm text-gray-500">{subscription.is_trialing ? "Switch your trial" : "$49/month"}</p>
+                  <p className="text-sm text-zinc-500">{subscription.is_trialing ? "Switch your trial" : "$49/month"}</p>
                 </div>
                 {subscription.is_trialing ? (
                   <Button
@@ -500,16 +500,16 @@ export default function BillingPage() {
                   </Button>
                 )}
               </div>
-              <ul className="mt-3 text-sm text-gray-600 space-y-1">
+              <ul className="mt-3 text-sm text-zinc-600 space-y-1">
                 <li>2,000 imports/month (vs unlimited)</li>
                 <li>100,000 rows per import (vs 500,000)</li>
               </ul>
             </div>
-            <div className="p-4 bg-gray-50 rounded-lg">
+            <div className="p-4 bg-zinc-50 rounded-lg">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="font-medium">Free Plan</p>
-                  <p className="text-sm text-gray-500">100 imports/month, 10,000 rows per import</p>
+                  <p className="text-sm text-zinc-500">100 imports/month, 10,000 rows per import</p>
                 </div>
                 {subscription.is_trialing ? (
                   <Button

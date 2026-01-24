@@ -111,7 +111,7 @@ export default function EmbedClient({
 
   return (
     <div
-      className={`min-h-screen ${darkMode ? "bg-gray-900" : "bg-white"}`}
+      className={`min-h-screen ${darkMode ? "bg-zinc-900" : "bg-white"}`}
       style={{ padding: hideHeader ? 0 : undefined }}
     >
       <CSVImporter

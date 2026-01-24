@@ -131,7 +131,7 @@ export default function IntegrationsPage() {
       case "supabase":
         return <Database className="w-4 h-4 text-green-600" />;
       default:
-        return <Database className="w-4 h-4 text-gray-600" />;
+        return <Database className="w-4 h-4 text-zinc-600" />;
     }
   };
 
@@ -154,7 +154,7 @@ export default function IntegrationsPage() {
       <div className="flex items-center gap-2 mb-6">
         <Link
           href="/settings"
-          className="text-blue-600 hover:text-blue-800 flex items-center"
+          className="text-indigo-600 hover:text-indigo-700 flex items-center"
         >
           <ChevronLeft className="h-4 w-4 mr-1" />
           Settings
@@ -164,7 +164,7 @@ export default function IntegrationsPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Integrations</h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-zinc-500 mt-1">
             Connect to external services to automatically deliver imported data
           </p>
         </div>
@@ -177,7 +177,7 @@ export default function IntegrationsPage() {
       {/* Content */}
       {isLoading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+          <Loader2 className="w-6 h-6 animate-spin text-zinc-400" />
         </div>
       ) : error ? (
         <Card className="p-6">
@@ -185,9 +185,9 @@ export default function IntegrationsPage() {
         </Card>
       ) : integrations.length === 0 ? (
         <Card className="p-12 text-center">
-          <Database className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+          <Database className="w-12 h-12 mx-auto text-zinc-400 mb-4" />
           <h3 className="text-lg font-medium">No integrations yet</h3>
-          <p className="text-gray-500 mt-1 mb-4">
+          <p className="text-zinc-500 mt-1 mb-4">
             Add a database integration to automatically send imported data to your database.
           </p>
           <Button onClick={handleAdd}>
@@ -216,7 +216,7 @@ export default function IntegrationsPage() {
                     </div>
                   </TableCell>
                   <TableCell>{getTypeBadge(integration.type)}</TableCell>
-                  <TableCell className="text-gray-500">
+                  <TableCell className="text-zinc-500">
                     {formatDate(integration.created_at)}
                   </TableCell>
                   <TableCell>

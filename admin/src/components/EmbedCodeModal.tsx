@@ -151,7 +151,7 @@ export default function EmbedCodeModal({
             {/* Parent Origin - Optional for no-code */}
             <div className="space-y-2">
               <Label htmlFor="parent-origin">
-                Your Website URL <span className="text-gray-400">(optional)</span>
+                Your Website URL <span className="text-zinc-400">(optional)</span>
               </Label>
               <Input
                 id="parent-origin"
@@ -169,12 +169,12 @@ export default function EmbedCodeModal({
                 </p>
               )}
               {isPlaceholderOrigin && (
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-zinc-500">
                   Leave empty for no-code embeds. Data goes directly to your configured destination (Supabase/webhook).
                 </p>
               )}
               {isValidParentOrigin && (
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-zinc-500">
                   Import data will also be sent to your page via postMessage.
                 </p>
               )}
@@ -184,7 +184,7 @@ export default function EmbedCodeModal({
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="dark-mode">Dark Mode</Label>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-zinc-500">
                   Use dark theme for the importer
                 </p>
               </div>
@@ -199,7 +199,7 @@ export default function EmbedCodeModal({
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="return-data">Return Row Data</Label>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-zinc-500">
                   Include full row data in completion message
                 </p>
               </div>
@@ -214,7 +214,7 @@ export default function EmbedCodeModal({
             <div className="flex items-center justify-between">
               <div>
                 <Label htmlFor="hide-header">Compact Layout</Label>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-zinc-500">
                   Remove extra padding around the importer
                 </p>
               </div>
@@ -277,7 +277,7 @@ export default function EmbedCodeModal({
                 )}
               </Button>
             </div>
-            <pre className="bg-gray-900 text-gray-100 p-4 rounded-md text-xs overflow-x-auto max-h-64">
+            <pre className="bg-zinc-900 text-zinc-100 p-4 rounded-md text-xs overflow-x-auto max-h-64">
               <code>{iframeCode}</code>
             </pre>
           </div>
@@ -289,13 +289,13 @@ export default function EmbedCodeModal({
                 href={embedUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 flex items-center text-sm"
+                className="text-indigo-600 hover:text-indigo-700 flex items-center text-sm"
               >
                 <ExternalLink className="h-4 w-4 mr-1" />
                 Open embed page in new tab
               </a>
             ) : (
-              <p className="text-sm text-gray-400 flex items-center">
+              <p className="text-sm text-zinc-400 flex items-center">
                 <ExternalLink className="h-4 w-4 mr-1" />
                 Enter a valid origin to preview
               </p>

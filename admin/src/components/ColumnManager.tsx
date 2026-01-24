@@ -80,17 +80,17 @@ export default function ColumnManager({
       <div className="border rounded-md overflow-hidden">
         <table className="w-full">
           <thead>
-            <tr className="bg-gray-50 border-b">
-              <th className="py-3 px-4 text-left text-sm font-medium text-gray-600 w-12">ORDER</th>
-              <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">COLUMN NAME</th>
-              <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">DISPLAY NAME</th>
-              <th className="py-3 px-4 text-left text-sm font-medium text-gray-600">FORMAT</th>
-              <th className="py-3 px-4 text-right text-sm font-medium text-gray-600">ACTIONS</th>
+            <tr className="bg-zinc-50 border-b">
+              <th className="py-3 px-4 text-left text-sm font-medium text-zinc-600 w-12">ORDER</th>
+              <th className="py-3 px-4 text-left text-sm font-medium text-zinc-600">COLUMN NAME</th>
+              <th className="py-3 px-4 text-left text-sm font-medium text-zinc-600">DISPLAY NAME</th>
+              <th className="py-3 px-4 text-left text-sm font-medium text-zinc-600">FORMAT</th>
+              <th className="py-3 px-4 text-right text-sm font-medium text-zinc-600">ACTIONS</th>
             </tr>
           </thead>
           <tbody>
             {columns.map((column, index) => (
-              <tr key={index} className="border-b hover:bg-gray-50">
+              <tr key={index} className="border-b hover:bg-zinc-50">
                 <td className="py-3 px-4 text-sm">{index + 1}</td>
                 <td className="py-3 px-4 text-sm font-medium">{column.name}</td>
                 <td className="py-3 px-4 text-sm">{column.display_name || column.name}</td>
@@ -147,7 +147,7 @@ export default function ColumnManager({
                         </DialogHeader>
                         <div className="py-4">
                           <p>Are you sure you want to delete the column "{column.name}"?</p>
-                          <p className="text-gray-500 mt-2">This action cannot be undone.</p>
+                          <p className="text-zinc-500 mt-2">This action cannot be undone.</p>
                         </div>
                         <div className="flex justify-end space-x-2">
                           <Button 
@@ -174,7 +174,7 @@ export default function ColumnManager({
             ))}
             {columns.length === 0 && (
               <tr>
-                <td colSpan={5} className="py-6 text-center text-sm text-gray-500">
+                <td colSpan={5} className="py-6 text-center text-sm text-zinc-500">
                   No columns defined. Click "Add Column" to create one.
                 </td>
               </tr>

@@ -43,14 +43,14 @@ export default function ImportSettings({
             <Label className="text-base">
               Include All Unmatched Columns in Import
             </Label>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-zinc-500 mt-1">
               Enable this to import all columns uploaded by users, even if
               they are unmatched. This is useful if users have a variable
               number of additional columns they want to import.
             </p>
             <Link
               href="#"
-              className="text-blue-600 hover:text-blue-800 text-sm flex items-center mt-1"
+              className="text-indigo-600 hover:text-indigo-700 text-sm flex items-center mt-1"
             >
               Importer docs <ExternalLink className="ml-1 h-3 w-3" />
             </Link>
@@ -65,14 +65,14 @@ export default function ImportSettings({
         <div className="flex items-start justify-between pt-4 border-t">
           <div>
             <Label className="text-base">Filter Invalid Rows</Label>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-zinc-500 mt-1">
               Enable to prevent rows that fail any column validation
               criteria being imported. If disabled, users will be warned
               about invalid rows, but they will still be imported.
             </p>
             <Link
               href="#"
-              className="text-blue-600 hover:text-blue-800 text-sm flex items-center mt-1"
+              className="text-indigo-600 hover:text-indigo-700 text-sm flex items-center mt-1"
             >
               Importer docs <ExternalLink className="ml-1 h-3 w-3" />
             </Link>
@@ -89,7 +89,7 @@ export default function ImportSettings({
             <Label className="text-base">
               Disable importing all data if there are invalid rows
             </Label>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-zinc-500 mt-1">
               Enable to prevent importing all data if there are any
               invalid rows. If disabled, users will be warned about errors
               and invalid rows, but data will still be imported.
@@ -107,7 +107,7 @@ export default function ImportSettings({
             <Label htmlFor="dark-mode" className="text-base">
               Dark Mode
             </Label>
-            <p className="text-sm text-gray-500 mt-1">
+            <p className="text-sm text-zinc-500 mt-1">
               Enable dark mode for the CSV importer UI. This will apply
               a dark theme to the importer interface when users interact with it.
             </p>

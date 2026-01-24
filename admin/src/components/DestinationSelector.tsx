@@ -314,7 +314,7 @@ export function DestinationSelector({
       case "supabase":
         return <Database className="w-4 h-4 text-green-600" />;
       case "webhook":
-        return <Webhook className="w-4 h-4 text-blue-600" />;
+        return <Webhook className="w-4 h-4 text-indigo-600" />;
       default:
         return null;
     }
@@ -367,7 +367,7 @@ export function DestinationSelector({
         <div className="space-y-2">
           <Label htmlFor="integration-select">Integration</Label>
           {isLoading ? (
-            <div className="flex items-center gap-2 text-gray-500 text-sm py-2">
+            <div className="flex items-center gap-2 text-zinc-500 text-sm py-2">
               <Loader2 className="w-4 h-4 animate-spin" />
               Loading integrations...
             </div>
@@ -381,7 +381,7 @@ export function DestinationSelector({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__none__">
-                  <span className="text-gray-500">
+                  <span className="text-zinc-500">
                     No integration (manual export only)
                   </span>
                 </SelectItem>
@@ -406,11 +406,11 @@ export function DestinationSelector({
           )}
 
           {integrations.length === 0 && !isLoading && (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-zinc-500">
               No integrations configured.{" "}
               <Link
                 href="/settings/integrations"
-                className="text-blue-600 hover:text-blue-800"
+                className="text-indigo-600 hover:text-indigo-700"
               >
                 <Plus className="inline w-3 h-3" /> Add one in Settings
               </Link>
@@ -481,7 +481,7 @@ export function DestinationSelector({
                 />
 
                 {isImported && (
-                  <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border">
+                  <div className="text-sm text-zinc-600 bg-zinc-50 p-3 rounded-lg border">
                     Next: Configure column mapping in the <strong>Columns</strong> tab
                   </div>
                 )}
@@ -492,7 +492,7 @@ export function DestinationSelector({
             {value.tableName && value.supabaseColumns.length > 0 && (
               <Collapsible>
                 <div className="pt-4 border-t">
-                  <CollapsibleTrigger className="group flex items-center gap-2 text-sm font-medium hover:text-blue-600 w-full">
+                  <CollapsibleTrigger className="group flex items-center gap-2 text-sm font-medium hover:text-indigo-600 w-full">
                     <ChevronRight className="w-4 h-4 transition-transform group-data-[state=open]:rotate-90" />
                     App-Provided Data
                     {value.contextColumns.length > 0 && (
@@ -521,7 +521,7 @@ export function DestinationSelector({
         {selectedIntegration?.type === "webhook" && value.integrationId && (
           <div className="pt-2 border-t">
             {isLoadingSecret ? (
-              <div className="flex items-center gap-2 text-gray-500 text-sm py-2">
+              <div className="flex items-center gap-2 text-zinc-500 text-sm py-2">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Loading webhook configuration...
               </div>
@@ -538,7 +538,7 @@ export function DestinationSelector({
 
         {/* Help text when no integration selected */}
         {!value.integrationId && !isLoading && integrations.length > 0 && (
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-zinc-500">
             Select an integration to automatically send imported data to
             Supabase or a webhook endpoint.
           </p>

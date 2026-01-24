@@ -53,29 +53,29 @@ export function ImportConfirmationModal({
         <div className="space-y-4 py-4">
           {/* From CSV section */}
           <div>
-            <div className="text-sm font-medium text-gray-700 mb-2">
-              From CSV <span className="font-normal text-gray-500">(users will map these)</span>
+            <div className="text-sm font-medium text-zinc-700 mb-2">
+              From CSV <span className="font-normal text-zinc-500">(users will map these)</span>
             </div>
             <ul className="space-y-1">
               {fromCsvColumns.map((col) => (
-                <li key={col.column_name} className="text-sm text-gray-600 font-mono">
+                <li key={col.column_name} className="text-sm text-zinc-600 font-mono">
                   • {col.column_name}
                 </li>
               ))}
               {fromCsvColumns.length === 0 && (
-                <li className="text-sm text-gray-400 italic">None</li>
+                <li className="text-sm text-zinc-400 italic">None</li>
               )}
             </ul>
           </div>
 
           {/* From your app section */}
           <div>
-            <div className="text-sm font-medium text-gray-700 mb-2">
-              From your app <span className="font-normal text-gray-500">(you&apos;ll pass these)</span>
+            <div className="text-sm font-medium text-zinc-700 mb-2">
+              From your app <span className="font-normal text-zinc-500">(you&apos;ll pass these)</span>
             </div>
             <ul className="space-y-1">
               {fromAppColumns.map((col) => (
-                <li key={col.column_name} className="text-sm text-gray-600 font-mono">
+                <li key={col.column_name} className="text-sm text-zinc-600 font-mono">
                   • {col.column_name}
                   {!col.is_nullable && (
                     <span className="text-orange-600 ml-1">(required)</span>
@@ -83,7 +83,7 @@ export function ImportConfirmationModal({
                 </li>
               ))}
               {fromAppColumns.length === 0 && (
-                <li className="text-sm text-gray-400 italic">None</li>
+                <li className="text-sm text-zinc-400 italic">None</li>
               )}
             </ul>
           </div>

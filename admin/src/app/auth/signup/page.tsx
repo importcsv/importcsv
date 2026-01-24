@@ -95,14 +95,14 @@ export default function SignUp() {
   // Show loading while checking auth to avoid flash of signup form
   if (authLoading || isAuthenticated) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <p className="text-gray-500">Loading...</p>
+      <div className="flex items-center justify-center min-h-screen bg-zinc-50">
+        <p className="text-zinc-500">Loading...</p>
       </div>
     );
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="flex items-center justify-center min-h-screen bg-zinc-50 dark:bg-zinc-900">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Create an Account</CardTitle>

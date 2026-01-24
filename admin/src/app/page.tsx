@@ -20,7 +20,7 @@ export default function Home() {
     <div className="flex items-center justify-center min-h-screen">
       <div className="text-center">
         <h1 className="text-2xl font-bold mb-4">ImportCSV Admin</h1>
-        <p className="text-gray-500">
+        <p className="text-zinc-500">
           {isLoading ? 'Loading...' : isAuthenticated ? 'Redirecting to dashboard...' : 'Redirecting to sign in...'}
         </p>
       </div>

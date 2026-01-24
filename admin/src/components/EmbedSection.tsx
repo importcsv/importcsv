@@ -101,7 +101,7 @@ export default function YourComponent() {
 
           <Link
             href="/docs/integration"
-            className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1"
+            className="text-sm text-indigo-600 hover:text-indigo-700 flex items-center gap-1"
           >
             View full documentation
             <ExternalLink className="h-3 w-3" />

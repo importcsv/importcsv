@@ -86,11 +86,11 @@ export function DestinationCard({
 
   if (!destinationType) {
     return (
-      <div className="border rounded-lg p-4 bg-gray-50">
+      <div className="border rounded-lg p-4 bg-zinc-50">
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-medium">No Destination</h3>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-zinc-500">
               Data will be returned to your frontend callback.
             </p>
           </div>
@@ -113,11 +113,11 @@ export function DestinationCard({
         </div>
         <div className="space-y-2 text-sm">
           <div>
-            <span className="text-gray-500">Integration:</span>{" "}
+            <span className="text-zinc-500">Integration:</span>{" "}
             <span className="font-medium">{integrationName}</span>
           </div>
           <div>
-            <span className="text-gray-500">Table:</span>{" "}
+            <span className="text-zinc-500">Table:</span>{" "}
             <span className="font-mono">{tableName}</span>
           </div>
         </div>
@@ -138,16 +138,16 @@ export function DestinationCard({
       <div className="space-y-4">
         {/* URL */}
         <div>
-          <Label className="text-xs text-gray-500">URL</Label>
+          <Label className="text-xs text-zinc-500">URL</Label>
           <div className="font-mono text-sm break-all">{webhookUrl}</div>
         </div>
 
         {/* Signing Secret (cloud mode) */}
         {signingSecret && (
           <div>
-            <Label className="text-xs text-gray-500">Signing Secret</Label>
+            <Label className="text-xs text-zinc-500">Signing Secret</Label>
             <div className="flex items-center gap-2">
-              <code className="font-mono text-sm bg-gray-100 px-2 py-1 rounded flex-1 overflow-hidden">
+              <code className="font-mono text-sm bg-zinc-100 px-2 py-1 rounded flex-1 overflow-hidden">
                 {showSecret ? signingSecret : "••••••••••••••••••••"}
               </code>
               <Button
@@ -193,11 +193,11 @@ export function DestinationCard({
 
         {/* Recent Deliveries */}
         <div>
-          <Label className="text-xs text-gray-500">Recent Deliveries</Label>
+          <Label className="text-xs text-zinc-500">Recent Deliveries</Label>
           {loadingDeliveries ? (
-            <p className="text-sm text-gray-400">Loading...</p>
+            <p className="text-sm text-zinc-400">Loading...</p>
           ) : deliveries.length === 0 ? (
-            <p className="text-sm text-gray-400">No deliveries yet</p>
+            <p className="text-sm text-zinc-400">No deliveries yet</p>
           ) : (
             <ul className="mt-1 space-y-1">
               {deliveries.map((d) => (
@@ -217,7 +217,7 @@ export function DestinationCard({
                         ? "[RETRY]"
                         : "[ERR]"}
                   </span>
-                  <span className="text-gray-500">
+                  <span className="text-zinc-500">
                     {formatDistanceToNow(new Date(d.created_at), {
                       addSuffix: true,
                     })}

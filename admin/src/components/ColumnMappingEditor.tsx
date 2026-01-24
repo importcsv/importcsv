@@ -219,7 +219,7 @@ export function ColumnMappingEditor({
       case "mapped":
         return <Check className="h-4 w-4 text-green-600" />;
       case "ignored":
-        return <MinusCircle className="h-4 w-4 text-gray-400" />;
+        return <MinusCircle className="h-4 w-4 text-zinc-400" />;
       case "unmapped":
         return <AlertTriangle className="h-4 w-4 text-amber-500" />;
     }

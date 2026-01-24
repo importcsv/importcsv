@@ -515,7 +515,7 @@ export default function NewImporterPage() {
     <div className="p-6">
       {/* Header with back button */}
       <div className="flex items-center space-x-2 mb-6">
-        <Link href="/importers" className="text-blue-600 hover:text-blue-800 flex items-center">
+        <Link href="/importers" className="text-indigo-600 hover:text-indigo-700 flex items-center">
           <ChevronLeft className="h-4 w-4 mr-1" />
           Back to list
         </Link>
@@ -524,7 +524,7 @@ export default function NewImporterPage() {
       {/* Page title */}
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Create New Importer</h1>
-        <p className="text-gray-500 mt-1">Define a new importer for your CSV imports.</p>
+        <p className="text-zinc-500 mt-1">Define a new importer for your CSV imports.</p>
       </div>
 
       {/* Step Indicator */}

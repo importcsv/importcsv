@@ -28,25 +28,25 @@ export default function CollapsibleSection({
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-6 py-4 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors"
+        className="w-full px-6 py-4 flex items-center justify-between bg-zinc-50 hover:bg-zinc-100 transition-colors"
       >
         <div className="flex items-center gap-3">
-          {icon && <div className="text-gray-600">{icon}</div>}
+          {icon && <div className="text-zinc-600">{icon}</div>}
           <div className="text-left">
             <div className="flex items-center gap-2">
               <h3 className="text-lg font-semibold">{title}</h3>
               {hasChanges && (
-                <span className="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full">
+                <span className="px-2 py-0.5 text-xs bg-blue-100 text-indigo-700 rounded-full">
                   Modified
                 </span>
               )}
             </div>
             {description && (
-              <p className="text-sm text-gray-600 mt-0.5">{description}</p>
+              <p className="text-sm text-zinc-600 mt-0.5">{description}</p>
             )}
           </div>
         </div>
-        <div className="text-gray-500">
+        <div className="text-zinc-500">
           {isOpen ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
         </div>
       </button>

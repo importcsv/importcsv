@@ -119,7 +119,7 @@ export function SupabaseTablePicker({
 
   const getDataTypeBadgeColor = (dataType: string): string => {
     if (dataType.includes("int") || dataType.includes("numeric") || dataType.includes("decimal")) {
-      return "bg-blue-100 text-blue-800";
+      return "bg-blue-100 text-indigo-700";
     }
     if (dataType.includes("char") || dataType.includes("text")) {
       return "bg-green-100 text-green-800";
@@ -131,12 +131,12 @@ export function SupabaseTablePicker({
       return "bg-yellow-100 text-yellow-800";
     }
     if (dataType.includes("uuid")) {
-      return "bg-gray-100 text-gray-800";
+      return "bg-zinc-100 text-zinc-800";
     }
     if (dataType.includes("json")) {
       return "bg-orange-100 text-orange-800";
     }
-    return "bg-gray-100 text-gray-800";
+    return "bg-zinc-100 text-zinc-800";
   };
 
   return (
@@ -167,7 +167,7 @@ export function SupabaseTablePicker({
             <AlertDescription>{error}</AlertDescription>
           </Alert>
         ) : isLoadingTables ? (
-          <div className="flex items-center gap-2 text-gray-500 text-sm py-2">
+          <div className="flex items-center gap-2 text-zinc-500 text-sm py-2">
             <Loader2 className="w-4 h-4 animate-spin" />
             Loading tables from Supabase...
           </div>
@@ -181,7 +181,7 @@ export function SupabaseTablePicker({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="__none__">
-                <div className="flex items-center gap-2 text-gray-500">
+                <div className="flex items-center gap-2 text-zinc-500">
                   <Database className="w-4 h-4" />
                   Select a table...
                 </div>
@@ -201,7 +201,7 @@ export function SupabaseTablePicker({
         )}
 
         {tables.length === 0 && !isLoadingTables && !error && (
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-zinc-500">
             No tables found. Make sure your Supabase project has tables in the
             public schema.
           </p>
@@ -213,28 +213,28 @@ export function SupabaseTablePicker({
         <div className="space-y-2">
           <Label>Table Schema</Label>
           {isLoadingSchema ? (
-            <div className="flex items-center gap-2 text-gray-500 text-sm py-2">
+            <div className="flex items-center gap-2 text-zinc-500 text-sm py-2">
               <Loader2 className="w-4 h-4 animate-spin" />
               Loading schema...
             </div>
           ) : schema ? (
             <Card className="p-0 overflow-hidden">
-              <div className="bg-gray-50 px-4 py-2 border-b">
-                <span className="text-sm font-medium text-gray-700">
+              <div className="bg-zinc-50 px-4 py-2 border-b">
+                <span className="text-sm font-medium text-zinc-700">
                   {schema.columns.length} columns
                 </span>
               </div>
               <div className="max-h-64 overflow-y-auto">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-50 sticky top-0">
+                  <thead className="bg-zinc-50 sticky top-0">
                     <tr>
-                      <th className="text-left px-4 py-2 font-medium text-gray-600">
+                      <th className="text-left px-4 py-2 font-medium text-zinc-600">
                         Column
                       </th>
-                      <th className="text-left px-4 py-2 font-medium text-gray-600">
+                      <th className="text-left px-4 py-2 font-medium text-zinc-600">
                         Type
                       </th>
-                      <th className="text-left px-4 py-2 font-medium text-gray-600">
+                      <th className="text-left px-4 py-2 font-medium text-zinc-600">
                         Nullable
                       </th>
                     </tr>
@@ -243,9 +243,9 @@ export function SupabaseTablePicker({
                     {schema.columns.map((col, idx) => (
                       <tr
                         key={col.column_name}
-                        className={idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"}
+                        className={idx % 2 === 0 ? "bg-white" : "bg-zinc-50/50"}
                       >
-                        <td className="px-4 py-2 font-mono text-gray-900">
+                        <td className="px-4 py-2 font-mono text-zinc-900">
                           {col.column_name}
                         </td>
                         <td className="px-4 py-2">
@@ -256,7 +256,7 @@ export function SupabaseTablePicker({
                             {col.data_type}
                           </Badge>
                         </td>
-                        <td className="px-4 py-2 text-gray-500">
+                        <td className="px-4 py-2 text-zinc-500">
                           {col.is_nullable ? "Yes" : "No"}
                         </td>
                       </tr>
@@ -266,7 +266,7 @@ export function SupabaseTablePicker({
               </div>
             </Card>
           ) : (
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-zinc-500">
               Could not load schema for this table.
             </p>
           )}

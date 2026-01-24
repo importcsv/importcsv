@@ -30,20 +30,20 @@ export function DestinationTypeCard({
         selected
           ? "border-blue-500 bg-blue-50"
           : disabled
-            ? "border-gray-200 bg-gray-50 cursor-not-allowed opacity-60"
-            : "border-gray-200 hover:border-gray-300 hover:bg-gray-50"
+            ? "border-zinc-200 bg-zinc-50 cursor-not-allowed opacity-60"
+            : "border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50"
       )}
     >
       {selected && (
-        <div className="absolute top-3 right-3 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+        <div className="absolute top-3 right-3 w-5 h-5 bg-indigo-500 rounded-full flex items-center justify-center">
           <span className="text-white text-xs">✓</span>
         </div>
       )}
       <div className="flex items-start gap-4">
         <div className="text-2xl">{icon}</div>
         <div>
-          <h3 className="font-semibold text-gray-900">{title}</h3>
-          <p className="text-sm text-gray-500 mt-1">{description}</p>
+          <h3 className="font-semibold text-zinc-900">{title}</h3>
+          <p className="text-sm text-zinc-500 mt-1">{description}</p>
           {disabled && disabledReason && (
             <p className="text-xs text-orange-600 mt-2">{disabledReason}</p>
           )}

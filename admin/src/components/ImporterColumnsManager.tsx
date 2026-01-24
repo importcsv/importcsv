@@ -46,7 +46,7 @@ export default function ImporterColumnsManager({
   return (
     <Card>
       <CardHeader>
-        <p className="text-sm text-gray-500">Define the columns for your CSV imports.</p>
+        <p className="text-sm text-zinc-500">Define the columns for your CSV imports.</p>
       </CardHeader>
       <CardContent>
         <ColumnManager

@@ -73,7 +73,7 @@ export function ImporterDetailHeader({
     <div className="space-y-4">
       <Link
         href="/importers"
-        className="text-blue-600 hover:text-blue-800 flex items-center text-sm"
+        className="text-indigo-600 hover:text-indigo-700 flex items-center text-sm"
       >
         <ChevronLeft className="h-4 w-4 mr-1" />
         Back to Importers

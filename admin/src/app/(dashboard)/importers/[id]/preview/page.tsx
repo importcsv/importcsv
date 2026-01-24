@@ -103,7 +103,7 @@ export default function ImporterPreviewPage() {
         <div className="mb-6">
           <Link
             href={`/importers/${params.id}`}
-            className="flex items-center text-sm text-gray-500 hover:text-gray-700"
+            className="flex items-center text-sm text-zinc-500 hover:text-zinc-700"
           >
             <ChevronLeft className="h-4 w-4 mr-1" />
             Back to importer
@@ -121,7 +121,7 @@ export default function ImporterPreviewPage() {
         <div className="mb-6">
           <Link
             href={`/importers/${params.id}`}
-            className="flex items-center text-sm text-gray-500 hover:text-gray-700"
+            className="flex items-center text-sm text-zinc-500 hover:text-zinc-700"
           >
             <ChevronLeft className="h-4 w-4 mr-1" />
             Back to importer
@@ -138,7 +138,7 @@ export default function ImporterPreviewPage() {
       <div className="mb-6">
         <Link
           href={`/importers/${params.id}`}
-          className="flex items-center text-sm text-gray-500 hover:text-gray-700"
+          className="flex items-center text-sm text-zinc-500 hover:text-zinc-700"
         >
           <ChevronLeft className="h-4 w-4 mr-1" />
           Back to importer

@@ -47,7 +47,7 @@ export function EmbedCodeBlock({ code, language = 'typescript' }: EmbedCodeBlock
           <Copy className="h-4 w-4" />
         )}
       </Button>
-      <pre className="bg-gray-900 text-gray-100 p-4 rounded-md font-mono text-sm overflow-x-auto">
+      <pre className="bg-zinc-900 text-zinc-100 p-4 rounded-md font-mono text-sm overflow-x-auto">
         <code data-language={language}>{code}</code>
       </pre>
     </div>
