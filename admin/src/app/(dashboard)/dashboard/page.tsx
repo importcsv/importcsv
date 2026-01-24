@@ -130,7 +130,9 @@ export default function DashboardPage() {
       // Enrich imports with importer names
       const enrichedImports = importsData.map((imp: ImportData) => ({
         ...imp,
-        importer_name: importerMap.get(imp.importer_id) || "Unknown",
+        importer_name: imp.importer_id
+          ? importerMap.get(imp.importer_id) || "Unknown"
+          : "Unknown",
       }));
 
       setRecentImports(enrichedImports.slice(0, 5));
