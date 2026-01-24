@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { usageApi, importsApi, billingApi, importersApi } from "@/utils/apiClient";
@@ -105,8 +104,6 @@ export default function DashboardPage() {
   const [recentImports, setRecentImports] = useState<ImportData[]>([]);
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [importers, setImporters] = useState<Array<{ id: string; name: string }>>([]);
-  const [allImports, setAllImports] = useState<ImportData[]>([]);
   const [importerActivity, setImporterActivity] = useState<ImporterActivity[]>([]);
 
   // Auth is handled by the layout - just load data on mount
@@ -123,8 +120,6 @@ export default function DashboardPage() {
         importersApi.getImporters(),
       ]);
       setUsage(usageData);
-      setImporters(importersData);
-      setAllImports(importsData);
 
       // Create lookup map for importer names
       const importerMap = new Map<string, string>();
@@ -228,13 +223,6 @@ export default function DashboardPage() {
   // Reset date from usage period
   const resetDate = usage?.period ? getResetDate(usage.period) : "";
 
-  // Calculate success rate from recent imports
-  const completedImports = recentImports.filter((i) => i.status === "completed").length;
-  const successRate =
-    recentImports.length > 0
-      ? Math.round((completedImports / recentImports.length) * 100)
-      : 100;
-
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -245,39 +233,34 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-        <div className="bg-white border border-zinc-200 rounded-lg p-5">
-          <div className="flex items-center gap-4">
-            <div className="p-2.5 bg-indigo-50 rounded-lg">
-              <FileSpreadsheet className="w-5 h-5 text-indigo-500" />
-            </div>
-            <div>
-              <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Imports this month</p>
-              <p className="text-2xl font-semibold text-zinc-900">{usage?.import_count || 0}</p>
-            </div>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div className="bg-white border border-zinc-200 rounded-lg p-5">
           <div className="flex items-center gap-4">
             <div className="p-2.5 bg-emerald-50 rounded-lg">
               <Rows3 className="w-5 h-5 text-emerald-500" />
             </div>
             <div>
-              <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Rows imported</p>
+              <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
+                Rows Imported
+              </p>
               <p className="text-2xl font-semibold text-zinc-900">
-                {(usage?.row_count || 0).toLocaleString()}
+                {totalRows.toLocaleString()}
               </p>
             </div>
           </div>
         </div>
         <div className="bg-white border border-zinc-200 rounded-lg p-5">
           <div className="flex items-center gap-4">
-            <div className="p-2.5 bg-violet-50 rounded-lg">
-              <CheckCircle className="w-5 h-5 text-violet-500" />
+            <div className="p-2.5 bg-indigo-50 rounded-lg">
+              <FileSpreadsheet className="w-5 h-5 text-indigo-500" />
             </div>
             <div>
-              <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Success rate</p>
-              <p className="text-2xl font-semibold text-zinc-900">{successRate}%</p>
+              <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">
+                Active Importers
+              </p>
+              <p className="text-2xl font-semibold text-zinc-900">
+                {activeImportersCount}
+              </p>
             </div>
           </div>
         </div>
