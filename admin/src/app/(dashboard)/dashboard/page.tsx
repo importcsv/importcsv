@@ -323,7 +323,11 @@ export default function DashboardPage() {
                   <div>
                     <p className="text-sm font-medium text-zinc-900">{imp.file_name}</p>
                     <p className="text-xs text-zinc-400">
+                      {imp.importer_name && <>{imp.importer_name} · </>}
                       {imp.row_count?.toLocaleString()} rows
+                      {imp.error_count && imp.error_count > 0 && (
+                        <span className="text-red-500"> · {imp.error_count} errors</span>
+                      )}
                     </p>
                   </div>
                 </div>
