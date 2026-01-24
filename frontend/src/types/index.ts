@@ -44,6 +44,21 @@ export type Transformer =
   | { type: 'replace'; find: string; replace: string; stage?: TransformationStage }
   | { type: 'custom'; fn: (value: any) => any; stage?: TransformationStage };
 
+/**
+ * Result structure returned by onComplete callback
+ */
+export interface ImportResult<T = Record<string, unknown>> {
+  rows: (T & {
+    _custom_fields?: Record<string, unknown>;
+    _unmatched?: Record<string, unknown>;
+  })[];
+  columns: {
+    predefined: Column[];
+    dynamic: Column[];
+    unmatched: string[];
+  };
+}
+
 // Column mapping types
 export interface ColumnMapping {
   id: string;              // Column identifier
@@ -84,6 +99,14 @@ export type CSVImporterProps<TSchema = any> = {
    * @deprecated Use `schema` prop instead for better type safety
    */
   columns?: Column[];          // For standalone mode (HelloCSV-style)
+
+  /**
+   * Customer-specific dynamic columns passed at runtime.
+   * These appear after predefined columns in the mapping dropdown.
+   * Output is nested under _custom_fields in each row.
+   */
+  dynamicColumns?: Column[];
+
   importerKey?: string;        // For backend mode
 
   // Required callback
