@@ -165,11 +165,11 @@ export function IntegrationForm({
             {/* Type display (always Supabase for now) */}
             <div className="space-y-2">
               <Label>Type</Label>
-              <div className="flex items-center gap-2 p-2 border rounded-md bg-gray-50">
+              <div className="flex items-center gap-2 p-2 border rounded-md bg-zinc-50">
                 <Database className="w-4 h-4 text-green-600" />
                 <span className="text-sm">Supabase</span>
               </div>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-zinc-500">
                 More database integrations coming soon (Postgres, MySQL, etc.)
               </p>
             </div>
@@ -184,8 +184,9 @@ export function IntegrationForm({
                     value={supabaseUrl}
                     onChange={(e) => setSupabaseUrl(e.target.value)}
                     placeholder="https://your-project.supabase.co"
+                    data-ph-mask
                   />
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-zinc-500">
                     Find this in your Supabase project settings → API
                   </p>
                 </div>
@@ -200,11 +201,12 @@ export function IntegrationForm({
                       onChange={(e) => setServiceKey(e.target.value)}
                       placeholder={isEditing ? "••••••••••••" : "eyJhbGciOiJIUzI1NiIs..."}
                       className="pr-10"
+                      data-ph-mask
                     />
                     <button
                       type="button"
                       onClick={() => setShowServiceKey(!showServiceKey)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600"
                     >
                       {showServiceKey ? (
                         <EyeOff className="w-4 h-4" />
@@ -213,7 +215,7 @@ export function IntegrationForm({
                       )}
                     </button>
                   </div>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-zinc-500">
                     Use the service_role key (not anon key) for server-side access
                   </p>
                 </div>

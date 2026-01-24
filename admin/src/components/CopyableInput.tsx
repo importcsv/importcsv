@@ -39,7 +39,8 @@ export function CopyableInput({ value, className }: CopyableInputProps) {
       <Input
         value={value}
         readOnly
-        className="font-mono bg-gray-50"
+        className="font-mono bg-zinc-50"
+        data-ph-mask
       />
       <Button variant="outline" size="icon" onClick={handleCopy} aria-label="Copy to clipboard">
         {isCopied ? (

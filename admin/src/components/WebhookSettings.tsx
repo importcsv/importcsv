@@ -57,16 +57,17 @@ export default function WebhookSettings({
             onChange={(e) => onWebhookUrlChange(e.target.value)}
             required={webhookEnabled}
             className={validationError ? "border-red-500 focus:border-red-500" : ""}
+            data-ph-mask
           />
           {validationError && (
             <p className="text-sm text-red-500 mt-1">{validationError}</p>
           )}
-          <p className="text-sm text-gray-500">
+          <p className="text-sm text-zinc-500">
             Uploaded data will be sent to our servers, and we will send
             you a webhook with the data.
             <Link
               href="#"
-              className="text-blue-600 hover:text-blue-800 ml-1"
+              className="text-indigo-600 hover:text-indigo-700 ml-1"
             >
               Webhook docs <ExternalLink className="inline h-3 w-3" />
             </Link>
