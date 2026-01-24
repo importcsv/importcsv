@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { usageApi, importsApi, billingApi } from "@/utils/apiClient";
+import { usageApi, importsApi, billingApi, importersApi } from "@/utils/apiClient";
 import { features } from "@/lib/features";
 import {
   FileSpreadsheet,
@@ -28,6 +28,9 @@ type ImportData = {
   row_count: number;
   status: string;
   created_at: string;
+  importer_id?: string;
+  importer_name?: string;
+  error_count?: number;
 };
 
 type SubscriptionData = {
@@ -45,6 +48,8 @@ export default function DashboardPage() {
   const [recentImports, setRecentImports] = useState<ImportData[]>([]);
   const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [importers, setImporters] = useState<Array<{ id: string; name: string }>>([]);
+  const [allImports, setAllImports] = useState<ImportData[]>([]);
 
   // Auth is handled by the layout - just load data on mount
   useEffect(() => {
@@ -54,12 +59,28 @@ export default function DashboardPage() {
   const loadDashboard = async () => {
     setIsLoading(true);
     try {
-      const [usageData, importsData] = await Promise.all([
+      const [usageData, importsData, importersData] = await Promise.all([
         usageApi.getCurrent(),
         importsApi.getImports(),
+        importersApi.getImporters(),
       ]);
       setUsage(usageData);
-      setRecentImports(importsData.slice(0, 5));
+      setImporters(importersData);
+      setAllImports(importsData);
+
+      // Create lookup map for importer names
+      const importerMap = new Map<string, string>();
+      importersData.forEach((imp: { id: string; name: string }) => {
+        importerMap.set(imp.id, imp.name);
+      });
+
+      // Enrich imports with importer names
+      const enrichedImports = importsData.map((imp: ImportData) => ({
+        ...imp,
+        importer_name: importerMap.get(imp.importer_id) || "Unknown",
+      }));
+
+      setRecentImports(enrichedImports.slice(0, 5));
 
       if (features.billing) {
         try {
@@ -114,18 +135,18 @@ export default function DashboardPage() {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "completed":
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
+        return <CheckCircle className="w-4 h-4 text-emerald-500" />;
       case "failed":
         return <XCircle className="w-4 h-4 text-red-500" />;
       default:
-        return <Clock className="w-4 h-4 text-yellow-500" />;
+        return <Clock className="w-4 h-4 text-amber-500" />;
     }
   };
 
   if (isLoading) {
     return (
-      <div className="p-8">
-        <p className="text-gray-500">Loading...</p>
+      <div className="p-6">
+        <p className="text-zinc-500 text-sm">Loading...</p>
       </div>
     );
   }
@@ -142,112 +163,113 @@ export default function DashboardPage() {
       : 100;
 
   return (
-    <div className="p-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-gray-500 mt-1">
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">Dashboard</h1>
+        <p className="text-zinc-500 text-sm mt-1">
           Welcome back! Here&apos;s your import overview.
         </p>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="p-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+        <div className="bg-white border border-zinc-200 rounded-lg p-5">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <FileSpreadsheet className="w-6 h-6 text-blue-600" />
+            <div className="p-2.5 bg-indigo-50 rounded-lg">
+              <FileSpreadsheet className="w-5 h-5 text-indigo-500" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Imports this month</p>
-              <p className="text-2xl font-bold">{usage?.import_count || 0}</p>
+              <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Imports this month</p>
+              <p className="text-2xl font-semibold text-zinc-900">{usage?.import_count || 0}</p>
             </div>
           </div>
-        </Card>
-        <Card className="p-6">
+        </div>
+        <div className="bg-white border border-zinc-200 rounded-lg p-5">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-green-100 rounded-lg">
-              <Rows3 className="w-6 h-6 text-green-600" />
+            <div className="p-2.5 bg-emerald-50 rounded-lg">
+              <Rows3 className="w-5 h-5 text-emerald-500" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Rows imported</p>
-              <p className="text-2xl font-bold">
+              <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Rows imported</p>
+              <p className="text-2xl font-semibold text-zinc-900">
                 {(usage?.row_count || 0).toLocaleString()}
               </p>
             </div>
           </div>
-        </Card>
-        <Card className="p-6">
+        </div>
+        <div className="bg-white border border-zinc-200 rounded-lg p-5">
           <div className="flex items-center gap-4">
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <CheckCircle className="w-6 h-6 text-purple-600" />
+            <div className="p-2.5 bg-violet-50 rounded-lg">
+              <CheckCircle className="w-5 h-5 text-violet-500" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Success rate</p>
-              <p className="text-2xl font-bold">{successRate}%</p>
+              <p className="text-xs font-medium text-zinc-500 uppercase tracking-wide">Success rate</p>
+              <p className="text-2xl font-semibold text-zinc-900">{successRate}%</p>
             </div>
           </div>
-        </Card>
+        </div>
       </div>
 
       {/* Usage bar (cloud mode) */}
       {features.usageLimits && usage?.import_limit && (
-        <Card className="p-6 mb-8">
+        <div className="bg-white border border-zinc-200 rounded-lg p-5 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="text-lg font-semibold">Usage</h2>
-              <p className="text-sm text-gray-500">
+              <h2 className="text-lg font-medium text-zinc-900">Usage</h2>
+              <p className="text-sm text-zinc-500">
                 {usage.import_count} / {usage.import_limit} free imports
               </p>
             </div>
             {subscription?.plan_tier === "free" && (
-              <Button onClick={handleUpgrade}>
+              <Button onClick={handleUpgrade} className="bg-indigo-500 hover:bg-indigo-600">
                 <Sparkles className="w-4 h-4 mr-2" />
                 Upgrade to Pro
               </Button>
             )}
           </div>
           <Progress value={usagePercent} className="h-2" />
-        </Card>
+        </div>
       )}
 
       {/* Recent imports */}
-      <Card className="p-6">
+      <div className="bg-white border border-zinc-200 rounded-lg p-5">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Recent Imports</h2>
+          <h2 className="text-lg font-medium text-zinc-900">Recent Imports</h2>
           <Button
             variant="ghost"
             size="sm"
             href="/imports"
+            className="text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100"
           >
             View all <ArrowRight className="w-4 h-4 ml-1" />
           </Button>
         </div>
         {recentImports.length === 0 ? (
-          <p className="text-gray-500 text-center py-8">No imports yet.</p>
+          <p className="text-zinc-400 text-center py-8 text-sm">No imports yet.</p>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-0">
             {recentImports.map((imp) => (
               <div
                 key={imp.id}
-                className="flex items-center justify-between py-3 border-b last:border-0"
+                className="flex items-center justify-between py-3 border-b border-zinc-100 last:border-0"
               >
                 <div className="flex items-center gap-3">
                   {getStatusIcon(imp.status)}
                   <div>
-                    <p className="font-medium">{imp.file_name}</p>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm font-medium text-zinc-900">{imp.file_name}</p>
+                    <p className="text-xs text-zinc-400">
                       {imp.row_count?.toLocaleString()} rows
                     </p>
                   </div>
                 </div>
-                <span className="text-sm text-gray-500">
+                <span className="text-xs text-zinc-400">
                   {formatDate(imp.created_at)}
                 </span>
               </div>
             ))}
           </div>
         )}
-      </Card>
+      </div>
     </div>
   );
 }
