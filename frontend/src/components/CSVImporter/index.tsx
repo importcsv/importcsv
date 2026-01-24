@@ -40,6 +40,7 @@ const CSVImporter = forwardRef(<TSchema = any,>(importerProps: CSVImporterProps<
     demoData,
     schema,
     columns: propColumns,
+    dynamicColumns,
     // Any remaining props will be valid DOM props
     ...domProps
   } = importerProps;
@@ -155,6 +156,7 @@ const CSVImporter = forwardRef(<TSchema = any,>(importerProps: CSVImporterProps<
         demoData={demoData}
         columns={derivedColumns}
         schema={schema}
+        dynamicColumns={dynamicColumns}
       />
     </Providers>
   );

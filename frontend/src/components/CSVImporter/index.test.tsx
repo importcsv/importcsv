@@ -4,8 +4,13 @@ import { h } from 'preact';
 import CSVImporter from './index';
 
 // Mock the Importer and Providers components
+// Store props passed to Importer for assertions
+let importerProps: any = {};
 vi.mock('../../importer/features/main', () => ({
-  default: ({ children, ...props }: any) => h('div', { 'data-testid': 'mock-importer', ...props }, children),
+  default: ({ children, ...props }: any) => {
+    importerProps = props;
+    return h('div', { 'data-testid': 'mock-importer', ...props }, children);
+  },
 }));
 
 vi.mock('../../importer/providers', () => ({
@@ -31,6 +36,10 @@ describe('CSVImporter component', () => {
     { id: 'lastName', label: 'Last Name' },
     { id: 'email', label: 'Email' },
   ];
+
+  beforeEach(() => {
+    importerProps = {};
+  });
 
   it('renders in modal mode by default', () => {
     render(h(CSVImporter, {
@@ -197,5 +206,20 @@ describe('CSVImporter component', () => {
     }));
 
     expect(screen.getByTestId('mock-importer')).toBeInTheDocument();
+  });
+
+  describe('dynamicColumns prop', () => {
+    it('passes dynamicColumns to Importer component', () => {
+      const dynamicColumns = [{ id: 'custom1', label: 'Custom Field' }];
+      render(
+        h(CSVImporter, {
+          columns: mockColumns,
+          dynamicColumns: dynamicColumns,
+          isModal: false
+        })
+      );
+      // Verify dynamicColumns is passed through to Importer
+      expect(importerProps.dynamicColumns).toEqual(dynamicColumns);
+    });
   });
 });
