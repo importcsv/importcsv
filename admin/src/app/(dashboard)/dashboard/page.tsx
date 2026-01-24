@@ -20,6 +20,7 @@ type UsageData = {
   import_count: number;
   row_count: number;
   import_limit?: number;
+  period?: string;
 };
 
 type ImportData = {
@@ -106,6 +107,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [importers, setImporters] = useState<Array<{ id: string; name: string }>>([]);
   const [allImports, setAllImports] = useState<ImportData[]>([]);
+  const [importerActivity, setImporterActivity] = useState<ImporterActivity[]>([]);
 
   // Auth is handled by the layout - just load data on mount
   useEffect(() => {
@@ -137,6 +139,10 @@ export default function DashboardPage() {
       }));
 
       setRecentImports(enrichedImports.slice(0, 5));
+
+      // Calculate importer activity
+      const activity = calculateImporterActivity(importsData, importersData);
+      setImporterActivity(activity);
 
       if (features.billing) {
         try {
@@ -210,6 +216,17 @@ export default function DashboardPage() {
   const usagePercent = usage?.import_limit
     ? Math.min(100, (usage.import_count / usage.import_limit) * 100)
     : 0;
+
+  // Count of importers that have been used
+  const activeImportersCount = importerActivity.filter(
+    (a) => a.importCount > 0
+  ).length;
+
+  // Total rows this month
+  const totalRows = usage?.row_count || 0;
+
+  // Reset date from usage period
+  const resetDate = usage?.period ? getResetDate(usage.period) : "";
 
   // Calculate success rate from recent imports
   const completedImports = recentImports.filter((i) => i.status === "completed").length;
