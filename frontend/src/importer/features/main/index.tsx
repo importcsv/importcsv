@@ -6,7 +6,7 @@ import { Button } from "../../components/ui/button";
 import Errors from "../../components/Errors";
 import Stepper from "../../components/Stepper";
 import Validation from "../validation/Validation";
-import { CSVImporterProps, Column } from "../../../types";
+import { CSVImporterProps, Column, ImportResult } from "../../../types";
 import useCustomStyles from "../../hooks/useCustomStyles";
 import { parseObjectOrStringJSON } from "../../utils/utils";
 import { ColumnMapping, ColumnMappingDictionary } from "../../../types";
@@ -380,12 +380,39 @@ export default function Main(props: CSVImporterProps) {
         };
       });
 
-      onComplete && onComplete(restructuredData as any);
+      // Build the full ImportResult structure
+      // Get column metadata
+      const columns = importColumns || propColumns || [];
+      const predefinedColumns = columns.filter(c => !dynamicColumnIds.has(c.id));
+      const dynamicColumnsResult = columns.filter(c => dynamicColumnIds.has(c.id));
+
+      // Get unmatched column names from header row (headerRow is already defined above)
+      const mappedColumnIndices = new Set(
+        Object.entries(columnMapping)
+          .filter(([_, mapping]) => mapping.include)
+          .map(([index]) => parseInt(index, 10))
+      );
+      const unmatchedColumnNames: string[] = headerRow.values
+        .map((value, index) => ({ value, index }))
+        .filter(({ index }) => !mappedColumnIndices.has(index))
+        .map(({ value }) => value?.toString() || '')
+        .filter(name => name.length > 0);
+
+      const result: ImportResult = {
+        rows: restructuredData,
+        columns: {
+          predefined: predefinedColumns,
+          dynamic: dynamicColumnsResult,
+          unmatched: unmatchedColumnNames,
+        },
+      };
+
+      onComplete && onComplete(result as any);
       setIsSubmitting(false);
       goNext();
       return;
     }
-    
+
     // Backend mode: send to API
     if (!importerKey) {
       setDataError("ImporterKey is required for backend mode.");
