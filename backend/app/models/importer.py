@@ -1,15 +1,16 @@
 import uuid
+
 from sqlalchemy import (
-    Column,
-    String,
     JSON,
-    DateTime,
-    ForeignKey,
     UUID,
     Boolean,
+    Column,
+    DateTime,
+    ForeignKey,
+    String,
 )
-from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
+from sqlalchemy.sql import func
 
 from app.db.base import Base
 
@@ -23,18 +24,17 @@ class Importer(Base):
     description = Column(String, nullable=True)
     user_id = Column(UUID, ForeignKey("users.id"), nullable=False)
     fields = Column(JSON, nullable=False)  # JSON structure defining the importer fields
+    dynamic_fields = Column(JSON, nullable=False, default=list)  # Customer-added fields
 
     # Import settings
     include_unmatched_columns = Column(
         Boolean, default=False
     )  # Include all unmatched columns in import
-    filter_invalid_rows = Column(
-        Boolean, default=False
-    )  # Filter rows that fail validation
+    filter_invalid_rows = Column(Boolean, default=False)  # Filter rows that fail validation
     disable_on_invalid_rows = Column(
         Boolean, default=False
     )  # Disable importing all data if there are invalid rows
-    
+
     # UI settings
     dark_mode = Column(Boolean, default=False)  # Enable dark mode for the importer UI
 
