@@ -115,6 +115,10 @@ class ImporterBase(BaseModel):
     name: str = Field(..., min_length=1, description="Name of the importer")
     description: Optional[str] = Field(None, description="Description of the importer")
     fields: List[ImporterField] = Field(..., min_length=1, description="Fields to import")
+    dynamic_fields: List[ImporterField] = Field(
+        default_factory=list,
+        description="Customer-specific dynamic fields passed at runtime"
+    )
     include_unmatched_columns: bool = Field(
         False, description="Include all unmatched columns in import"
     )
@@ -142,6 +146,9 @@ class ImporterUpdate(BaseModel):
     name: Optional[str] = Field(None, description="Name of the importer")
     description: Optional[str] = Field(None, description="Description of the importer")
     fields: Optional[List[ImporterField]] = Field(None, description="Fields to import")
+    dynamic_fields: Optional[List[ImporterField]] = Field(
+        None, description="Customer-specific dynamic fields passed at runtime"
+    )
     include_unmatched_columns: Optional[bool] = Field(
         None, description="Include all unmatched columns in import"
     )
