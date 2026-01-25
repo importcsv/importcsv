@@ -304,3 +304,42 @@ def test_get_importer_by_key_not_found(db_session: Session):
 
     assert exc_info.value.status_code == 404
     assert "not found" in str(exc_info.value.detail).lower()
+
+
+# ============================================================================
+# Dynamic Fields Tests
+# ============================================================================
+
+
+@pytest.mark.unit
+def test_create_importer_with_dynamic_fields(db_session: Session, test_user: User):
+    """create_importer should handle dynamic_fields."""
+    importer_in = ImporterCreate(
+        name="Test Importer",
+        fields=[{"name": "field1", "type": "text"}],
+        dynamic_fields=[{"name": "custom1", "type": "text"}],
+    )
+
+    importer = create_importer(db_session, str(test_user.id), importer_in)
+
+    assert len(importer.dynamic_fields) == 1
+    assert importer.dynamic_fields[0]["name"] == "custom1"
+    assert importer.dynamic_fields[0]["type"] == "text"
+    assert importer.dynamic_fields[0]["display_name"] == "Custom1"
+
+
+@pytest.mark.unit
+def test_update_importer_dynamic_fields(
+    db_session: Session, test_user: User, sample_importer: Importer
+):
+    """update_importer should update dynamic_fields."""
+    update_data = ImporterUpdate(
+        dynamic_fields=[{"name": "new_custom", "type": "number"}],
+    )
+
+    updated = update_importer(db_session, str(test_user.id), sample_importer.id, update_data)
+
+    assert updated is not None
+    assert len(updated.dynamic_fields) == 1
+    assert updated.dynamic_fields[0]["name"] == "new_custom"
+    assert updated.dynamic_fields[0]["type"] == "number"

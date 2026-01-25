@@ -56,11 +56,13 @@ def create_importer(db: Session, user_id: str, importer_in: ImporterCreate) -> I
     try:
         # Process fields to ensure they are dictionaries
         fields_json = _process_fields(importer_in.fields)
+        dynamic_fields_json = _process_fields(importer_in.dynamic_fields)
 
         importer = Importer(
             name=importer_in.name,
             description=importer_in.description,
             fields=fields_json,
+            dynamic_fields=dynamic_fields_json,
             user_id=user_id,
             include_unmatched_columns=importer_in.include_unmatched_columns,
             filter_invalid_rows=importer_in.filter_invalid_rows,
@@ -119,11 +121,17 @@ def update_importer(db: Session, user_id: str, importer_id, importer_in: Importe
         if "fields" in update_data and update_data["fields"]:
             update_data["fields"] = _process_fields(update_data["fields"])
 
+        # Process dynamic_fields if present
+        if "dynamic_fields" in update_data and update_data["dynamic_fields"]:
+            update_data["dynamic_fields"] = _process_fields(update_data["dynamic_fields"])
+
         # Update fields
         for field, value in update_data.items():
             setattr(importer, field, value)
             if field == "fields":
                 flag_modified(importer, "fields")
+            if field == "dynamic_fields":
+                flag_modified(importer, "dynamic_fields")
 
         # Add and commit in the transaction
         with db_transaction(db):
