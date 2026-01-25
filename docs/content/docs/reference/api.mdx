@@ -26,6 +26,7 @@ description: Complete API documentation for ImportCSV
 | `includeUnmatchedColumns` | `boolean` | `false` | Include CSV columns not defined in schema |
 | `language` | `string` | - | Language for internationalization |
 | `customTranslations` | `object` | - | Custom translation resources |
+| `dynamicColumns` | `Column[]` | - | Customer-specific dynamic columns (output nested under `_custom_fields`) |
 | `importerKey` | `string` | - | Importer key for backend mode |
 | `backendUrl` | `string` | - | Backend API URL (for backend mode) |
 | `user` | `object` | - | User context for backend mode |
@@ -203,6 +204,80 @@ This is useful for:
 - Dynamic CSV structures where users might add custom columns
 - Importing data where you want to preserve all information
 - Flexible schemas that adapt to user needs
+
+### Dynamic Columns
+
+For customer-specific fields that vary per user (e.g., custom properties, tenant-specific attributes), use the `dynamicColumns` prop:
+
+```tsx
+// Fetch customer-specific fields at runtime
+const customerFields = await fetchCustomerFields(customerId);
+// Returns: [{ id: 'location', label: 'Location' }, { id: 'department', label: 'Department' }]
+
+<CSVImporter
+  columns={[
+    { id: 'name', label: 'Name', validators: [{ type: 'required' }] },
+    { id: 'email', label: 'Email', type: 'email' },
+  ]}
+  dynamicColumns={customerFields}
+  onComplete={(result) => {
+    result.rows.forEach(row => {
+      // Predefined fields at top level
+      console.log(row.name, row.email);
+
+      // Dynamic fields nested under _custom_fields
+      console.log(row._custom_fields?.location);
+      console.log(row._custom_fields?.department);
+    });
+  }}
+/>
+```
+
+#### Output Structure
+
+When using `dynamicColumns`, the output is structured as follows:
+
+- **Predefined columns** (`columns` prop) → values at top level of each row
+- **Dynamic columns** (`dynamicColumns` prop) → values nested under `_custom_fields`
+- **Unmatched CSV columns** → values nested under `_unmatched` (when `includeUnmatchedColumns` is true)
+
+```tsx
+// Example result structure
+{
+  rows: [
+    {
+      name: 'John Doe',           // Predefined column
+      email: 'john@example.com',  // Predefined column
+      _custom_fields: {           // Dynamic columns
+        location: 'New York',
+        department: 'Engineering'
+      },
+      _unmatched: {               // Unmatched columns (if includeUnmatchedColumns=true)
+        extra_col: 'some value'
+      }
+    }
+  ],
+  columns: {
+    predefined: [{ id: 'name', label: 'Name' }, { id: 'email', label: 'Email' }],
+    dynamic: [{ id: 'location', label: 'Location' }, { id: 'department', label: 'Department' }],
+    unmatched: ['extra_col']
+  }
+}
+```
+
+#### Use Cases
+
+- **Multi-tenant SaaS**: Each customer has unique custom fields
+- **Configurable imports**: Admins define additional fields per import type
+- **Integration mapping**: Different integrations require different custom attributes
+
+#### Column Priority in Mapping
+
+When the user maps CSV columns, they see columns in this order:
+1. Predefined columns (from `columns` prop)
+2. Dynamic columns (from `dynamicColumns` prop)
+
+This keeps the core required fields prominent while allowing flexibility for custom fields.
 
 ## Column Interface
 
