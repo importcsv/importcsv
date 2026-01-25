@@ -773,3 +773,154 @@ def test_switch_supabase_to_webhook_destination(
     assert data["destination_type"] == "webhook"
     assert data["webhook_url"] == "https://example.com/webhook"
     assert data["integration_id"] is None
+
+
+# ============================================================================
+# Dynamic Fields Tests
+# ============================================================================
+
+
+@pytest.fixture
+def sample_importer_with_dynamic(db_session: Session, test_user: User) -> Importer:
+    """Create a sample importer with dynamic_fields in the database."""
+    importer = Importer(
+        id=uuid.uuid4(),
+        key=uuid.uuid4(),
+        name="Importer With Dynamic Fields",
+        description="An importer with dynamic fields",
+        user_id=test_user.id,
+        fields=[
+            {"name": "email", "type": "email"},
+            {"name": "name", "type": "text"},
+        ],
+        dynamic_fields=[
+            {"name": "custom_field_1", "type": "text"},
+            {"name": "custom_field_2", "type": "number"},
+        ],
+        include_unmatched_columns=False,
+        filter_invalid_rows=False,
+        disable_on_invalid_rows=False,
+    )
+    db_session.add(importer)
+    db_session.commit()
+    db_session.refresh(importer)
+    return importer
+
+
+@pytest.mark.integration
+def test_create_importer_with_dynamic_fields(client: TestClient, auth_headers: dict):
+    """POST /importers/ should accept dynamic_fields."""
+    response = client.post(
+        "/api/v1/importers/",
+        json={
+            "name": "Test Importer",
+            "fields": [{"name": "field1", "type": "text"}],
+            "dynamic_fields": [{"name": "custom1", "type": "text"}],
+        },
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert "dynamic_fields" in data
+    assert len(data["dynamic_fields"]) == 1
+    assert data["dynamic_fields"][0]["name"] == "custom1"
+    assert data["dynamic_fields"][0]["type"] == "text"
+
+
+@pytest.mark.integration
+def test_get_importer_returns_dynamic_fields(
+    client: TestClient,
+    auth_headers: dict,
+    sample_importer_with_dynamic: Importer,
+):
+    """GET /importers/{id} should return dynamic_fields."""
+    response = client.get(
+        f"/api/v1/importers/{sample_importer_with_dynamic.id}",
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert "dynamic_fields" in data
+    assert len(data["dynamic_fields"]) == 2
+    assert data["dynamic_fields"][0]["name"] == "custom_field_1"
+    assert data["dynamic_fields"][1]["name"] == "custom_field_2"
+
+
+@pytest.mark.integration
+def test_list_importers_returns_dynamic_fields(
+    client: TestClient,
+    auth_headers: dict,
+    sample_importer_with_dynamic: Importer,
+):
+    """GET /importers/ should return dynamic_fields for each importer."""
+    response = client.get("/api/v1/importers/", headers=auth_headers)
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert "dynamic_fields" in data[0]
+    assert len(data[0]["dynamic_fields"]) == 2
+
+
+@pytest.mark.integration
+def test_update_importer_with_dynamic_fields(
+    client: TestClient,
+    auth_headers: dict,
+    sample_importer: Importer,
+):
+    """PUT /importers/{id} should accept and update dynamic_fields."""
+    response = client.put(
+        f"/api/v1/importers/{sample_importer.id}",
+        json={
+            "dynamic_fields": [
+                {"name": "new_field", "type": "text"},
+                {"name": "another_field", "type": "number"},
+            ],
+        },
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert "dynamic_fields" in data
+    assert len(data["dynamic_fields"]) == 2
+    assert data["dynamic_fields"][0]["name"] == "new_field"
+    assert data["dynamic_fields"][1]["name"] == "another_field"
+
+
+@pytest.mark.integration
+def test_create_importer_without_dynamic_fields_defaults_to_empty(
+    client: TestClient,
+    auth_headers: dict,
+):
+    """POST /importers/ without dynamic_fields should default to empty list."""
+    response = client.post(
+        "/api/v1/importers/",
+        json={
+            "name": "Importer Without Dynamic",
+            "fields": [{"name": "email", "type": "email"}],
+        },
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert "dynamic_fields" in data
+    assert data["dynamic_fields"] == []
+
+
+@pytest.mark.integration
+def test_update_importer_clear_dynamic_fields(
+    client: TestClient,
+    auth_headers: dict,
+    sample_importer_with_dynamic: Importer,
+):
+    """PUT /importers/{id} should allow clearing dynamic_fields."""
+    response = client.put(
+        f"/api/v1/importers/{sample_importer_with_dynamic.id}",
+        json={
+            "dynamic_fields": [],
+        },
+        headers=auth_headers,
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert "dynamic_fields" in data
+    assert data["dynamic_fields"] == []
