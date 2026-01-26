@@ -100,10 +100,37 @@ export interface ThemeConfig {
     };
 }
 
+/**
+ * Result structure returned by onComplete callback.
+ * Contains imported rows with their data and column metadata.
+ */
+export interface ImportResult<T = Record<string, unknown>> {
+    rows: (T & {
+        /** Values from dynamicColumns, keyed by column id */
+        _custom_fields?: Record<string, unknown>;
+        /** Values from unmapped CSV columns (when includeUnmatchedColumns is true) */
+        _unmatched?: Record<string, unknown>;
+    })[];
+    columns: {
+        /** Columns from the columns prop */
+        predefined: Column[];
+        /** Columns from the dynamicColumns prop */
+        dynamic: Column[];
+        /** CSV column names that were not mapped to any column */
+        unmatched: string[];
+    };
+}
+
 export interface CSVImporterProps {
     columns?: Column[];
+    /**
+     * Customer-specific dynamic columns passed at runtime.
+     * These appear after predefined columns in the mapping dropdown.
+     * Output is nested under _custom_fields in each row.
+     */
+    dynamicColumns?: Column[];
     importerKey?: string;
-    onComplete?: (data: any) => void;
+    onComplete?: (data: ImportResult) => void;
     backendUrl?: string;
     context?: Record<string, any>;
     theme?: ThemeConfig | 'default' | 'minimal' | 'modern' | 'compact' | 'dark';

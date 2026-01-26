@@ -24,17 +24,24 @@ describe('CSVImporter Type Inference', () => {
         age: z.number(),
       });
 
-      type ExpectedType = { name: string; age: number }[];
+      type SchemaType = z.infer<typeof schema>;
 
       // Type assertion: verify the inferred type matches expected
       const onComplete = (data: z.infer<typeof schema>[]) => {
+        type ExpectedType = { name: string; age: number }[];
         expectTypeOf(data).toEqualTypeOf<ExpectedType>();
         expect(Array.isArray(data)).toBe(true);
       };
 
-      // Verify props type is correct
-      type Props = CSVImporterProps<z.infer<typeof schema>>;
-      expectTypeOf<Props['onComplete']>().toEqualTypeOf<((data: ExpectedType) => void) | undefined>();
+      // Verify props onComplete receives ImportResult
+      type Props = CSVImporterProps<SchemaType>;
+      // onComplete now receives ImportResult<T> instead of T[]
+      const typedCallback: Props['onComplete'] = (result) => {
+        // Access data via result.rows
+        expectTypeOf(result.rows[0].name).toBeString();
+        expectTypeOf(result.rows[0].age).toBeNumber();
+      };
+      expect(typedCallback).toBeDefined();
     });
 
     it('should infer string type', () => {
@@ -341,10 +348,11 @@ describe('CSVImporter Type Inference', () => {
       // When using columns instead of schema
       type Props = CSVImporterProps;
 
-      // onComplete should accept any[] by default
-      const onComplete: Props['onComplete'] = (data) => {
-        // data is type any[]
-        expectTypeOf(data).toEqualTypeOf<any[]>();
+      // onComplete receives ImportResult by default
+      const onComplete: Props['onComplete'] = (result) => {
+        // result.rows is the data array
+        expectTypeOf(result.rows).toBeArray();
+        expectTypeOf(result.columns).toBeObject();
       };
 
       expect(onComplete).toBeDefined();
@@ -353,8 +361,9 @@ describe('CSVImporter Type Inference', () => {
     it('should work with explicit any type parameter', () => {
       type Props = CSVImporterProps<any>;
 
-      const onComplete: Props['onComplete'] = (data) => {
-        expectTypeOf(data).toEqualTypeOf<any[]>();
+      const onComplete: Props['onComplete'] = (result) => {
+        // result is ImportResult<any>
+        expectTypeOf(result.rows).toBeArray();
       };
 
       expect(onComplete).toBeDefined();
@@ -373,7 +382,13 @@ describe('CSVImporter Type Inference', () => {
 
       // Verify the generic flows through to onComplete
       expectTypeOf<Props['schema']>().toEqualTypeOf<z.ZodSchema<SchemaType> | undefined>();
-      expectTypeOf<Props['onComplete']>().toEqualTypeOf<((data: SchemaType[]) => void) | undefined>();
+
+      // onComplete now receives ImportResult<T> with .rows containing the typed data
+      const callback: Props['onComplete'] = (result) => {
+        expectTypeOf(result.rows[0].id).toBeString();
+        expectTypeOf(result.rows[0].value).toBeNumber();
+      };
+      expect(callback).toBeDefined();
     });
 
     it('should work with extracted types', () => {
@@ -388,10 +403,10 @@ describe('CSVImporter Type Inference', () => {
 
       const props: ImporterProps = {
         schema: userSchema,
-        onComplete: (users: User[]) => {
-          expectTypeOf(users).toEqualTypeOf<User[]>();
-          expectTypeOf(users[0].username).toBeString();
-          expectTypeOf(users[0].role).toEqualTypeOf<'admin' | 'user' | 'guest'>();
+        onComplete: (result) => {
+          // Access typed data via result.rows
+          expectTypeOf(result.rows[0].username).toBeString();
+          expectTypeOf(result.rows[0].role).toEqualTypeOf<'admin' | 'user' | 'guest'>();
         },
       };
 

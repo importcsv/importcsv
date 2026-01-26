@@ -22,7 +22,7 @@ const fetchCustomerFields = async (customerId: string): Promise<Column[]> => {
     ],
     'tech-startup': [
       { id: 'team', label: 'Team', type: 'string' },
-      { id: 'role_level', label: 'Role Level', type: 'select', selectOptions: ['Junior', 'Mid', 'Senior', 'Lead'] },
+      { id: 'role_level', label: 'Role Level', type: 'select', options: ['Junior', 'Mid', 'Senior', 'Lead'] },
       { id: 'remote', label: 'Remote Worker', type: 'string' },
     ],
     'enterprise-inc': [

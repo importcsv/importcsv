@@ -109,8 +109,8 @@ export type CSVImporterProps<TSchema = any> = {
 
   importerKey?: string;        // For backend mode
 
-  // Required callback
-  onComplete?: (data: TSchema[]) => void;
+  // Required callback - receives ImportResult with rows, columns metadata
+  onComplete?: (data: ImportResult<TSchema>) => void;
   
   // Optional configuration
   backendUrl?: string;         // API endpoint (default from config)

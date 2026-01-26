@@ -12,20 +12,13 @@
 
 </div>
 
-## What it does
-
-- **Column mapping** - Auto-matches columns, users fix the rest
-- **Validation** - Required, unique, email, regex, custom
-- **Large files** - Virtual scrolling handles 10k+ rows
-- **~125KB gzipped**
-
-Optional with backend: AI column matching, AI error fixing, natural language transforms.
-
-## Quick Start
+## Install
 
 ```bash
-npm install @importcsv/react
+npm install @importcsv/react zod
 ```
+
+## Quick Start
 
 ```tsx
 import { useState } from 'react';
@@ -48,54 +41,40 @@ function App() {
         schema={schema}
         modalIsOpen={isOpen}
         modalOnCloseTriggered={() => setIsOpen(false)}
-        onComplete={(rows) => console.log(rows)}
+        onComplete={(result) => console.log(result.rows)}
       />
     </>
   );
 }
 ```
 
-Zod handles validation automatically. No need to define validators separately.
-
 ## Features
 
-**File handling**
-- CSV, TSV, XLS, XLSX
-- Automatic encoding detection
-- Header row detection
+- **Column mapping** — Auto-matches headers to your schema
+- **Zod validation** — Type-safe with automatic error messages
+- **Large files** — Virtual scrolling handles 100k+ rows
+- **~100KB gzipped** — Styles included
 
-**Validation**
-- Required, unique, min/max, regex
-- Email, phone, date formats
-- Custom validators
+**File formats:** CSV, TSV, XLS, XLSX (Excel requires `npm install xlsx`)
 
-**Transforms**
-- trim, uppercase, lowercase, capitalize
-- normalize_phone, normalize_date
-- Custom functions
+**Frameworks:** React 16–19, Preact, Next.js
 
-**Frameworks**
-- React 16–19
-- Preact
-- Next.js (App & Pages Router)
-
-**Theming**
-- 7 presets: default, minimal, modern, compact, dark, corporate, playful
-- Custom themes via `theme` prop
-- Dark mode support
-
-## Examples
-
-### Next.js App Router
+## Theming
 
 ```tsx
-'use client';
-import { CSVImporter } from '@importcsv/react';
+<CSVImporter theme="dark" primaryColor="#10b981" />
 ```
 
-### Preact
+Presets: `default`, `minimal`, `modern`, `compact`, `dark`, `corporate`, `playful`
+
+## Next.js / Preact
 
 ```tsx
+// Next.js App Router
+'use client';
+import { CSVImporter } from '@importcsv/react';
+
+// Preact
 import { CSVImporter } from '@importcsv/react/preact';
 ```
 
@@ -103,15 +82,15 @@ import { CSVImporter } from '@importcsv/react/preact';
 
 With the [ImportCSV backend](https://github.com/importcsv/importcsv/tree/main/backend):
 
-- **AI column matching**
-- **AI error fixing** - Automatically fix validation errors
-- **Natural language transforms** - "Convert dates to MM/DD/YYYY"
+- AI column matching
+- AI error fixing
+- Natural language transforms
 
-## Resources
+## Links
 
 - [Documentation](https://docs.importcsv.com)
-- [Issues](https://github.com/importcsv/importcsv/issues)
 - [GitHub](https://github.com/importcsv/importcsv)
+- [Issues](https://github.com/importcsv/importcsv/issues)
 
 ## License
 

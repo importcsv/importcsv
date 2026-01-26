@@ -29,20 +29,20 @@ describe('CSVImporter Type Error Tests', () => {
 
       // Valid callback - should compile
       const validCallback: Props['onComplete'] = (data) => {
-        console.log(data[0].name);
-        console.log(data[0].age);
+        console.log(data.rows[0].name);
+        console.log(data.rows[0].age);
       };
 
       // Invalid callback - should NOT compile
       const invalidCallback: Props['onComplete'] = (data) => {
         // @ts-expect-error - Property 'email' does not exist on type
-        console.log(data[0].email);
+        console.log(data.rows[0].email);
 
         // @ts-expect-error - Property 'invalidProp' does not exist on type
-        console.log(data[0].invalidProp);
+        console.log(data.rows[0].invalidProp);
 
         // @ts-expect-error - Property 'firstName' does not exist on type
-        const firstName = data[0].firstName;
+        const firstName = data.rows[0].firstName;
       };
 
       // Suppress unused variable warnings
@@ -60,10 +60,10 @@ describe('CSVImporter Type Error Tests', () => {
 
       const callback: Props['onComplete'] = (data) => {
         // Valid - optional exists
-        const opt = data[0].optional;
+        const opt = data.rows[0].optional;
 
         // @ts-expect-error - 'notOptional' does not exist
-        const invalid = data[0].notOptional;
+        const invalid = data.rows[0].notOptional;
 
         void opt;
         void invalid;
@@ -85,18 +85,18 @@ describe('CSVImporter Type Error Tests', () => {
 
       const callback: Props['onComplete'] = (data) => {
         // Valid assignments
-        const age: number = data[0].age;
-        const name: string = data[0].name;
-        const isActive: boolean = data[0].isActive;
+        const age: number = data.rows[0].age;
+        const name: string = data.rows[0].name;
+        const isActive: boolean = data.rows[0].isActive;
 
         // @ts-expect-error - Type 'number' is not assignable to type 'string'
-        const wrongAge: string = data[0].age;
+        const wrongAge: string = data.rows[0].age;
 
         // @ts-expect-error - Type 'string' is not assignable to type 'number'
-        const wrongName: number = data[0].name;
+        const wrongName: number = data.rows[0].name;
 
         // @ts-expect-error - Type 'boolean' is not assignable to type 'string'
-        const wrongActive: string = data[0].isActive;
+        const wrongActive: string = data.rows[0].isActive;
 
         void age;
         void name;
@@ -118,11 +118,11 @@ describe('CSVImporter Type Error Tests', () => {
 
       const callback: Props['onComplete'] = (data) => {
         // Valid assignment
-        const cat: 'electronics' | 'clothing' | 'home' = data[0].category;
+        const cat: 'electronics' | 'clothing' | 'home' = data.rows[0].category;
 
         // @ts-expect-error - Type 'electronics' | 'clothing' | 'home' is not assignable to type 'string'
         // (more specific type cannot be assigned to broader type in strict mode)
-        const wrongCat: 'invalid' = data[0].category;
+        const wrongCat: 'invalid' = data.rows[0].category;
 
         void cat;
         void wrongCat;
@@ -143,13 +143,13 @@ describe('CSVImporter Type Error Tests', () => {
 
       const callback: Props['onComplete'] = (data) => {
         // Valid - required field
-        const name: string = data[0].name;
+        const name: string = data.rows[0].name;
 
         // Valid - optional with undefined
-        const nickname: string | undefined = data[0].nickname;
+        const nickname: string | undefined = data.rows[0].nickname;
 
         // @ts-expect-error - Type 'string | undefined' is not assignable to type 'string'
-        const wrongNickname: string = data[0].nickname;
+        const wrongNickname: string = data.rows[0].nickname;
 
         void name;
         void nickname;
@@ -197,7 +197,7 @@ describe('CSVImporter Type Error Tests', () => {
       const validProps: ValidProps = {
         schema: stringSchema,
         onComplete: (data) => {
-          console.log(data[0].name);
+          console.log(data.rows[0].name);
         },
       };
 
@@ -207,7 +207,7 @@ describe('CSVImporter Type Error Tests', () => {
         // @ts-expect-error - Type mismatch between schema and generic
         schema: numberSchema,
         onComplete: (data) => {
-          console.log(data[0].name);
+          console.log(data.rows[0].name);
         },
       };
 
@@ -227,7 +227,7 @@ describe('CSVImporter Type Error Tests', () => {
 
       // Valid
       const validCallback: Props['onComplete'] = (data) => {
-        console.log(data[0].id, data[0].value);
+        console.log(data.rows[0].id, data.rows[0].value);
       };
 
       // @ts-expect-error - Parameter type doesn't match
@@ -260,10 +260,10 @@ describe('CSVImporter Type Error Tests', () => {
 
       const callback: Props['onComplete'] = (data) => {
         // Valid - age is number after transform
-        const age: number = data[0].age;
+        const age: number = data.rows[0].age;
 
         // @ts-expect-error - age is number, not string (after transform)
-        const wrongAge: string = data[0].age;
+        const wrongAge: string = data.rows[0].age;
 
         void age;
         void wrongAge;
@@ -284,11 +284,11 @@ describe('CSVImporter Type Error Tests', () => {
 
       const callback: Props['onComplete'] = (data) => {
         // Valid
-        const name: string = data[0].name;
-        const middleName: string | null = data[0].middleName;
+        const name: string = data.rows[0].name;
+        const middleName: string | null = data.rows[0].middleName;
 
         // @ts-expect-error - middleName can be null
-        const wrongMiddleName: string = data[0].middleName;
+        const wrongMiddleName: string = data.rows[0].middleName;
 
         void name;
         void middleName;
@@ -309,10 +309,10 @@ describe('CSVImporter Type Error Tests', () => {
 
       const callback: Props['onComplete'] = (data) => {
         // Valid
-        const total = data.reduce((sum, item) => sum + item.price, 0);
+        const total = data.rows.reduce((sum, item) => sum + item.price, 0);
 
         // @ts-expect-error - Cannot access non-existent property
-        const invalid = data.map(item => item.invalidProp);
+        const invalid = data.rows.map(item => item.invalidProp);
 
         void total;
         void invalid;
@@ -366,11 +366,11 @@ describe('CSVImporter Type Error Tests', () => {
 
       const callback: Props['onComplete'] = (data) => {
         // Valid
-        const price: number = data[0].price;
-        const cost: number = data[0].cost;
+        const price: number = data.rows[0].price;
+        const cost: number = data.rows[0].cost;
 
         // @ts-expect-error - Wrong type
-        const wrongPrice: string = data[0].price;
+        const wrongPrice: string = data.rows[0].price;
 
         void price;
         void cost;
