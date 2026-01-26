@@ -3,8 +3,9 @@ import BasicExample from './examples/BasicExample'
 import AdvancedExample from './examples/AdvancedExample'
 import LargeFileExample from './examples/LargeFileExample'
 import CustomizationExample from './examples/CustomizationExample'
+import DynamicColumnsExample from './examples/DynamicColumnsExample'
 
-type ExampleType = 'basic' | 'advanced' | 'large-file' | 'customization' | null
+type ExampleType = 'basic' | 'advanced' | 'large-file' | 'customization' | 'dynamic-columns' | null
 
 const App: React.FC = () => {
   const [activeExample, setActiveExample] = useState<ExampleType>(null)
@@ -37,6 +38,13 @@ const App: React.FC = () => {
       description: 'Customize colors, themes, and dark mode',
       icon: '🎨',
       color: 'from-purple-500 to-purple-600'
+    },
+    {
+      id: 'dynamic-columns' as ExampleType,
+      name: 'Dynamic Columns',
+      description: 'Customer-specific fields passed at runtime',
+      icon: '🔀',
+      color: 'from-pink-500 to-pink-600'
     }
   ]
 
@@ -60,6 +68,7 @@ const App: React.FC = () => {
           {activeExample === 'advanced' && <AdvancedExample />}
           {activeExample === 'large-file' && <LargeFileExample />}
           {activeExample === 'customization' && <CustomizationExample />}
+          {activeExample === 'dynamic-columns' && <DynamicColumnsExample />}
         </div>
       </div>
     )
