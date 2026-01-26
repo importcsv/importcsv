@@ -133,6 +133,126 @@ Jane Smith  ,jane@EXAMPLE.COM,555-010-0101,US,2024-02-01
 ]
 ```
 
+## Built-in Transformers (Column-based)
+
+When using the `columns` prop instead of Zod schemas, you can use built-in transformers:
+
+```tsx
+const columns = [
+  {
+    id: 'email',
+    label: 'Email',
+    transformations: [
+      { type: 'trim' },
+      { type: 'lowercase' }
+    ]
+  },
+  {
+    id: 'name',
+    label: 'Name',
+    transformations: [
+      { type: 'trim' },
+      { type: 'capitalize' }
+    ]
+  },
+  {
+    id: 'phone',
+    label: 'Phone',
+    transformations: [
+      { type: 'normalize_phone' }
+    ]
+  }
+];
+
+<CSVImporter columns={columns} onComplete={handleComplete} />
+```
+
+### Available Transformers
+
+| Type | Description | Example Input | Example Output |
+|------|-------------|---------------|----------------|
+| `trim` | Remove leading/trailing whitespace | `"  hello  "` | `"hello"` |
+| `uppercase` | Convert to uppercase | `"Hello"` | `"HELLO"` |
+| `lowercase` | Convert to lowercase | `"Hello"` | `"hello"` |
+| `capitalize` | Capitalize first letter of each word | `"john doe"` | `"John Doe"` |
+| `remove_special_chars` | Keep only letters, numbers, spaces | `"hello@123!"` | `"hello123"` |
+| `normalize_phone` | Format as phone number | `"555-123-4567"` | `"(555) 123-4567"` |
+| `normalize_date` | Parse and format dates | `"01/15/24"` | `"2024-01-15"` |
+| `default` | Replace empty values | `""` | `"N/A"` |
+| `replace` | String replacement | `"hello world"` | `"hello_world"` |
+| `custom` | Custom function | any | any |
+
+### Transformation Stages
+
+Transformers support an optional `stage` property to control when they run:
+
+| Stage | When it runs | Use case |
+|-------|--------------|----------|
+| `'pre'` | Before validation | Clean data before validating |
+| `'post'` | After validation (default) | Format validated data |
+
+```tsx
+const columns = [
+  {
+    id: 'email',
+    label: 'Email',
+    validators: [{ type: 'required' }],
+    transformations: [
+      // Trim BEFORE validation so "  " isn't considered valid
+      { type: 'trim', stage: 'pre' },
+      // Lowercase AFTER validation
+      { type: 'lowercase', stage: 'post' }
+    ]
+  }
+];
+```
+
+#### When to Use Pre-Stage
+
+Use `stage: 'pre'` when the transformation affects validation:
+
+```tsx
+transformations: [
+  // Without 'pre', "  john@example.com  " would fail email validation
+  { type: 'trim', stage: 'pre' }
+]
+```
+
+#### When to Use Post-Stage (Default)
+
+Use `stage: 'post'` (or omit stage) for formatting:
+
+```tsx
+transformations: [
+  // Format phone number after it's validated
+  { type: 'normalize_phone', stage: 'post' }
+]
+```
+
+### Custom Transformers
+
+```tsx
+transformations: [
+  {
+    type: 'custom',
+    fn: (value) => {
+      // Parse currency string to number
+      return parseFloat(value.replace(/[$,]/g, ''));
+    }
+  }
+]
+```
+
+## Zod vs Column Transformations
+
+| Feature | Zod `.transform()` | Column `transformations` |
+|---------|-------------------|-------------------------|
+| Type inference | ✅ Full TypeScript inference | ❌ Limited |
+| Custom logic | ✅ Any JavaScript | ✅ Via `custom` type |
+| Built-in helpers | ❌ None | ✅ `trim`, `uppercase`, etc. |
+| Stage control | ❌ Always post-parse | ✅ `pre` or `post` |
+| Recommended for | New projects, strict typing | Simple use cases, migration |
+
 ## Next Steps
 
 - [Validation](/configuration/validation) - Add validation rules

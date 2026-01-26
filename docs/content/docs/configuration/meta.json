@@ -5,6 +5,7 @@
     "schemas",
     "validation",
     "transformations",
+    "dynamic-columns",
     "styling",
     "theming"
   ]

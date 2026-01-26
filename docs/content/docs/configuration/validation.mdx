@@ -66,18 +66,48 @@ const schema = z.object({
 
 ## Unique Validation
 
+Use Zod's `.refine()` to validate uniqueness across all rows:
+
 ```tsx
-// ImportCSV handles unique validation automatically
+import { z } from 'zod';
+
 const schema = z.object({
   employee_id: z.string().min(1),
   email: z.string().email()
 });
 
+// Validate uniqueness in onComplete
+const handleComplete = (result) => {
+  const emails = result.rows.map(r => r.email);
+  const duplicates = emails.filter((e, i) => emails.indexOf(e) !== i);
+
+  if (duplicates.length > 0) {
+    alert(`Duplicate emails found: ${[...new Set(duplicates)].join(', ')}`);
+    return;
+  }
+
+  // Process valid data
+  saveToDatabase(result.rows);
+};
+
 <CSVImporter
   schema={schema}
-  // Add this prop to enable unique validation
-  validateUnique={['employee_id', 'email']}
+  onComplete={handleComplete}
 />
+```
+
+For per-column uniqueness validation, use the `unique` validator in the `columns` prop:
+
+```tsx
+const columns = [
+  {
+    id: 'employee_id',
+    label: 'Employee ID',
+    validators: [{ type: 'unique', message: 'Employee ID must be unique' }]
+  }
+];
+
+<CSVImporter columns={columns} onComplete={handleComplete} />
 ```
 
 ## Error Handling Modes

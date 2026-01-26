@@ -19,11 +19,12 @@ Use ImportCSV when you need to:
 ## Key Features
 
 - **Type-Safe with Zod** - Define your schema once, get full TypeScript types automatically
-- **Intelligent Mapping** - AI-powered column matching suggests the right mapping
+- **Intelligent Mapping** - Fuzzy column matching with configurable similarity threshold
 - **High Performance** - Handle 10,000+ rows with virtual scrolling and progressive validation
 - **Production Ready** - Built-in validation, transformations, and error handling
 - **Zero Config** - CSS auto-injected, no separate imports needed
-- **Lightweight** - ~100KB gzipped bundle, optimized with Preact
+- **Lightweight** - ~68KB gzipped bundle, optimized with Preact
+- **AI Features** - Smart mapping and natural language transforms (requires [backend setup](/self-hosting))
 
 ## Installation
 
@@ -67,14 +68,14 @@ function App() {
         modalIsOpen={isOpen}
         modalOnCloseTriggered={() => setIsOpen(false)}
         schema={schema}
-        onComplete={(data) => {
-          // data is typed: { name: string; email: string; company?: string }[]
-          console.log(`Imported ${data.length} customers`);
+        onComplete={(result) => {
+          // result.rows is typed: { name: string; email: string; company?: string }[]
+          console.log(`Imported ${result.rows.length} customers`);
 
           // Send to your API
           fetch('/api/customers/import', {
             method: 'POST',
-            body: JSON.stringify(data)
+            body: JSON.stringify(result.rows)
           });
         }}
       />
@@ -86,11 +87,13 @@ function App() {
 ### What You Get
 
 ✅ **Automatic file parsing** - CSV, TSV, XLS, XLSX
-✅ **Smart column mapping** - AI-powered field matching
+✅ **Smart column mapping** - Fuzzy matching based on column names
 ✅ **Built-in validation** - Email, required fields, and more
 ✅ **Large file support** - 10,000+ rows with virtual scrolling
 ✅ **Full TypeScript types** - Automatic type inference from schema
 ✅ **Zero configuration** - Works out of the box
+
+> **Want AI-powered features?** For smart AI column mapping and natural language transforms, see the [AI Features guide](/advanced/ai-features) (requires backend setup).
 
 ## Framework-Specific Guides
 
@@ -115,7 +118,7 @@ function App() {
 ## How It Works
 
 1. **User uploads file** - CSV, XLS, or XLSX
-2. **Column mapping** - AI suggests mappings, user can adjust
+2. **Column mapping** - Fuzzy matching suggests mappings, user can adjust
 3. **Validation** - Data validated against your Zod schema
 4. **Error handling** - Clear error messages, option to fix or skip invalid rows
 5. **Import complete** - Type-safe data returned to your app

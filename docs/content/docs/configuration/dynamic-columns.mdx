@@ -1,0 +1,286 @@
+---
+title: Dynamic Columns
+description: Add customer-specific fields at runtime for multi-tenant imports
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+# Dynamic Columns
+
+Add customer-specific fields at runtime without changing your core schema. Perfect for multi-tenant SaaS where each customer has unique data requirements.
+
+<Callout type="info">
+**When to use this.** Dynamic columns are for fields that vary per customer, tenant, or import configuration. If your fields are the same for everyone, use the standard `columns` or `schema` prop instead.
+</Callout>
+
+## Why This Matters
+
+In multi-tenant applications, different customers need different fields:
+- **Acme Corp** tracks `department` and `cost_center`
+- **Tech Startup** tracks `team`, `role_level`, and `remote_worker`
+- **Enterprise Inc** tracks `division`, `employee_id`, `badge_number`, and `building`
+
+Rather than creating separate importers or maintaining complex conditional logic, pass these fields dynamically at runtime.
+
+## Quick Start
+
+```tsx
+import { CSVImporter } from '@importcsv/react';
+
+// Your predefined schema - same for all customers
+const columns = [
+  { id: 'name', label: 'Name', validators: [{ type: 'required' }] },
+  { id: 'email', label: 'Email', type: 'email' },
+];
+
+// Customer-specific fields fetched at runtime
+const customerFields = [
+  { id: 'department', label: 'Department' },
+  { id: 'cost_center', label: 'Cost Center' },
+];
+
+<CSVImporter
+  columns={columns}
+  dynamicColumns={customerFields}
+  onComplete={(result) => {
+    // Predefined fields at top level
+    console.log(result.rows[0].name);
+    console.log(result.rows[0].email);
+
+    // Dynamic fields nested under _custom_fields
+    console.log(result.rows[0]._custom_fields?.department);
+    console.log(result.rows[0]._custom_fields?.cost_center);
+  }}
+/>
+```
+
+## Output Structure
+
+Dynamic columns are separated from predefined columns in the output to prevent naming conflicts and make it clear which fields came from your schema vs. customer configuration.
+
+```typescript
+// What onComplete receives
+{
+  rows: [
+    {
+      name: 'John Doe',           // Predefined column
+      email: 'john@example.com',  // Predefined column
+      _custom_fields: {           // Dynamic columns go here
+        department: 'Engineering',
+        cost_center: 'ENG-001'
+      }
+    }
+  ],
+  columns: {
+    predefined: [{ id: 'name', ... }, { id: 'email', ... }],
+    dynamic: [{ id: 'department', ... }, { id: 'cost_center', ... }],
+    unmatched: []  // CSV columns that weren't mapped
+  }
+}
+```
+
+### TypeScript Support
+
+```typescript
+import type { ImportResult } from '@importcsv/react';
+
+// Define your base row type
+type Employee = {
+  name: string;
+  email: string;
+};
+
+// Result type includes _custom_fields automatically
+const handleComplete = (result: ImportResult<Employee>) => {
+  result.rows.forEach(row => {
+    // row.name and row.email are typed
+    // row._custom_fields is Record<string, unknown> | undefined
+    const dept = row._custom_fields?.department as string;
+  });
+};
+```
+
+## Fetching Customer Fields
+
+In practice, you'll fetch dynamic columns from your backend based on the current user or tenant:
+
+```tsx
+import { useState, useEffect } from 'react';
+import { CSVImporter, Column } from '@importcsv/react';
+
+function ImporterWithCustomFields({ customerId }: { customerId: string }) {
+  const [dynamicColumns, setDynamicColumns] = useState<Column[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadFields() {
+      const response = await fetch(`/api/customers/${customerId}/import-fields`);
+      const fields = await response.json();
+      setDynamicColumns(fields);
+      setLoading(false);
+    }
+    loadFields();
+  }, [customerId]);
+
+  if (loading) return <div>Loading...</div>;
+
+  return (
+    <CSVImporter
+      columns={predefinedColumns}
+      dynamicColumns={dynamicColumns}
+      onComplete={handleImport}
+    />
+  );
+}
+```
+
+## Dynamic Columns with Validation
+
+Dynamic columns support the same validators and transformations as predefined columns:
+
+```tsx
+const customerFields = [
+  {
+    id: 'employee_id',
+    label: 'Employee ID',
+    validators: [
+      { type: 'required', message: 'Employee ID is required' },
+      { type: 'regex', pattern: '^E\\d{5}$', message: 'Must be E followed by 5 digits' }
+    ]
+  },
+  {
+    id: 'department',
+    label: 'Department',
+    type: 'select',
+    options: ['Engineering', 'Marketing', 'Sales', 'Operations']
+  },
+  {
+    id: 'start_date',
+    label: 'Start Date',
+    type: 'date',
+    transformations: [{ type: 'normalize_date', format: 'YYYY-MM-DD' }]
+  }
+];
+```
+
+## Column Mapping Order
+
+When users map CSV columns, they see options in this order:
+
+1. **Predefined columns** (from `columns` prop) - your core required fields
+2. **Dynamic columns** (from `dynamicColumns` prop) - customer-specific fields
+
+This keeps essential fields prominent while still exposing custom fields for mapping.
+
+## Combining with Unmatched Columns
+
+You can use `dynamicColumns` alongside `includeUnmatchedColumns` for maximum flexibility:
+
+```tsx
+<CSVImporter
+  columns={predefinedColumns}
+  dynamicColumns={customerFields}
+  includeUnmatchedColumns={true}
+  onComplete={(result) => {
+    result.rows.forEach(row => {
+      // Predefined fields
+      console.log(row.name);
+
+      // Dynamic fields
+      console.log(row._custom_fields?.department);
+
+      // Completely unmapped CSV columns
+      console.log(row._unmatched?.some_random_column);
+    });
+  }}
+/>
+```
+
+<Callout type="warn">
+**Data segregation.** The three field types are kept separate: predefined at top level, dynamic under `_custom_fields`, and unmatched under `_unmatched`. This prevents naming collisions if a dynamic column happens to share a name with an unmatched CSV column.
+</Callout>
+
+## Common Use Cases
+
+### Multi-Tenant SaaS
+
+Each customer has unique custom properties stored in your database:
+
+```tsx
+// Fetch from your tenant configuration
+const tenantFields = await getTenantCustomFields(tenantId);
+
+<CSVImporter
+  columns={standardUserColumns}
+  dynamicColumns={tenantFields}
+  onComplete={(result) => {
+    // Save predefined fields to users table
+    // Save _custom_fields to tenant_custom_data table
+  }}
+/>
+```
+
+### Configurable Import Types
+
+Different import types (e.g., "Employees", "Contractors", "Vendors") need different fields:
+
+```tsx
+const importTypeFields = {
+  employees: [
+    { id: 'department', label: 'Department' },
+    { id: 'manager', label: 'Manager' }
+  ],
+  contractors: [
+    { id: 'agency', label: 'Staffing Agency' },
+    { id: 'contract_end', label: 'Contract End Date', type: 'date' }
+  ],
+  vendors: [
+    { id: 'payment_terms', label: 'Payment Terms' },
+    { id: 'tax_id', label: 'Tax ID' }
+  ]
+};
+
+<CSVImporter
+  columns={baseContactColumns}
+  dynamicColumns={importTypeFields[selectedType]}
+  onComplete={handleImport}
+/>
+```
+
+### Integration Field Mapping
+
+Different integrations require different custom attributes:
+
+```tsx
+const integrationFields = {
+  salesforce: [{ id: 'sf_account_id', label: 'Salesforce Account ID' }],
+  hubspot: [{ id: 'hs_contact_id', label: 'HubSpot Contact ID' }],
+  custom_crm: [{ id: 'external_id', label: 'External System ID' }]
+};
+
+<CSVImporter
+  columns={standardColumns}
+  dynamicColumns={integrationFields[activeIntegration] || []}
+  onComplete={handleImport}
+/>
+```
+
+## Next Steps
+
+<Cards>
+  <Card
+    title="Validation Guide"
+    href="/configuration/validation"
+    description="Add validation rules to dynamic columns"
+  />
+  <Card
+    title="Transformations"
+    href="/configuration/transformations"
+    description="Transform dynamic column values during import"
+  />
+  <Card
+    title="API Reference"
+    href="/reference/api"
+    description="Complete props and types documentation"
+  />
+</Cards>

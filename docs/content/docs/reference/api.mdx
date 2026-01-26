@@ -106,30 +106,68 @@ type Transformer =
 
 ## onComplete Callback Data Structure
 
-The `onComplete` callback receives an object with the following structure:
+The `onComplete` callback receives an `ImportResult` object:
 
 ```typescript
-{
-  success: boolean;           // Whether the import was successful
-  data: Array<{              // Raw row data with values array
-    index: number;
-    values: string[];
+interface ImportResult<T = Record<string, unknown>> {
+  rows: Array<T & {
+    _custom_fields?: Record<string, unknown>;  // Dynamic column values
+    _unmatched?: Record<string, unknown>;      // Unmapped CSV columns
   }>;
-  mappedData: Array<{        // Mapped data with column names
-    data: Record<string, any>;
-  }>;
-  num_rows: number;          // Number of rows imported
-  num_columns: number;       // Number of columns
-  headers: string[];         // Column headers from CSV
-  columnMapping: {           // Mapping configuration
-    [index: string]: {
-      id: string;
-      label: string;
-      include: boolean;
-    }
+  columns: {
+    predefined: Column[];   // Columns from `columns` prop
+    dynamic: Column[];      // Columns from `dynamicColumns` prop
+    unmatched: string[];    // CSV column names that weren't mapped
   };
 }
 ```
+
+### Example Usage
+
+```tsx
+import { CSVImporter, ImportResult } from '@importcsv/react';
+import { z } from 'zod';
+
+const schema = z.object({
+  name: z.string(),
+  email: z.string().email()
+});
+
+type User = z.infer<typeof schema>;
+
+<CSVImporter
+  schema={schema}
+  dynamicColumns={[{ id: 'department', label: 'Department' }]}
+  onComplete={(result: ImportResult<User>) => {
+    // Access validated rows
+    result.rows.forEach(row => {
+      console.log(row.name, row.email);           // Typed from schema
+      console.log(row._custom_fields?.department); // Dynamic columns
+    });
+
+    // Access column metadata
+    console.log(`Predefined: ${result.columns.predefined.length}`);
+    console.log(`Dynamic: ${result.columns.dynamic.length}`);
+    console.log(`Unmatched: ${result.columns.unmatched.join(', ')}`);
+  }}
+/>
+```
+
+### Row Structure
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `[column_id]` | `any` | Values from predefined columns (top-level) |
+| `_custom_fields` | `Record<string, unknown>` | Values from `dynamicColumns` prop |
+| `_unmatched` | `Record<string, unknown>` | Values from unmapped CSV columns (when `includeUnmatchedColumns` is true) |
+
+### Columns Metadata
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `predefined` | `Column[]` | Columns defined via `columns` or `schema` prop |
+| `dynamic` | `Column[]` | Columns from `dynamicColumns` prop |
+| `unmatched` | `string[]` | CSV header names that weren't mapped to any column |
 
 ## Import Behavior Options
 
@@ -193,9 +231,18 @@ const columns = [
 <CSVImporter
   columns={columns}
   includeUnmatchedColumns={true}
-  onComplete={(data) => {
-    // data.mappedData includes defined columns
-    // data.unmappedData includes Manager and Office columns
+  onComplete={(result) => {
+    result.rows.forEach(row => {
+      // Defined columns at top level
+      console.log(row.name, row.email, row.department);
+
+      // Unmapped columns under _unmatched
+      console.log(row._unmatched?.Manager);
+      console.log(row._unmatched?.Office);
+    });
+
+    // List of unmapped column names
+    console.log(result.columns.unmatched); // ['Manager', 'Office']
   }}
 />
 ```
@@ -278,6 +325,49 @@ When the user maps CSV columns, they see columns in this order:
 2. Dynamic columns (from `dynamicColumns` prop)
 
 This keeps the core required fields prominent while allowing flexibility for custom fields.
+
+## Backend Mode
+
+When using `importerKey` and `backendUrl`, the importer operates in **backend mode**. In this mode:
+
+1. **Schema is fetched from the backend** - No need to pass `columns` or `schema` prop
+2. **Data is sent directly to your backend API** - Not passed to `onComplete`
+3. **AI features are enabled** - Smart column mapping, natural language transforms
+
+```tsx
+<CSVImporter
+  importerKey="your-importer-key"
+  backendUrl="https://api.yoursite.com"
+  onComplete={() => {
+    // In backend mode, this is called when the import completes
+    // but data is sent to your backend, not passed here
+    console.log('Import completed - data sent to backend');
+  }}
+/>
+```
+
+### Backend Mode vs Local Mode
+
+| Feature | Local Mode | Backend Mode |
+|---------|------------|--------------|
+| Schema source | `schema` or `columns` prop | Fetched from backend API |
+| Data destination | `onComplete` callback | Backend API endpoint |
+| AI column mapping | ❌ | ✅ |
+| Natural language transforms | ❌ | ✅ |
+| Requires backend setup | ❌ | ✅ |
+
+### When to Use Backend Mode
+
+Use backend mode when you need:
+- AI-powered column matching (fuzzy matching, synonyms)
+- Natural language data transformations
+- Centralized importer configuration (via admin dashboard)
+- Background processing for large files
+
+Use local mode (default) when you want:
+- Simple, frontend-only imports
+- Full control over data handling
+- No backend dependencies
 
 ## Column Interface
 
