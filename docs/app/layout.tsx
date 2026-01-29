@@ -2,6 +2,24 @@ import './global.css';
 import { RootProvider } from 'fumadocs-ui/provider';
 import { cn } from 'fumadocs-ui/utils/cn';
 import { Geist, Geist_Mono } from 'next/font/google';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  metadataBase: new URL('https://docs.importcsv.com'),
+  title: {
+    default: 'ImportCSV Documentation',
+    template: '%s | ImportCSV',
+  },
+  description: 'AI-powered CSV importer for React apps',
+  openGraph: {
+    type: 'website',
+    siteName: 'ImportCSV Documentation',
+    locale: 'en_US',
+  },
+  twitter: {
+    card: 'summary_large_image',
+  },
+};
 
 const sans = Geist({
   subsets: ['latin'],

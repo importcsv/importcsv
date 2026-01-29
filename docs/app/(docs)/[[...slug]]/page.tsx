@@ -44,8 +44,25 @@ export async function generateMetadata(
   const page = source.getPage(params.slug);
   if (!page) notFound();
 
+  const title = page.data.title;
+  const description = page.data.description;
+  const url = `https://docs.importcsv.com${page.url}`;
+
   return {
-    title: page.data.title,
-    description: page.data.description,
+    title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url,
+      type: 'article',
+    },
+    twitter: {
+      title,
+      description,
+    },
+    alternates: {
+      canonical: url,
+    },
   };
 }
