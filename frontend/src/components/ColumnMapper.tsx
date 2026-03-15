@@ -5,6 +5,7 @@ import { z } from 'zod';
 import type { Column } from '../headless/types';
 import { Root } from '../headless/root';
 import { cn } from '../utils/cn';
+import { isZodObject } from '../utils/isZodObject';
 
 interface ColumnMapperProps {
   schema?: z.ZodSchema<any>;
@@ -72,7 +73,7 @@ export const ColumnMapper = ({
 }: ColumnMapperProps) => {
   // Derive columns from schema or use provided columns
   const columns = useMemo<Column[]>(() => {
-    if (schema && schema instanceof z.ZodObject) {
+    if (schema && isZodObject(schema)) {
       const shape = (schema as any).shape;
       return Object.entries(shape).map(([key, zodType]: [string, any]) => ({
         id: key,

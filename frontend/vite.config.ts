@@ -33,11 +33,11 @@ export default defineConfig(({ mode }) => {
       },
       rollupOptions: {
         // Different externals based on build mode
-        external: isBundled 
+        external: isBundled
           ? ['xlsx'] // Bundled mode includes Preact
-          : isReact 
-            ? ['react', 'react-dom', 'react/jsx-runtime', 'xlsx']
-            : ['preact', 'preact/hooks', 'preact/compat', 'preact/jsx-runtime', 'xlsx'],
+          : isReact
+            ? ['react', 'react-dom', 'react/jsx-runtime', 'zod', 'xlsx']
+            : ['preact', 'preact/hooks', 'preact/compat', 'preact/jsx-runtime', 'zod', 'xlsx'],
         output: {
           globals: {
             react: 'React',
@@ -47,6 +47,7 @@ export default defineConfig(({ mode }) => {
             'preact/hooks': 'preactHooks',
             'preact/compat': 'preactCompat',
             'preact/jsx-runtime': 'preactJsx',
+            zod: 'zod',
             xlsx: 'XLSX',
           },
           // CSS will be extracted as a separate file

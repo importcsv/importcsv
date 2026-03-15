@@ -1,6 +1,7 @@
 // frontend/src/headless/utils/zodSchemaToColumns.ts
 import { z } from 'zod';
 import type { Column, Validator, Transformer } from '../../types';
+import { isZodObject } from '../../utils/isZodObject';
 
 // Type aliases for better type safety when working with Zod internals
 type ZodDef = {
@@ -48,8 +49,7 @@ type ZodTypeWithDef = z.ZodTypeAny & {
  *       as CSV data is text-based and typically represents booleans as 'true'/'false' strings.
  */
 export function zodSchemaToColumns<T>(schema: z.ZodSchema<T>): Column[] {
-  if (!(schema instanceof z.ZodObject)) {
-    // Check if it looks like a Zod schema but failed instanceof (multiple Zod versions)
+  if (!isZodObject(schema)) {
     if (schema && typeof schema === 'object' && '_def' in schema) {
       console.error(
         'ImportCSV: Schema detection failed. This usually means multiple Zod versions are installed. ' +

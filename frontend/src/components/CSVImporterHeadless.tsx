@@ -18,6 +18,7 @@ import { h } from 'preact';
 import { useState, useEffect, useMemo } from 'preact/hooks';
 import { z } from 'zod';
 import type { Column } from '../headless/types';
+import { isZodObject } from '../utils/isZodObject';
 import { Root, useCSV } from '../headless/root';
 import { Validator } from '../headless/validator';
 import { NextButton } from '../headless/next-button';
@@ -96,7 +97,7 @@ export const CSVImporterHeadless = ({
 
   // Derive columns from schema if provided
   const derivedColumns = useMemo<Column[]>(() => {
-    if (schema && schema instanceof z.ZodObject) {
+    if (schema && isZodObject(schema)) {
       const shape = (schema as any).shape;
       return Object.entries(shape).map(([key, zodType]: [string, any]) => ({
         id: key,
