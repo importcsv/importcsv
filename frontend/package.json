@@ -99,7 +99,7 @@
     }
   },
   "optionalDependencies": {
-    "xlsx": "^0.18.5"
+    "xlsx": "npm:@stackline/xlsx@^1.0.6"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.22.4",
