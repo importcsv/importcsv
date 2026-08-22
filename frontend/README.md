@@ -55,7 +55,7 @@ function App() {
 - **Large files** — Virtual scrolling handles 100k+ rows
 - **~100KB gzipped** — Styles included
 
-**File formats:** CSV, TSV, XLS, XLSX (Excel requires `npm install xlsx`)
+**File formats:** CSV, TSV, XLS, XLSX (Excel requires `npm install xlsx@npm:@stackline/xlsx@^1.0.6`)
 
 **Frameworks:** React 16–19, Preact, Next.js
 
