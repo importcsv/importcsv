@@ -1,7 +1,7 @@
 import Papa from "papaparse";
 import { useEffect, useState } from "preact/hooks";
 // Note: XLSX is dynamically imported when needed to reduce bundle size
-// Users must install 'xlsx' package separately for Excel support
+// Users must install the xlsx-compatible alias separately for Excel support
 import { Button } from "../../components/ui/button";
 import Errors from "../../components/Errors";
 import Stepper from "../../components/Stepper";
@@ -557,7 +557,7 @@ export default function Main(props: CSVImporterProps) {
                                                error.message?.includes('Failed to fetch dynamically imported module');
                       
                       const errorMessage = isModuleNotFound
-                        ? "Excel support requires the 'xlsx' package. Please install it with: npm install xlsx"
+                        ? "Excel support requires the 'xlsx' package. Please install it with: npm install xlsx@npm:@stackline/xlsx@^1.0.6"
                         : "Failed to load Excel parser. Please try again or use CSV format.";
                       
                       setDataError(errorMessage);
