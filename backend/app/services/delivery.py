@@ -193,7 +193,7 @@ async def deliver_to_webhook_destination(
     # Direct POST (self-hosted mode or Svix fallback)
     logger.info(f"Delivering via direct POST to {urlparse(webhook_url).netloc}")
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx.AsyncClient(timeout=30.0, follow_redirects=False) as client:
         for attempt in range(MAX_RETRIES):
             try:
                 response = await client.post(
@@ -267,7 +267,7 @@ async def deliver_to_supabase(
 
     total_delivered = 0
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx.AsyncClient(timeout=30.0, follow_redirects=False) as client:
         for chunk_idx, chunk in enumerate(chunks):
             for attempt in range(MAX_RETRIES):
                 try:
@@ -355,7 +355,7 @@ async def deliver_to_webhook(
     # Log only the hostname, not the full URL (may contain tokens)
     parsed_url = urlparse(webhook_url)
 
-    async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx.AsyncClient(timeout=30.0, follow_redirects=False) as client:
         for attempt in range(MAX_RETRIES):
             try:
                 response = await client.post(

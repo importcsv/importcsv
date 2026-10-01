@@ -140,9 +140,13 @@ async def auth_google_callback(request: Request, db: Session = Depends(get_db)):
 
     user_info = token.get("userinfo")
 
-    if not user_info or not user_info.get("email"):
+    if (
+        not user_info
+        or not user_info.get("email")
+        or user_info.get("email_verified") is not True
+    ):
         return RedirectResponse(
-            url=f"{settings.FRONTEND_URL}/auth/signin?error=oauth_no_email"
+            url=f"{settings.FRONTEND_URL}/auth/signin?error=oauth_email_unverified"
         )
 
     # Get or create user
@@ -200,12 +204,13 @@ async def auth_github_callback(request: Request, db: Session = Depends(get_db)):
     user_info = resp.json()
 
     # GitHub may not return email in user info, need separate call
-    email = user_info.get("email")
-    if not email:
-        resp = await oauth.github.get("user/emails", token=token)
-        emails = resp.json()
-        primary_email = next((e for e in emails if e.get("primary")), None)
-        email = primary_email["email"] if primary_email else None
+    resp = await oauth.github.get("user/emails", token=token)
+    emails = resp.json()
+    primary_email = next(
+        (e for e in emails if e.get("primary") and e.get("verified")),
+        None,
+    )
+    email = primary_email["email"] if primary_email else None
 
     if not email:
         return RedirectResponse(

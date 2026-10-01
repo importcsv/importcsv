@@ -304,6 +304,11 @@ async def set_destination(
 
     elif destination_in.destination_type == "webhook":
         webhook_url = destination_in.webhook_url
+        if not is_safe_webhook_url(webhook_url):
+            raise HTTPException(
+                status_code=400,
+                detail="Webhook URL is not allowed (must be HTTPS and not target internal resources)",
+            )
         svix_endpoint_id = None
 
         # Create Svix endpoint if in cloud mode
@@ -459,7 +464,7 @@ async def send_test_webhook(
     # Send test request
     start_time = time.time()
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=30.0, follow_redirects=False) as client:
             response = await client.post(webhook_url, json=payload)
         duration_ms = int((time.time() - start_time) * 1000)
 

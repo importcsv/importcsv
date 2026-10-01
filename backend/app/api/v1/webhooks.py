@@ -74,7 +74,7 @@ async def check_webhook_url(
 
     start_time = time.time()
     try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=30.0, follow_redirects=False) as client:
             response = await client.post(
                 request.url,
                 json=payload,

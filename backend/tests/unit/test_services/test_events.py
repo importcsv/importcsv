@@ -279,19 +279,6 @@ class TestUserSignupEvent:
         assert "events.emit" in source, "register() should call events.emit"
         assert "EventType.USER_SIGNUP" in source, "register() should emit USER_SIGNUP"
 
-    def test_sync_oauth_user_calls_events_emit_for_new_users(self):
-        """OAuth sync should call events.emit for new users."""
-        import inspect
-
-        from app.api.v1.auth import sync_oauth_user
-
-        source = inspect.getsource(sync_oauth_user)
-        assert "events.emit" in source, "sync_oauth_user() should call events.emit"
-        assert (
-            "EventType.USER_SIGNUP" in source
-        ), "sync_oauth_user() should emit USER_SIGNUP"
-
-
 class TestImporterCreatedEvent:
     """Tests for importer.created event emission."""
 

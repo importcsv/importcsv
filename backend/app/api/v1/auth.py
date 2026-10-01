@@ -18,7 +18,7 @@ from app.core.config import settings
 from app.db.base import get_db
 from app.models.user import User as UserModel
 from app.auth.jwt_auth import get_current_active_user
-from app.schemas.user import UserCreate, User
+from app.schemas.user import UserRegister, User
 from app.services.email import email_service
 from app.services.events import events
 from app.services.events.types import EventType
@@ -132,7 +132,7 @@ async def login(
 async def register(
     *,
     db: Session = Depends(get_db),
-    user_in: UserCreate
+    user_in: UserRegister
 ) -> UserModel:
     """
     Create new user registration
@@ -152,9 +152,9 @@ async def register(
         email=user_in.email,
         hashed_password=hashed_password,
         full_name=user_in.full_name,
-        is_active=user_in.is_active,
-        is_superuser=user_in.is_superuser,
-        is_verified=True,  # Auto-verify for now
+        is_active=True,
+        is_superuser=False,
+        is_verified=False,
     )
     
     db.add(db_user)
@@ -168,65 +168,6 @@ async def register(
     events.emit(EventType.USER_SIGNUP, {"email": db_user.email})
 
     return db_user
-
-
-@router.post("/oauth/sync")
-async def sync_oauth_user(
-    *,
-    db: Session = Depends(get_db),
-    email: str,
-    name: Optional[str] = None,
-    provider: Optional[str] = None,
-    providerId: Optional[str] = None
-) -> Dict[str, Any]:
-    """
-    Sync OAuth user with database (create if doesn't exist)
-    """
-    # Check if user exists
-    user = db.query(UserModel).filter(UserModel.email == email).first()
-    
-    is_new_user = user is None
-
-    if not user:
-        # Create new user from OAuth
-        user = UserModel(
-            id=uuid.uuid4(),
-            email=email,
-            hashed_password=None,  # OAuth users don't have passwords
-            full_name=name,
-            is_active=True,
-            is_superuser=False,
-            is_verified=True,  # OAuth users are pre-verified
-        )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-    else:
-        # Update existing user info if provided
-        if name and not user.full_name:
-            user.full_name = name
-            db.commit()
-
-    # Send welcome email for new users only
-    if is_new_user:
-        email_service.send_welcome(user.email, user.full_name)
-        # Emit signup event for internal notifications
-        events.emit(EventType.USER_SIGNUP, {"email": user.email})
-
-    # Create access token
-    access_token = create_access_token(
-        data={"sub": str(user.id), "email": user.email}
-    )
-    
-    return {
-        "access_token": access_token,
-        "user": {
-            "id": str(user.id),
-            "email": user.email,
-            "full_name": user.full_name,
-            "is_active": user.is_active,
-        }
-    }
 
 
 @router.get("/me", response_model=Dict[str, Any])

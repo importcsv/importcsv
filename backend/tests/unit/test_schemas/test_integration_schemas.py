@@ -7,6 +7,7 @@ import pytest
 from pydantic import ValidationError
 
 from app.schemas.integration import DestinationCreate, DestinationResponse
+from app.schemas.user import UserRegister
 
 
 # ============================================================================
@@ -108,6 +109,24 @@ def test_destination_create_webhook_requires_https():
             webhook_url="http://example.com/webhook",
         )
     assert "Webhook URL must use HTTPS" in str(exc_info.value)
+
+
+@pytest.mark.unit
+def test_public_registration_ignores_privileged_fields():
+    """Public registration must not accept server-controlled user flags."""
+    user = UserRegister(
+        email="attacker@example.com",
+        password="password123",
+        is_superuser=True,
+        is_verified=True,
+        is_active=False,
+    )
+
+    assert user.model_dump() == {
+        "email": "attacker@example.com",
+        "password": "password123",
+        "full_name": None,
+    }
 
 
 @pytest.mark.unit

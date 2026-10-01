@@ -18,6 +18,7 @@ from app.core.config import settings
 from app.models.import_job import ImportJob
 from app.models.importer import Importer
 from app.models.webhook import WebhookEvent, WebhookEventType
+from app.services.delivery import is_safe_webhook_url
 
 # Configure a specific webhook logger
 webhook_logger = logging.getLogger("app.webhook")
@@ -122,8 +123,10 @@ class WebhookService:
                 webhook_logger.debug(f"First data row keys: {list(first_row.keys()) if isinstance(first_row, dict) else 'N/A'}")
 
             # Validate URL before sending
-            if not url or not url.strip() or not (url.startswith('http://') or url.startswith('https://')):
-                webhook_logger.error(f"Invalid webhook URL: '{url}' - must be a valid HTTP/HTTPS URL")
+            if not url or not is_safe_webhook_url(url.strip()):
+                webhook_logger.error(
+                    f"Invalid webhook URL: '{url}' - must be HTTPS and not target internal resources"
+                )
                 return False
 
             # Sanitize URL (remove whitespace)
@@ -138,7 +141,7 @@ class WebhookService:
             }
 
             # Create a client with adequate timeout
-            async with httpx.AsyncClient(timeout=60.0) as client:
+            async with httpx.AsyncClient(timeout=60.0, follow_redirects=False) as client:
                 # First try with the json parameter (most reliable method)
                 try:
                     webhook_logger.info("Sending webhook request with json parameter")
